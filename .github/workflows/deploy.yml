@@ -20,7 +20,7 @@ jobs:
       - name: Build Image và đẩy lên Docker Hub
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./be
           file: ./be/Dockerfile
           push: true
           tags: nengoilahoang/bakers-marketplace-be:latest
