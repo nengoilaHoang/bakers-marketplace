@@ -27,10 +27,23 @@ morgan.token('time',()=>{
   return now.toTimeString().split(' ')[0];
 })
 app.use(morgan('[RES] :time | :method | :url | :status | :response-time ms'))
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, Express!!');
+
+import db from "#/db/index.js"
+app.get('/health', async (req: Request, res: Response) => {
+  const checkHealth: boolean = await db.checkConnection();
+  if (checkHealth) {
+    return res.status(200).json({
+      status: 'UP',
+      message: 'Kết nối Database thành công!'
+    });
+  } else {
+    return res.status(503).json({
+      status: 'DOWN',
+      message: 'Mất kết nối tới Database!'
+    });
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}/health`);
 });

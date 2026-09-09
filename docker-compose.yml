@@ -1,0 +1,66 @@
+services:
+  # 1. Cơ sở dữ liệu PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: bakers_postgres
+    restart: always
+    env_file:
+      - ./be/.env
+    environment:
+      POSTGRES_USER: ${DB_USER:-bakers_admin}
+      POSTGRES_PASSWORD: ${DB_PASS:-secretpassword}
+      POSTGRES_DB: ${DB_NAME:-bakers_marketplace}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # 2. pgAdmin - Giao diện quản lý Database qua Web
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: bakers_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bakers.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80" # Truy cập bằng localhost:5050
+    depends_on:
+      - postgres
+
+  # 3. Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: bakers_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # 4. Backend (Node.js) - Cấu hình cho môi trường Dev
+  backend:
+    container_name: bakers_backend
+    build:
+      context: ./BE
+      dockerfile: Dockerfile
+      target: builder # GIỮ LẠI DEV DEPENDENCIES
+    restart: always
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./BE/.env
+    depends_on:
+      - postgres
+      - redis
+    # --- PHẦN QUYẾT ĐỊNH TÍNH NĂNG HOT RELOAD ---
+    volumes:
+      - ./BE:/app
+      # - /app/node_modules
+      - backend_node_modules:/app/node_modules
+    command: npm run dev
+
+volumes:
+  pg_data:
+  redis_data:
+  backend_node_modules:
