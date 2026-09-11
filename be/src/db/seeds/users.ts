@@ -1,11 +1,36 @@
 import type { Knex } from 'knex';
 
-const authors = [
-  'Nguyễn Minh Anh',
-  'Trần Bảo Ngọc',
-  'Lê Hoàng Nam',
-  'Phạm Thảo Vy',
-  'Đặng Quốc Huy',
+const users = [
+  {
+    email: 'minhanh@example.com',
+    displayname: 'Nguyễn Minh Anh',
+    password: 'password123',
+    role: 'CUSTOMER',
+  },
+  {
+    email: 'baongoc@example.com',
+    displayname: 'Trần Bảo Ngọc',
+    password: 'password123',
+    role: 'CUSTOMER',
+  },
+  {
+    email: 'hoangnam@example.com',
+    displayname: 'Lê Hoàng Nam',
+    password: 'password123',
+    role: 'CUSTOMER',
+  },
+  {
+    email: 'thaovy@example.com',
+    displayname: 'Phạm Thảo Vy',
+    password: 'password123',
+    role: 'CUSTOMER',
+  },
+  {
+    email: 'quochuy@example.com',
+    displayname: 'Đặng Quốc Huy',
+    password: 'password123',
+    role: 'CUSTOMER',
+  },
 ];
 
 const baseRecipes = [
@@ -334,26 +359,58 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('steps').del();
     await trx('recipes').del();
     await trx('images').del();
-    await trx('authors').del();
+    await trx('users').del();
 
-    const authorRows = await trx('authors')
-      .insert(authors.map((display_name) => ({ display_name })))
-      .returning(['id', 'display_name']);
+    const userRows = await trx('users')
+      .insert(users)
+      .returning([
+        'id',
+        'email',
+        'displayname',
+        'role',
+      ]);
 
     const recipes = [...baseRecipes];
 
-    for (const [flavorName, flavorTag, flavorIngredient] of flavors) {
+    for (
+      const [flavorName, flavorTag, flavorIngredient]
+      of flavors
+    ) {
       for (const family of families) {
         recipes.push({
           title: `${family.name} ${flavorName}`,
-          description: `${family.description} Phiên bản ${flavorName.toLowerCase()} thơm rõ vị và dễ ăn.`,
-          portion: family.name === 'Macaron' ? 16 : family.name === 'Cupcake' ? 12 : 6,
-          tags: [...family.tags, flavorTag, 'homemade'],
-          ingredients: [...family.ingredients, [flavorIngredient, 120, 'g']],
+
+          description:
+            `${family.description} Phiên bản ` +
+            `${flavorName.toLowerCase()} thơm rõ vị và dễ ăn.`,
+
+          portion:
+            family.name === 'Macaron'
+              ? 16
+              : family.name === 'Cupcake'
+                ? 12
+                : 6,
+
+          tags: [
+            ...family.tags,
+            flavorTag,
+            'homemade',
+          ],
+
+          ingredients: [
+            ...family.ingredients,
+            [flavorIngredient, 120, 'g'],
+          ],
+
           tools: family.tools,
+
           steps: familySteps[family.name],
+
           notes: [
-            `Có thể điều chỉnh lượng ${String(flavorIngredient).toLowerCase()} theo khẩu vị.`,
+            `Có thể điều chỉnh lượng ${
+              String(flavorIngredient).toLowerCase()
+            } theo khẩu vị.`,
+
             'Bảo quản kín và dùng sớm để giữ chất lượng tốt nhất.',
           ],
         });
@@ -364,74 +421,127 @@ export async function seed(knex: Knex): Promise<void> {
       .insert(
         recipes.map((recipe, index) => ({
           display_name: `${recipe.title} cover`,
-          original_name: `recipe-${index + 1}.jpg`,
-          url: `https://picsum.photos/seed/bakers-recipe-${index + 1}/800/600`,
+
+          original_name:
+            `recipe-${index + 1}.jpg`,
+
+          url:
+            `https://picsum.photos/seed/` +
+            `bakers-recipe-${index + 1}/800/600`,
+
           content_type: 'image/jpeg',
         })),
       )
       .returning(['id']);
 
-    for (let index = 0; index < recipes.length; index += 1) {
+    for (
+      let index = 0;
+      index < recipes.length;
+      index += 1
+    ) {
       const recipe = recipes[index];
-      const author = authorRows[index % authorRows.length];
+
+      const user =
+        userRows[index % userRows.length];
+
       const image = imageRows[index];
 
-      const isPublic = index % 7 !== 0;
-      const isSnapshot = isPublic && index % 11 === 0;
+      const isPublic =
+        index % 7 !== 0;
 
-      const [createdRecipe] = await trx('recipes')
-        .insert({
-          cover_img_id: image.id,
-          title: recipe.title,
-          description: recipe.description,
-          portion: recipe.portion,
-          author_id: author.id,
-          is_public: isPublic,
-          is_snapshot: isSnapshot,
-          created_at: trx.raw(`NOW() - (? * INTERVAL '1 day')`, [index]),
-        })
-        .returning(['id']);
+      const isSnapshot =
+        isPublic && index % 11 === 0;
 
-      const recipeId = createdRecipe.id;
+      const [createdRecipe] =
+        await trx('recipes')
+          .insert({
+            cover_img_id: image.id,
 
-      await trx('recipe_ingredients').insert(
-        recipe.ingredients.map(([name, amount, unit]) => ({
-          recipe_id: recipeId,
-          name,
-          amount,
-          unit,
-        })),
-      );
+            user_id: user.id,
 
-      await trx('recipe_tools').insert(
-        recipe.tools.map(([name, amount]) => ({
-          recipe_id: recipeId,
-          name,
-          amount,
-        })),
-      );
+            title: recipe.title,
 
-      await trx('steps').insert(
-        recipe.steps.map((description, stepIndex) => ({
-          recipe_id: recipeId,
-          step_order: stepIndex + 1,
-          description,
-        })),
-      );
+            description:
+              recipe.description,
 
-      await trx('recipe_notes').insert(
-        recipe.notes.map((content) => ({
-          recipe_id: recipeId,
-          content,
-        })),
-      );
+            portion:
+              recipe.portion,
 
-      await trx('recipe_tags').insert(
-        [...new Set(recipe.tags)].map((name) => ({
-          recipe_id: recipeId,
-          name,
-        })),
-      );
+            is_public:
+              isPublic,
+
+            is_snapshot:
+              isSnapshot,
+
+            created_at:
+              trx.raw(
+                `NOW() - (? * INTERVAL '1 day')`,
+                [index],
+              ),
+          })
+          .returning(['id']);
+
+      const recipeId =
+        createdRecipe.id;
+
+      await trx('recipe_ingredients')
+        .insert(
+          recipe.ingredients.map(
+            ([name, amount, unit]) => ({
+              recipe_id: recipeId,
+              name,
+              amount,
+              unit,
+            }),
+          ),
+        );
+
+      await trx('recipe_tools')
+        .insert(
+          recipe.tools.map(
+            ([name, amount]) => ({
+              recipe_id: recipeId,
+              name,
+              amount,
+            }),
+          ),
+        );
+
+      await trx('steps')
+        .insert(
+          recipe.steps.map(
+            (
+              description,
+              stepIndex,
+            ) => ({
+              recipe_id: recipeId,
+
+              step_order:
+                stepIndex + 1,
+
+              description,
+            }),
+          ),
+        );
+
+      await trx('recipe_notes')
+        .insert(
+          recipe.notes.map(
+            (content) => ({
+              recipe_id: recipeId,
+              content,
+            }),
+          ),
+        );
+
+      await trx('recipe_tags')
+        .insert(
+          [...new Set(recipe.tags)]
+            .map((name) => ({
+              recipe_id: recipeId,
+              name,
+            })),
+        );
     }
   });
 }
