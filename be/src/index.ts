@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import ratelimit from 'express-rate-limit';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import router from './routes/index.route.js';
 
 const app = express();
 const PORT = 4000;
@@ -43,6 +44,8 @@ app.get('/health', async (req: Request, res: Response) => {
     });
   }
 });
+
+app.use("/api",router);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}/health`);

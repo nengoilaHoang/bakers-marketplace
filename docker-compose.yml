@@ -49,7 +49,7 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./be/.env
+      - ./be/.env.docker
     depends_on:
       - postgres
       - redis
