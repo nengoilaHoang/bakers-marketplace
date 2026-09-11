@@ -62,7 +62,8 @@ jobs:
             sudo docker compose up -d
 
             # 5. Tạm dừng vài giây để đảm bảo Database container đã sẵn sàng kết nối
-            sleep 10
+            echo "Waiting for database and backend to be fully ready..."
+            sleep 60
             
             # 6. Chạy Migrate và Seed bên trong container BE
             sudo docker compose exec -T bakers_backend npm run db:migrate
