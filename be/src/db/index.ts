@@ -1,11 +1,12 @@
-import knex, { Knex } from 'knex';
-import config from '#/knexfile.js';
+import knex from 'knex';
+import type { Knex } from 'knex';
+import development from '#/knexfile.js';
 
 class Database {
   public instance: Knex;
 
   constructor() {
-    this.instance = knex(config);
+    this.instance = knex(development);
   }
 
   public async checkConnection(): Promise<boolean> {
@@ -19,6 +20,4 @@ class Database {
   }
 }
 
-const db = new Database();
-
-export default db;
+export default new Database();

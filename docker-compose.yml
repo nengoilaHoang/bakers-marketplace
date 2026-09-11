@@ -5,7 +5,7 @@ services:
     container_name: bakers_postgres
     restart: always
     env_file:
-      - ./be/.env
+      - ./be/.env.docker
     environment:
       POSTGRES_USER: ${DB_USER:-bakers_admin}
       POSTGRES_PASSWORD: ${DB_PASS:-secretpassword}

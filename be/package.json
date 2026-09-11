@@ -8,11 +8,12 @@
     "start": "npm run build && node dist/index.js",
     "dev": "tsx --watch src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:make": "knex migrate:make -x ts",
-    "db:migrate": "knex migrate:latest",
-    "db:rollback": "knex migrate:rollback",
-    "db:seed:make": "knex seed:make -x ts",
-    "db:seed": "knex seed:run"
+    "db:make": "knex --knexfile ./src/knexfile.ts migrate:make -x ts",
+    "db:migrate": "knex --knexfile ./src/knexfile.ts migrate:latest",
+    "db:rollback": "knex --knexfile ./src/knexfile.ts migrate:rollback",
+    "db:list": "knex --knexfile ./src/knexfile.ts migrate:list",
+    "db:seed:make": "knex --knexfile ./src/knexfile.ts seed:make -x ts",
+    "db:seed": "knex --knexfile ./src/knexfile.ts seed:run"
   },
   "keywords": [],
   "type": "module",
@@ -39,6 +40,7 @@
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.5.0",
+    "ts-node": "^10.9.2",
     "tsc-alias": "^1.9.4",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
