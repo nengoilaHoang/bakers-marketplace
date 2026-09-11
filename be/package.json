@@ -13,7 +13,9 @@
     "db:rollback": "knex --knexfile ./src/knexfile.ts migrate:rollback",
     "db:list": "knex --knexfile ./src/knexfile.ts migrate:list",
     "db:seed:make": "knex --knexfile ./src/knexfile.ts seed:make -x ts",
-    "db:seed": "knex --knexfile ./src/knexfile.ts seed:run"
+    "db:seed": "knex --knexfile ./src/knexfile.ts seed:run",
+    "db:migrate:prod": "knex --knexfile ./dist/knexfile.js migrate:latest",
+    "db:seed:prod": "knex --knexfile ./dist/knexfile.js seed:run"
   },
   "keywords": [],
   "type": "module",
