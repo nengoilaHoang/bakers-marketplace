@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({
   path: path.resolve(__dirname, '../.env'),
 });
-
+const ext = __filename.endsWith('.ts') ? 'ts' : 'js';
 const development: Knex.Config = {
   client: 'pg',
 
@@ -23,13 +23,13 @@ const development: Knex.Config = {
 
   migrations: {
     directory: path.resolve(__dirname, 'db/migrations'),
-    extension: 'ts',
-    loadExtensions: ['.ts'],
+    extension: ext,
+    loadExtensions: [`.${ext}`],
   },
   seeds: {
-      directory: './db/seeds',
-      extension: 'ts',
-      loadExtensions: ['.ts'],
+    directory: './db/seeds',
+    extension: ext,
+    loadExtensions: [`.${ext}`],
   },
 };
 
