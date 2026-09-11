@@ -52,9 +52,11 @@ jobs:
             
             # 2. Xóa image backend cũ để đảm bảo tải bản mới sạch sẽ
             sudo docker rmi nengoilahoang/bakers-marketplace-be:latest || true
+            sudo docker rmi nengoilahoang/bakers-marketplace-fe:latest || true
             
             # 3. Kéo image mới nhất vừa build trên Docker Hub về
             sudo docker pull nengoilahoang/bakers-marketplace-be:latest
+            sudo docker pull nengoilahoang/bakers-marketplace-fe:latest
             
             # 4. Khởi động lại toàn bộ services
             sudo docker compose up -d
