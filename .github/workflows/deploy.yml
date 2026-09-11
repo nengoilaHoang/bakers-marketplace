@@ -17,13 +17,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Build Image và đẩy lên Docker Hub
+      - name: Build Image BE và đẩy lên Docker Hub
         uses: docker/build-push-action@v5
         with:
           context: ./be
           file: ./be/Dockerfile
           push: true
           tags: nengoilahoang/bakers-marketplace-be:latest
+      
+      - name: Build Image FE và đẩy lên Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: ./fe
+          file: ./fe/Dockerfile
+          push: true
+          tags: nengoilahoang/bakers-marketplace-fe:latest
 
   # JOB 2: Deploy lên Server qua SSH
   deploy-to-server:
