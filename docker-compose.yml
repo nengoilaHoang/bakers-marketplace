@@ -56,11 +56,11 @@ services:
     # volumes:
     #   - ./be:/app
     #   - backend_node_modules:/app/node_modules
-    command: npm run dev
+    command: npm run dev:docker
     develop:
       watch:
         # Source code thay đổi -> sync vào container
-        - action: sync
+        - action: sync+restart
           path: ./be/src
           target: /app/src
           initial_sync: true
