@@ -96,6 +96,27 @@ class RecipeController {
         }
     };
 
+    public createSnapshot = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+        const recipe = new Recipe(req.body);
+        console.log(recipe);
+        recipe.is_snapshot = true;
+        recipe.is_public = true;
+        const createdRecipe =
+            await recipeService.create(recipe);
+
+        res.status(201).json({
+            data: createdRecipe,
+        });
+        } catch (error) {
+        next(error);
+        }
+    };
+
     public update = async (
         req: Request<RecipeIdParams>,
         res: Response,

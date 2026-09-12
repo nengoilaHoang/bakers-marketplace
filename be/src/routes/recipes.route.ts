@@ -9,6 +9,11 @@ router.get(
   recipeController.getAll,
 );
 
+router.post(
+  '/snapshot',
+  recipeController.createSnapshot,
+);
+
 router.get(
   '/user/:userId',
   recipeController.getByUserId,

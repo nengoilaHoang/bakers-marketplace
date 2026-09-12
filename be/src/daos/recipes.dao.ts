@@ -8,11 +8,21 @@ class RecipeDAO {
   public async getAll(): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
+      .where('is_public',true)
       .orderBy('created_at', 'desc');
-
     return data.map(
       (recipe) => new Recipe(recipe),
     );
+  }
+
+  public async checkRecipeBelongUser(user_id: string, recipe_id: string): Promise<boolean> {
+    const data = await this.db.instance<Recipe>(this.tableName)
+      .select('*')
+      .where('id',recipe_id)
+      .first();
+    if(data == null) return false;
+    if(data?.user_id == user_id) return true;
+    return false;
   }
 
   public async getById(

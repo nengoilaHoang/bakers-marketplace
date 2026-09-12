@@ -10,6 +10,7 @@ const app = express();
 const PORT = 4000;
 
 app.use(helmet());
+app.use(express.json());
 
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -35,7 +36,7 @@ app.get('/health', async (req: Request, res: Response) => {
   if (checkHealth) {
     return res.status(200).json({
       status: 'UP',
-      message: 'Kết nối Database thành công!'
+      message: 'Kết nối Database thành công!!'
     });
   } else {
     return res.status(503).json({

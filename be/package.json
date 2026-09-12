@@ -15,7 +15,8 @@
     "db:seed:make": "knex --knexfile ./src/knexfile.ts seed:make -x ts",
     "db:seed": "knex --knexfile ./src/knexfile.ts seed:run",
     "db:migrate:prod": "knex --knexfile ./dist/knexfile.js migrate:latest",
-    "db:seed:prod": "knex --knexfile ./dist/knexfile.js seed:run"
+    "db:seed:prod": "knex --knexfile ./dist/knexfile.js seed:run",
+    "dev:docker": "tsx src/index.ts"
   },
   "keywords": [],
   "type": "module",

@@ -57,10 +57,17 @@ services:
     depends_on:
       - postgres
       - redis
-    volumes:
-      - ./be:/app
-      - /app/node_modules
-    command: npm run dev
+    command: npm run dev:docker
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./be/src
+          target: /app/src
+          initial_sync: true
+        - action: rebuild
+          path: ./be/package.json
+        - action: rebuild
+          path: ./be/package-lock.json
 
   #fe
   frontend:
@@ -75,12 +82,22 @@ services:
       - bakers_network
     ports:
       - "3000:3000"
-    volumes:
-      - ./fe:/app
-      - /app/node_modules
-      - /app/.next
     command: npm run dev
-
+    develop:
+      watch:
+        - action: sync
+          path: ./fe
+          target: /app
+          initial_sync: true
+          ignore:
+            - node_modules/
+            - .next/
+            - package.json
+            - package-lock.json
+        - action: rebuild
+          path: ./fe/package.json
+        - action: rebuild
+          path: ./fe/package-lock.json
 volumes:
   pg_data:
   redis_data:
