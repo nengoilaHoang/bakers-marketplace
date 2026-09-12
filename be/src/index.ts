@@ -35,7 +35,7 @@ app.get('/health', async (req: Request, res: Response) => {
   if (checkHealth) {
     return res.status(200).json({
       status: 'UP',
-      message: 'Kết nối Database thành công!'
+      message: 'Kết nối Database thành công!!'
     });
   } else {
     return res.status(503).json({
