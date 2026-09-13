@@ -22,6 +22,7 @@ const development: Knex.Config = {
   },
 
   migrations: {
+    tableName: 'knex_migrations',
     directory: path.resolve(__dirname, 'db/migrations'),
     extension: ext,
     loadExtensions: [`.${ext}`],
