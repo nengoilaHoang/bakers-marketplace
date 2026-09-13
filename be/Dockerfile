@@ -1,15 +1,25 @@
 # ==========================================
-# STAGE 1: BUILDER
+# STAGE 1: SETUP
 # ==========================================
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
+ENV NODE_ENV=development
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+EXPOSE 4000
+CMD ["npm", "run", "dev"]
+
+# ==========================================
+# STAGE 2: BUILDER
+# ==========================================
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=base /app /app
 RUN npm run build
 
 # ==========================================
-# STAGE 2: RUNNER
+# STAGE 3: RUNNER
 # ==========================================
 FROM node:20-alpine AS runner
 ENV NODE_ENV=production
