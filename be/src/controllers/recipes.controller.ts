@@ -27,7 +27,7 @@ class RecipeController {
         res.status(200).json({
             data: recipes,
         });
-        } catch (error) {
+        } catch (error) {  
         next(error);
         }
     };
@@ -84,7 +84,7 @@ class RecipeController {
     ): Promise<void> => {
         try {
         const recipe = new Recipe(req.body);
-
+        recipe.is_snapshot=false;
         const createdRecipe =
             await recipeService.create(recipe);
 

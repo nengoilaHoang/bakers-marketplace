@@ -8,7 +8,7 @@ class RecipeDAO {
   public async getAll(): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('is_public',true)
+      .where({is_public: true, is_snapshot: false})
       .orderBy('created_at', 'desc');
     return data.map(
       (recipe) => new Recipe(recipe),
