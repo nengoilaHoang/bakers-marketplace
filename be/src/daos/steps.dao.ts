@@ -23,6 +23,13 @@ class StepDAO {
     return data ? new Step(data) : null;
   }
 
+  public async getAllByRecipeId(recipeId: string): Promise<Step[]> {
+    const data = await this.db.instance<Step>(this.tableName)
+      .where('recipeId', recipeId)
+      .orderBy('stepOrder', 'asc');
+    return data.map((step) => new Step(step));
+  }
+
   public async update(id: string, data: StepUpdate): Promise<Step | null> {
     const updateData = this.removeUndefined(data);
 

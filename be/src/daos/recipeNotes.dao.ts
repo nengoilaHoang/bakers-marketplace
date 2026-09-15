@@ -23,6 +23,13 @@ class RecipeNoteDAO {
     return data ? new RecipeNote(data) : null;
   }
 
+  public async getAllByRecipeId(recipeId: string): Promise<RecipeNote[]> {
+    const data = await this.db.instance<RecipeNote>(this.tableName)
+      .where('recipeId', recipeId)
+      .orderBy('createdAt', 'desc');
+    return data.map((note) => new RecipeNote(note));
+  }
+
   public async update(id: string, data: RecipeNoteUpdate): Promise<RecipeNote | null> {
     const updateData = this.removeUndefined(data);
     delete updateData.id;

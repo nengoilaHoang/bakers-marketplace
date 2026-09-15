@@ -19,6 +19,13 @@ class RecipeTagDAO {
     return data ? new RecipeTag(data) : null;
   }
 
+  public async getAllByRecipeId(recipeId: string): Promise<RecipeTag[]> {
+    const data = await this.db.instance<RecipeTag>(this.tableName)
+      .where('recipeId', recipeId)
+      .orderBy('createdAt', 'desc');
+    return data.map((tag) => new RecipeTag(tag));
+  }
+
   public async update(id: string, data: RecipeTagUpdate): Promise<RecipeTag | null> {
     const updateData = this.removeUndefined(data);
     delete updateData.id;
