@@ -14,8 +14,12 @@ dotenv.config({
 const ext = __filename.endsWith('.ts') ? 'ts' : 'js';
 const development: Knex.Config = {
 	client: 'pg',
-	wrapIdentifier: (value, origImpl, _queryContext) =>
-		origImpl(snakecase(value)),
+	wrapIdentifier: (value, origImpl, queryContext) => {
+		if (value === '*') {
+			return origImpl(value);
+		}
+		return origImpl(snakecase(value));
+	},
 	postProcessResponse: (result, _queryContext) => {
 		if (Array.isArray(result)) {
 			return result.map((row) => camelcaseKey(row, { deep: true }));

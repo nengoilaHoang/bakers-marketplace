@@ -1,5 +1,9 @@
 import recipeDAO from '#/daos/recipes.dao.js';
-import { Recipe } from '#/models/recipes.model.js';
+import {
+    Recipe,
+    type RecipeCreate,
+    type RecipeUpdate,
+} from '#/models/recipes.model.js';
 
 class RecipeService {
     private recipeDAO = recipeDAO;
@@ -20,18 +24,15 @@ class RecipeService {
     }
 
     public async create(
-        recipe: Recipe,
+        userId: string,
+        recipe: RecipeCreate,
     ): Promise<Recipe> {
-        if (!recipe.title) {
-        throw new Error('Recipe title is required');
-        }
-
-        return this.recipeDAO.create(recipe);
+        return this.recipeDAO.create(userId, recipe);
     }
 
     public async update(
         id: string,
-        recipe: Recipe,
+        recipe: RecipeUpdate,
     ): Promise<Recipe | null> {
         const existingRecipe =
         await this.recipeDAO.getById(id);

@@ -1,5 +1,9 @@
 import db from '#/db/index.js';
-import { Recipe } from '#/models/recipes.model.js';
+import {
+  Recipe,
+  type RecipeCreate,
+  type RecipeUpdate,
+} from '#/models/recipes.model.js';
 
 class RecipeDAO {
   private readonly tableName = 'recipes';
@@ -8,20 +12,20 @@ class RecipeDAO {
   public async getAll(): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where({is_public: true, is_snapshot: false})
-      .orderBy('created_at', 'desc');
+      .where({isPublic: true, isSnapshot: false})
+      .orderBy('createdAt', 'desc');
     return data.map(
       (recipe) => new Recipe(recipe),
     );
   }
 
-  public async checkRecipeBelongUser(user_id: string, recipe_id: string): Promise<boolean> {
+  public async checkRecipeBelongUser(userId: string, recipeId: string): Promise<boolean> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('id',recipe_id)
+      .where('id', recipeId)
       .first();
     if(data == null) return false;
-    if(data?.user_id == user_id) return true;
+    if(data?.userId == userId) return true;
     return false;
   }
 
@@ -45,8 +49,8 @@ class RecipeDAO {
   ): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('user_id', userId)
-      .orderBy('created_at', 'desc');
+      .where('userId', userId)
+      .orderBy('createdAt', 'desc');
 
     return data.map(
       (recipe) => new Recipe(recipe),
@@ -54,9 +58,13 @@ class RecipeDAO {
   }
 
   public async create(
-    recipe: Recipe,
+    userId: string,
+    recipe: RecipeCreate,
   ): Promise<Recipe> {
-    const data = this.removeUndefined(recipe);
+    const data = {
+      ...this.removeUndefined(recipe),
+      userId,
+    };
 
     const [createdRecipe] = await this.db.instance<Recipe>(
       this.tableName,
@@ -69,12 +77,12 @@ class RecipeDAO {
 
   public async update(
     id: string,
-    recipe: Recipe,
+    recipe: RecipeUpdate,
   ): Promise<Recipe | null> {
     const data = this.removeUndefined(recipe);
     delete data.id;
-    delete data.created_at;
-    delete data.updated_at;
+    delete data.createdAt;
+    delete data.updatedAt;
 
     if (Object.keys(data).length === 0) {
       return this.getById(id);
@@ -86,7 +94,7 @@ class RecipeDAO {
       .where('id', id)
       .update({
         ...data,
-        updated_at: db.instance.fn.now(),
+        updatedAt: db.instance.fn.now(),
       })
       .returning('*');
 
@@ -115,7 +123,7 @@ class RecipeDAO {
   }
 
   private removeUndefined(
-    recipe: Recipe,
+    recipe: RecipeCreate | RecipeUpdate,
   ): Partial<Recipe> {
     return Object.fromEntries(
       Object.entries(recipe).filter(

@@ -30,7 +30,7 @@ router.post(
 );
 
 router.patch(
-  '/:id',
+  '/',
   recipeController.update,
 );
 

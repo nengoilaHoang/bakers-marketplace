@@ -5,7 +5,11 @@ import type {
 } from 'express';
 
 import recipeService from '#/services/recipes.service.js';
-import { Recipe } from '#/models/recipes.model.js';
+import {
+    Recipe,
+    RecipeCreateSchema,
+    RecipeUpdateSchema,
+} from '#/models/recipes.model.js';
 
 type RecipeIdParams = {
   id: string;
@@ -83,10 +87,15 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(req.body);
-        recipe.is_snapshot=false;
+        const recipe = new Recipe(RecipeCreateSchema.parse(req.body));
+        //hard code userId
+        const userId = "11111111-1111-4111-8111-111111111111";
+        if (!userId) {
+            throw new Error('userId is required');
+        }
+        recipe.isSnapshot = false;
         const createdRecipe =
-            await recipeService.create(recipe);
+            await recipeService.create(userId, recipe);
 
         res.status(201).json({
             data: createdRecipe,
@@ -102,12 +111,12 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(req.body);
-        console.log(recipe);
-        recipe.is_snapshot = true;
-        recipe.is_public = true;
+        const recipe = new Recipe(RecipeCreateSchema.parse(req.body));
+        const userId = "11111111-1111-4111-8111-111111111111";
+        recipe.isSnapshot = true;
+        recipe.isPublic = true;
         const createdRecipe =
-            await recipeService.create(recipe);
+            await recipeService.create(userId, recipe);
 
         res.status(201).json({
             data: createdRecipe,
@@ -123,16 +132,16 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const { id } = req.params;
-
-        const recipe = new Recipe(req.body);
-
+        const recipe = new Recipe(RecipeUpdateSchema.parse(req.body));
+        if (!recipe.id) {
+            throw new Error('recipe id is required');
+        }
+        const id:string = recipe.id;
         const updatedRecipe =
             await recipeService.update(
-            id,
-            recipe,
+                id,
+                recipe,
             );
-
         if (!updatedRecipe) {
             res.status(404).json({
             message: 'Recipe not found',
@@ -140,7 +149,6 @@ class RecipeController {
 
             return;
         }
-
         res.status(200).json({
             data: updatedRecipe,
         });
