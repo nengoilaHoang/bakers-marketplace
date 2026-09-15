@@ -19,16 +19,6 @@ class RecipeDAO {
     );
   }
 
-  public async checkRecipeBelongUser(userId: string, recipeId: string): Promise<boolean> {
-    const data = await this.db.instance<Recipe>(this.tableName)
-      .select('*')
-      .where('id', recipeId)
-      .first();
-    if(data == null) return false;
-    if(data?.userId == userId) return true;
-    return false;
-  }
-
   public async getById(
     id: string,
   ): Promise<Recipe | null> {
@@ -49,7 +39,7 @@ class RecipeDAO {
   ): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('userId', userId)
+      .where({userId: userId, isSnapshot: false})
       .orderBy('createdAt', 'desc');
 
     return data.map(
@@ -120,6 +110,18 @@ class RecipeDAO {
     }
 
     return new Recipe(deletedRecipe);
+  }
+
+  public async checkRecipeOwner(
+    userId:string,
+    recipeId: string,
+  ): Promise<boolean>{
+    return Boolean(
+      await this.db.instance<Recipe>(this.tableName)
+        .select('id')
+        .where({ id: recipeId, userId })
+        .first(),
+    );
   }
 
   private removeUndefined(

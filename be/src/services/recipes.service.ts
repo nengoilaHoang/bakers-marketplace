@@ -29,7 +29,14 @@ class RecipeService {
     ): Promise<Recipe> {
         return this.recipeDAO.create(userId, recipe);
     }
-
+    
+    public async checkRecipeOwner(
+        userId: string,
+        recipeId: string,
+    ): Promise<boolean> {
+        return this.recipeDAO.checkRecipeOwner(userId, recipeId);
+    }
+    
     public async update(
         id: string,
         recipe: RecipeUpdate,
