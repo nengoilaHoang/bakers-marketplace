@@ -10,7 +10,11 @@ class StepService {
 
   public async setSteps(recipeId: string, data: StepCreate[]): Promise<Step[]> {
     await this.stepDAO.deleteByRecipeId(recipeId);
-    return this.stepDAO.create(data);
+    const steps = data.map((step) => ({
+      ...step,
+      recipeId,
+    }));
+    return this.stepDAO.create(steps);
   }
 }
 

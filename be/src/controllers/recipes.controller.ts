@@ -10,6 +10,10 @@ import recipeToolsService from '#/services/recipeTools.service.js';
 import recipeTagsService from '#/services/recipeTags.service.js';
 import recipeNotesService from '#/services/recipeNotes.service.js';
 import recipeIngredientsService from '#/services/recipeIngredients.service.js';
+import type {
+    RecipeCreatePayload,
+    RecipeUpdatePayload,
+} from '#/services/recipes.service.js';
 
 import {
     Recipe,
@@ -94,7 +98,11 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(RecipeCreateSchema.parse(req.body));
+        const parsedRecipe = RecipeCreateSchema.parse(req.body);
+        const recipe = {
+            ...parsedRecipe,
+            ...req.body,
+        } as RecipeCreatePayload;
         //hard code userId
         const userId = "11111111-1111-4111-8111-111111111111";
         if (!userId) {
@@ -118,7 +126,11 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(RecipeCreateSchema.parse(req.body));
+        const parsedRecipe = RecipeCreateSchema.parse(req.body);
+        const recipe = {
+            ...parsedRecipe,
+            ...req.body,
+        } as RecipeCreatePayload;
         const userId = "11111111-1111-4111-8111-111111111111";
         recipe.isSnapshot = true;
         recipe.isPublic = true;
@@ -139,7 +151,11 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(RecipeUpdateSchema.parse(req.body));
+        const parsedRecipe = RecipeUpdateSchema.parse(req.body);
+        const recipe = {
+            ...parsedRecipe,
+            ...req.body,
+        } as RecipeUpdatePayload;
         const userId:string = "11111111-1111-4111-8111-111111111111";
         if (!recipe.id) {throw new Error('recipe id is required');}
         const isOwner = await this.recipeService.checkRecipeOwner(userId, recipe.id);

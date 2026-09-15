@@ -13,7 +13,11 @@ class RecipeTagService {
     data: RecipeTagCreate[],
   ): Promise<RecipeTag[]> {
     await this.recipeTagDAO.deleteByRecipeId(recipeId);
-    return this.recipeTagDAO.create(data);
+    const tags = data.map((tag) => ({
+      ...tag,
+      recipeId,
+    }));
+    return this.recipeTagDAO.create(tags);
   }
 }
 

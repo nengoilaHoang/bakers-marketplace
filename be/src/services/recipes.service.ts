@@ -9,6 +9,11 @@ import recipeNotesService from '#/services/recipeNotes.service.js';
 import recipeTagsService from '#/services/recipeTags.service.js';
 import recipeToolsService from '#/services/recipeTools.service.js';
 import recipeIngredientsService from '#/services/recipeIngredients.service.js';
+import type { StepCreate } from '#/models/steps.model.js';
+import type { RecipeNoteCreate } from '#/models/recipeNotes.model.js';
+import type { RecipeTagCreate } from '#/models/recipeTags.model.js';
+import type { RecipeToolCreate } from '#/models/recipeTools.model.js';
+import type { RecipeIngredientCreate } from '#/models/recipeIngredients.model.js';
 
 type RecipeWithDetails = Recipe & {
     steps: Awaited<ReturnType<typeof stepsService.getAllByRecipeId>>;
@@ -17,6 +22,17 @@ type RecipeWithDetails = Recipe & {
     recipeTools: Awaited<ReturnType<typeof recipeToolsService.getAllByRecipeId>>;
     recipeIngredients: Awaited<ReturnType<typeof recipeIngredientsService.getAllByRecipeId>>;
 };
+
+export type RecipeDetails = {
+    steps?: StepCreate[];
+    recipeNotes?: RecipeNoteCreate[];
+    recipeTags?: RecipeTagCreate[];
+    recipeTools?: RecipeToolCreate[];
+    recipeIngredients?: RecipeIngredientCreate[];
+};
+
+export type RecipeCreatePayload = RecipeCreate & RecipeDetails;
+export type RecipeUpdatePayload = RecipeUpdate & RecipeDetails;
 
 class RecipeService {
     private recipeDAO = recipeDAO;
@@ -60,9 +76,32 @@ class RecipeService {
 
     public async create(
         userId: string,
-        recipe: RecipeCreate,
-    ): Promise<Recipe> {
-        return this.recipeDAO.create(userId, recipe);
+        payload: RecipeCreatePayload,
+    ): Promise<RecipeWithDetails | null> {
+        const {
+            steps,
+            recipeNotes,
+            recipeTags,
+            recipeTools,
+            recipeIngredients,
+            ...recipe
+        } = payload;
+        const createdRecipe = await this.recipeDAO.create(userId, recipe);
+        const recipeId = createdRecipe.id;
+
+        if (!recipeId) {
+            return createdRecipe as RecipeWithDetails;
+        }
+
+        await Promise.all([
+            stepsService.setSteps(recipeId, steps ?? []),
+            recipeNotesService.setRecipeNotes(recipeId, recipeNotes ?? []),
+            recipeTagsService.setRecipeTags(recipeId, recipeTags ?? []),
+            recipeToolsService.setRecipeTools(recipeId, recipeTools ?? []),
+            recipeIngredientsService.setRecipeIngredients(recipeId, recipeIngredients ?? []),
+        ]);
+
+        return this.getById(recipeId);
     }
     
     public async checkRecipeOwner(
@@ -74,8 +113,8 @@ class RecipeService {
     
     public async update(
         id: string,
-        recipe: RecipeUpdate,
-    ): Promise<Recipe | null> {
+        payload: RecipeUpdatePayload,
+    ): Promise<RecipeWithDetails | null> {
         const existingRecipe =
         await this.recipeDAO.getById(id);
 
@@ -83,10 +122,29 @@ class RecipeService {
         return null;
         }
 
-        return this.recipeDAO.update(
-        id,
-        recipe,
-        );
+        const {
+            steps,
+            recipeNotes,
+            recipeTags,
+            recipeTools,
+            recipeIngredients,
+            ...recipe
+        } = payload;
+        const updatedRecipe = await this.recipeDAO.update(id, recipe);
+
+        if (!updatedRecipe) {
+            return null;
+        }
+
+        const detailUpdates: Promise<unknown>[] = [];
+        if (steps !== undefined) detailUpdates.push(stepsService.setSteps(id, steps));
+        if (recipeNotes !== undefined) detailUpdates.push(recipeNotesService.setRecipeNotes(id, recipeNotes));
+        if (recipeTags !== undefined) detailUpdates.push(recipeTagsService.setRecipeTags(id, recipeTags));
+        if (recipeTools !== undefined) detailUpdates.push(recipeToolsService.setRecipeTools(id, recipeTools));
+        if (recipeIngredients !== undefined) detailUpdates.push(recipeIngredientsService.setRecipeIngredients(id, recipeIngredients));
+
+        await Promise.all(detailUpdates);
+        return this.getById(id);
     }
 
     public async delete(

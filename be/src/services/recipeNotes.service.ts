@@ -13,7 +13,11 @@ class RecipeNoteService {
     data: RecipeNoteCreate[],
   ): Promise<RecipeNote[]> {
     await this.recipeNoteDAO.deleteByRecipeId(recipeId);
-    return this.recipeNoteDAO.create(data);
+    const notes = data.map((note) => ({
+      ...note,
+      recipeId,
+    }));
+    return this.recipeNoteDAO.create(notes);
   }
 }
 

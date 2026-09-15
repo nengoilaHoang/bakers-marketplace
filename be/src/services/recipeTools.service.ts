@@ -13,7 +13,11 @@ class RecipeToolService {
     data: RecipeToolCreate[],
   ): Promise<RecipeTool[]> {
     await this.recipeToolDAO.deleteByRecipeId(recipeId);
-    return this.recipeToolDAO.create(data);
+    const tools = data.map((tool) => ({
+      ...tool,
+      recipeId,
+    }));
+    return this.recipeToolDAO.create(tools);
   }
 }
 

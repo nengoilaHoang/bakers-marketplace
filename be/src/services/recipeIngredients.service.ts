@@ -16,7 +16,11 @@ class RecipeIngredientService {
     data: RecipeIngredientCreate[],
   ): Promise<RecipeIngredient[]> {
     await this.recipeIngredientDAO.deleteByRecipeId(recipeId);
-    return this.recipeIngredientDAO.create(data);
+    const ingredients = data.map((ingredient) => ({
+      ...ingredient,
+      recipeId,
+    }));
+    return this.recipeIngredientDAO.create(ingredients);
   }
 }
 
