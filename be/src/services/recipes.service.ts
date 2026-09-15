@@ -4,6 +4,19 @@ import {
     type RecipeCreate,
     type RecipeUpdate,
 } from '#/models/recipes.model.js';
+import stepsService from '#/services/steps.service.js';
+import recipeNotesService from '#/services/recipeNotes.service.js';
+import recipeTagsService from '#/services/recipeTags.service.js';
+import recipeToolsService from '#/services/recipeTools.service.js';
+import recipeIngredientsService from '#/services/recipeIngredients.service.js';
+
+type RecipeWithDetails = Recipe & {
+    steps: Awaited<ReturnType<typeof stepsService.getAllByRecipeId>>;
+    recipeNotes: Awaited<ReturnType<typeof recipeNotesService.getAllByRecipeId>>;
+    recipeTags: Awaited<ReturnType<typeof recipeTagsService.getAllByRecipeId>>;
+    recipeTools: Awaited<ReturnType<typeof recipeToolsService.getAllByRecipeId>>;
+    recipeIngredients: Awaited<ReturnType<typeof recipeIngredientsService.getAllByRecipeId>>;
+};
 
 class RecipeService {
     private recipeDAO = recipeDAO;
@@ -13,8 +26,30 @@ class RecipeService {
 
     public async getById(
         id: string,
-    ): Promise<Recipe | null> {
-        return this.recipeDAO.getById(id);
+    ): Promise<RecipeWithDetails | null> {
+        const recipe = await this.recipeDAO.getById(id);
+
+        if (!recipe) {
+            return null;
+        }
+
+        const [steps, recipeNotes, recipeTags, recipeTools, recipeIngredients] =
+            await Promise.all([
+                stepsService.getAllByRecipeId(id),
+                recipeNotesService.getAllByRecipeId(id),
+                recipeTagsService.getAllByRecipeId(id),
+                recipeToolsService.getAllByRecipeId(id),
+                recipeIngredientsService.getAllByRecipeId(id),
+            ]);
+
+        return {
+            ...recipe,
+            steps,
+            recipeNotes,
+            recipeTags,
+            recipeTools,
+            recipeIngredients,
+        };
     }
 
     public async getByUserId(

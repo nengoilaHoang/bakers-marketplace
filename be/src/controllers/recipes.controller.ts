@@ -5,6 +5,12 @@ import type {
 } from 'express';
 
 import recipeService from '#/services/recipes.service.js';
+import stepsService from '#/services/steps.service.js';
+import recipeToolsService from '#/services/recipeTools.service.js';
+import recipeTagsService from '#/services/recipeTags.service.js';
+import recipeNotesService from '#/services/recipeNotes.service.js';
+import recipeIngredientsService from '#/services/recipeIngredients.service.js';
+
 import {
     Recipe,
     RecipeCreateSchema,
@@ -20,6 +26,7 @@ type RecipeUserIdParams = {
 
 class RecipeController {
     private recipeService = recipeService;
+    private stepsService = stepsService;
     public getAll = async (
         req: Request,
         res: Response,
