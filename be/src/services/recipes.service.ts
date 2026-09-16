@@ -4,16 +4,16 @@ import {
     type RecipeCreate,
     type RecipeUpdate,
 } from '#/models/recipes.model.js';
-import stepsService from '#/services/steps.service.js';
+import stepsService from '#/services/recipeSteps.service.js';
 import recipeNotesService from '#/services/recipeNotes.service.js';
 import recipeTagsService from '#/services/recipeTags.service.js';
 import recipeToolsService from '#/services/recipeTools.service.js';
 import recipeIngredientsService from '#/services/recipeIngredients.service.js';
-import type { StepCreate } from '#/models/steps.model.js';
-import type { RecipeNoteCreate } from '#/models/recipeNotes.model.js';
-import type { RecipeTagCreate } from '#/models/recipeTags.model.js';
-import type { RecipeToolCreate } from '#/models/recipeTools.model.js';
-import type { RecipeIngredientCreate } from '#/models/recipeIngredients.model.js';
+import type { StepSet } from '#/services/recipeSteps.service.js';
+import type { RecipeNoteSet } from '#/services/recipeNotes.service.js';
+import type { RecipeTagSet } from '#/services/recipeTags.service.js';
+import type { RecipeToolSet } from '#/services/recipeTools.service.js';
+import type { RecipeIngredientSet } from '#/services/recipeIngredients.service.js';
 
 type RecipeWithDetails = Recipe & {
     steps: Awaited<ReturnType<typeof stepsService.getAllByRecipeId>>;
@@ -24,11 +24,11 @@ type RecipeWithDetails = Recipe & {
 };
 
 export type RecipeDetails = {
-    steps?: StepCreate[];
-    recipeNotes?: RecipeNoteCreate[];
-    recipeTags?: RecipeTagCreate[];
-    recipeTools?: RecipeToolCreate[];
-    recipeIngredients?: RecipeIngredientCreate[];
+    steps?: StepSet;
+    recipeNotes?: RecipeNoteSet;
+    recipeTags?: RecipeTagSet;
+    recipeTools?: RecipeToolSet;
+    recipeIngredients?: RecipeIngredientSet;
 };
 
 export type RecipeCreatePayload = RecipeCreate & RecipeDetails;
@@ -94,11 +94,11 @@ class RecipeService {
         }
 
         await Promise.all([
-            stepsService.setSteps(recipeId, steps ?? []),
-            recipeNotesService.setRecipeNotes(recipeId, recipeNotes ?? []),
-            recipeTagsService.setRecipeTags(recipeId, recipeTags ?? []),
-            recipeToolsService.setRecipeTools(recipeId, recipeTools ?? []),
-            recipeIngredientsService.setRecipeIngredients(recipeId, recipeIngredients ?? []),
+            stepsService.setSteps(recipeId, steps ?? { create: [], update: [], delete: [] }),
+            recipeNotesService.setRecipeNotes(recipeId, recipeNotes ?? { create: [], update: [], delete: [] }),
+            recipeTagsService.setRecipeTags(recipeId, recipeTags ?? { create: [], update: [], delete: [] }),
+            recipeToolsService.setRecipeTools(recipeId, recipeTools ?? { create: [], update: [], delete: [] }),
+            recipeIngredientsService.setRecipeIngredients(recipeId, recipeIngredients ?? { create: [], update: [], delete: [] }),
         ]);
 
         return this.getById(recipeId);

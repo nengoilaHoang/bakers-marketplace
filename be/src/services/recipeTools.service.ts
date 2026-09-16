@@ -1,5 +1,11 @@
 import recipeToolsDAO from '#/daos/recipeTools.dao.js';
-import { RecipeTool, type RecipeToolCreate } from '#/models/recipeTools.model.js';
+import { RecipeTool, type RecipeToolCreate, type RecipeToolUpdate } from '#/models/recipeTools.model.js';
+
+export type RecipeToolSet = {
+  create: Omit<RecipeToolCreate, 'recipeId'>[];
+  update: (RecipeToolUpdate & { id: string })[];
+  delete: string[];
+};
 
 class RecipeToolService {
   private recipeToolDAO = recipeToolsDAO;
@@ -10,14 +16,19 @@ class RecipeToolService {
 
   public async setRecipeTools(
     recipeId: string,
-    data: RecipeToolCreate[],
+    data: RecipeToolSet,
   ): Promise<RecipeTool[]> {
-    await this.recipeToolDAO.deleteByRecipeId(recipeId);
-    const tools = data.map((tool) => ({
+    const tools = data.create.map((tool) => ({
       ...tool,
       recipeId,
     }));
-    return this.recipeToolDAO.create(tools);
+    const [created, updated, deleted] = await Promise.all([
+      tools.length ? this.recipeToolDAO.create(tools) : [],
+      data.update.length ? this.recipeToolDAO.update(data.update) : [],
+      data.delete.length ? this.recipeToolDAO.delete(data.delete) : [],
+    ]);
+
+    return [...created, ...updated, ...deleted];
   }
 }
 

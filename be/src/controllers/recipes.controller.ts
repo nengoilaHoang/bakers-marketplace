@@ -5,7 +5,7 @@ import type {
 } from 'express';
 
 import recipeService from '#/services/recipes.service.js';
-import stepsService from '#/services/steps.service.js';
+import stepsService from '#/services/recipeSteps.service.js';   
 import recipeToolsService from '#/services/recipeTools.service.js';
 import recipeTagsService from '#/services/recipeTags.service.js';
 import recipeNotesService from '#/services/recipeNotes.service.js';

@@ -365,7 +365,7 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('recipe_notes').del();
     await trx('recipe_tools').del();
     await trx('recipe_ingredients').del();
-    await trx('steps').del();
+    await trx('recipe_steps').del();
     await trx('recipes').del();
     await trx('images').del();
     await trx('users').del();
@@ -522,7 +522,7 @@ export async function seed(knex: Knex): Promise<void> {
           ),
         );
 
-      await trx('steps')
+      await trx('recipe_steps')
         .insert(
           recipe.steps.map(
             (
@@ -542,8 +542,9 @@ export async function seed(knex: Knex): Promise<void> {
       await trx('recipe_notes')
         .insert(
           recipe.notes.map(
-            (content) => ({
+            (content, noteIndex) => ({
               recipe_id: recipeId,
+              note_order: noteIndex + 1,
               content,
             }),
           ),

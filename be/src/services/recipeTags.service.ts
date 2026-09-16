@@ -1,5 +1,11 @@
 import recipeTagsDAO from '#/daos/recipeTags.dao.js';
-import { RecipeTag, type RecipeTagCreate } from '#/models/recipeTags.model.js';
+import { RecipeTag, type RecipeTagCreate, type RecipeTagUpdate } from '#/models/recipeTags.model.js';
+
+export type RecipeTagSet = {
+  create: Omit<RecipeTagCreate, 'recipeId'>[];
+  update: (RecipeTagUpdate & { id: string })[];
+  delete: string[];
+};
 
 class RecipeTagService {
   private recipeTagDAO = recipeTagsDAO;
@@ -10,14 +16,19 @@ class RecipeTagService {
 
   public async setRecipeTags(
     recipeId: string,
-    data: RecipeTagCreate[],
+    data: RecipeTagSet,
   ): Promise<RecipeTag[]> {
-    await this.recipeTagDAO.deleteByRecipeId(recipeId);
-    const tags = data.map((tag) => ({
+    const tags = data.create.map((tag) => ({
       ...tag,
       recipeId,
     }));
-    return this.recipeTagDAO.create(tags);
+    const [created, updated, deleted] = await Promise.all([
+      tags.length ? this.recipeTagDAO.create(tags) : [],
+      data.update.length ? this.recipeTagDAO.update(data.update) : [],
+      data.delete.length ? this.recipeTagDAO.delete(data.delete) : [],
+    ]);
+
+    return [...created, ...updated, ...deleted];
   }
 }
 

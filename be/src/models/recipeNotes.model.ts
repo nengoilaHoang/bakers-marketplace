@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const RecipeNoteSchema = z.object({
   id: z.uuidv4().optional(),
   recipeId: z.uuidv4(),
+  noteOrder: z.int().positive(),
   content: z.string().trim().min(1),
   createdAt: z.date().optional(),
 });
@@ -25,6 +26,7 @@ export type RecipeNoteUpdate = z.infer<typeof RecipeNoteUpdateSchema>;
 export class RecipeNote implements RecipeNoteData {
   id?: string;
   recipeId!: string;
+  noteOrder!: number;
   content!: string;
   createdAt?: Date;
 
