@@ -195,6 +195,7 @@ export async function up(knex: Knex): Promise<void> {
         ['recipe_id', 'step_order'],
         {
           indexName: 'uq_steps_recipe_order',
+          deferrable: 'deferred',
         },
       );
     })
@@ -331,6 +332,7 @@ export async function up(knex: Knex): Promise<void> {
         ['recipe_id', 'note_order'],
         {
           indexName: 'uq_notes_recipe_order',
+          deferrable: 'deferred',
         },
       );
 

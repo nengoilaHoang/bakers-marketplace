@@ -1,4 +1,5 @@
 import db from '#/db/index.js';
+import type { Knex } from 'knex';
 import {
   Recipe,
   type RecipeCreate,
@@ -50,17 +51,17 @@ class RecipeDAO {
   public async create(
     userId: string,
     recipe: RecipeCreate,
+    trx?: Knex.Transaction,
   ): Promise<Recipe> {
     const data = {
       ...this.removeUndefined(recipe),
       userId,
     };
 
-    const [createdRecipe] = await this.db.instance<Recipe>(
+    const query = (trx ?? this.db.instance)<Recipe>(
       this.tableName,
-    )
-      .insert(data)
-      .returning('*');
+    ).insert(data).returning('*');
+    const [createdRecipe] = await query;
 
     return new Recipe(createdRecipe);
   }
@@ -68,6 +69,7 @@ class RecipeDAO {
   public async update(
     id: string,
     recipe: RecipeUpdate,
+    trx?: Knex.Transaction,
   ): Promise<Recipe | null> {
     const data = this.removeUndefined(recipe);
     delete data.id;
@@ -78,13 +80,13 @@ class RecipeDAO {
       return this.getById(id);
     }
 
-    const [updatedRecipe] = await this.db.instance<Recipe>(
+    const [updatedRecipe] = await (trx ?? this.db.instance)<Recipe>(
       this.tableName,
     )
       .where('id', id)
       .update({
         ...data,
-        updatedAt: db.instance.fn.now(),
+        updatedAt: (trx ?? this.db.instance).fn.now(),
       })
       .returning('*');
 

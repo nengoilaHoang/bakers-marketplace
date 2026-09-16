@@ -1,4 +1,5 @@
 import recipeTagsDAO from '#/daos/recipeTags.dao.js';
+import type { Knex } from 'knex';
 import { RecipeTag, type RecipeTagCreate, type RecipeTagUpdate } from '#/models/recipeTags.model.js';
 
 export type RecipeTagSet = {
@@ -17,16 +18,21 @@ class RecipeTagService {
   public async setRecipeTags(
     recipeId: string,
     data: RecipeTagSet,
+    trx?: Knex.Transaction,
   ): Promise<RecipeTag[]> {
     const tags = data.create.map((tag) => ({
       ...tag,
       recipeId,
     }));
-    const [created, updated, deleted] = await Promise.all([
-      tags.length ? this.recipeTagDAO.create(tags) : [],
-      data.update.length ? this.recipeTagDAO.update(data.update) : [],
-      data.delete.length ? this.recipeTagDAO.delete(data.delete) : [],
-    ]);
+    const deleted = data.delete.length
+      ? await this.recipeTagDAO.delete(data.delete, trx)
+      : [];
+    const updated = data.update.length
+      ? await this.recipeTagDAO.update(data.update, trx)
+      : [];
+    const created = tags.length
+      ? await this.recipeTagDAO.create(tags, trx)
+      : [];
 
     return [...created, ...updated, ...deleted];
   }

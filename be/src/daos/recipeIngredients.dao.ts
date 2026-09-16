@@ -1,4 +1,5 @@
 import db from '#/db/index.js';
+import type { Knex } from 'knex';
 import {
   RecipeIngredient,
   type RecipeIngredientCreate,
@@ -11,13 +12,17 @@ class RecipeIngredientDAO {
   private readonly tableName = 'recipe_ingredients';
   private db = db;
 
-  public async create(data: RecipeIngredientCreate[]): Promise<RecipeIngredient[]> {
-    const created = await this.db.instance<RecipeIngredient>(this.tableName).insert(data).returning('*');
-    return created.map((ingredient) => new RecipeIngredient(ingredient));
+  public async create(data: RecipeIngredientCreate[], trx?: Knex.Transaction): Promise<RecipeIngredient[]> {
+    if (trx) {
+      const created = await trx<RecipeIngredient>(this.tableName).insert(data).returning('*');
+      return created.map((ingredient) => new RecipeIngredient(ingredient));
+    }
+
+    return this.db.instance.transaction((transaction) => this.create(data, transaction));
   }
 
-  public async update(data: RecipeIngredientUpdateItem[]): Promise<RecipeIngredient[]> {
-    return this.db.instance.transaction(async (trx) => {
+  public async update(data: RecipeIngredientUpdateItem[], trx?: Knex.Transaction): Promise<RecipeIngredient[]> {
+    if (trx) {
       const updated = [] as RecipeIngredient[];
 
       for (const { id, ...changes } of data) {
@@ -32,15 +37,21 @@ class RecipeIngredientDAO {
       }
 
       return updated.map((ingredient) => new RecipeIngredient(ingredient));
-    });
+    }
+
+    return this.db.instance.transaction((transaction) => this.update(data, transaction));
   }
 
-  public async delete(ids: string[]): Promise<RecipeIngredient[]> {
-    const deleted = await this.db.instance<RecipeIngredient>(this.tableName)
-      .whereIn('id', ids)
-      .del()
-      .returning('*');
-    return deleted.map((ingredient) => new RecipeIngredient(ingredient));
+  public async delete(ids: string[], trx?: Knex.Transaction): Promise<RecipeIngredient[]> {
+    if (trx) {
+      const deleted = await trx<RecipeIngredient>(this.tableName)
+        .whereIn('id', ids)
+        .del()
+        .returning('*');
+      return deleted.map((ingredient) => new RecipeIngredient(ingredient));
+    }
+
+    return this.db.instance.transaction((transaction) => this.delete(ids, transaction));
   }
 
   public async getAllByRecipeId(recipeId: string): Promise<RecipeIngredient[]> {

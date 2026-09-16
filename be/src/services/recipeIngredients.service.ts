@@ -1,4 +1,5 @@
 import recipeIngredientsDAO from '#/daos/recipeIngredients.dao.js';
+import type { Knex } from 'knex';
 import {
   RecipeIngredient,
   type RecipeIngredientCreate,
@@ -21,16 +22,21 @@ class RecipeIngredientService {
   public async setRecipeIngredients(
     recipeId: string,
     data: RecipeIngredientSet,
+    trx?: Knex.Transaction,
   ): Promise<RecipeIngredient[]> {
     const ingredients = data.create.map((ingredient) => ({
       ...ingredient,
       recipeId,
     }));
-    const [created, updated, deleted] = await Promise.all([
-      ingredients.length ? this.recipeIngredientDAO.create(ingredients) : [],
-      data.update.length ? this.recipeIngredientDAO.update(data.update) : [],
-      data.delete.length ? this.recipeIngredientDAO.delete(data.delete) : [],
-    ]);
+    const deleted = data.delete.length
+      ? await this.recipeIngredientDAO.delete(data.delete, trx)
+      : [];
+    const updated = data.update.length
+      ? await this.recipeIngredientDAO.update(data.update, trx)
+      : [];
+    const created = ingredients.length
+      ? await this.recipeIngredientDAO.create(ingredients, trx)
+      : [];
 
     return [...created, ...updated, ...deleted];
   }

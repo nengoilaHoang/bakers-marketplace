@@ -1,4 +1,5 @@
 import recipeDAO from '#/daos/recipes.dao.js';
+import db from '#/db/index.js';
 import {
     Recipe,
     type RecipeCreate,
@@ -74,7 +75,7 @@ class RecipeService {
         return this.recipeDAO.getByUserId(userId);
     }
 
-    public async create(
+    public async set(
         userId: string,
         payload: RecipeCreatePayload,
     ): Promise<RecipeWithDetails | null> {
@@ -86,22 +87,26 @@ class RecipeService {
             recipeIngredients,
             ...recipe
         } = payload;
-        const createdRecipe = await this.recipeDAO.create(userId, recipe);
-        const recipeId = createdRecipe.id;
+        const recipeId = await db.instance.transaction(async (trx) => {
+            const createdRecipe = await this.recipeDAO.create(userId, recipe, trx);
+            const recipeId = createdRecipe.id;
 
-        if (!recipeId) {
-            return createdRecipe as RecipeWithDetails;
-        }
+            if (!recipeId) {
+                return null;
+            }
 
-        await Promise.all([
-            stepsService.setSteps(recipeId, steps ?? { create: [], update: [], delete: [] }),
-            recipeNotesService.setRecipeNotes(recipeId, recipeNotes ?? { create: [], update: [], delete: [] }),
-            recipeTagsService.setRecipeTags(recipeId, recipeTags ?? { create: [], update: [], delete: [] }),
-            recipeToolsService.setRecipeTools(recipeId, recipeTools ?? { create: [], update: [], delete: [] }),
-            recipeIngredientsService.setRecipeIngredients(recipeId, recipeIngredients ?? { create: [], update: [], delete: [] }),
-        ]);
+            await Promise.all([
+                stepsService.setSteps(recipeId, steps ?? { create: [], update: [], delete: [] }, trx),
+                recipeNotesService.setRecipeNotes(recipeId, recipeNotes ?? { create: [], update: [], delete: [] }, trx),
+                recipeTagsService.setRecipeTags(recipeId, recipeTags ?? { create: [], update: [], delete: [] }, trx),
+                recipeToolsService.setRecipeTools(recipeId, recipeTools ?? { create: [], update: [], delete: [] }, trx),
+                recipeIngredientsService.setRecipeIngredients(recipeId, recipeIngredients ?? { create: [], update: [], delete: [] }, trx),
+            ]);
 
-        return this.getById(recipeId);
+            return recipeId;
+        });
+
+        return recipeId ? this.getById(recipeId) : null;
     }
     
     public async checkRecipeOwner(
@@ -130,21 +135,33 @@ class RecipeService {
             recipeIngredients,
             ...recipe
         } = payload;
-        const updatedRecipe = await this.recipeDAO.update(id, recipe);
+        const updatedRecipe = await db.instance.transaction(async (trx) => {
+            const updatedRecipe = await this.recipeDAO.update(id, recipe, trx);
 
-        if (!updatedRecipe) {
-            return null;
-        }
+            if (!updatedRecipe) {
+                return null;
+            }
 
-        const detailUpdates: Promise<unknown>[] = [];
-        if (steps !== undefined) detailUpdates.push(stepsService.setSteps(id, steps));
-        if (recipeNotes !== undefined) detailUpdates.push(recipeNotesService.setRecipeNotes(id, recipeNotes));
-        if (recipeTags !== undefined) detailUpdates.push(recipeTagsService.setRecipeTags(id, recipeTags));
-        if (recipeTools !== undefined) detailUpdates.push(recipeToolsService.setRecipeTools(id, recipeTools));
-        if (recipeIngredients !== undefined) detailUpdates.push(recipeIngredientsService.setRecipeIngredients(id, recipeIngredients));
+            if (steps !== undefined) {
+                await stepsService.setSteps(id, steps, trx);
+            }
+            if (recipeNotes !== undefined) {
+                await recipeNotesService.setRecipeNotes(id, recipeNotes, trx);
+            }
+            if (recipeTags !== undefined) {
+                await recipeTagsService.setRecipeTags(id, recipeTags, trx);
+            }
+            if (recipeTools !== undefined) {
+                await recipeToolsService.setRecipeTools(id, recipeTools, trx);
+            }
+            if (recipeIngredients !== undefined) {
+                await recipeIngredientsService.setRecipeIngredients(id, recipeIngredients, trx);
+            }
 
-        await Promise.all(detailUpdates);
-        return this.getById(id);
+            return updatedRecipe;
+        });
+
+        return updatedRecipe ? this.getById(id) : null;
     }
 
     public async delete(

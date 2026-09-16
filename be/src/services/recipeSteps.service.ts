@@ -1,4 +1,5 @@
 import stepsDAO from '#/daos/recipeSteps.dao.js';
+import type { Knex } from 'knex';
 import { Step, type StepCreate, type StepUpdate } from '#/models/recipeSteps.model.js';
 
 export type StepSet = {
@@ -14,16 +15,24 @@ class StepService {
     return this.stepDAO.getAllByRecipeId(recipeId);
   }
 
-  public async setSteps(recipeId: string, data: StepSet): Promise<Step[]> {
+  public async setSteps(
+    recipeId: string,
+    data: StepSet,
+    trx?: Knex.Transaction,
+  ): Promise<Step[]> {
     const steps = data.create.map((step) => ({
       ...step,
       recipeId,
     }));
-    const [created, updated, deleted] = await Promise.all([
-      steps.length ? this.stepDAO.create(steps) : [],
-      data.update.length ? this.stepDAO.update(data.update) : [],
-      data.delete.length ? this.stepDAO.delete(data.delete) : [],
-    ]);
+    const deleted = data.delete.length
+      ? await this.stepDAO.delete(data.delete, trx)
+      : [];
+    const updated = data.update.length
+      ? await this.stepDAO.update(data.update, trx)
+      : [];
+    const created = steps.length
+      ? await this.stepDAO.create(steps, trx)
+      : [];
 
     return [...created, ...updated, ...deleted];
   }

@@ -1,4 +1,5 @@
 import recipeNotesDAO from '#/daos/recipeNotes.dao.js';
+import type { Knex } from 'knex';
 import { RecipeNote, type RecipeNoteCreate } from '#/models/recipeNotes.model.js';
 import type { RecipeNoteUpdate } from '#/models/recipeNotes.model.js';
 
@@ -18,16 +19,21 @@ class RecipeNoteService {
   public async setRecipeNotes(
     recipeId: string,
     data: RecipeNoteSet,
+    trx?: Knex.Transaction,
   ): Promise<RecipeNote[]> {
     const notes = data.create.map((note) => ({
       ...note,
       recipeId,
     }));
-    const [created, updated, deleted] = await Promise.all([
-      notes.length ? this.recipeNoteDAO.create(notes) : [],
-      data.update.length ? this.recipeNoteDAO.update(data.update) : [],
-      data.delete.length ? this.recipeNoteDAO.delete(data.delete) : [],
-    ]);
+    const deleted = data.delete.length
+      ? await this.recipeNoteDAO.delete(data.delete, trx)
+      : [];
+    const updated = data.update.length
+      ? await this.recipeNoteDAO.update(data.update, trx)
+      : [];
+    const created = notes.length
+      ? await this.recipeNoteDAO.create(notes, trx)
+      : [];
 
     return [...created, ...updated, ...deleted];
   }

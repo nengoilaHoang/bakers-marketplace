@@ -110,7 +110,7 @@ class RecipeController {
         }
         recipe.isSnapshot = false;
         const createdRecipe =
-            await recipeService.create(userId, recipe);
+            await recipeService.set(userId, recipe);
 
         res.status(201).json({
             data: createdRecipe,
@@ -135,7 +135,7 @@ class RecipeController {
         recipe.isSnapshot = true;
         recipe.isPublic = true;
         const createdRecipe =
-            await recipeService.create(userId, recipe);
+            await recipeService.set(userId, recipe);
 
         res.status(201).json({
             data: createdRecipe,
