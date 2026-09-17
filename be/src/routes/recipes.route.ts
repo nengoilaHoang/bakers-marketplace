@@ -20,6 +20,11 @@ router.post(
 );
 
 router.get(
+  '/mine',
+  recipeController.getMine,
+);
+
+router.get(
   '/user/:userId',
   recipeController.getByUserId,
 );

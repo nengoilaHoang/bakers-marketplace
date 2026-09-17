@@ -2,6 +2,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
 
+import AvatarMenu from "./AvatarMenu";
+
 type RecipesLayoutProps = {
   children: ReactNode;
 };
@@ -26,22 +28,25 @@ export default function RecipesLayout({ children }: RecipesLayoutProps) {
             Recipe Book
           </Link>
 
-          <nav aria-label="Điều hướng chính" className="flex items-center gap-1">
-            <Link
-              href="/"
-              aria-current={pathname === "/" ? "page" : undefined}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
-            >
-              Trang chủ
-            </Link>
-            <Link
-              href="/recipes"
-              aria-current={pathname === "/recipes" ? "page" : undefined}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
-            >
-              Công thức
-            </Link>
-          </nav>
+          <div className="flex items-center gap-2">
+            <nav aria-label="Điều hướng chính" className="flex items-center gap-1">
+              <Link
+                href="/"
+                aria-current={pathname === "/" ? "page" : undefined}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
+              >
+                Trang chủ
+              </Link>
+              <Link
+                href="/recipes"
+                aria-current={pathname === "/recipes" ? "page" : undefined}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
+              >
+                Công thức
+              </Link>
+            </nav>
+            <AvatarMenu />
+          </div>
         </div>
       </header>
 
