@@ -1,6 +1,7 @@
 import type {
   Recipe,
   RecipeCursor,
+  RecipeDetail,
   RecipesPage,
 } from "@/types/recipe";
 import { apiRequest } from "@/utils/api";
@@ -54,5 +55,35 @@ export async function getRecipes({
   return {
     recipes: payload.data,
     cursor: payload.cursor,
+  };
+}
+
+export async function getRecipeById(
+  id: string,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<RecipeDetail> {
+  const response = await apiRequest<{ data: RecipeDetail }>(
+    `/recipes/${encodeURIComponent(id)}`,
+    { method: "GET", signal },
+  );
+  const recipe = response.data;
+
+  if (
+    !recipe ||
+    typeof recipe.id !== "string" ||
+    typeof recipe.title !== "string" ||
+    !Array.isArray(recipe.recipeIngredients) ||
+    !Array.isArray(recipe.recipeTools) ||
+    !Array.isArray(recipe.steps) ||
+    !Array.isArray(recipe.recipeNotes) ||
+    !Array.isArray(recipe.recipeTags)
+  ) {
+    throw new Error("Dữ liệu chi tiết công thức không đúng định dạng.");
+  }
+
+  return {
+    ...recipe,
+    steps: [...recipe.steps].sort((a, b) => a.stepOrder - b.stepOrder),
+    recipeNotes: [...recipe.recipeNotes].sort((a, b) => a.noteOrder - b.noteOrder),
   };
 }

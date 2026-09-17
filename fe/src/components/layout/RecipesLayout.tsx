@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import type { ReactNode } from "react";
 
 type RecipesLayoutProps = {
@@ -6,6 +7,7 @@ type RecipesLayoutProps = {
 };
 
 export default function RecipesLayout({ children }: RecipesLayoutProps) {
+  const { pathname } = useRouter();
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 text-zinc-950">
       <a
@@ -24,10 +26,17 @@ export default function RecipesLayout({ children }: RecipesLayoutProps) {
             Recipe Book
           </Link>
 
-          <nav aria-label="Điều hướng chính">
+          <nav aria-label="Điều hướng chính" className="flex items-center gap-1">
+            <Link
+              href="/"
+              aria-current={pathname === "/" ? "page" : undefined}
+              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
+            >
+              Trang chủ
+            </Link>
             <Link
               href="/recipes"
-              aria-current="page"
+              aria-current={pathname === "/recipes" ? "page" : undefined}
               className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
             >
               Công thức
