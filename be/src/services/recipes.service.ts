@@ -4,6 +4,8 @@ import {
     Recipe,
     type RecipeCreate,
     type RecipeUpdate,
+    type RecipeCursor,
+    type GetRecipesResult
 } from '#/models/recipes.model.js';
 import stepsService from '#/services/recipeSteps.service.js';
 import recipeNotesService from '#/services/recipeNotes.service.js';
@@ -39,6 +41,10 @@ class RecipeService {
     private recipeDAO = recipeDAO;
     public async getAll(): Promise<Recipe[]> {
         return this.recipeDAO.getAll();
+    }
+
+    public async getRecipes(cursor?: RecipeCursor,): Promise<GetRecipesResult> {
+        return this.recipeDAO.getRecipes(cursor);
     }
 
     public async getById(

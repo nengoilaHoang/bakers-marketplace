@@ -4,9 +4,14 @@ import recipeController from '#/controllers/recipes.controller.js';
 
 const router = Router();
 
+// router.get(
+//   '/',
+//   recipeController.getAll,
+// );
+
 router.get(
   '/',
-  recipeController.getAll,
+  recipeController.getRecipes,
 );
 
 router.post(

@@ -19,6 +19,7 @@ import {
     Recipe,
     RecipeCreateSchema,
     RecipeUpdateSchema,
+    type RecipeCursor
 } from '#/models/recipes.model.js';
 
 type RecipeIdParams = {
@@ -44,6 +45,31 @@ class RecipeController {
         });
         } catch (error) {  
         next(error);
+        }
+    };
+
+    public getRecipes = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+        const { createdAt, id } = req.query;
+        let recipes;
+        if (typeof createdAt !== "string" || typeof id !== "string") {
+        recipes = await this.recipeService.getRecipes();
+        } else {
+            const recipeCursor: RecipeCursor = {
+                createdAt: new Date(createdAt),
+                id,
+            };
+            recipes = await this.recipeService.getRecipes(recipeCursor);
+        }
+        res.status(200).json({
+            data: recipes,
+        });
+        } catch (error) {  
+            next(error);
         }
     };
 

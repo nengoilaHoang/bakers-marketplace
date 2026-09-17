@@ -4,6 +4,8 @@ import {
   Recipe,
   type RecipeCreate,
   type RecipeUpdate,
+  type RecipeCursor,
+  type GetRecipesResult
 } from '#/models/recipes.model.js';
 
 class RecipeDAO {
@@ -18,6 +20,49 @@ class RecipeDAO {
     return data.map(
       (recipe) => new Recipe(recipe),
     );
+  }
+
+  public async getRecipes( cursor?: RecipeCursor,): Promise<GetRecipesResult> 
+  {
+    const query = this.db.instance<Recipe>(this.tableName)
+      .select('*')
+      .where({
+        isPublic: true,
+        isSnapshot: false,
+      });
+      
+    if (cursor) {
+      query.andWhere((builder) => {
+        builder
+          .where('createdAt', '<', cursor.createdAt)
+          .orWhere((subBuilder) => {
+            subBuilder
+              .where('createdAt', '=', cursor.createdAt)
+              .andWhere('id', '<', cursor.id);
+          });
+      });
+    }
+
+    const data = await query
+      .orderBy('createdAt', 'desc')
+      .orderBy('id', 'desc')
+      .limit(20);
+
+    const recipes = data.map(
+      (recipe) => new Recipe(recipe),
+    );
+
+    const lastRecipe = data.at(-1);
+
+    return {
+      data: recipes,
+      cursor: lastRecipe
+        ? {
+            createdAt: lastRecipe.createdAt,
+            id: lastRecipe.id,
+          }
+        : null,
+    };
   }
 
   public async getById(

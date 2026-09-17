@@ -28,6 +28,15 @@ export type RecipeData = z.infer<typeof RecipeSchema>;
 export type RecipeCreate = z.infer<typeof RecipeCreateSchema>;
 export type RecipeUpdate = z.infer<typeof RecipeUpdateSchema>;
 
+export type RecipeCursor = {
+  createdAt: Date | undefined;
+  id: string | undefined;
+};
+export type GetRecipesResult = {
+  data: Recipe[];
+  cursor: RecipeCursor | null;
+};
+
 export class Recipe implements RecipeData {
   id?: string;
   coverImgId?: string | null;
