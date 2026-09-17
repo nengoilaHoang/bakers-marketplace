@@ -159,7 +159,7 @@ export async function up(knex: Knex): Promise<void> {
       );
     })
 
-    .createTable('steps', (table) => {
+    .createTable('recipe_steps', (table) => {
       table
         .uuid('id')
         .primary()
@@ -180,6 +180,11 @@ export async function up(knex: Knex): Promise<void> {
         .text('description')
         .notNullable();
 
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
       table.check(
         'step_order > 0',
         [],
@@ -190,6 +195,7 @@ export async function up(knex: Knex): Promise<void> {
         ['recipe_id', 'step_order'],
         {
           indexName: 'uq_steps_recipe_order',
+          deferrable: 'deferred',
         },
       );
     })
@@ -304,6 +310,10 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('CASCADE');
 
       table
+        .integer('note_order')
+        .notNullable();
+
+      table
         .text('content')
         .notNullable();
 
@@ -311,6 +321,20 @@ export async function up(knex: Knex): Promise<void> {
         .timestamp('created_at', { useTz: true })
         .notNullable()
         .defaultTo(knex.fn.now());
+
+      table.check(
+        'note_order > 0',
+        [],
+        'chk_notes_order_positive',
+      );
+
+      table.unique(
+        ['recipe_id', 'note_order'],
+        {
+          indexName: 'uq_notes_recipe_order',
+          deferrable: 'deferred',
+        },
+      );
 
       table.index(
         ['recipe_id'],
@@ -785,16 +809,37 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema
+    .dropTableIfExists('typography')
+    .dropTableIfExists('color_palettes')
+    .dropTableIfExists('theme_settings')
+    .dropTableIfExists('component_templates')
+    .dropTableIfExists('composite_component_children')
+    .dropTableIfExists('composite_components')
+    .dropTableIfExists('repeater_components')
+    .dropTableIfExists('leaf_components')
+    .dropTableIfExists('commerce_components')
+    .dropTableIfExists('layout_components')
+    .dropTableIfExists('page_layouts')
+    .dropTableIfExists('storefront_releases')
+    .dropTableIfExists('storefronts')
+    .dropTableIfExists('social_links')
+    .dropTableIfExists('brands')
     .dropTableIfExists('recipe_tags')
     .dropTableIfExists('recipe_notes')
     .dropTableIfExists('recipe_tools')
     .dropTableIfExists('recipe_ingredients')
-    .dropTableIfExists('steps')
+    .dropTableIfExists('recipe_steps')
     .dropTableIfExists('recipes')
+    .dropTableIfExists('vendors')
     .dropTableIfExists('images')
     .dropTableIfExists('users');
 
   await knex.raw(`
+    DROP TYPE IF EXISTS composite_component_type;
+    DROP TYPE IF EXISTS repeater_component_type;
+    DROP TYPE IF EXISTS leaf_component_type;
+    DROP TYPE IF EXISTS commerce_component_type;
+    DROP TYPE IF EXISTS page_type;
     DROP TYPE IF EXISTS user_role;
   `);
 }

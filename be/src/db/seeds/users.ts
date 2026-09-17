@@ -1,7 +1,16 @@
 import type { Knex } from 'knex';
 
+// Hard-coded seed IDs for testing
+// User - Nguyễn Minh Anh: 11111111-1111-4111-8111-111111111111
+// Recipe - Bánh Chocolate Fudge: 22222222-2222-4222-8222-222222222222
+// Recipe - Cheesecake Oreo Không Cần Lò: 33333333-3333-4333-8333-333333333333
+const HARD_CODED_USER_ID = '11111111-1111-4111-8111-111111111111';
+const HARD_CODED_RECIPE_ID_1 = '22222222-2222-4222-8222-222222222222';
+const HARD_CODED_RECIPE_ID_2 = '33333333-3333-4333-8333-333333333333';
+
 const users = [
   {
+    id: HARD_CODED_USER_ID,
     email: 'minhanh@example.com',
     displayname: 'Nguyễn Minh Anh',
     password: 'password123',
@@ -356,7 +365,7 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('recipe_notes').del();
     await trx('recipe_tools').del();
     await trx('recipe_ingredients').del();
-    await trx('steps').del();
+    await trx('recipe_steps').del();
     await trx('recipes').del();
     await trx('images').del();
     await trx('users').del();
@@ -455,6 +464,12 @@ export async function seed(knex: Knex): Promise<void> {
       const [createdRecipe] =
         await trx('recipes')
           .insert({
+            ...(index === 0
+              ? { id: HARD_CODED_RECIPE_ID_1 }
+              : index === 1
+                ? { id: HARD_CODED_RECIPE_ID_2 }
+                : {}),
+
             cover_img_id: image.id,
 
             user_id: user.id,
@@ -507,7 +522,7 @@ export async function seed(knex: Knex): Promise<void> {
           ),
         );
 
-      await trx('steps')
+      await trx('recipe_steps')
         .insert(
           recipe.steps.map(
             (
@@ -527,8 +542,9 @@ export async function seed(knex: Knex): Promise<void> {
       await trx('recipe_notes')
         .insert(
           recipe.notes.map(
-            (content) => ({
+            (content, noteIndex) => ({
               recipe_id: recipeId,
+              note_order: noteIndex + 1,
               content,
             }),
           ),
