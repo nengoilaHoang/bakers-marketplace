@@ -26,7 +26,14 @@ export default function RecipesLayout({ children }: RecipesLayoutProps) {
             Recipe Book
           </Link>
 
-          <nav aria-label="Điều hướng chính">
+          <nav aria-label="Điều hướng chính" className="flex items-center gap-1">
+            <Link
+              href="/"
+              aria-current={pathname === "/" ? "page" : undefined}
+              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
+            >
+              Trang chủ
+            </Link>
             <Link
               href="/recipes"
               aria-current={pathname === "/recipes" ? "page" : undefined}
