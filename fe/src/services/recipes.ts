@@ -3,6 +3,10 @@ import type {
   RecipeCursor,
   RecipeDetail,
   RecipeMutationPayload,
+  RecipeRequirementMatch,
+  RecipeSearchMatchMode,
+  RecipeSearchParams,
+  RecipeSearchResult,
   RecipesPage,
 } from "@/types/recipe";
 import { apiRequest } from "@/utils/api";
@@ -26,6 +30,49 @@ function isRecipeCursor(value: unknown): value is RecipeCursor {
 
   const cursor = value as Partial<RecipeCursor>;
   return typeof cursor.createdAt === "string" && typeof cursor.id === "string";
+}
+
+function isRecipeRequirementMatch(
+  value: unknown,
+): value is RecipeRequirementMatch {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const match = value as Partial<RecipeRequirementMatch>;
+
+  return (
+    typeof match.matched === "number" &&
+    Number.isFinite(match.matched) &&
+    typeof match.total === "number" &&
+    Number.isFinite(match.total) &&
+    Array.isArray(match.missing) &&
+    match.missing.every((item) => typeof item === "string")
+  );
+}
+
+function isRecipeSearchMatchMode(
+  value: unknown,
+): value is RecipeSearchMatchMode {
+  return value === "complete" || value === "flexible";
+}
+
+function isRecipeSearchResult(value: unknown): value is RecipeSearchResult {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const recipe = value as Partial<RecipeSearchResult>;
+
+  return (
+    typeof recipe.id === "string" &&
+    typeof recipe.title === "string" &&
+    typeof recipe.rankScore === "number" &&
+    Number.isFinite(recipe.rankScore) &&
+    isRecipeSearchMatchMode(recipe.matchMode) &&
+    isRecipeRequirementMatch(recipe.ingredientMatch) &&
+    isRecipeRequirementMatch(recipe.toolMatch)
+  );
 }
 
 export async function getRecipes({
@@ -57,6 +104,31 @@ export async function getRecipes({
     recipes: payload.data,
     cursor: payload.cursor,
   };
+}
+
+export async function searchRecipes(
+  params: RecipeSearchParams,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<RecipeSearchResult[]> {
+  const response = await apiRequest<{ data: unknown }>("/recipes/search", {
+    method: "GET",
+    signal,
+    query: {
+      q: params.query,
+      tools: params.tools,
+      ingredients: params.ingredients,
+      matchMode: params.matchMode,
+    },
+  });
+
+  if (
+    !Array.isArray(response.data) ||
+    !response.data.every(isRecipeSearchResult)
+  ) {
+    throw new Error("Dữ liệu tìm kiếm công thức trả về không đúng định dạng.");
+  }
+
+  return response.data;
 }
 
 function parseRecipeDetail(value: unknown, errorMessage: string): RecipeDetail {

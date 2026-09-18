@@ -1,15 +1,15 @@
 import { useCallback, useId, useRef, useState } from "react";
 
+import type { RecipeSearchMatchMode } from "@/types/recipe";
+
 import FilterDropdown, { type FilterOption } from "./FilterDropdown";
 import SearchIcon from "./SearchIcon";
-
-export type RecipeMatchMode = "complete" | "flexible";
 
 type RecipeSearchPanelProps = {
   initialQuery?: string;
   initialTools?: string[];
   initialIngredients?: string[];
-  initialMatchMode?: RecipeMatchMode;
+  initialMatchMode?: RecipeSearchMatchMode;
 };
 
 const toolOptions: FilterOption[] = [
@@ -39,7 +39,7 @@ const ingredientOptions: FilterOption[] = [
   { value: "other", label: "Nguyên liệu khác" },
 ];
 
-const matchModes: { value: RecipeMatchMode; title: string; summary: string; explanation: string; example: string }[] = [
+const matchModes: { value: RecipeSearchMatchMode; title: string; summary: string; explanation: string; example: string }[] = [
   {
     value: "complete",
     title: "Khớp đầy đủ",
@@ -74,7 +74,7 @@ export default function RecipeSearchPanel({
   const [ingredients, setIngredients] = useState(() => normalizeSelection(initialIngredients, ingredientOptions));
   const [matchMode, setMatchMode] = useState(initialMatchMode);
   const [openDropdown, setOpenDropdown] = useState<"tools" | "ingredients" | null>(null);
-  const [helpMode, setHelpMode] = useState<RecipeMatchMode | null>(null);
+  const [helpMode, setHelpMode] = useState<RecipeSearchMatchMode | null>(null);
   const help = matchModes.find((mode) => mode.value === helpMode);
   const hasFilters = tools.length > 0 || ingredients.length > 0 || matchMode !== "complete";
   const changeToolsOpen = useCallback((open: boolean) => {

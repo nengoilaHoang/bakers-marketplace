@@ -61,6 +61,28 @@ export type RecipeDetail = Recipe & {
   recipeTags: RecipeTag[];
 };
 
+export type RecipeSearchMatchMode = "complete" | "flexible";
+
+export type RecipeRequirementMatch = {
+  matched: number;
+  total: number;
+  missing: string[];
+};
+
+export type RecipeSearchResult = Recipe & {
+  rankScore: number;
+  matchMode: RecipeSearchMatchMode;
+  ingredientMatch: RecipeRequirementMatch;
+  toolMatch: RecipeRequirementMatch;
+};
+
+export type RecipeSearchParams = {
+  query: string;
+  tools?: string[];
+  ingredients?: string[];
+  matchMode?: RecipeSearchMatchMode;
+};
+
 export type RecipeIngredientFormValue = {
   id?: string;
   name: string;

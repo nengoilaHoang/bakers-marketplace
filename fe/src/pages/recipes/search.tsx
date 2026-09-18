@@ -1,71 +1,21 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useMemo, useState } from "react";
 
 import RecipesLayout from "@/components/layout/RecipesLayout";
-import RecipeSearchPanel, {
-  type RecipeMatchMode,
-} from "@/components/recipe/search/RecipeSearchPanel";
-import RecipeSearchResultCard, {
-  type RecipeSearchResultItem,
-} from "@/components/recipe/search/RecipeSearchResultCard";
+import RecipesEmptyState from "@/components/recipe/RecipesEmptyState";
+import RecipeSearchPanel from "@/components/recipe/search/RecipeSearchPanel";
+import RecipeSearchResultCard from "@/components/recipe/search/RecipeSearchResultCard";
+import RecipeSearchResultsSkeleton from "@/components/recipe/search/RecipeSearchResultsSkeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { useRecipeSearch } from "@/hooks/useRecipeSearch";
+import type {
+  RecipeSearchMatchMode,
+  RecipeSearchResult,
+} from "@/types/recipe";
 
-const previewResults: RecipeSearchResultItem[] = [
-  {
-    id: "preview-chocolate-cookie",
-    title: "Cookie chocolate mềm",
-    description: "Cookie thơm bơ, viền giòn nhẹ và phần giữa mềm ẩm với chocolate đậm vị.",
-    portion: 12,
-    matchMode: "complete",
-    ingredientMatch: { matched: 8, total: 8, missing: [] },
-    toolMatch: { matched: 4, total: 4, missing: [] },
-  },
-  {
-    id: "preview-banana-bread",
-    title: "Bánh chuối nướng",
-    description: "Công thức tận dụng chuối chín, dễ làm và phù hợp cho bữa sáng nhẹ nhàng.",
-    portion: 8,
-    matchMode: "complete",
-    ingredientMatch: { matched: 7, total: 7, missing: [] },
-    toolMatch: { matched: 3, total: 3, missing: [] },
-  },
-  {
-    id: "preview-tiramisu",
-    title: "Tiramisu không cần lò",
-    description: "Tiramisu mềm mịn với lớp kem mascarpone và hương cà phê cân bằng.",
-    portion: 6,
-    matchMode: "flexible",
-    ingredientMatch: { matched: 7, total: 8, missing: ["Mascarpone"] },
-    toolMatch: { matched: 3, total: 3, missing: [] },
-  },
-  {
-    id: "preview-butter-cake",
-    title: "Butter cake cổ điển",
-    description: "Cốt bánh bơ cơ bản, mềm xốp và dễ kết hợp với trái cây hoặc kem tươi.",
-    portion: 8,
-    matchMode: "flexible",
-    ingredientMatch: { matched: 6, total: 7, missing: ["Kem tươi"] },
-    toolMatch: { matched: 3, total: 4, missing: ["Máy đánh trứng"] },
-  },
-  {
-    id: "preview-pancake",
-    title: "Pancake sữa tươi",
-    description: "Bánh pancake nhanh gọn, mềm nhẹ, dùng được với mật ong hoặc trái cây.",
-    portion: 4,
-    matchMode: "complete",
-    ingredientMatch: { matched: 6, total: 6, missing: [] },
-    toolMatch: { matched: 2, total: 2, missing: [] },
-  },
-  {
-    id: "preview-cinnamon-roll",
-    title: "Cinnamon roll phủ kem",
-    description: "Bánh cuộn quế thơm mềm với lớp đường quế và kem phủ dịu ngọt.",
-    portion: 9,
-    matchMode: "flexible",
-    ingredientMatch: { matched: 8, total: 10, missing: ["Cream cheese", "Đường nâu"] },
-    toolMatch: { matched: 4, total: 5, missing: ["Cây cán bột"] },
-  },
-];
+type RecipeSearchSort = "relevance" | "missing" | "newest";
 
 function readQueryValue(value: string | string[] | undefined) {
   return typeof value === "string" ? value : value?.[0] ?? "";
@@ -76,16 +26,57 @@ function readQueryList(value: string | string[] | undefined) {
   return value ? [value] : [];
 }
 
+function getMissingCount(result: RecipeSearchResult): number {
+  return result.ingredientMatch.missing.length + result.toolMatch.missing.length;
+}
+
+function getCreatedAtTime(result: RecipeSearchResult): number {
+  const createdAt = result.createdAt
+    ? new Date(result.createdAt).getTime()
+    : 0;
+
+  return Number.isNaN(createdAt) ? 0 : createdAt;
+}
+
 export default function RecipeSearchPage() {
   const router = useRouter();
+  const [sort, setSort] = useState<RecipeSearchSort>("relevance");
   const queryText = readQueryValue(router.query.q);
+  const selectedTools = readQueryList(router.query.tools);
+  const selectedIngredients = readQueryList(router.query.ingredients);
   const matchModeValue = readQueryValue(router.query.matchMode);
-  const matchMode: RecipeMatchMode =
+  const matchMode: RecipeSearchMatchMode =
     matchModeValue === "flexible" ? "flexible" : "complete";
-  const displayedResults =
-    matchMode === "complete"
-      ? previewResults.filter((result) => result.matchMode === "complete")
-      : previewResults;
+  const { results, isLoading, error, retry } = useRecipeSearch({
+    query: queryText,
+    tools: selectedTools,
+    ingredients: selectedIngredients,
+    matchMode,
+    enabled: router.isReady,
+  });
+  const displayedResults = useMemo(() => {
+    const sortedResults = [...results];
+
+    if (sort === "missing") {
+      return sortedResults.sort(
+        (first, second) =>
+          getMissingCount(first) - getMissingCount(second)
+          || second.rankScore - first.rankScore,
+      );
+    }
+
+    if (sort === "newest") {
+      return sortedResults.sort(
+        (first, second) =>
+          getCreatedAtTime(second) - getCreatedAtTime(first)
+          || second.rankScore - first.rankScore,
+      );
+    }
+
+    return sortedResults.sort(
+      (first, second) => second.rankScore - first.rankScore,
+    );
+  }, [results, sort]);
   const pageTitle = queryText
     ? `Kết quả cho “${queryText}” | Recipe Book`
     : "Kết quả tìm kiếm | Recipe Book";
@@ -126,39 +117,65 @@ export default function RecipeSearchPage() {
         <RecipeSearchPanel
           key={router.isReady ? router.asPath : "search-loading"}
           initialQuery={queryText}
-          initialTools={readQueryList(router.query.tools)}
-          initialIngredients={readQueryList(router.query.ingredients)}
+          initialTools={selectedTools}
+          initialIngredients={selectedIngredients}
           initialMatchMode={matchMode}
         />
 
         <section className="mt-12" aria-labelledby="search-results-title">
           <div className="flex flex-col justify-between gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm text-zinc-500">{displayedResults.length} kết quả phù hợp</p>
+              <p className="text-sm text-zinc-500" aria-live="polite">
+                {isLoading
+                  ? "Đang tìm công thức phù hợp..."
+                  : error
+                    ? "Chưa thể tải kết quả"
+                    : `${displayedResults.length} kết quả phù hợp`}
+              </p>
               <h2 id="search-results-title" className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
                 Công thức dành cho bạn
               </h2>
             </div>
-            <label className="flex w-full items-center gap-3 text-sm text-zinc-600 sm:w-auto">
-              <span className="shrink-0">Sắp xếp</span>
-              <select
-                defaultValue="relevance"
-                className="min-h-10 min-w-44 flex-1 rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 outline-none focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-              >
-                <option value="relevance">Phù hợp nhất</option>
-                <option value="missing">Ít mục còn thiếu nhất</option>
-                <option value="newest">Mới nhất</option>
-              </select>
-            </label>
+            {!isLoading && !error && displayedResults.length > 0 && (
+              <label className="flex w-full items-center gap-3 text-sm text-zinc-600 sm:w-auto">
+                <span className="shrink-0">Sắp xếp</span>
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value as RecipeSearchSort)}
+                  className="min-h-10 min-w-44 flex-1 rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 outline-none focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                >
+                  <option value="relevance">Phù hợp nhất</option>
+                  <option value="missing">Ít mục còn thiếu nhất</option>
+                  <option value="newest">Mới nhất</option>
+                </select>
+              </label>
+            )}
           </div>
 
-          <ul className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {displayedResults.map((result) => (
-              <li key={result.id}>
-                <RecipeSearchResultCard result={result} />
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6">
+            {isLoading ? (
+              <RecipeSearchResultsSkeleton />
+            ) : error ? (
+              <ErrorState
+                title="Không thể tải kết quả tìm kiếm"
+                message={error}
+                onRetry={retry}
+              />
+            ) : displayedResults.length === 0 ? (
+              <RecipesEmptyState
+                title="Không tìm thấy công thức phù hợp"
+                description="Hãy thử đổi từ khóa, chọn thêm dụng cụ hoặc chuyển sang chế độ khớp linh hoạt."
+              />
+            ) : (
+              <ul className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {displayedResults.map((result) => (
+                  <li key={result.id}>
+                    <RecipeSearchResultCard result={result} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       </RecipesLayout>
     </>

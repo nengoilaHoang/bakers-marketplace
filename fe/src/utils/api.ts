@@ -1,4 +1,9 @@
-type QueryValue = string | number | boolean | null | undefined;
+type QueryPrimitive = string | number | boolean;
+type QueryValue =
+  | QueryPrimitive
+  | readonly (QueryPrimitive | null | undefined)[]
+  | null
+  | undefined;
 
 type ApiRequestOptions = RequestInit & {
   query?: Record<string, QueryValue>;
@@ -52,8 +57,12 @@ export function createApiUrl(
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== null) {
-        url.searchParams.set(key, String(value));
+      const values = Array.isArray(value) ? value : [value];
+
+      for (const item of values) {
+        if (item !== undefined && item !== null) {
+          url.searchParams.append(key, String(item));
+        }
       }
     }
   }

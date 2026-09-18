@@ -1,20 +1,6 @@
-export type RecipeSearchResultItem = {
-  id: string;
-  title: string;
-  description: string;
-  portion: number;
-  matchMode: "complete" | "flexible";
-  ingredientMatch: {
-    matched: number;
-    total: number;
-    missing: string[];
-  };
-  toolMatch: {
-    matched: number;
-    total: number;
-    missing: string[];
-  };
-};
+import Link from "next/link";
+
+import type { RecipeSearchResult } from "@/types/recipe";
 
 function MatchRow({
   label,
@@ -55,7 +41,7 @@ function MatchRow({
 export default function RecipeSearchResultCard({
   result,
 }: {
-  result: RecipeSearchResultItem;
+  result: RecipeSearchResult;
 }) {
   const isComplete = result.matchMode === "complete";
 
@@ -89,11 +75,11 @@ export default function RecipeSearchResultCard({
             {result.title}
           </h2>
           <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600">
-            {result.portion} phần
+            {result.portion ? `${result.portion} phần` : "Chưa rõ khẩu phần"}
           </span>
         </div>
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-600">
-          {result.description}
+          {result.description || "Công thức này chưa có mô tả."}
         </p>
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -102,10 +88,13 @@ export default function RecipeSearchResultCard({
         </div>
 
         <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
-          <span className="text-xs text-zinc-500">Kết quả xem trước</span>
-          <span className="text-sm font-semibold text-zinc-900">
+          <span className="text-xs text-zinc-500">Công thức phù hợp</span>
+          <Link
+            href={`/recipes/${encodeURIComponent(result.id)}`}
+            className="rounded-md text-sm font-semibold text-zinc-900 transition hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
+          >
             Xem công thức <span aria-hidden="true">→</span>
-          </span>
+          </Link>
         </div>
       </div>
     </article>
