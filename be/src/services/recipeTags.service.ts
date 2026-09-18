@@ -1,4 +1,4 @@
-import recipeTagsDAO from '#/daos/recipeTags.dao.js';
+import recipeTagsDAO from '#/daos/recipes/recipeTags.dao.js';
 import type { Knex } from 'knex';
 import { RecipeTag, type RecipeTagCreate, type RecipeTagUpdate } from '#/models/recipeTags.model.js';
 

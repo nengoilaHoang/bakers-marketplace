@@ -61,6 +61,17 @@ class RecipeIngredientDAO {
     return data.map((ingredient) => new RecipeIngredient(ingredient));
   }
 
+  public async getAllByRecipeIds(recipeIds: string[]): Promise<RecipeIngredient[]> {
+    if (recipeIds.length === 0) {
+      return [];
+    }
+
+    const data = await this.db.instance<RecipeIngredient>(this.tableName)
+      .whereIn('recipeId', recipeIds)
+      .orderBy('createdAt', 'desc');
+    return data.map((ingredient) => new RecipeIngredient(ingredient));
+  }
+
   public async deleteByRecipeId(recipeId: string): Promise<RecipeIngredient[]> {
     const deleted = await this.db.instance<RecipeIngredient>(this.tableName)
       .where('recipeId', recipeId).del().returning('*');

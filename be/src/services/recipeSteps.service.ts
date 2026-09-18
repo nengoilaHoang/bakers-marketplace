@@ -1,4 +1,4 @@
-import stepsDAO from '#/daos/recipeSteps.dao.js';
+import stepsDAO from '#/daos/recipes/recipeSteps.dao.js';
 import type { Knex } from 'knex';
 import { Step, type StepCreate, type StepUpdate } from '#/models/recipeSteps.model.js';
 

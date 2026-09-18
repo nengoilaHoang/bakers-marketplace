@@ -61,6 +61,17 @@ class RecipeToolDAO {
     return data.map((tool) => new RecipeTool(tool));
   }
 
+  public async getAllByRecipeIds(recipeIds: string[]): Promise<RecipeTool[]> {
+    if (recipeIds.length === 0) {
+      return [];
+    }
+
+    const data = await this.db.instance<RecipeTool>(this.tableName)
+      .whereIn('recipeId', recipeIds)
+      .orderBy('createdAt', 'desc');
+    return data.map((tool) => new RecipeTool(tool));
+  }
+
   public async deleteByRecipeId(recipeId: string): Promise<RecipeTool[]> {
     const deleted = await this.db.instance<RecipeTool>(this.tableName)
       .where('recipeId', recipeId).del().returning('*');
