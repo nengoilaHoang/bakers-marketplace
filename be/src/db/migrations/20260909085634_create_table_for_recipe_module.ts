@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     CREATE TYPE user_role AS ENUM (
       'CUSTOMER',
       'BAKER',
-      'VENDER',
+      'VENDOR',
       'ADMIN'
     );
   `);

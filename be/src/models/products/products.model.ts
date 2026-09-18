@@ -72,6 +72,18 @@ export const ProductSchema = ProductTableSchema.extend({
   collections: z.array(ProductCollectionSummarySchema).default([]),
 });
 
+/** Dữ liệu client gửi lên khi tạo sản phẩm. */
+export const ProductCreateSchema = ProductTableSchema.omit({
+	id: true,
+	createdAt: true,
+});
+
+/** Khi cập nhật, mọi trường đều không bắt buộc. */
+export const ProductUpdateSchema = ProductCreateSchema.partial();
+
+export type ProductCreateInput = z.infer<typeof ProductCreateSchema>;
+export type ProductUpdateInput = z.infer<typeof ProductUpdateSchema>;
+
 export type ProductRow = z.infer<typeof ProductTableSchema>;
 export type ProductImageRow = z.infer<typeof ProductImageTableSchema>;
 export type ProductNoteRow = z.infer<typeof ProductNoteTableSchema>;
