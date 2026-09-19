@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
-export const UserRole = z.enum(['CUSTOMER', 'BAKER', 'VENDOR', 'ADMIN']);
-export const UserStatus = z.enum(['PENDING_VERIFICATION', 'ACTIVE', 'BANNED']);
+export const UserRoleSchema = z.enum(['CUSTOMER', 'BAKER', 'VENDOR', 'ADMIN']);
+export const UserStatusSchema = z.enum([
+	'PENDING_VERIFICATION',
+	'ACTIVE',
+	'BANNED',
+]);
 
 export const UserTableSchema = z.object({
 	id: z.uuidv4().readonly(),
@@ -9,8 +13,8 @@ export const UserTableSchema = z.object({
 	phone: z.string().max(15),
 	password: z.string().max(255),
 	displayName: z.string().max(255),
-	role: UserRole.default('CUSTOMER'),
-	status: UserStatus,
+	role: UserRoleSchema.default('CUSTOMER'),
+	status: UserStatusSchema,
 	createdAt: z.date().readonly(),
 	updateAt: z.date(),
 });
