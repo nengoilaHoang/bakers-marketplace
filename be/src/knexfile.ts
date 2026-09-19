@@ -14,10 +14,8 @@ dotenv.config({
 const ext = __filename.endsWith('.ts') ? 'ts' : 'js';
 const development: Knex.Config = {
 	client: 'pg',
-	wrapIdentifier: (value, origImpl, queryContext) => {
-		if (value === '*') {
-			return origImpl(value);
-		}
+	wrapIdentifier: (value, origImpl, _queryContext) => {
+		if (value === '*') return origImpl(value);
 		return origImpl(snakecase(value));
 	},
 	postProcessResponse: (result, _queryContext) => {

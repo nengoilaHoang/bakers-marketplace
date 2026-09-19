@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     CREATE TYPE user_role AS ENUM (
       'CUSTOMER',
       'BAKER',
-      'VENDER',
+      'VENDOR',
       'ADMIN'
     );
   `);
@@ -84,10 +84,27 @@ export async function up(knex: Knex): Promise<void> {
 
       table.text('content_type');
 
+      table.text('ext_name');
+
+      table
+        .bigInteger('size')
+        .unsigned()
+        .nullable();
+
+      table
+        .string('checksum')
+        .nullable();
+
+      table
+        .timestamp('uploaded_at', { useTz: true })
+        .nullable();
+
       table
         .timestamp('created_at', { useTz: true })
         .notNullable()
         .defaultTo(knex.fn.now());
+
+      table.index(['checksum'], 'idx_images_check_sum');
     })
 
     .createTable('recipes', (table) => {
@@ -146,7 +163,7 @@ export async function up(knex: Knex): Promise<void> {
         'NOT is_snapshot OR is_public',
         [],
         'chk_recipes_snapshot_public',
-      );
+      ); 
 
       table.index(
         ['cover_img_id'],
@@ -416,6 +433,284 @@ export async function up(knex: Knex): Promise<void> {
         .timestamps(true, true);
     })
 
+    .createTable('products', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('brand_id')
+        .notNullable()
+        .references('id')
+        .inTable('brands')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('vendor_id')
+        .references('id')
+        .inTable('vendors')
+        .onDelete('SET NULL');
+
+      table
+        .string('title', 255)
+        .notNullable();
+
+      table.text('description');
+
+      table
+        .string('slug', 255)
+        .notNullable()
+        .unique();
+
+      table
+        .decimal('unit_price', 20, 2)
+        .notNullable();
+
+      table
+        .decimal('unit_cost', 20, 2)
+        .notNullable();
+
+      table
+        .specificType('currency', 'char(3)')
+        .notNullable()
+        .defaultTo('VND');
+
+      table
+        .string('unit', 255)
+        .notNullable();
+
+      table
+        .date('expiration_date')
+        .nullable()
+        .defaultTo(null);
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.check(
+        'unit_price >= 0',
+        [],
+        'chk_products_unit_price_non_negative',
+      );
+
+      table.check(
+        'unit_cost >= 0',
+        [],
+        'chk_products_unit_cost_non_negative',
+      );
+
+      table.index(['brand_id'], 'idx_products_brand_id');
+      table.index(['vendor_id'], 'idx_products_vendor_id');
+    })
+
+    .createTable('product_images', (table) => {
+      table
+        .uuid('product_id')
+        .notNullable()
+        .references('id')
+        .inTable('products')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('image_id')
+        .notNullable()
+        .references('id')
+        .inTable('images')
+        .onDelete('CASCADE');
+
+      table
+        .integer('sort_order')
+        .notNullable()
+        .checkPositive('chk_product_images_sort_order_positive');
+
+      table.primary(['product_id', 'sort_order']);
+
+      table.unique(['product_id', 'image_id'], {
+        indexName: 'uq_product_images_product_image',
+      });
+    })
+
+    .createTable('product_notes', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('product_id')
+        .notNullable()
+        .references('id')
+        .inTable('products')
+        .onDelete('CASCADE');
+
+      table
+        .text('content')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['product_id'], 'idx_product_notes_product_id');
+    })
+
+    .createTable('product_tags', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('product_id')
+        .notNullable()
+        .references('id')
+        .inTable('products')
+        .onDelete('CASCADE');
+
+      table
+        .string('name', 100)
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.unique(['product_id', 'name'], {
+        indexName: 'uq_product_tags_product_name',
+      });
+    })
+
+    .createTable('product_stocks', (table) => {
+      table
+        .uuid('id')
+        .references('id')
+        .inTable('products')
+        .primary()
+        .onDelete('CASCADE');
+
+      table
+        .integer('stock')
+        .notNullable()
+        .defaultTo(0);
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.check(
+        'stock >= 0',
+        [],
+        'chk_product_stocks_stock_non_negative',
+      );
+    })
+
+    .createTable('stock_alerts', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('product_stock_id')
+        .notNullable()
+        .references('id')
+        .inTable('product_stocks')
+        .onDelete('CASCADE');
+
+      table
+        .enum(
+          'alert_type',
+          [
+            'MAXIMUM',
+            'REORDER',
+            'MINIMUM',
+          ],
+          { useNative: true, enumName: 'stock_alert_type' },
+        )
+        .notNullable();
+
+      table
+        .integer('threshold')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.check(
+        'threshold >= 0',
+        [],
+        'chk_stock_alerts_threshold_non_negative',
+      );
+
+      table.unique(['product_stock_id', 'alert_type'], {
+        indexName: 'uq_stock_alerts_stock_type',
+      });
+    })
+
+    .createTable('collections', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .string('name', 255)
+        .notNullable();
+
+      table
+        .string('slug', 255)
+        .notNullable()
+        .unique();
+
+      table.text('description');
+
+      table
+        .boolean('is_active')
+        .notNullable()
+        .defaultTo(true);
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+    })
+
+    .createTable('product_collections', (table) => {
+      table
+        .uuid('product_id')
+        .notNullable()
+        .references('id')
+        .inTable('products')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('collection_id')
+        .notNullable()
+        .references('id')
+        .inTable('collections')
+        .onDelete('CASCADE');
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.primary(['product_id', 'collection_id']);
+
+      table.index(
+        ['collection_id'],
+        'idx_product_collections_collection_id',
+      );
+    })
+
     .createTable('social_links', (table) => {
       table
         .uuid('id')
@@ -483,47 +778,16 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('SET NULL');
       
       table
-        .string('displayName', 255)
+        .string('display_name', 255)
         .notNullable();
       
       table
-        .timestamp('published_at', { useTz: true })
-        .nullable()
-        .defaultTo(null);
-    })
-
-    .createTable('page_layouts', (table) => {
-      table
-        .uuid('id')
-        .primary()
-        .defaultTo(knex.raw('gen_random_uuid()'));
-
-      table
-        .uuid('storefront_release_id')
-        .notNullable()
-        .references('id')
-        .inTable('storefront_releases')
-        .onDelete('CASCADE');
+        .timestamps(true, true);
 
 			table
-				.enum(
-					'type',
-					[
-						'HOME',
-						'ABOUT_US',
-						'COLLECTION',
-						'COLLECTION_LIST',
-						'SEARCH',
-						'PRODUCT',
-					],
-					{ useNative: true, enumName: 'page_type' },
-				)
-				.notNullable();
-
-			table.unique(['storefront_release_id', 'type'], {
-				indexName: 'idx_page_layout_storefront_release_page_type',
-				useConstraint: true,
-			});
+        .boolean('is_active')
+				.notNullable()
+				.defaultTo(false);
     })
 
     .createTable('layout_components', (table) => {
@@ -534,7 +798,8 @@ export async function up(knex: Knex): Promise<void> {
 
       table
         .string('name', 255)
-        .notNullable();
+				.nullable()
+				.defaultTo(null);
 
       table
         .text('description')
@@ -590,6 +855,7 @@ export async function up(knex: Knex): Promise<void> {
 					[
 						'CARD',
 						'FORM',
+            'BUTTON',
 						'SEARCH_BAR',
 						'FILTER',
 						'RICH_TEXT',
@@ -613,7 +879,7 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('CASCADE');
 
       table
-        .uuid('data_source_id')
+        .uuid('item_template_id')
         .references('id')
         .inTable('layout_components')
         .nullable()
@@ -667,7 +933,8 @@ export async function up(knex: Knex): Promise<void> {
         .references('id')
         .inTable('layout_components')
         .unique()
-        .notNullable();
+        .notNullable()
+				.onDelete('CASCADE');
 
       table
         .integer('sort_order')
@@ -675,7 +942,10 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table
-        .primary(['composite_id', 'sort_order']);
+        .primary(['composite_id', 'sort_order'], {
+					constraintName: 'uniq_composite_children_order',
+					deferrable: 'deferred',
+				});
     })
 
     .createTable('component_templates', (table) => {
@@ -696,6 +966,47 @@ export async function up(knex: Knex): Promise<void> {
         .inTable('vendors')
         .notNullable()
         .onDelete('CASCADE');
+    })
+
+		.createTable('page_layouts', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('storefront_release_id')
+        .notNullable()
+        .references('id')
+        .inTable('storefront_releases')
+        .onDelete('CASCADE');
+
+			table
+				.enum(
+					'type',
+					[
+						'HOME',
+						'ABOUT_US',
+						'COLLECTION',
+						'COLLECTION_LIST',
+						'SEARCH',
+						'PRODUCT',
+					],
+					{ useNative: true, enumName: 'page_type' },
+				)
+				.notNullable();
+
+			table
+				.uuid('root_component_id')
+				.references('id')
+				.inTable('composite_components')
+				.nullable()
+				.onDelete('SET NULL');
+
+			table.unique(['storefront_release_id', 'type'], {
+				indexName: 'idx_page_layout_storefront_release_page_type',
+				useConstraint: true,
+			});
     })
 
     .createTable('theme_settings', (table) => {
@@ -734,6 +1045,7 @@ export async function up(knex: Knex): Promise<void> {
       addColorColumn('color_primary', 0x2563EB);
       addColorColumn('color_primary_foreground', 0xFFFFFF);
       addColorColumn('color_secondary', 0x475569);
+			addColorColumn('color_secondary_foreground', 0xFFFFFF);
 
       addColorColumn('color_accent', 0xF59E0B);
       addColorColumn('color_accent_foreground', 0x000000);
@@ -788,7 +1100,70 @@ export async function up(knex: Knex): Promise<void> {
         .decimal('body_letter_spacing', 4, 3)
         .notNullable()
         .defaultTo(0.000);
-    })
+    });
+
+		await knex.raw(`
+			CREATE OR REPLACE FUNCTION get_layout_tree_json(target_id uuid)
+			RETURNS jsonb AS $$
+			SELECT jsonb_build_object(
+				'id', lc.id,
+				'name', lc.name,
+				'description', lc.description,
+				'config', lc.config::jsonb
+			) || COALESCE(
+				(
+					SELECT jsonb_build_object(
+						'type', 'LEAF',
+						'component_type', l.component_type
+					)
+					FROM leaf_components l
+					WHERE l.id = lc.id
+				),
+				(
+					SELECT jsonb_build_object(
+						'type', 'COMMERCE',
+						'component_type', c.component_type
+					)
+					FROM commerce_components c
+					WHERE c.id = lc.id
+				),
+				(
+					SELECT jsonb_build_object(
+						'type', 'REPEATER',
+						'component_type', r.component_type,
+						'item_template', CASE 
+							WHEN r.item_template_id IS NOT NULL THEN get_layout_tree_json(r.item_template_id)
+							ELSE NULL
+						END
+					)
+					FROM repeater_components r
+					WHERE r.id = lc.id
+				),
+				(
+					SELECT jsonb_build_object(
+						'type', 'COMPOSITE',
+						'component_type', cc.component_type,
+						'children', COALESCE(
+							(
+								SELECT jsonb_object_agg(
+									ccc.sort_order,
+									get_layout_tree_json(ccc.child_id)
+								)
+								FROM composite_component_children ccc
+								WHERE ccc.composite_id = cc.id
+							),
+							'{}'::jsonb
+						)
+					)
+					FROM composite_components cc
+					WHERE cc.id = lc.id
+				),
+				'{}'::jsonb
+			)
+			FROM layout_components lc
+			WHERE lc.id = target_id;
+			$$ LANGUAGE sql STABLE;
+		`);
 
   await knex.raw(`
     CREATE INDEX idx_component_templates_name_trgm
@@ -805,10 +1180,15 @@ export async function up(knex: Knex): Promise<void> {
     ON recipes (created_at DESC, id DESC)
     WHERE is_public = TRUE;
   `);
+
+  await knex.raw(`
+    CREATE INDEX idx_products_title_trgm
+    ON products USING gin (title gin_trgm_ops);
+  `);
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema
+	await knex.schema
     .dropTableIfExists('typography')
     .dropTableIfExists('color_palettes')
     .dropTableIfExists('theme_settings')
@@ -824,6 +1204,14 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('storefronts')
     .dropTableIfExists('social_links')
     .dropTableIfExists('brands')
+    .dropTableIfExists('product_collections')
+    .dropTableIfExists('collections')
+    .dropTableIfExists('stock_alerts')
+    .dropTableIfExists('product_stocks')
+    .dropTableIfExists('product_tags')
+    .dropTableIfExists('product_notes')
+    .dropTableIfExists('product_images')
+    .dropTableIfExists('products')
     .dropTableIfExists('recipe_tags')
     .dropTableIfExists('recipe_notes')
     .dropTableIfExists('recipe_tools')
@@ -832,14 +1220,18 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('recipes')
     .dropTableIfExists('vendors')
     .dropTableIfExists('images')
+    .dropTableIfExists('vendors')
     .dropTableIfExists('users');
 
-  await knex.raw(`
+	await knex.raw(`
     DROP TYPE IF EXISTS composite_component_type;
     DROP TYPE IF EXISTS repeater_component_type;
     DROP TYPE IF EXISTS leaf_component_type;
     DROP TYPE IF EXISTS commerce_component_type;
     DROP TYPE IF EXISTS page_type;
+		DROP TYPE IF EXISTS stock_alert_type;
     DROP TYPE IF EXISTS user_role;
   `);
+	
+	await knex.raw('DROP EXTENSION IF EXISTS pg_trgm;');
 }

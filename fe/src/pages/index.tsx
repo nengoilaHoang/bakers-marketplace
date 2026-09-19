@@ -1,11 +1,51 @@
 import Head from "next/head";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
 import HomeRecipeCard from "@/components/home/HomeRecipeCard";
 import HomeRecipeCardSkeleton from "@/components/home/HomeRecipeCardSkeleton";
 import RecipesLayout from "@/components/layout/RecipesLayout";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useLatestRecipes } from "@/hooks/useLatestRecipes";
+
+const page: CSSProperties = {
+  padding: "24px 32px",
+  fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
+  fontSize: 14,
+  lineHeight: 1.6,
+  maxWidth: 620,
+  margin: "0 auto",
+  background: "#fff",
+  color: "#111827",
+  minHeight: "100vh",
+  colorScheme: "light",
+};
+
+const h1: CSSProperties = {
+  fontSize: 22,
+  fontWeight: 600,
+  margin: "12px 0 4px",
+};
+
+const h2: CSSProperties = {
+  fontSize: 16,
+  fontWeight: 600,
+  margin: "28px 0 8px",
+  paddingBottom: 6,
+  borderBottom: "1px solid #e5e7eb",
+};
+
+const muted: CSSProperties = { color: "#6b7280", fontSize: 13 };
+
+const card: CSSProperties = {
+  display: "block",
+  border: "1px solid #e5e7eb",
+  borderRadius: 8,
+  padding: "14px 16px",
+  marginBottom: 12,
+  color: "#2563eb",
+  textDecoration: "none",
+};
 
 const topics = [
   "Bánh mì",
@@ -14,6 +54,23 @@ const topics = [
   "Chocolate",
   "Healthy",
   "Dễ làm",
+];
+const links = [
+  {
+    group: "Products",
+    items: [
+      { href: "/products", label: "Danh sách sản phẩm" },
+      { href: "/products/new", label: "Tạo sản phẩm" },
+      { href: "/products/search", label: "Tìm kiếm sản phẩm" },
+    ],
+  },
+  {
+    group: "Collections",
+    items: [
+      { href: "/collections", label: "Danh sách bộ sưu tập" },
+      { href: "/collections/new", label: "Tạo bộ sưu tập" },
+    ],
+  },
 ];
 
 export default function Home() {
@@ -29,6 +86,19 @@ export default function Home() {
         />
       </Head>
 
+      {links.map((section) => (
+        <div key={section.group}>
+          <h2 style={h2}>{section.group}</h2>
+
+          {section.items.map((item) => (
+            <Link key={item.href} href={item.href} style={card}>
+              {item.label}
+              <span style={{ ...muted, marginLeft: 8 }}>{item.href}</span>
+            </Link>
+          ))}
+        </div>
+      ))}
+
       <RecipesLayout>
         <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white px-6 py-14 sm:px-10 sm:py-20 lg:px-16">
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-500">
@@ -38,7 +108,8 @@ export default function Home() {
             Khám phá thế giới làm bánh
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg">
-            Tìm công thức, học hỏi từ cộng đồng và chuẩn bị nguyên liệu cho món bánh tiếp theo.
+            Tìm công thức, học hỏi từ cộng đồng và chuẩn bị nguyên liệu cho món
+            bánh tiếp theo.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link

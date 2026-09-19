@@ -693,8 +693,247 @@ function buildFamilyNotes(familyName: string, flavor: Flavor): string[] {
   }
 }
 
+// ==========================================================
+// PRODUCT MODULE
+// ==========================================================
+
+const vendorUsers = [
+  {
+    email: 'vendor.hoasen@example.com',
+    displayname: 'Tiệm Bánh Hoa Sen',
+    password: 'password123',
+    role: 'VENDOR',
+    taxCode: '0312345678',
+  },
+  {
+    email: 'vendor.mattroi@example.com',
+    displayname: 'Bánh Ngọt Mặt Trời',
+    password: 'password123',
+    role: 'VENDOR',
+    taxCode: '0398765432',
+  },
+];
+
+const brands = [
+  {
+    name: 'Hoa Sen Bakery',
+    domain: 'hoasen-bakery.vn',
+  },
+  {
+    name: 'Sunrise Patisserie',
+    domain: 'sunrise-patisserie.vn',
+  },
+];
+
+const collections = [
+  {
+    name: 'Bánh Trung Thu',
+    slug: 'banh-trung-thu',
+    description: 'Bộ sưu tập bánh trung thu truyền thống và hiện đại.',
+    isActive: true,
+  },
+  {
+    name: 'Hàng Mới Về',
+    slug: 'hang-moi-ve',
+    description: 'Những sản phẩm vừa lên kệ trong tuần.',
+    isActive: true,
+  },
+  {
+    name: 'Bánh Không Đường',
+    slug: 'banh-khong-duong',
+    description: 'Dành cho người ăn kiêng hoặc tiểu đường.',
+    isActive: true,
+  },
+  {
+    name: 'Bộ Sưu Tập Cũ',
+    slug: 'bo-suu-tap-cu',
+    description: 'Đã ngừng kinh doanh, giữ lại để tham khảo.',
+    isActive: false,
+  },
+];
+
+type SeedProduct = {
+  title: string;
+  slug: string;
+  description: string;
+  unitPrice: number;
+  unitCost: number;
+  unit: string;
+  stock: number;
+  brandIndex: 0 | 1;
+  tags: string[];
+  notes: string[];
+  collectionSlugs: string[];
+  alerts: Array<{
+    alertType: 'MINIMUM' | 'REORDER' | 'MAXIMUM';
+    threshold: number;
+  }>;
+};
+
+const products: SeedProduct[] = [
+  {
+    title: 'Bánh Trung Thu Thập Cẩm',
+    slug: 'banh-trung-thu-thap-cam',
+    description:
+      'Bánh nướng nhân thập cẩm truyền thống với hạt dưa, lạp xưởng và mứt bí.',
+    unitPrice: 85000,
+    unitCost: 52000,
+    unit: 'cái',
+    stock: 120,
+    brandIndex: 0,
+    tags: ['trung-thu', 'banh-nuong', 'truyen-thong'],
+    notes: [
+      'Bảo quản nơi khô ráo, dùng trong 30 ngày.',
+      'Không để trong tủ lạnh vì vỏ bánh sẽ bị cứng.',
+    ],
+    collectionSlugs: ['banh-trung-thu'],
+    alerts: [
+      { alertType: 'MINIMUM', threshold: 20 },
+      { alertType: 'REORDER', threshold: 50 },
+      { alertType: 'MAXIMUM', threshold: 300 },
+    ],
+  },
+  {
+    title: 'Bánh Trung Thu Trứng Muối Tan Chảy',
+    slug: 'banh-trung-thu-trung-muoi',
+    description:
+      'Bánh dẻo nhân custard trứng muối chảy, vị béo ngậy và mặn ngọt hài hòa.',
+    unitPrice: 95000,
+    unitCost: 60000,
+    unit: 'cái',
+    stock: 80,
+    brandIndex: 0,
+    tags: ['trung-thu', 'banh-deo', 'trung-muoi'],
+    notes: ['Bảo quản lạnh 5-10°C, dùng trong 10 ngày.'],
+    collectionSlugs: ['banh-trung-thu', 'hang-moi-ve'],
+    alerts: [
+      { alertType: 'MINIMUM', threshold: 15 },
+      { alertType: 'REORDER', threshold: 40 },
+    ],
+  },
+  {
+    title: 'Bánh Mì Nguyên Cám',
+    slug: 'banh-mi-nguyen-cam',
+    description:
+      'Bánh mì làm từ bột mì nguyên cám, giàu chất xơ, không thêm đường.',
+    unitPrice: 42000,
+    unitCost: 24000,
+    unit: 'ổ',
+    stock: 45,
+    brandIndex: 1,
+    tags: ['banh-mi', 'nguyen-cam', 'healthy', 'khong-duong'],
+    notes: [
+      'Dùng trong 3 ngày kể từ ngày sản xuất.',
+      'Có thể cấp đông tối đa 1 tháng.',
+    ],
+    collectionSlugs: ['banh-khong-duong', 'hang-moi-ve'],
+    alerts: [
+      { alertType: 'MINIMUM', threshold: 10 },
+      { alertType: 'REORDER', threshold: 25 },
+    ],
+  },
+  {
+    title: 'Croissant Bơ Pháp',
+    slug: 'croissant-bo-phap',
+    description:
+      'Croissant nhiều lớp, sử dụng bơ Pháp AOP, nướng mới mỗi sáng.',
+    unitPrice: 35000,
+    unitCost: 19000,
+    unit: 'cái',
+    stock: 60,
+    brandIndex: 1,
+    tags: ['croissant', 'bo-phap', 'an-sang'],
+    notes: ['Ngon nhất khi dùng trong ngày.'],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [{ alertType: 'MINIMUM', threshold: 12 }],
+  },
+  {
+    title: 'Bánh Quy Yến Mạch Không Đường',
+    slug: 'banh-quy-yen-mach-khong-duong',
+    description:
+      'Bánh quy yến mạch dùng đường ăn kiêng erythritol, phù hợp người tiểu đường.',
+    unitPrice: 68000,
+    unitCost: 41000,
+    unit: 'hộp 200g',
+    stock: 30,
+    brandIndex: 1,
+    tags: ['banh-quy', 'yen-mach', 'khong-duong', 'an-kieng'],
+    notes: ['Đóng gói hút chân không.', 'Hạn sử dụng 6 tháng.'],
+    collectionSlugs: ['banh-khong-duong'],
+    alerts: [
+      { alertType: 'MINIMUM', threshold: 8 },
+      { alertType: 'MAXIMUM', threshold: 150 },
+    ],
+  },
+  {
+    title: 'Bánh Kem Dâu Tây Tươi',
+    slug: 'banh-kem-dau-tay-tuoi',
+    description: 'Cốt bánh chiffon vani, kem tươi Pháp và dâu tây Đà Lạt.',
+    unitPrice: 320000,
+    unitCost: 185000,
+    unit: 'cái',
+    stock: 15,
+    brandIndex: 0,
+    tags: ['banh-kem', 'dau-tay', 'sinh-nhat'],
+    notes: [
+      'Đặt trước tối thiểu 24 giờ.',
+      'Bảo quản lạnh, dùng trong 2 ngày.',
+    ],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [
+      { alertType: 'MINIMUM', threshold: 3 },
+      { alertType: 'REORDER', threshold: 8 },
+    ],
+  },
+  {
+    title: 'Bánh Su Kem Nhân Trà Xanh',
+    slug: 'banh-su-kem-tra-xanh',
+    description: 'Vỏ su giòn nhẹ, nhân custard trà xanh Uji Nhật Bản.',
+    unitPrice: 28000,
+    unitCost: 15000,
+    unit: 'cái',
+    stock: 0,
+    brandIndex: 0,
+    tags: ['su-kem', 'tra-xanh', 'matcha'],
+    notes: ['Tạm hết hàng, dự kiến nhập lại cuối tuần.'],
+    collectionSlugs: [],
+    alerts: [{ alertType: 'MINIMUM', threshold: 20 }],
+  },
+  {
+    title: 'Tart Trứng Bồ Đào Nha',
+    slug: 'tart-trung-bo-dao-nha',
+    description:
+      'Vỏ tart ngàn lớp giòn rụm, nhân trứng sữa mềm mịn, mặt caramel.',
+    unitPrice: 25000,
+    unitCost: 13000,
+    unit: 'cái',
+    stock: 90,
+    brandIndex: 1,
+    tags: ['tart', 'trung', 'bo-dao-nha'],
+    notes: ['Hâm nóng 3 phút ở 160°C trước khi dùng.'],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [
+      { alertType: 'MINIMUM', threshold: 20 },
+      { alertType: 'REORDER', threshold: 45 },
+    ],
+  },
+];
+
 export async function seed(knex: Knex): Promise<void> {
   await knex.transaction(async (trx) => {
+    // --- product module ---
+    await trx('product_collections').del();
+    await trx('stock_alerts').del();
+    await trx('product_stocks').del();
+    await trx('product_tags').del();
+    await trx('product_notes').del();
+    await trx('product_images').del();
+    await trx('products').del();
+    await trx('collections').del();
+    await trx('brands').del();
+    await trx('vendors').del();
+
+    // --- recipe module ---
     await trx('recipe_tags').del();
     await trx('recipe_notes').del();
     await trx('recipe_tools').del();
@@ -814,6 +1053,121 @@ export async function seed(knex: Knex): Promise<void> {
           name,
         })),
       );
+    }
+
+    // ======================================================
+    // PRODUCT MODULE
+    // ======================================================
+
+    const vendorRows = await trx('users')
+      .insert(
+        vendorUsers.map(
+          ({ email, displayname, password, role }) => ({
+            email,
+            displayname,
+            password,
+            role,
+          }),
+        ),
+      )
+      .returning(['id']);
+
+    await trx('vendors').insert(
+      vendorRows.map((row, index) => ({
+        id: row.id,
+        taxCode: vendorUsers[index].taxCode,
+        registeredAt: trx.fn.now(),
+      })),
+    );
+
+    const brandRows = await trx('brands')
+      .insert(
+        brands.map((brand, index) => ({
+          name: brand.name,
+          domain: brand.domain,
+          vendorId: vendorRows[index].id,
+        })),
+      )
+      .returning(['id']);
+
+    const collectionRows = await trx('collections')
+      .insert(collections)
+      .returning(['id', 'slug']);
+
+    const collectionIdBySlug = new Map<string, string>(
+      collectionRows.map(
+        (row: { id: string; slug: string }) => [row.slug, row.id],
+      ),
+    );
+
+    for (let index = 0; index < products.length; index += 1) {
+      const product = products[index];
+
+      const [createdProduct] = await trx('products')
+        .insert({
+          brandId: brandRows[product.brandIndex].id,
+          vendorId: vendorRows[product.brandIndex].id,
+          title: product.title,
+          description: product.description,
+          slug: product.slug,
+          unitPrice: product.unitPrice,
+          unitCost: product.unitCost,
+          currency: 'VND',
+          unit: product.unit,
+          createdAt: trx.raw(
+            `NOW() - (? * INTERVAL '1 day')`,
+            [index],
+          ),
+        })
+        .returning(['id']);
+
+      const productId = createdProduct.id;
+
+      await trx('product_stocks').insert({
+        id: productId,
+        stock: product.stock,
+      });
+
+      if (product.alerts.length > 0) {
+        await trx('stock_alerts').insert(
+          product.alerts.map((alert) => ({
+            productStockId: productId,
+            alertType: alert.alertType,
+            threshold: alert.threshold,
+          })),
+        );
+      }
+
+      if (product.tags.length > 0) {
+        await trx('product_tags').insert(
+          product.tags.map((name) => ({
+            productId,
+            name,
+          })),
+        );
+      }
+
+      if (product.notes.length > 0) {
+        await trx('product_notes').insert(
+          product.notes.map((content) => ({
+            productId,
+            content,
+          })),
+        );
+      }
+
+      const collectionIds = product.collectionSlugs
+        .map((slug) => collectionIdBySlug.get(slug))
+        .filter((id): id is string => Boolean(id));
+
+      if (collectionIds.length > 0) {
+        await trx('product_collections').insert(
+          collectionIds.map((collectionId) => ({
+            productId,
+            collectionId,
+          })),
+        );
+      }
     }
   });
 }
