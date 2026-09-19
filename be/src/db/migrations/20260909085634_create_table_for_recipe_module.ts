@@ -483,47 +483,16 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('SET NULL');
       
       table
-        .string('displayName', 255)
+        .string('display_name', 255)
         .notNullable();
       
       table
-        .timestamp('published_at', { useTz: true })
-        .nullable()
-        .defaultTo(null);
-    })
-
-    .createTable('page_layouts', (table) => {
-      table
-        .uuid('id')
-        .primary()
-        .defaultTo(knex.raw('gen_random_uuid()'));
-
-      table
-        .uuid('storefront_release_id')
-        .notNullable()
-        .references('id')
-        .inTable('storefront_releases')
-        .onDelete('CASCADE');
+        .timestamps(true, true);
 
 			table
-				.enum(
-					'type',
-					[
-						'HOME',
-						'ABOUT_US',
-						'COLLECTION',
-						'COLLECTION_LIST',
-						'SEARCH',
-						'PRODUCT',
-					],
-					{ useNative: true, enumName: 'page_type' },
-				)
-				.notNullable();
-
-			table.unique(['storefront_release_id', 'type'], {
-				indexName: 'idx_page_layout_storefront_release_page_type',
-				useConstraint: true,
-			});
+        .boolean('is_active')
+				.notNullable()
+				.defaultTo(false);
     })
 
     .createTable('layout_components', (table) => {
@@ -534,7 +503,8 @@ export async function up(knex: Knex): Promise<void> {
 
       table
         .string('name', 255)
-        .notNullable();
+				.nullable()
+				.defaultTo(null);
 
       table
         .text('description')
@@ -590,6 +560,7 @@ export async function up(knex: Knex): Promise<void> {
 					[
 						'CARD',
 						'FORM',
+            'BUTTON',
 						'SEARCH_BAR',
 						'FILTER',
 						'RICH_TEXT',
@@ -613,7 +584,7 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('CASCADE');
 
       table
-        .uuid('data_source_id')
+        .uuid('item_template_id')
         .references('id')
         .inTable('layout_components')
         .nullable()
@@ -667,7 +638,8 @@ export async function up(knex: Knex): Promise<void> {
         .references('id')
         .inTable('layout_components')
         .unique()
-        .notNullable();
+        .notNullable()
+				.onDelete('CASCADE');
 
       table
         .integer('sort_order')
@@ -675,7 +647,10 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table
-        .primary(['composite_id', 'sort_order']);
+        .primary(['composite_id', 'sort_order'], {
+					constraintName: 'uniq_composite_children_order',
+					deferrable: 'deferred',
+				});
     })
 
     .createTable('component_templates', (table) => {
@@ -696,6 +671,47 @@ export async function up(knex: Knex): Promise<void> {
         .inTable('vendors')
         .notNullable()
         .onDelete('CASCADE');
+    })
+
+		.createTable('page_layouts', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('storefront_release_id')
+        .notNullable()
+        .references('id')
+        .inTable('storefront_releases')
+        .onDelete('CASCADE');
+
+			table
+				.enum(
+					'type',
+					[
+						'HOME',
+						'ABOUT_US',
+						'COLLECTION',
+						'COLLECTION_LIST',
+						'SEARCH',
+						'PRODUCT',
+					],
+					{ useNative: true, enumName: 'page_type' },
+				)
+				.notNullable();
+
+			table
+				.uuid('root_component_id')
+				.references('id')
+				.inTable('composite_components')
+				.nullable()
+				.onDelete('SET NULL');
+
+			table.unique(['storefront_release_id', 'type'], {
+				indexName: 'idx_page_layout_storefront_release_page_type',
+				useConstraint: true,
+			});
     })
 
     .createTable('theme_settings', (table) => {
@@ -734,6 +750,7 @@ export async function up(knex: Knex): Promise<void> {
       addColorColumn('color_primary', 0x2563EB);
       addColorColumn('color_primary_foreground', 0xFFFFFF);
       addColorColumn('color_secondary', 0x475569);
+			addColorColumn('color_secondary_foreground', 0xFFFFFF);
 
       addColorColumn('color_accent', 0xF59E0B);
       addColorColumn('color_accent_foreground', 0x000000);
@@ -788,7 +805,70 @@ export async function up(knex: Knex): Promise<void> {
         .decimal('body_letter_spacing', 4, 3)
         .notNullable()
         .defaultTo(0.000);
-    })
+    });
+
+		await knex.raw(`
+			CREATE OR REPLACE FUNCTION get_layout_tree_json(target_id uuid)
+			RETURNS jsonb AS $$
+			SELECT jsonb_build_object(
+				'id', lc.id,
+				'name', lc.name,
+				'description', lc.description,
+				'config', lc.config::jsonb
+			) || COALESCE(
+				(
+					SELECT jsonb_build_object(
+						'type', 'LEAF',
+						'component_type', l.component_type
+					)
+					FROM leaf_components l
+					WHERE l.id = lc.id
+				),
+				(
+					SELECT jsonb_build_object(
+						'type', 'COMMERCE',
+						'component_type', c.component_type
+					)
+					FROM commerce_components c
+					WHERE c.id = lc.id
+				),
+				(
+					SELECT jsonb_build_object(
+						'type', 'REPEATER',
+						'component_type', r.component_type,
+						'item_template', CASE 
+							WHEN r.item_template_id IS NOT NULL THEN get_layout_tree_json(r.item_template_id)
+							ELSE NULL
+						END
+					)
+					FROM repeater_components r
+					WHERE r.id = lc.id
+				),
+				(
+					SELECT jsonb_build_object(
+						'type', 'COMPOSITE',
+						'component_type', cc.component_type,
+						'children', COALESCE(
+							(
+								SELECT jsonb_object_agg(
+									ccc.sort_order,
+									get_layout_tree_json(ccc.child_id)
+								)
+								FROM composite_component_children ccc
+								WHERE ccc.composite_id = cc.id
+							),
+							'{}'::jsonb
+						)
+					)
+					FROM composite_components cc
+					WHERE cc.id = lc.id
+				),
+				'{}'::jsonb
+			)
+			FROM layout_components lc
+			WHERE lc.id = target_id;
+			$$ LANGUAGE sql STABLE;
+		`);
 
   await knex.raw(`
     CREATE INDEX idx_component_templates_name_trgm
@@ -808,7 +888,7 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema
+await knex.schema
     .dropTableIfExists('typography')
     .dropTableIfExists('color_palettes')
     .dropTableIfExists('theme_settings')
@@ -832,9 +912,10 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('recipes')
     .dropTableIfExists('vendors')
     .dropTableIfExists('images')
+    .dropTableIfExists('vendors')
     .dropTableIfExists('users');
 
-  await knex.raw(`
+	await knex.raw(`
     DROP TYPE IF EXISTS composite_component_type;
     DROP TYPE IF EXISTS repeater_component_type;
     DROP TYPE IF EXISTS leaf_component_type;
@@ -842,4 +923,6 @@ export async function down(knex: Knex): Promise<void> {
     DROP TYPE IF EXISTS page_type;
     DROP TYPE IF EXISTS user_role;
   `);
+	
+	await knex.raw('DROP EXTENSION IF EXISTS pg_trgm;');
 }
