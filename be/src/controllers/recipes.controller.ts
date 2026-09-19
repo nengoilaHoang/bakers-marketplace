@@ -29,6 +29,8 @@ type RecipeUserIdParams = {
   userId: string;
 };
 
+const CURRENT_USER_ID = '11111111-1111-4111-8111-111111111111';
+
 class RecipeController {
     private recipeService = recipeService;
     private stepsService = stepsService;
@@ -118,6 +120,23 @@ class RecipeController {
         }
     };
 
+    public getMine = async (
+        _req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+        const recipes =
+            await recipeService.getByUserId(CURRENT_USER_ID);
+
+        res.status(200).json({
+            data: recipes,
+        });
+        } catch (error) {
+        next(error);
+        }
+    };
+
     public create = async (
         req: Request,
         res: Response,
@@ -130,7 +149,7 @@ class RecipeController {
             ...req.body,
         } as RecipeCreatePayload;
         //hard code userId
-        const userId = "11111111-1111-4111-8111-111111111111";
+        const userId = CURRENT_USER_ID;
         if (!userId) {
             throw new Error('userId is required');
         }
@@ -157,7 +176,7 @@ class RecipeController {
             ...parsedRecipe,
             ...req.body,
         } as RecipeCreatePayload;
-        const userId = "11111111-1111-4111-8111-111111111111";
+        const userId = CURRENT_USER_ID;
         recipe.isSnapshot = true;
         recipe.isPublic = true;
         const createdRecipe =
@@ -182,7 +201,7 @@ class RecipeController {
             ...parsedRecipe,
             ...req.body,
         } as RecipeUpdatePayload;
-        const userId:string = "11111111-1111-4111-8111-111111111111";
+        const userId: string = CURRENT_USER_ID;
         if (!recipe.id) {throw new Error('recipe id is required');}
         const isOwner = await this.recipeService.checkRecipeOwner(userId, recipe.id);
         if (!isOwner) {
@@ -216,7 +235,7 @@ class RecipeController {
     ): Promise<void> => {
         try {
         const { id } = req.params;
-        const userId:string = "11111111-1111-4111-8111-111111111111";   
+        const userId: string = CURRENT_USER_ID;
         const isOwner = await this.recipeService.checkRecipeOwner(userId, id);
         if (!isOwner) {
         throw new Error('you dont have permission');

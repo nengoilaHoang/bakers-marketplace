@@ -60,3 +60,108 @@ export type RecipeDetail = Recipe & {
   recipeNotes: RecipeNote[];
   recipeTags: RecipeTag[];
 };
+
+export type RecipeSearchMatchMode = "complete" | "flexible";
+
+export type RecipeRequirementMatch = {
+  matched: number;
+  total: number;
+  missing: string[];
+};
+
+export type RecipeSearchResult = Recipe & {
+  rankScore: number;
+  matchMode: RecipeSearchMatchMode;
+  ingredientMatch: RecipeRequirementMatch;
+  toolMatch: RecipeRequirementMatch;
+};
+
+export type RecipeSearchParams = {
+  query: string;
+  tools?: string[];
+  ingredients?: string[];
+  matchMode?: RecipeSearchMatchMode;
+};
+
+export type RecipeIngredientFormValue = {
+  id?: string;
+  name: string;
+  amount?: number | null;
+  unit?: string | null;
+  coverImgId?: string | null;
+};
+
+export type RecipeToolFormValue = Omit<RecipeIngredientFormValue, "unit">;
+
+export type RecipeStepFormValue = {
+  id?: string;
+  description: string;
+};
+
+export type RecipeNoteFormValue = {
+  id?: string;
+  content: string;
+};
+
+export type RecipeTagFormValue = {
+  id?: string;
+  name: string;
+};
+
+export type RecipeFormValues = {
+  title: string;
+  description: string | null;
+  portion: number | null;
+  isPublic: boolean;
+  coverImgId?: string | null;
+  recipeIngredients: RecipeIngredientFormValue[];
+  recipeTools: RecipeToolFormValue[];
+  steps: RecipeStepFormValue[];
+  recipeNotes: RecipeNoteFormValue[];
+  recipeTags: RecipeTagFormValue[];
+};
+
+export type RecipeIngredientMutationFields = {
+  name: string;
+  amount: number | null;
+  unit: string | null;
+  coverImgId: string | null;
+};
+
+export type RecipeToolMutationFields = Omit<
+  RecipeIngredientMutationFields,
+  "unit"
+>;
+
+export type RecipeStepMutationFields = {
+  stepOrder: number;
+  description: string;
+};
+
+export type RecipeNoteMutationFields = {
+  noteOrder: number;
+  content: string;
+};
+
+export type RecipeTagMutationFields = {
+  name: string;
+};
+
+export type RecipeRelationMutation<TFields> = {
+  create: TFields[];
+  update: Array<TFields & { id: string }>;
+  delete: string[];
+};
+
+export type RecipeMutationPayload = {
+  title: string;
+  description: string | null;
+  portion: number | null;
+  isPublic: boolean;
+  coverImgId: string | null;
+  recipeIngredients: RecipeRelationMutation<RecipeIngredientMutationFields>;
+  recipeTools: RecipeRelationMutation<RecipeToolMutationFields>;
+  steps: RecipeRelationMutation<RecipeStepMutationFields>;
+  recipeNotes: RecipeRelationMutation<RecipeNoteMutationFields>;
+  recipeTags: RecipeRelationMutation<RecipeTagMutationFields>;
+};

@@ -118,12 +118,12 @@ export default function Home() {
             >
               Khám phá công thức
             </Link>
-            <a
-              href="#share-recipe"
+            <Link
+              href="/recipes/mine/new"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-800 transition hover:border-zinc-500 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
             >
               Đăng công thức
-            </a>
+            </Link>
           </div>
         </section>
 
@@ -225,12 +225,12 @@ export default function Home() {
           <p className="mt-4 max-w-2xl leading-7 text-zinc-300">
             Đăng công thức và cùng xây dựng cộng đồng làm bánh.
           </p>
-          <a
-            href="#share-recipe"
+          <Link
+            href="/recipes/mine/new"
             className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             Đăng công thức
-          </a>
+          </Link>
         </section>
       </RecipesLayout>
     </>

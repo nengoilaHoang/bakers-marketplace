@@ -1,4 +1,4 @@
-import recipeIngredientsDAO from '#/daos/recipeIngredients.dao.js';
+import recipeIngredientsDAO from '#/daos/recipes/recipeIngredients.dao.js';
 import type { Knex } from 'knex';
 import {
   RecipeIngredient,
@@ -17,6 +17,10 @@ class RecipeIngredientService {
 
   public async getAllByRecipeId(recipeId: string): Promise<RecipeIngredient[]> {
     return this.recipeIngredientDAO.getAllByRecipeId(recipeId);
+  }
+
+  public async getAllByRecipeIds(recipeIds: string[]): Promise<RecipeIngredient[]> {
+    return this.recipeIngredientDAO.getAllByRecipeIds(recipeIds);
   }
 
   public async setRecipeIngredients(

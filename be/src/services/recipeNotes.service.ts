@@ -1,4 +1,4 @@
-import recipeNotesDAO from '#/daos/recipeNotes.dao.js';
+import recipeNotesDAO from '#/daos/recipes/recipeNotes.dao.js';
 import type { Knex } from 'knex';
 import { RecipeNote, type RecipeNoteCreate } from '#/models/recipeNotes.model.js';
 import type { RecipeNoteUpdate } from '#/models/recipeNotes.model.js';

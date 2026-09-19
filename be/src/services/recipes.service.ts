@@ -1,4 +1,4 @@
-import recipeDAO from '#/daos/recipes.dao.js';
+import recipeDAO from '#/daos/recipes/recipes.dao.js';
 import db from '#/db/index.js';
 import {
     Recipe,

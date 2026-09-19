@@ -1,4 +1,4 @@
-import recipeToolsDAO from '#/daos/recipeTools.dao.js';
+import recipeToolsDAO from '#/daos/recipes/recipeTools.dao.js';
 import type { Knex } from 'knex';
 import { RecipeTool, type RecipeToolCreate, type RecipeToolUpdate } from '#/models/recipeTools.model.js';
 
@@ -13,6 +13,10 @@ class RecipeToolService {
 
   public async getAllByRecipeId(recipeId: string): Promise<RecipeTool[]> {
     return this.recipeToolDAO.getAllByRecipeId(recipeId);
+  }
+
+  public async getAllByRecipeIds(recipeIds: string[]): Promise<RecipeTool[]> {
+    return this.recipeToolDAO.getAllByRecipeIds(recipeIds);
   }
 
   public async setRecipeTools(

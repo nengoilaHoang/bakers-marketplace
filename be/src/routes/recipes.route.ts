@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import recipeController from '#/controllers/recipes.controller.js';
+import recipeSearchEngineController from '#/controllers/recipeSearchEngine.controller.js';
 
 const router = Router();
 
@@ -20,8 +21,18 @@ router.post(
 );
 
 router.get(
+  '/mine',
+  recipeController.getMine,
+);
+
+router.get(
   '/user/:userId',
   recipeController.getByUserId,
+);
+
+router.get(
+  '/search',
+  recipeSearchEngineController.search,
 );
 
 router.get(

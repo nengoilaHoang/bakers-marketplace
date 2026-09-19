@@ -3,6 +3,7 @@ import type { Recipe } from "@/types/recipe";
 
 type RecipeCardProps = {
   recipe: Recipe;
+  href?: string;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -25,13 +26,13 @@ function formatDate(value: string | null | undefined) {
   return dateFormatter.format(date);
 }
 
-export default function RecipeCard({ recipe }: RecipeCardProps) {
+export default function RecipeCard({ recipe, href }: RecipeCardProps) {
   const formattedDate = formatDate(recipe.createdAt);
 
   return (
     <article className="h-full">
       <Link
-        href={`/recipes/${encodeURIComponent(recipe.id)}`}
+        href={href ?? `/recipes/${encodeURIComponent(recipe.id)}`}
         aria-label={`Xem công thức ${recipe.title}`}
         className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
       >
