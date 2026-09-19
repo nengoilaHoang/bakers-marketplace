@@ -1,4 +1,4 @@
-import pageLayoutDao, { PageLayoutDao } from '#/daos/page-layout.dao.js';
+import pageLayoutDao, { PageLayoutDao } from '#/daos/layouts/page-layout.dao.js';
 import {
 	CompositeComponent,
 	CompositeComponentSchema,

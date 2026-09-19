@@ -1,6 +1,6 @@
 import storefrontReleaseDao, {
 	StorefrontReleaseDao,
-} from '#/daos/storefront-releases.dao.js';
+} from '#/daos/storefronts/storefront-releases.dao.js';
 import { NotFoundError } from '#/utils/http-errors.js';
 
 export class StorefrontReleaseService {

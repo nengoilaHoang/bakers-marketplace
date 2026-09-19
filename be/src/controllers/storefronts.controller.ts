@@ -1,4 +1,4 @@
-import { ComponentNode } from '#/daos/layout-components.dao.js';
+import { ComponentNode } from '#/daos/layouts/layout-components.dao.js';
 import pageLayoutService, {
 	PageLayoutService,
 } from '#/services/page-layouts.service.js';

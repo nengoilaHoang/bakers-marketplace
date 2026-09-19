@@ -1,4 +1,4 @@
-import { LayoutComponentDao } from '#/daos/layout-components.dao.js';
+import { LayoutComponentDao } from '#/daos/layouts/layout-components.dao.js';
 
 import {
 	UpdateLayoutComponent,

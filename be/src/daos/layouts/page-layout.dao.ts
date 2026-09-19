@@ -2,7 +2,7 @@ import { CompositeComponent } from '#/models/layout-components/composite/composi
 import { Knex } from 'knex';
 import layoutComponentDao, {
 	LayoutComponentDao,
-} from './layout-components.dao.js';
+} from '../layouts/layout-components.dao.js';
 import database from '#/db/index.js';
 
 export class PageLayoutDao {

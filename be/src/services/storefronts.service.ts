@@ -1,4 +1,4 @@
-import storefrontDao, { StorefrontDao } from '#/daos/storefronts.dao.js';
+import storefrontDao, { StorefrontDao } from '#/daos/storefronts/storefronts.dao.js';
 import { StorefrontRelease } from '#/models/storefronts/storefront-releases.model.js';
 import { NotFoundError } from '#/utils/http-errors.js';
 
