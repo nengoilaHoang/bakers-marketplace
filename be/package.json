@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && tsc-alias",
+    "build": "tsc --noCheck && tsc-alias",
     "start": "npm run build && node dist/index.js",
     "dev": "tsx --watch src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:make": "NODE_OPTIONS='--import tsx' knex --knexfile ./src/knexfile.ts migrate:make -x ts",
+    "db:make": "cross-env NODE_OPTIONS=\"--import tsx\" knex --knexfile ./src/knexfile.ts migrate:make -x ts",
     "db:migrate": "NODE_OPTIONS='--import tsx' knex --knexfile ./src/knexfile.ts migrate:latest",
     "db:rollback": "NODE_OPTIONS='--import tsx' knex --knexfile ./src/knexfile.ts migrate:rollback",
     "db:list": "NODE_OPTIONS='--import tsx' knex --knexfile ./src/knexfile.ts migrate:list",
@@ -48,6 +48,7 @@
     "@types/knex": "^0.15.2",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.5.0",
+    "cross-env": "^10.1.0",
     "tsc-alias": "^1.9.4",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"

@@ -1,18 +1,22 @@
 import { z } from 'zod';
 
-export const UserRoleEnum = z.enum(['CUSTOMER', 'BAKER', 'VENDOR', 'ADMIN']);
-export const UserStatus = z.enum(['PENDING_VERIFICATION', 'ACTIVE', 'BANNED']);
+export const UserRoleSchema = z.enum(['CUSTOMER', 'BAKER', 'VENDOR', 'ADMIN']);
+export const UserStatusSchema = z.enum([
+	'PENDING_VERIFICATION',
+	'ACTIVE',
+	'BANNED',
+]);
 
 export const UserTableSchema = z.object({
-	id: z.uuidv4(),
+	id: z.uuidv4().readonly(),
 	email: z.email(),
 	phone: z.string().max(15),
 	password: z.string().max(255),
 	displayName: z.string().max(255),
-	role: UserRoleEnum.default('CUSTOMER'),
-	status: UserStatus,
-	createdAt: z.date().default(() => new Date()),
-	updateAt: z.date().default(() => new Date()),
+	role: UserRoleSchema.default('CUSTOMER'),
+	status: UserStatusSchema,
+	createdAt: z.date().readonly(),
+	updateAt: z.date(),
 });
 
 export const UserSchema = UserTableSchema;

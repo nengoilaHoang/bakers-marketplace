@@ -5,7 +5,22 @@ import type {
 } from 'express';
 
 import recipeService from '#/services/recipes.service.js';
-import { Recipe } from '#/models/recipes.model.js';
+import stepsService from '#/services/recipeSteps.service.js';   
+import recipeToolsService from '#/services/recipeTools.service.js';
+import recipeTagsService from '#/services/recipeTags.service.js';
+import recipeNotesService from '#/services/recipeNotes.service.js';
+import recipeIngredientsService from '#/services/recipeIngredients.service.js';
+import type {
+    RecipeCreatePayload,
+    RecipeUpdatePayload,
+} from '#/services/recipes.service.js';
+
+import {
+    Recipe,
+    RecipeCreateSchema,
+    RecipeUpdateSchema,
+    type RecipeCursor
+} from '#/models/recipes.model.js';
 
 type RecipeIdParams = {
   id: string;
@@ -16,6 +31,7 @@ type RecipeUserIdParams = {
 
 class RecipeController {
     private recipeService = recipeService;
+    private stepsService = stepsService;
     public getAll = async (
         req: Request,
         res: Response,
@@ -27,8 +43,33 @@ class RecipeController {
         res.status(200).json({
             data: recipes,
         });
-        } catch (error) {
+        } catch (error) {  
         next(error);
+        }
+    };
+
+    public getRecipes = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+        const { createdAt, id } = req.query;
+        let recipes;
+        if (typeof createdAt !== "string" || typeof id !== "string") {
+        recipes = await this.recipeService.getRecipes();
+        } else {
+            const recipeCursor: RecipeCursor = {
+                createdAt: new Date(createdAt),
+                id,
+            };
+            recipes = await this.recipeService.getRecipes(recipeCursor);
+        }
+        res.status(200).json({
+            data: recipes,
+        });
+        } catch (error) {  
+            next(error);
         }
     };
 
@@ -83,10 +124,19 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(req.body);
-
+        const parsedRecipe = RecipeCreateSchema.parse(req.body);
+        const recipe = {
+            ...parsedRecipe,
+            ...req.body,
+        } as RecipeCreatePayload;
+        //hard code userId
+        const userId = "11111111-1111-4111-8111-111111111111";
+        if (!userId) {
+            throw new Error('userId is required');
+        }
+        recipe.isSnapshot = false;
         const createdRecipe =
-            await recipeService.create(recipe);
+            await recipeService.set(userId, recipe);
 
         res.status(201).json({
             data: createdRecipe,
@@ -102,12 +152,16 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const recipe = new Recipe(req.body);
-        console.log(recipe);
-        recipe.is_snapshot = true;
-        recipe.is_public = true;
+        const parsedRecipe = RecipeCreateSchema.parse(req.body);
+        const recipe = {
+            ...parsedRecipe,
+            ...req.body,
+        } as RecipeCreatePayload;
+        const userId = "11111111-1111-4111-8111-111111111111";
+        recipe.isSnapshot = true;
+        recipe.isPublic = true;
         const createdRecipe =
-            await recipeService.create(recipe);
+            await recipeService.set(userId, recipe);
 
         res.status(201).json({
             data: createdRecipe,
@@ -123,16 +177,23 @@ class RecipeController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-        const { id } = req.params;
-
-        const recipe = new Recipe(req.body);
-
+        const parsedRecipe = RecipeUpdateSchema.parse(req.body);
+        const recipe = {
+            ...parsedRecipe,
+            ...req.body,
+        } as RecipeUpdatePayload;
+        const userId:string = "11111111-1111-4111-8111-111111111111";
+        if (!recipe.id) {throw new Error('recipe id is required');}
+        const isOwner = await this.recipeService.checkRecipeOwner(userId, recipe.id);
+        if (!isOwner) {
+        throw new Error('you dont have permission');
+        }
+        const id:string = recipe.id;
         const updatedRecipe =
             await recipeService.update(
-            id,
-            recipe,
+                id,
+                recipe,
             );
-
         if (!updatedRecipe) {
             res.status(404).json({
             message: 'Recipe not found',
@@ -140,7 +201,6 @@ class RecipeController {
 
             return;
         }
-
         res.status(200).json({
             data: updatedRecipe,
         });
@@ -156,18 +216,19 @@ class RecipeController {
     ): Promise<void> => {
         try {
         const { id } = req.params;
-
+        const userId:string = "11111111-1111-4111-8111-111111111111";   
+        const isOwner = await this.recipeService.checkRecipeOwner(userId, id);
+        if (!isOwner) {
+        throw new Error('you dont have permission');
+        }
         const deletedRecipe =
             await recipeService.delete(id);
-
         if (!deletedRecipe) {
             res.status(404).json({
             message: 'Recipe not found',
             });
-
             return;
         }
-
         res.status(200).json({
             data: deletedRecipe,
         });
