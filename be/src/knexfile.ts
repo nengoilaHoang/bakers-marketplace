@@ -15,7 +15,7 @@ const ext = __filename.endsWith('.ts') ? 'ts' : 'js';
 const development: Knex.Config = {
 	client: 'pg',
 	wrapIdentifier: (value, origImpl, _queryContext) => {
-		if (value === '*') return value;
+		if (value === '*') return origImpl(value);
 		return origImpl(snakecase(value));
 	},
 	postProcessResponse: (result, _queryContext) => {

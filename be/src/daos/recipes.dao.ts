@@ -1,5 +1,12 @@
 import db from '#/db/index.js';
-import { Recipe } from '#/models/recipes.model.js';
+import type { Knex } from 'knex';
+import {
+  Recipe,
+  type RecipeCreate,
+  type RecipeUpdate,
+  type RecipeCursor,
+  type GetRecipesResult
+} from '#/models/recipes.model.js';
 
 class RecipeDAO {
   private readonly tableName = 'recipes';
@@ -8,21 +15,54 @@ class RecipeDAO {
   public async getAll(): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('is_public',true)
-      .orderBy('created_at', 'desc');
+      .where({isPublic: true, isSnapshot: false})
+      .orderBy('createdAt', 'desc');
     return data.map(
       (recipe) => new Recipe(recipe),
     );
   }
 
-  public async checkRecipeBelongUser(user_id: string, recipe_id: string): Promise<boolean> {
-    const data = await this.db.instance<Recipe>(this.tableName)
+  public async getRecipes( cursor?: RecipeCursor,): Promise<GetRecipesResult> 
+  {
+    const query = this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('id',recipe_id)
-      .first();
-    if(data == null) return false;
-    if(data?.user_id == user_id) return true;
-    return false;
+      .where({
+        isPublic: true,
+        isSnapshot: false,
+      });
+      
+    if (cursor) {
+      query.andWhere((builder) => {
+        builder
+          .where('createdAt', '<', cursor.createdAt)
+          .orWhere((subBuilder) => {
+            subBuilder
+              .where('createdAt', '=', cursor.createdAt)
+              .andWhere('id', '<', cursor.id);
+          });
+      });
+    }
+
+    const data = await query
+      .orderBy('createdAt', 'desc')
+      .orderBy('id', 'desc')
+      .limit(20);
+
+    const recipes = data.map(
+      (recipe) => new Recipe(recipe),
+    );
+
+    const lastRecipe = data.at(-1);
+
+    return {
+      data: recipes,
+      cursor: lastRecipe
+        ? {
+            createdAt: lastRecipe.createdAt,
+            id: lastRecipe.id,
+          }
+        : null,
+    };
   }
 
   public async getById(
@@ -45,8 +85,8 @@ class RecipeDAO {
   ): Promise<Recipe[]> {
     const data = await this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where('user_id', userId)
-      .orderBy('created_at', 'desc');
+      .where({userId: userId, isSnapshot: false})
+      .orderBy('createdAt', 'desc');
 
     return data.map(
       (recipe) => new Recipe(recipe),
@@ -54,39 +94,44 @@ class RecipeDAO {
   }
 
   public async create(
-    recipe: Recipe,
+    userId: string,
+    recipe: RecipeCreate,
+    trx?: Knex.Transaction,
   ): Promise<Recipe> {
-    const data = this.removeUndefined(recipe);
+    const data = {
+      ...this.removeUndefined(recipe),
+      userId,
+    };
 
-    const [createdRecipe] = await this.db.instance<Recipe>(
+    const query = (trx ?? this.db.instance)<Recipe>(
       this.tableName,
-    )
-      .insert(data)
-      .returning('*');
+    ).insert(data).returning('*');
+    const [createdRecipe] = await query;
 
     return new Recipe(createdRecipe);
   }
 
   public async update(
     id: string,
-    recipe: Recipe,
+    recipe: RecipeUpdate,
+    trx?: Knex.Transaction,
   ): Promise<Recipe | null> {
     const data = this.removeUndefined(recipe);
     delete data.id;
-    delete data.created_at;
-    delete data.updated_at;
+    delete data.createdAt;
+    delete data.updatedAt;
 
     if (Object.keys(data).length === 0) {
       return this.getById(id);
     }
 
-    const [updatedRecipe] = await this.db.instance<Recipe>(
+    const [updatedRecipe] = await (trx ?? this.db.instance)<Recipe>(
       this.tableName,
     )
       .where('id', id)
       .update({
         ...data,
-        updated_at: db.instance.fn.now(),
+        updatedAt: (trx ?? this.db.instance).fn.now(),
       })
       .returning('*');
 
@@ -114,8 +159,20 @@ class RecipeDAO {
     return new Recipe(deletedRecipe);
   }
 
+  public async checkRecipeOwner(
+    userId:string,
+    recipeId: string,
+  ): Promise<boolean>{
+    return Boolean(
+      await this.db.instance<Recipe>(this.tableName)
+        .select('id')
+        .where({ id: recipeId, userId })
+        .first(),
+    );
+  }
+
   private removeUndefined(
-    recipe: Recipe,
+    recipe: RecipeCreate | RecipeUpdate,
   ): Partial<Recipe> {
     return Object.fromEntries(
       Object.entries(recipe).filter(
