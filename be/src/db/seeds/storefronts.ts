@@ -36,7 +36,7 @@ export async function seed(knex: Knex): Promise<void> {
         email: 'vendor@sweetblissbakery.com',
         displayname: 'Sweet Bliss Bakery',
         password: 'password123',
-        role: 'VENDER',
+        role: 'VENDOR',
       })
       .returning(['id']);
 
