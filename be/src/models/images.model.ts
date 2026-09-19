@@ -5,6 +5,11 @@ export const ImageTableSchema = z.object({
 	displayName: z.string().trim().min(3).max(255),
 	originalName: z.string().trim().min(3).max(255),
 	url: z.url().max(2048),
+	contentType: z.string().nullable(),
+	extName: z.string().nullable(),
+	size: z.number().int().nonnegative().nullable(),
+	checkSum: z.string().length(64).nullable(),
+	uploadedAt: z.date().nullable(),
 	createdAt: z.date().readonly(),
 });
 

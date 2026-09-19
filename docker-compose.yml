@@ -75,8 +75,6 @@ services:
     build:
       context: ./fe
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
     restart: always
     env_file:
       - ./fe/.env.${APP_ENV:-development}
