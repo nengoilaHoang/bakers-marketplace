@@ -75,6 +75,7 @@ services:
     build:
       context: ./fe
       dockerfile: Dockerfile
+      target: base
     restart: always
     env_file:
       - ./fe/.env.${APP_ENV:-development}
