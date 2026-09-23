@@ -47,6 +47,13 @@ app.get('/health', async (req: Request, res: Response) => {
   }
 });
 
+app.set('json replacer', (key: string, value: unknown) => {
+	if (value instanceof Map) {
+		return Array.from(value.entries());
+	}
+	return value;
+})
+
 app.use("/api",router);
 
 app.use(errorMiddleware);
