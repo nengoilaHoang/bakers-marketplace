@@ -1,6 +1,6 @@
-import recipeToolsDAO from '#/daos/recipes/recipeTools.dao.js';
+import recipeToolsDAO from '#/daos/recipes/recipe-tools.dao.js';
 import type { Knex } from 'knex';
-import { RecipeTool, type RecipeToolCreate, type RecipeToolUpdate } from '#/models/recipeTools.model.js';
+import { RecipeTool, type RecipeToolCreate, type RecipeToolUpdate } from '#/models/recipe-tools.model.js';
 
 export type RecipeToolSet = {
   create: Omit<RecipeToolCreate, 'recipeId'>[];

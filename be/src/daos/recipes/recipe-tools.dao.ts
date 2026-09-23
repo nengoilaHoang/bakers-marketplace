@@ -4,7 +4,7 @@ import {
   RecipeTool,
   type RecipeToolCreate,
   type RecipeToolUpdate,
-} from '#/models/recipeTools.model.js';
+} from '#/models/recipe-tools.model.js';
 
 type RecipeToolUpdateItem = RecipeToolUpdate & { id: string };
 

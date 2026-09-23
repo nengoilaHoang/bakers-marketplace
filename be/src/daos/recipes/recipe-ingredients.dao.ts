@@ -4,7 +4,7 @@ import {
   RecipeIngredient,
   type RecipeIngredientCreate,
   type RecipeIngredientUpdate,
-} from '#/models/recipeIngredients.model.js';
+} from '#/models/recipe-ingredients.model.js';
 
 type RecipeIngredientUpdateItem = RecipeIngredientUpdate & { id: string };
 

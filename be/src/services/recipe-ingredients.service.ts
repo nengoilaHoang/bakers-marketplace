@@ -1,10 +1,10 @@
-import recipeIngredientsDAO from '#/daos/recipes/recipeIngredients.dao.js';
+import recipeIngredientsDAO from '#/daos/recipes/recipe-ingredients.dao.js';
 import type { Knex } from 'knex';
 import {
   RecipeIngredient,
   type RecipeIngredientCreate,
   type RecipeIngredientUpdate,
-} from '#/models/recipeIngredients.model.js';
+} from '#/models/recipe-ingredients.model.js';
 
 export type RecipeIngredientSet = {
   create: Omit<RecipeIngredientCreate, 'recipeId'>[];

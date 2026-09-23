@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import recipeController from '#/controllers/recipes.controller.js';
-import recipeSearchEngineController from '#/controllers/recipeSearchEngine.controller.js';
+import recipeSearchEngineController from '#/controllers/recipe-search-engine.controller.js';
 
 const router = Router();
 

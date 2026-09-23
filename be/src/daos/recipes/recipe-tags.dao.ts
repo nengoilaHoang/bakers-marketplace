@@ -4,7 +4,7 @@ import {
   RecipeTag,
   type RecipeTagCreate,
   type RecipeTagUpdate,
-} from '#/models/recipeTags.model.js';
+} from '#/models/recipe-tags.model.js';
 
 type RecipeTagUpdateItem = RecipeTagUpdate & { id: string };
 
