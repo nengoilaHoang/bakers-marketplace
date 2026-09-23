@@ -1,17 +1,7 @@
-import type {
-	Request,
-	Response,
-	NextFunction,
-} from 'express';
-
+import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { HttpError } from '#/utils/http-errors.js';
 
-import { HttpError } from '#/errors/http.error.js';
-
-/**
- * Middleware cuối cùng của chuỗi: đổi lỗi ném ra từ controller
- * thành response JSON với đúng mã HTTP.
- */
 export function errorMiddleware(
 	error: unknown,
 	req: Request,
@@ -31,8 +21,7 @@ export function errorMiddleware(
 	}
 
 	if (error instanceof HttpError) {
-		res.status(error.status).json({ message: error.message });
-
+		res.status(Number(error.code)).json({ message: error.message });
 		return;
 	}
 

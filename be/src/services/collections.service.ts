@@ -1,7 +1,7 @@
 import collectionDAO from '#/daos/collections.dao.js';
 import productDAO from '#/daos/products.dao.js';
 
-import { ConflictError } from '#/errors/http.error.js';
+import { ConflictError } from '#/utils/http-errors.js';
 
 import type {
 	Collection,
@@ -15,9 +15,7 @@ class CollectionService {
 	private collectionDAO = collectionDAO;
 	private productDAO = productDAO;
 
-	public async getAll(
-		onlyActive = false,
-	): Promise<CollectionRow[]> {
+	public async getAll(onlyActive = false): Promise<CollectionRow[]> {
 		return this.collectionDAO.getAll(onlyActive);
 	}
 
@@ -29,19 +27,13 @@ class CollectionService {
 		return this.collectionDAO.getBySlug(slug);
 	}
 
-	public async getProducts(
-		collectionId: string,
-	): Promise<Product[]> {
+	public async getProducts(collectionId: string): Promise<Product[]> {
 		return this.productDAO.getByCollectionId(collectionId);
 	}
 
-	public async create(
-		input: CollectionCreateInput,
-	): Promise<CollectionRow> {
+	public async create(input: CollectionCreateInput): Promise<CollectionRow> {
 		if (await this.collectionDAO.isSlugTaken(input.slug)) {
-			throw new ConflictError(
-				`Slug "${input.slug}" is already in use`,
-			);
+			throw new ConflictError(`Slug "${input.slug}" is already in use`);
 		}
 
 		return this.collectionDAO.create(input);
@@ -51,17 +43,12 @@ class CollectionService {
 		id: string,
 		input: CollectionUpdateInput,
 	): Promise<CollectionRow | null> {
-		if (!await this.collectionDAO.existsById(id)) {
+		if (!(await this.collectionDAO.existsById(id))) {
 			return null;
 		}
 
-		if (
-			input.slug &&
-			await this.collectionDAO.isSlugTaken(input.slug, id)
-		) {
-			throw new ConflictError(
-				`Slug "${input.slug}" is already in use`,
-			);
+		if (input.slug && (await this.collectionDAO.isSlugTaken(input.slug, id))) {
+			throw new ConflictError(`Slug "${input.slug}" is already in use`);
 		}
 
 		return this.collectionDAO.update(id, input);

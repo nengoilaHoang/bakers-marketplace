@@ -5,7 +5,7 @@ import {
 	BadRequestError,
 	ConflictError,
 	NotFoundError,
-} from '#/errors/http.error.js';
+} from '#/utils/http-errors.js';
 
 import type {
 	Product,
@@ -47,15 +47,11 @@ class ProductService {
 		return this.productDAO.getByBrandId(brandId);
 	}
 
-	public async create(
-		input: ProductCreateInput,
-	): Promise<Product> {
+	public async create(input: ProductCreateInput): Promise<Product> {
 		this.assertPriceIsSane(input.unitPrice, input.unitCost);
 
 		if (await this.productDAO.isSlugTaken(input.slug)) {
-			throw new ConflictError(
-				`Slug "${input.slug}" is already in use`,
-			);
+			throw new ConflictError(`Slug "${input.slug}" is already in use`);
 		}
 
 		return this.productDAO.create(input);
@@ -76,13 +72,8 @@ class ProductService {
 			input.unitCost ?? existing.unitCost,
 		);
 
-		if (
-			input.slug &&
-			await this.productDAO.isSlugTaken(input.slug, id)
-		) {
-			throw new ConflictError(
-				`Slug "${input.slug}" is already in use`,
-			);
+		if (input.slug && (await this.productDAO.isSlugTaken(input.slug, id))) {
+			throw new ConflictError(`Slug "${input.slug}" is already in use`);
 		}
 
 		return this.productDAO.update(id, input);
@@ -109,15 +100,10 @@ class ProductService {
 		productId: string,
 		imageId: string,
 	): Promise<Product> {
-		const removed = await this.productDAO.removeImage(
-			productId,
-			imageId,
-		);
+		const removed = await this.productDAO.removeImage(productId, imageId);
 
 		if (!removed) {
-			throw new NotFoundError(
-				'Image is not attached to this product',
-			);
+			throw new NotFoundError('Image is not attached to this product');
 		}
 
 		return this.getExistingProduct(productId);
@@ -132,9 +118,7 @@ class ProductService {
 		const unique = new Set(imageIds);
 
 		if (unique.size !== imageIds.length) {
-			throw new BadRequestError(
-				'Image list contains duplicated ids',
-			);
+			throw new BadRequestError('Image list contains duplicated ids');
 		}
 
 		await this.productDAO.reorderImages(productId, imageIds);
@@ -178,10 +162,7 @@ class ProductService {
 
 	// ---------- tags ----------
 
-	public async addTag(
-		productId: string,
-		name: string,
-	): Promise<ProductTagRow> {
+	public async addTag(productId: string, name: string): Promise<ProductTagRow> {
 		await this.assertProductExists(productId);
 
 		const trimmed = name.trim();
@@ -218,10 +199,7 @@ class ProductService {
 		}
 	}
 
-	public async removeTag(
-		productId: string,
-		name: string,
-	): Promise<boolean> {
+	public async removeTag(productId: string, name: string): Promise<boolean> {
 		return this.productDAO.removeTag(productId, name);
 	}
 
@@ -232,15 +210,10 @@ class ProductService {
 		stock: number,
 	): Promise<ProductStock> {
 		if (!Number.isInteger(stock) || stock < 0) {
-			throw new BadRequestError(
-				'Stock must be a non-negative integer',
-			);
+			throw new BadRequestError('Stock must be a non-negative integer');
 		}
 
-		const updated = await this.productDAO.updateStock(
-			productId,
-			stock,
-		);
+		const updated = await this.productDAO.updateStock(productId, stock);
 
 		if (!updated) {
 			throw new NotFoundError('Product stock not found');
@@ -257,16 +230,10 @@ class ProductService {
 		await this.assertProductExists(productId);
 
 		if (!Number.isInteger(threshold) || threshold < 0) {
-			throw new BadRequestError(
-				'Threshold must be a non-negative integer',
-			);
+			throw new BadRequestError('Threshold must be a non-negative integer');
 		}
 
-		return this.productDAO.setAlert(
-			productId,
-			alertType,
-			threshold,
-		);
+		return this.productDAO.setAlert(productId, alertType, threshold);
 	}
 
 	public async removeAlert(
@@ -284,14 +251,11 @@ class ProductService {
 	): Promise<Product> {
 		await this.assertProductExists(productId);
 
-		if (!await this.collectionDAO.existsById(collectionId)) {
+		if (!(await this.collectionDAO.existsById(collectionId))) {
 			throw new NotFoundError('Collection not found');
 		}
 
-		await this.productDAO.assignToCollection(
-			productId,
-			collectionId,
-		);
+		await this.productDAO.assignToCollection(productId, collectionId);
 
 		return this.getExistingProduct(productId);
 	}
@@ -306,9 +270,7 @@ class ProductService {
 		);
 
 		if (!removed) {
-			throw new NotFoundError(
-				'Product is not in this collection',
-			);
+			throw new NotFoundError('Product is not in this collection');
 		}
 
 		return this.getExistingProduct(productId);
@@ -316,19 +278,14 @@ class ProductService {
 
 	// ---------- helpers ----------
 
-	private assertPriceIsSane(
-		unitPrice: number,
-		unitCost: number,
-	): void {
+	private assertPriceIsSane(unitPrice: number, unitCost: number): void {
 		if (unitPrice < unitCost) {
-			throw new BadRequestError(
-				'Unit price must not be lower than unit cost',
-			);
+			throw new BadRequestError('Unit price must not be lower than unit cost');
 		}
 	}
 
 	private async assertProductExists(id: string): Promise<void> {
-		if (!await this.productDAO.existsById(id)) {
+		if (!(await this.productDAO.existsById(id))) {
 			throw new NotFoundError('Product not found');
 		}
 	}
