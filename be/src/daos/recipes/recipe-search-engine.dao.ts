@@ -1,5 +1,5 @@
 import db from '#/db/index.js';
-import { Recipe } from '#/models/recipes.model.js';
+import { Recipe } from '#/models/recipes/recipes.model.js';
 
 const MIN_RANK_SCORE = 0.05;
 

@@ -6,17 +6,17 @@ import {
     type RecipeUpdate,
     type RecipeCursor,
     type GetRecipesResult
-} from '#/models/recipes.model.js';
-import stepsService from '#/services/recipe-steps.service.js';
-import recipeNotesService from '#/services/recipe-notes.service.js';
-import recipeTagsService from '#/services/recipe-tags.service.js';
-import recipeToolsService from '#/services/recipe-tools.service.js';
-import recipeIngredientsService from '#/services/recipe-ingredients.service.js';
-import type { StepSet } from '#/services/recipe-steps.service.js';
-import type { RecipeNoteSet } from '#/services/recipe-notes.service.js';
-import type { RecipeTagSet } from '#/services/recipe-tags.service.js';
-import type { RecipeToolSet } from '#/services/recipe-tools.service.js';
-import type { RecipeIngredientSet } from '#/services/recipe-ingredients.service.js';
+} from '#/models/recipes/recipes.model.js';
+import stepsService from '#/services/recipes/recipe-steps.service.js';
+import recipeNotesService from '#/services/recipes/recipe-notes.service.js';
+import recipeTagsService from '#/services/recipes/recipe-tags.service.js';
+import recipeToolsService from '#/services/recipes/recipe-tools.service.js';
+import recipeIngredientsService from '#/services/recipes/recipe-ingredients.service.js';
+import type { StepSet } from '#/services/recipes/recipe-steps.service.js';
+import type { RecipeNoteSet } from '#/services/recipes/recipe-notes.service.js';
+import type { RecipeTagSet } from '#/services/recipes/recipe-tags.service.js';
+import type { RecipeToolSet } from '#/services/recipes/recipe-tools.service.js';
+import type { RecipeIngredientSet } from '#/services/recipes/recipe-ingredients.service.js';
 
 type RecipeWithDetails = Recipe & {
     steps: Awaited<ReturnType<typeof stepsService.getAllByRecipeId>>;

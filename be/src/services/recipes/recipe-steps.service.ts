@@ -1,6 +1,6 @@
 import stepsDAO from '#/daos/recipes/recipe-steps.dao.js';
 import type { Knex } from 'knex';
-import { Step, type StepCreate, type StepUpdate } from '#/models/recipe-steps.model.js';
+import { Step, type StepCreate, type StepUpdate } from '#/models/recipes/recipe-steps.model.js';
 
 export type StepSet = {
   create: StepCreate[];

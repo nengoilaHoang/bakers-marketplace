@@ -6,7 +6,7 @@ import {
   type RecipeUpdate,
   type RecipeCursor,
   type GetRecipesResult
-} from '#/models/recipes.model.js';
+} from '#/models/recipes/recipes.model.js';
 
 class RecipeDAO {
   private readonly tableName = 'recipes';

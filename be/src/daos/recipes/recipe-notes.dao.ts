@@ -4,7 +4,7 @@ import {
   RecipeNote,
   type RecipeNoteCreate,
   type RecipeNoteUpdate,
-} from '#/models/recipe-notes.model.js';
+} from '#/models/recipes/recipe-notes.model.js';
 
 type RecipeNoteUpdateItem = RecipeNoteUpdate & { id: string };
 

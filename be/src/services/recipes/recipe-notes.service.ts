@@ -1,7 +1,7 @@
 import recipeNotesDAO from '#/daos/recipes/recipe-notes.dao.js';
 import type { Knex } from 'knex';
-import { RecipeNote, type RecipeNoteCreate } from '#/models/recipe-notes.model.js';
-import type { RecipeNoteUpdate } from '#/models/recipe-notes.model.js';
+import { RecipeNote, type RecipeNoteCreate } from '#/models/recipes/recipe-notes.model.js';
+import type { RecipeNoteUpdate } from '#/models/recipes/recipe-notes.model.js';
 
 export type RecipeNoteSet = {
   create: Omit<RecipeNoteCreate, 'recipeId'>[];

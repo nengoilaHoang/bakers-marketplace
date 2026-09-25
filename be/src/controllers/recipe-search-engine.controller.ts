@@ -6,7 +6,7 @@ import type {
 
 import recipeSearchEngineService, {
   type RecipeSearchMatchMode,
-} from '#/services/recipe-search-engine.service.js';
+} from '#/services/recipes/recipe-search-engine.service.js';
 
 function readQueryString(value: unknown): string {
   if (typeof value === 'string') {

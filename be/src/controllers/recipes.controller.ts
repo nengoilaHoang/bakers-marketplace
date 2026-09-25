@@ -1,17 +1,17 @@
 import type { Request, Response, NextFunction } from 'express';
 
-import recipeService from '#/services/recipes.service.js';
-import stepsService from '#/services/recipe-steps.service.js';
+import recipeService from '#/services/recipes/recipes.service.js';
+import stepsService from '#/services/recipes/recipe-steps.service.js';
 import type {
 	RecipeCreatePayload,
 	RecipeUpdatePayload,
-} from '#/services/recipes.service.js';
+} from '#/services/recipes/recipes.service.js';
 
 import {
 	RecipeCreateSchema,
 	RecipeUpdateSchema,
 	type RecipeCursor,
-} from '#/models/recipes.model.js';
+} from '#/models/recipes/recipes.model.js';
 
 type RecipeIdParams = {
 	id: string;

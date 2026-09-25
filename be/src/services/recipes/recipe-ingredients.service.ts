@@ -4,7 +4,7 @@ import {
   RecipeIngredient,
   type RecipeIngredientCreate,
   type RecipeIngredientUpdate,
-} from '#/models/recipe-ingredients.model.js';
+} from '#/models/recipes/recipe-ingredients.model.js';
 
 export type RecipeIngredientSet = {
   create: Omit<RecipeIngredientCreate, 'recipeId'>[];

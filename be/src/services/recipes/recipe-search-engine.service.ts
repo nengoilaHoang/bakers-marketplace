@@ -1,8 +1,8 @@
 import recipeSearchEngineDAO, {
   type RecipeSearchCandidate,
 } from '#/daos/recipes/recipe-search-engine.dao.js';
-import recipeIngredientsService from '#/services/recipe-ingredients.service.js';
-import recipeToolsService from '#/services/recipe-tools.service.js';
+import recipeIngredientsService from '#/services/recipes/recipe-ingredients.service.js';
+import recipeToolsService from '#/services/recipes/recipe-tools.service.js';
 
 export type RecipeSearchMatchMode = 'complete' | 'flexible';
 

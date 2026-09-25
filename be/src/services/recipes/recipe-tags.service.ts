@@ -1,6 +1,6 @@
 import recipeTagsDAO from '#/daos/recipes/recipe-tags.dao.js';
 import type { Knex } from 'knex';
-import { RecipeTag, type RecipeTagCreate, type RecipeTagUpdate } from '#/models/recipe-tags.model.js';
+import { RecipeTag, type RecipeTagCreate, type RecipeTagUpdate } from '#/models/recipes/recipe-tags.model.js';
 
 export type RecipeTagSet = {
   create: Omit<RecipeTagCreate, 'recipeId'>[];

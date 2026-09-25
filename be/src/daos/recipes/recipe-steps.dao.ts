@@ -4,7 +4,7 @@ import {
   Step,
   type StepCreate,
   type StepUpdate,
-} from '#/models/recipe-steps.model.js';
+} from '#/models/recipes/recipe-steps.model.js';
 
 type StepUpdateItem = StepUpdate & { id: string };
 
