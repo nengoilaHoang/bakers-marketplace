@@ -50,3 +50,12 @@ export const CreateLayoutComponentSchema = z.lazy(() =>
 	]),
 );
 export type CreateLayoutComponent = z.infer<typeof CreateLayoutComponentSchema>;
+
+export const PutLayoutComponentSchema = z.lazy(() =>
+	z.union([
+		LayoutComponentSchema,
+		CreateLayoutComponentSchema,
+		UpdateLayoutComponentSchema,
+	]),
+);
+export type PutLayoutComponent = z.infer<typeof PutLayoutComponentSchema>;

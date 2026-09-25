@@ -13,12 +13,14 @@ export const UpdateRepeaterComponentSchema = z.discriminatedUnion(
 	'componentType',
 	[UpdateCollectionGridSchema],
 );
+export type UpdateRepeaterComponent = z.infer<
+	typeof UpdateRepeaterComponentSchema
+>;
 
 export const CreateRepeaterComponentSchema = z.discriminatedUnion(
 	'componentType',
 	[CreateCollectionGridSchema],
 );
-
 export type CreateRepeaterComponent = z.infer<
 	typeof CreateRepeaterComponentSchema
 >;

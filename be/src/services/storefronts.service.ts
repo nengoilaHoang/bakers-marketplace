@@ -1,4 +1,6 @@
-import storefrontDao, { StorefrontDao } from '#/daos/storefronts/storefronts.dao.js';
+import storefrontDao, {
+	StorefrontDao,
+} from '#/daos/storefronts/storefronts.dao.js';
 import { StorefrontRelease } from '#/models/storefronts/storefront-releases.model.js';
 import { NotFoundError } from '#/utils/http-errors.js';
 
@@ -16,6 +18,10 @@ export class StorefrontService {
 		id: string,
 	): Promise<StorefrontRelease | null> => {
 		return await this.storefrontDao.getActiveRelease(id);
+	};
+
+	public getRelease = async (storeId: string, releaseId: string): Promise<StorefrontRelease | null> => {
+		return await this.storefrontDao.getRelease(storeId, releaseId);
 	};
 }
 

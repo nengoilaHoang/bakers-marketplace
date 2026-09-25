@@ -1,15 +1,7 @@
 import { Knex } from 'knex';
-import {
-	CreateLayoutComponent,
-	LayoutComponent,
-	UpdateLayoutComponent,
-} from '#/models/layout-components/layout-components.model.js';
 import database from '#/db/index.js';
-
-export type ComponentNode =
-	| LayoutComponent
-	| CreateLayoutComponent
-	| UpdateLayoutComponent;
+import { PutLayoutComponent } from '#/models/layout-components/layout-components.model.js';
+import { NotFoundError } from '#/utils/http-errors.js';
 
 export class LayoutComponentDao {
 	constructor(private readonly knex: Knex) {}
@@ -19,7 +11,7 @@ export class LayoutComponentDao {
 	};
 
 	public upsertLayoutComponent = async (
-		component: ComponentNode,
+		component: PutLayoutComponent,
 		trx?: Knex.Transaction,
 	): Promise<string> => {
 		const execute = async (t: Knex.Transaction): Promise<string> => {
@@ -75,7 +67,7 @@ export class LayoutComponentDao {
 					let templateId: string | null = null;
 					if ('itemTemplate' in component && component.itemTemplate) {
 						templateId = await this.upsertLayoutComponent(
-							component.itemTemplate as ComponentNode,
+							component.itemTemplate as PutLayoutComponent,
 							trx,
 						);
 					}
@@ -101,24 +93,24 @@ export class LayoutComponentDao {
 						.merge();
 
 					if ('children' in component && component.children) {
-						const childEntries =
-							component.children instanceof Map
-								? Array.from(component.children.entries())
-								: Object.entries(component.children);
-
 						const upsertBatch = [];
 
-						for (const [order, child] of childEntries) {
-							const childId = await this.upsertLayoutComponent(
-								child as ComponentNode,
-								t,
-							);
+						for (const breakpoint of ['desktop', 'tablet', 'mobile'] as const) {
+							const breakpointChildren = component.children[breakpoint] ?? {};
+							const entries = Object.entries(breakpointChildren);
+							for (const [order, child] of entries) {
+								const childId = await this.upsertLayoutComponent(
+									child as PutLayoutComponent,
+									t,
+								);
 
-							upsertBatch.push({
-								compositeId: componentId,
-								childId: childId,
-								sortOrder: order,
-							});
+								upsertBatch.push({
+									compositeId: componentId,
+									childId: childId,
+									breakpoint,
+									sortOrder: order,
+								});
+							}
 						}
 
 						const activeIds = await t('composite_component_children')
@@ -143,6 +135,23 @@ export class LayoutComponentDao {
 				}
 			}
 			return componentId;
+		};
+
+		return await execute(await this.transaction(trx));
+	};
+
+	public deleteComponents = async (ids: string[], trx?: Knex.Transaction) => {
+		if (ids.length === 0) return;
+		const execute = async (t: Knex.Transaction) => {
+			const affectedRows = await t('layout_components')
+				.whereIn('id', ids)
+				.del();
+
+			if (affectedRows !== ids.length) {
+				throw new NotFoundError(
+					`Failed to delete all components. Expected to delete ${ids.length} but deleted ${affectedRows}`,
+				);
+			}
 		};
 
 		return await execute(await this.transaction(trx));

@@ -12,6 +12,7 @@ export const LeafComponentSchema = z.discriminatedUnion('componentType', [
 export const UpdateLeafComponentSchema = z.discriminatedUnion('componentType', [
 	UpdateRichTextLeafComponentSchema,
 ]);
+export type UpdateLeafComponent = z.infer<typeof UpdateLeafComponentSchema>;
 
 export const CreateLeafComponentSchema = z.discriminatedUnion('componentType', [
 	CreateRichTextLeafComponentSchema,
