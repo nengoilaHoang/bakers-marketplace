@@ -1,8 +1,6 @@
-import type {
-  NextFunction,
-  Request,
-  Response,
-} from 'express';
+import type { Request, Response } from 'express';
+
+import asyncHandler from '#/utils/asyncHandler.js';
 
 import recipeSearchEngineService, {
   type RecipeSearchMatchMode,
@@ -46,12 +44,8 @@ function readMatchMode(value: unknown): RecipeSearchMatchMode {
 class RecipeSearchEngineController {
   private recipeSearchEngineService = recipeSearchEngineService;
 
-  public search = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
+  public search = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
       const query = readQueryString(req.query.q);
       const selectedTools = readQueryList(
         req.query.tools ?? req.query['tools[]'],
@@ -82,10 +76,8 @@ class RecipeSearchEngineController {
           recipesWithMatches,
         ),
       });
-    } catch (error) {
-      next(error);
-    }
-  };
+    },
+  );
 }
 
 export default new RecipeSearchEngineController();

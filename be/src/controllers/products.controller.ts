@@ -1,12 +1,12 @@
 import type {
 	Request,
 	Response,
-	NextFunction,
 } from 'express';
 
 import { z } from 'zod';
 
 import productService from '#/services/products.service.js';
+import asyncHandler from '#/utils/asyncHandler.js';
 
 import {
 	ProductCreateSchema,
@@ -60,42 +60,26 @@ const AssignCollectionSchema = z.object({
 class ProductController {
 	private productService = productService;
 
-	public getAll = async (
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getAll = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const products = await this.productService.getAll();
 
 			res.status(200).json({ data: products });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public search = async (
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public search = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const keyword = String(req.query.q ?? '');
 
 			const products = await this.productService.search(keyword);
 
 			res.status(200).json({ data: products });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public getById = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getById = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const product = await this.productService.getById(
 				req.params.id,
 			);
@@ -107,17 +91,11 @@ class ProductController {
 			}
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public getBySlug = async (
-		req: Request<SlugParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getBySlug = asyncHandler(
+		async (req: Request<SlugParams>, res: Response): Promise<void> => {
 			const product = await this.productService.getBySlug(
 				req.params.slug,
 			);
@@ -129,49 +107,34 @@ class ProductController {
 			}
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public getByBrandId = async (
-		req: Request<BrandIdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getByBrandId = asyncHandler(
+		async (
+			req: Request<BrandIdParams>,
+			res: Response,
+		): Promise<void> => {
 			const products = await this.productService.getByBrandId(
 				req.params.brandId,
 			);
 
 			res.status(200).json({ data: products });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public create = async (
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public create = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const input = ProductCreateSchema.parse(req.body);
 
 			const product = await this.productService.create(input);
 
 			res.status(201).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public update = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public update = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const input = ProductUpdateSchema.parse(req.body);
 
 			const product = await this.productService.update(
@@ -186,17 +149,11 @@ class ProductController {
 			}
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public delete = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public delete = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const product = await this.productService.delete(
 				req.params.id,
 			);
@@ -208,19 +165,13 @@ class ProductController {
 			}
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
 	// ---------- media ----------
 
-	public addImage = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public addImage = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { imageId, sortOrder } = AddImageSchema.parse(req.body);
 
 			const product = await this.productService.addImage(
@@ -230,17 +181,11 @@ class ProductController {
 			);
 
 			res.status(201).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public reorderImages = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public reorderImages = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { imageIds } = ReorderImagesSchema.parse(req.body);
 
 			const product = await this.productService.reorderImages(
@@ -249,36 +194,24 @@ class ProductController {
 			);
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public removeImage = async (
-		req: Request<ImageParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public removeImage = asyncHandler(
+		async (req: Request<ImageParams>, res: Response): Promise<void> => {
 			const product = await this.productService.removeImage(
 				req.params.id,
 				req.params.imageId,
 			);
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
 	// ---------- notes ----------
 
-	public addNote = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public addNote = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { content } = NoteBodySchema.parse(req.body);
 
 			const note = await this.productService.addNote(
@@ -287,17 +220,11 @@ class ProductController {
 			);
 
 			res.status(201).json({ data: note });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public updateNote = async (
-		req: Request<NoteParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public updateNote = asyncHandler(
+		async (req: Request<NoteParams>, res: Response): Promise<void> => {
 			const { content } = NoteBodySchema.parse(req.body);
 
 			const note = await this.productService.updateNote(
@@ -312,17 +239,11 @@ class ProductController {
 			}
 
 			res.status(200).json({ data: note });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public removeNote = async (
-		req: Request<NoteParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public removeNote = asyncHandler(
+		async (req: Request<NoteParams>, res: Response): Promise<void> => {
 			const removed = await this.productService.removeNote(
 				req.params.noteId,
 			);
@@ -334,19 +255,13 @@ class ProductController {
 			}
 
 			res.status(204).send();
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
 	// ---------- tags ----------
 
-	public addTag = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public addTag = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { name } = TagBodySchema.parse(req.body);
 
 			const tag = await this.productService.addTag(
@@ -355,17 +270,11 @@ class ProductController {
 			);
 
 			res.status(201).json({ data: tag });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public updateTag = async (
-		req: Request<TagParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public updateTag = asyncHandler(
+		async (req: Request<TagParams>, res: Response): Promise<void> => {
 			const { name } = TagBodySchema.parse(req.body);
 
 			const tag = await this.productService.updateTag(
@@ -380,17 +289,14 @@ class ProductController {
 			}
 
 			res.status(200).json({ data: tag });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public removeTag = async (
-		req: Request<ProductTagParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public removeTag = asyncHandler(
+		async (
+			req: Request<ProductTagParams>,
+			res: Response,
+		): Promise<void> => {
 			const removed = await this.productService.removeTag(
 				req.params.id,
 				req.params.name,
@@ -403,19 +309,13 @@ class ProductController {
 			}
 
 			res.status(204).send();
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
 	// ---------- stock ----------
 
-	public updateStock = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public updateStock = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { stock } = StockBodySchema.parse(req.body);
 
 			const updated = await this.productService.updateStock(
@@ -424,17 +324,11 @@ class ProductController {
 			);
 
 			res.status(200).json({ data: updated });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public setAlert = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public setAlert = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { alertType, threshold } = AlertBodySchema.parse(
 				req.body,
 			);
@@ -446,17 +340,11 @@ class ProductController {
 			);
 
 			res.status(200).json({ data: alert });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public removeAlert = async (
-		req: Request<AlertParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public removeAlert = asyncHandler(
+		async (req: Request<AlertParams>, res: Response): Promise<void> => {
 			const removed = await this.productService.removeAlert(
 				req.params.id,
 				req.params.alertType,
@@ -469,19 +357,13 @@ class ProductController {
 			}
 
 			res.status(204).send();
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
 	// ---------- collections ----------
 
-	public assignToCollection = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public assignToCollection = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const { collectionId } = AssignCollectionSchema.parse(
 				req.body,
 			);
@@ -492,17 +374,14 @@ class ProductController {
 			);
 
 			res.status(201).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public removeFromCollection = async (
-		req: Request<CollectionParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public removeFromCollection = asyncHandler(
+		async (
+			req: Request<CollectionParams>,
+			res: Response,
+		): Promise<void> => {
 			const product =
 				await this.productService.removeFromCollection(
 					req.params.id,
@@ -510,10 +389,8 @@ class ProductController {
 				);
 
 			res.status(200).json({ data: product });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 }
 
 export default new ProductController();

@@ -1,10 +1,7 @@
-import type {
-	Request,
-	Response,
-	NextFunction,
-} from 'express';
+import type { Request, Response } from 'express';
 
 import collectionService from '#/services/collections.service.js';
+import asyncHandler from '#/utils/asyncHandler.js';
 
 import {
 	CollectionCreateSchema,
@@ -17,12 +14,8 @@ type SlugParams = { slug: string };
 class CollectionController {
 	private collectionService = collectionService;
 
-	public getAll = async (
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getAll = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const onlyActive = req.query.active === 'true';
 
 			const collections = await this.collectionService.getAll(
@@ -30,17 +23,11 @@ class CollectionController {
 			);
 
 			res.status(200).json({ data: collections });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public getById = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getById = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const collection = await this.collectionService.getById(
 				req.params.id,
 			);
@@ -54,17 +41,11 @@ class CollectionController {
 			}
 
 			res.status(200).json({ data: collection });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public getBySlug = async (
-		req: Request<SlugParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getBySlug = asyncHandler(
+		async (req: Request<SlugParams>, res: Response): Promise<void> => {
 			const collection = await this.collectionService.getBySlug(
 				req.params.slug,
 			);
@@ -78,49 +59,31 @@ class CollectionController {
 			}
 
 			res.status(200).json({ data: collection });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public getProducts = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public getProducts = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const products = await this.collectionService.getProducts(
 				req.params.id,
 			);
 
 			res.status(200).json({ data: products });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public create = async (
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public create = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const input = CollectionCreateSchema.parse(req.body);
 
 			const collection = await this.collectionService.create(input);
 
 			res.status(201).json({ data: collection });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public update = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public update = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const input = CollectionUpdateSchema.parse(req.body);
 
 			const collection = await this.collectionService.update(
@@ -137,17 +100,11 @@ class CollectionController {
 			}
 
 			res.status(200).json({ data: collection });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 
-	public delete = async (
-		req: Request<IdParams>,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> => {
-		try {
+	public delete = asyncHandler(
+		async (req: Request<IdParams>, res: Response): Promise<void> => {
 			const collection = await this.collectionService.delete(
 				req.params.id,
 			);
@@ -161,10 +118,8 @@ class CollectionController {
 			}
 
 			res.status(200).json({ data: collection });
-		} catch (error) {
-			next(error);
-		}
-	};
+		},
+	);
 }
 
 export default new CollectionController();
