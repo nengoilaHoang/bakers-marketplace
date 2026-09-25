@@ -188,7 +188,7 @@ const VendorLayout = ({
           </ul>
         </nav>
       </aside>
-      <div>
+      <div className='flex flex-col h-full min-h-0 overflow-hidden'>
         <header
           id='header'
           className='flex flex-row-reverse items-center h-16 border-b border-zinc-200'
@@ -197,7 +197,7 @@ const VendorLayout = ({
             <AvatarMenu actions={[]}></AvatarMenu>
           </div>
         </header>
-        <main id='main' className='bg-white'>
+        <main id='main' className='bg-white overflow-y-auto flex-1 min-h-0'>
           {children}
         </main>
       </div>
