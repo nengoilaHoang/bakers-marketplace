@@ -18,6 +18,13 @@ export const CompositeComponentTypeSchema = z.enum([
 	'CAROUSEL',
 ]);
 
+export const ResponsiveValueSchema = <T extends z.ZodType>(valueSchema: T) =>
+	z.object({
+		mobile: valueSchema,
+		tablet: valueSchema,
+		desktop: valueSchema,
+	});
+
 // Table Schemas
 export const CompositeComponentTableSchema = z.object({
 	id: z.uuidv4().readonly(),
@@ -44,18 +51,23 @@ export const ComponentTemplateTableSchema = z.object({
 export type ComponentTemplateRow = z.infer<typeof ComponentTemplateTableSchema>;
 
 // Domain Definitions
-const ChildrenSchema = z.preprocess(
-	(val) => (val instanceof Map ? Object.fromEntries(val.entries()) : val),
-	z.record(
-		z.string(),
-		z.lazy((): z.ZodType => LayoutComponentSchema),
-	),
+const createChildrenMapSchema = <T extends z.ZodType>(childSchema: T) =>
+	z.preprocess(
+		(value) => {
+			if (value instanceof Map) {
+				return Object.fromEntries(value.entries());
+			}
+			return value;
+		},
+		z.record(z.string(), childSchema),
+	);
+
+const ChildrenSchema = ResponsiveValueSchema(
+	createChildrenMapSchema(z.lazy((): z.ZodType => LayoutComponentSchema)),
 );
 
-const UpdateChildrenSchema = z.preprocess(
-	(val) => (val instanceof Map ? Object.fromEntries(val.entries()) : val),
-	z.record(
-		z.string(),
+const UpdateChildrenSchema = ResponsiveValueSchema(
+	createChildrenMapSchema(
 		z.lazy(
 			(): z.ZodType =>
 				z
@@ -82,13 +94,12 @@ export const CreateBaseCompositeComponentSchema =
 	CreateBaseLayoutComponentSchema.extend({
 		type: z.literal(ComponentTypeSchema.enum.COMPOSITE).readonly(),
 		componentType: CompositeComponentTypeSchema.readonly(),
-		children: z
-			.map(
-				z.uint32().min(0).max(49),
+		children: ResponsiveValueSchema(
+			createChildrenMapSchema(
 				z.lazy(
 					(): z.ZodType =>
 						z.union([UpdateLayoutComponentSchema, CreateLayoutComponentSchema]),
 				),
-			)
-			.optional(),
+			),
+		).optional(),
 	});

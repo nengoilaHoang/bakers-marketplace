@@ -39,6 +39,8 @@ const HARD_CODED_RECIPE_ID_2 = '33333333-3333-4333-8333-333333333333';
 const HARD_CODED_STOREFRONT_ID = '44444444-4444-4444-8444-444444444444';
 const HARD_CODED_STOREFRONT_RELEASE_ID = '55555555-5555-4555-8555-555555555555';
 
+const BREAKPOINTS = ['mobile', 'tablet', 'desktop'] as const;
+
 const users = [
 	{
 		id: HARD_CODED_USER_ID,
@@ -620,9 +622,9 @@ export async function seed(knex: Knex): Promise<void> {
 					colorScheme: 'default',
 					colorPalette: { type: 'palette', token: 'background' },
 					layout: 'UNIFORM',
-					rows: 2,
-					cols: 1,
-					gap: 32,
+					rows: { mobile: 2, tablet: 2, desktop: 2 },
+					cols: { mobile: 1, tablet: 1, desktop: 1 },
+					gap: { mobile: 16, tablet: 24, desktop: 32 },
 					borderRadius: 0,
 				}),
 			})
@@ -761,18 +763,22 @@ export async function seed(knex: Knex): Promise<void> {
 			component_type: 'COLLECTION_GRID',
 		});
 
-		await trx('composite_component_children').insert([
-			{
-				composite_id: collectionRootGrid.id,
-				child_id: collectionIntroText.id,
-				sort_order: 1,
-			},
-			{
-				composite_id: collectionRootGrid.id,
-				child_id: repeaterBase.id,
-				sort_order: 2,
-			},
-		]);
+		await trx('composite_component_children').insert(
+			BREAKPOINTS.flatMap((breakpoint) => [
+				{
+					composite_id: collectionRootGrid.id,
+					child_id: collectionIntroText.id,
+					breakpoint,
+					sort_order: 1,
+				},
+				{
+					composite_id: collectionRootGrid.id,
+					child_id: repeaterBase.id,
+					breakpoint,
+					sort_order: 2,
+				},
+			]),
+		);
 
 		await trx('page_layouts').insert({
 			storefront_release_id: release.id,
@@ -797,9 +803,9 @@ export async function seed(knex: Knex): Promise<void> {
 					colorScheme: 'default',
 					colorPalette: { type: 'palette', token: 'background' },
 					layout: 'UNIFORM',
-					rows: 2,
-					cols: 1,
-					gap: 40,
+					rows: { mobile: 2, tablet: 2, desktop: 2 },
+					cols: { mobile: 1, tablet: 1, desktop: 1 },
+					gap: { mobile: 24, tablet: 32, desktop: 40 },
 					borderRadius: 0,
 				}),
 			})
@@ -889,9 +895,9 @@ export async function seed(knex: Knex): Promise<void> {
 					colorScheme: 'default',
 					colorPalette: { type: 'palette', token: 'surface' },
 					layout: 'UNIFORM',
-					rows: 1,
-					cols: 3,
-					gap: 24,
+					rows: { mobile: 3, tablet: 1, desktop: 1 },
+					cols: { mobile: 1, tablet: 3, desktop: 3 },
+					gap: { mobile: 16, tablet: 20, desktop: 24 },
 					borderRadius: 8,
 				}),
 			})
@@ -950,26 +956,33 @@ export async function seed(knex: Knex): Promise<void> {
 
 		// Attach 3 cards to Features Grid
 		await trx('composite_component_children').insert(
-			featureCardIds.map((id, index) => ({
-				composite_id: homeFeaturesGrid.id,
-				child_id: id,
-				sort_order: index + 1,
-			})),
+			BREAKPOINTS.flatMap((breakpoint) =>
+				featureCardIds.map((id, index) => ({
+					composite_id: homeFeaturesGrid.id,
+					child_id: id,
+					breakpoint,
+					sort_order: index + 1,
+				})),
+			),
 		);
 
 		// Attach Hero Banner and Features Grid to Home Root Grid
-		await trx('composite_component_children').insert([
-			{
-				composite_id: homeRootGrid.id,
-				child_id: homeHeroBanner.id,
-				sort_order: 1,
-			},
-			{
-				composite_id: homeRootGrid.id,
-				child_id: homeFeaturesGrid.id,
-				sort_order: 2,
-			},
-		]);
+		await trx('composite_component_children').insert(
+			BREAKPOINTS.flatMap((breakpoint) => [
+				{
+					composite_id: homeRootGrid.id,
+					child_id: homeHeroBanner.id,
+					breakpoint,
+					sort_order: 1,
+				},
+				{
+					composite_id: homeRootGrid.id,
+					child_id: homeFeaturesGrid.id,
+					breakpoint,
+					sort_order: 2,
+				},
+			]),
+		);
 
 		// Attach HOME layout to Storefront Release
 		await trx('page_layouts').insert({
