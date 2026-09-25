@@ -1,162 +1,164 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import { useRouter } from "next/router";
-import Link from "next/link";
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
-import { productApi, type Product, type StockAlert } from "@/services/products";
-import { collectionApi } from "@/services/collections";
-import { type Collection } from "@/types/collection";
+import { productApi, type Product, type StockAlert } from '@/services/products';
+import { collectionApi } from '@/services/collections';
+import { type Collection } from '@/types/collection';
+import { NextPageWithLayout } from '@/pages/_app';
+import VendorLayout from '@/components/layout/VendorLayout';
 
 const page: CSSProperties = {
-  padding: "24px 32px",
-  fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
+  padding: '24px 32px',
+  fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
   fontSize: 14,
   lineHeight: 1.6,
   maxWidth: 780,
-  margin: "0 auto",
-  background: "#fff",
-  color: "#111827",
-  minHeight: "100vh",
-  colorScheme: "light",
+  margin: '0 auto',
+  background: '#fff',
+  color: '#111827',
+  minHeight: '100vh',
+  colorScheme: 'light',
 };
 
 const h1: CSSProperties = {
   fontSize: 22,
   fontWeight: 600,
-  margin: "12px 0 4px",
+  margin: '12px 0 4px',
 };
 
 const h2: CSSProperties = {
   fontSize: 16,
   fontWeight: 600,
-  margin: "28px 0 8px",
+  margin: '28px 0 8px',
   paddingBottom: 6,
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom: '1px solid #e5e7eb',
 };
 
-const muted: CSSProperties = { color: "#6b7280", fontSize: 13 };
+const muted: CSSProperties = { color: '#6b7280', fontSize: 13 };
 
-const link: CSSProperties = { color: "#2563eb", textDecoration: "none" };
+const link: CSSProperties = { color: '#2563eb', textDecoration: 'none' };
 
 const toolbar: CSSProperties = {
-  display: "flex",
+  display: 'flex',
   gap: 12,
-  alignItems: "center",
-  flexWrap: "wrap",
-  margin: "12px 0 20px",
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  margin: '12px 0 20px',
 };
 
 const row: CSSProperties = {
-  display: "flex",
+  display: 'flex',
   gap: 8,
-  alignItems: "center",
-  flexWrap: "wrap",
+  alignItems: 'center',
+  flexWrap: 'wrap',
 };
 
 const table: CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
+  width: '100%',
+  borderCollapse: 'collapse',
   fontSize: 13,
-  border: "1px solid #d1d5db",
+  border: '1px solid #d1d5db',
 };
 
 const td: CSSProperties = {
-  padding: "9px 12px",
-  border: "1px solid #d1d5db",
-  verticalAlign: "top",
+  padding: '9px 12px',
+  border: '1px solid #d1d5db',
+  verticalAlign: 'top',
 };
 
 const button: CSSProperties = {
-  display: "inline-block",
-  padding: "5px 12px",
-  border: "1px solid #d1d5db",
+  display: 'inline-block',
+  padding: '5px 12px',
+  border: '1px solid #d1d5db',
   borderRadius: 6,
-  background: "#fff",
-  color: "#111827",
-  cursor: "pointer",
+  background: '#fff',
+  color: '#111827',
+  cursor: 'pointer',
   fontSize: 13,
-  textDecoration: "none",
-  fontFamily: "inherit",
+  textDecoration: 'none',
+  fontFamily: 'inherit',
   lineHeight: 1.6,
 };
 
 const buttonPrimary: CSSProperties = {
   ...button,
-  background: "#2563eb",
-  borderColor: "#2563eb",
-  color: "#fff",
+  background: '#2563eb',
+  borderColor: '#2563eb',
+  color: '#fff',
   fontWeight: 500,
 };
 
 const buttonDanger: CSSProperties = {
   ...button,
-  color: "#dc2626",
-  borderColor: "#fca5a5",
+  color: '#dc2626',
+  borderColor: '#fca5a5',
 };
 
 const buttonX: CSSProperties = {
-  border: "none",
-  background: "none",
-  cursor: "pointer",
-  color: "#dc2626",
+  border: 'none',
+  background: 'none',
+  cursor: 'pointer',
+  color: '#dc2626',
   padding: 0,
   fontSize: 14,
 };
 
 const input: CSSProperties = {
-  padding: "7px 10px",
-  border: "1px solid #d1d5db",
+  padding: '7px 10px',
+  border: '1px solid #d1d5db',
   borderRadius: 6,
   fontSize: 13,
-  fontFamily: "inherit",
-  background: "#fff",
-  color: "#111827",
+  fontFamily: 'inherit',
+  background: '#fff',
+  color: '#111827',
 };
 
 const card: CSSProperties = {
-  border: "1px solid #e5e7eb",
+  border: '1px solid #e5e7eb',
   borderRadius: 8,
-  padding: "14px 16px",
+  padding: '14px 16px',
   marginBottom: 12,
 };
 
 const chip: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
+  display: 'inline-flex',
+  alignItems: 'center',
   gap: 6,
-  padding: "3px 10px",
-  background: "#f3f4f6",
-  color: "#374151",
+  padding: '3px 10px',
+  background: '#f3f4f6',
+  color: '#374151',
   borderRadius: 999,
   fontSize: 12,
 };
 
 const errorBox: CSSProperties = {
   marginTop: 16,
-  padding: "10px 14px",
-  background: "#fef2f2",
-  border: "1px solid #fecaca",
+  padding: '10px 14px',
+  background: '#fef2f2',
+  border: '1px solid #fecaca',
   borderRadius: 6,
-  color: "#b91c1c",
+  color: '#b91c1c',
   fontSize: 13,
 };
 
 const badge = (ok: boolean): CSSProperties => ({
-  display: "inline-block",
-  padding: "2px 9px",
+  display: 'inline-block',
+  padding: '2px 9px',
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 500,
-  background: ok ? "#dcfce7" : "#f3f4f6",
-  color: ok ? "#166534" : "#6b7280",
+  background: ok ? '#dcfce7' : '#f3f4f6',
+  color: ok ? '#166534' : '#6b7280',
 });
 
-const ALERT_TYPES: StockAlert["alertType"][] = [
-  "MINIMUM",
-  "REORDER",
-  "MAXIMUM",
+const ALERT_TYPES: StockAlert['alertType'][] = [
+  'MINIMUM',
+  'REORDER',
+  'MAXIMUM',
 ];
 
-export default function ProductDetailPage() {
+const ProductDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = router.query.id as string | undefined;
 
@@ -165,38 +167,43 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [tagName, setTagName] = useState("");
-  const [noteContent, setNoteContent] = useState("");
-  const [stockValue, setStockValue] = useState("");
+  const [tagName, setTagName] = useState('');
+  const [noteContent, setNoteContent] = useState('');
+  const [stockValue, setStockValue] = useState('');
   const [alertType, setAlertType] =
-    useState<StockAlert["alertType"]>("MINIMUM");
-  const [threshold, setThreshold] = useState("");
-  const [collectionId, setCollectionId] = useState("");
+    useState<StockAlert['alertType']>('MINIMUM');
+  const [threshold, setThreshold] = useState('');
+  const [collectionId, setCollectionId] = useState('');
+
+  const load = useCallback(async () => {
+    if (!id) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [productRes, collectionsRes] = await Promise.all([
+        productApi.getById(id),
+        collectionApi.getAll(),
+      ]);
+
+      setProduct(productRes.data);
+      setCollections(collectionsRes.data);
+      setStockValue(String(productRes.data.stock?.stock ?? 0));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const load = async () => {
-      if (!id) return;
+    const timer = setTimeout(() => {
+      void load();
+    }, 0);
 
-      setLoading(true);
-      setError(null);
-
-      try {
-        const [productRes, collectionsRes] = await Promise.all([
-          productApi.getById(id),
-          collectionApi.getAll(),
-        ]);
-
-        setProduct(productRes.data);
-        setCollections(collectionsRes.data);
-        setStockValue(String(productRes.data.stock?.stock ?? 0));
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [id]);
+    return () => clearTimeout(timer);
+  }, [id, load]);
 
   const run = async (fn: () => Promise<unknown>) => {
     try {
@@ -212,7 +219,7 @@ export default function ProductDetailPage() {
   if (error)
     return (
       <div style={page}>
-        <Link href="/products" style={link}>
+        <Link href='/vendors/products' style={link}>
           ← Danh sách
         </Link>
         <div style={errorBox}>Lỗi: {error}</div>
@@ -222,38 +229,41 @@ export default function ProductDetailPage() {
   if (!product) return <p style={page}>Không tìm thấy.</p>;
 
   const info: Array<[string, React.ReactNode]> = [
-    ["Slug", product.slug],
-    ["Mô tả", product.description ?? "—"],
+    ['Slug', product.slug],
+    ['Mô tả', product.description ?? '—'],
     [
-      "Giá bán",
-      `${product.unitPrice.toLocaleString("vi-VN")} ${product.currency}`,
+      'Giá bán',
+      `${product.unitPrice.toLocaleString('vi-VN')} ${product.currency}`,
     ],
     [
-      "Giá vốn",
-      `${product.unitCost.toLocaleString("vi-VN")} ${product.currency}`,
+      'Giá vốn',
+      `${product.unitCost.toLocaleString('vi-VN')} ${product.currency}`,
     ],
-    ["Đơn vị", product.unit],
-    ["Hạn sử dụng", product.expirationDate?.slice(0, 10) ?? "—"],
-    ["Brand ID", <code key="b">{product.brandId}</code>],
+    ['Đơn vị', product.unit],
+    ['Hạn sử dụng', product.expirationDate?.slice(0, 10) ?? '—'],
+    ['Brand ID', <code key='b'>{product.brandId}</code>],
     [
-      "Vendor ID",
-      product.vendorId ? <code key="v">{product.vendorId}</code> : "—",
+      'Vendor ID',
+      product.vendorId ? <code key='v'>{product.vendorId}</code> : '—',
     ],
-    ["ID", <code key="i">{product.id}</code>],
+    ['ID', <code key='i'>{product.id}</code>],
   ];
 
   const alerts = product.stock?.alerts ?? [];
 
   return (
     <div style={page}>
-      <Link href="/products" style={link}>
+      <Link href='/vendors/products' style={link}>
         ← Danh sách
       </Link>
 
       <h1 style={h1}>{product.title}</h1>
 
       <div style={toolbar}>
-        <Link href={`/products/${product.id}/edit`} style={buttonPrimary}>
+        <Link
+          href={`/vendors/products/${product.id}/edit`}
+          style={buttonPrimary}
+        >
           Sửa sản phẩm
         </Link>
       </div>
@@ -265,7 +275,7 @@ export default function ProductDetailPage() {
         <tbody>
           {info.map(([key, value]) => (
             <tr key={key}>
-              <td style={{ ...td, width: 140, color: "#6b7280" }}>{key}</td>
+              <td style={{ ...td, width: 140, color: '#6b7280' }}>{key}</td>
               <td style={td}>{value}</td>
             </tr>
           ))}
@@ -282,7 +292,7 @@ export default function ProductDetailPage() {
           </span>
 
           <input
-            type="number"
+            type='number'
             style={{ ...input, width: 110 }}
             value={stockValue}
             onChange={(e) => setStockValue(e.target.value)}
@@ -323,7 +333,7 @@ export default function ProductDetailPage() {
             style={input}
             value={alertType}
             onChange={(e) =>
-              setAlertType(e.target.value as StockAlert["alertType"])
+              setAlertType(e.target.value as StockAlert['alertType'])
             }
           >
             {ALERT_TYPES.map((t) => (
@@ -333,8 +343,8 @@ export default function ProductDetailPage() {
             ))}
           </select>
           <input
-            type="number"
-            placeholder="ngưỡng"
+            type='number'
+            placeholder='ngưỡng'
             style={{ ...input, width: 110 }}
             value={threshold}
             onChange={(e) => setThreshold(e.target.value)}
@@ -348,7 +358,7 @@ export default function ProductDetailPage() {
                   alertType,
                   Number(threshold),
                 );
-                setThreshold("");
+                setThreshold('');
               })
             }
           >
@@ -382,7 +392,7 @@ export default function ProductDetailPage() {
 
         <div style={row}>
           <input
-            placeholder="tên tag"
+            placeholder='tên tag'
             style={{ ...input, width: 200 }}
             value={tagName}
             onChange={(e) => setTagName(e.target.value)}
@@ -392,7 +402,7 @@ export default function ProductDetailPage() {
             onClick={() =>
               run(async () => {
                 await productApi.addTag(product.id, tagName);
-                setTagName("");
+                setTagName('');
               })
             }
           >
@@ -414,10 +424,10 @@ export default function ProductDetailPage() {
             key={n.id}
             style={{
               ...row,
-              justifyContent: "space-between",
+              justifyContent: 'space-between',
               paddingBottom: 8,
               marginBottom: 8,
-              borderBottom: "1px solid #f1f2f4",
+              borderBottom: '1px solid #f1f2f4',
             }}
           >
             <span>{n.content}</span>
@@ -432,7 +442,7 @@ export default function ProductDetailPage() {
 
         <div style={{ ...row, marginTop: 12 }}>
           <input
-            placeholder="nội dung ghi chú"
+            placeholder='nội dung ghi chú'
             style={{ ...input, flex: 1, minWidth: 260 }}
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
@@ -442,7 +452,7 @@ export default function ProductDetailPage() {
             onClick={() =>
               run(async () => {
                 await productApi.addNote(product.id, noteContent);
-                setNoteContent("");
+                setNoteContent('');
               })
             }
           >
@@ -480,7 +490,7 @@ export default function ProductDetailPage() {
             value={collectionId}
             onChange={(e) => setCollectionId(e.target.value)}
           >
-            <option value="">— chọn bộ sưu tập —</option>
+            <option value=''>— chọn bộ sưu tập —</option>
             {collections.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -493,7 +503,7 @@ export default function ProductDetailPage() {
             onClick={() =>
               run(async () => {
                 await productApi.assignToCollection(product.id, collectionId);
-                setCollectionId("");
+                setCollectionId('');
               })
             }
           >
@@ -518,4 +528,10 @@ export default function ProductDetailPage() {
       </div>
     </div>
   );
-}
+};
+
+ProductDetailPage.getLayout = function getLayout(page) {
+  return <VendorLayout>{page}</VendorLayout>;
+};
+
+export default ProductDetailPage;
