@@ -2,11 +2,18 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
 
-import AvatarMenu from "./AvatarMenu";
+import AvatarMenu from "../ui/AvatarMenu";
 
-type RecipesLayoutProps = {
+type RecipesLayoutProps = Readonly<{
   children: ReactNode;
-};
+}>;
+
+const AVATAR_ACTIONS = [
+  {
+    label: "My recipes",
+    href: "/recipes/mine",
+  },
+];
 
 export default function RecipesLayout({ children }: RecipesLayoutProps) {
   const { pathname } = useRouter();
@@ -29,7 +36,10 @@ export default function RecipesLayout({ children }: RecipesLayoutProps) {
           </Link>
 
           <div className="flex items-center gap-2">
-            <nav aria-label="Điều hướng chính" className="flex items-center gap-1">
+            <nav
+              aria-label="Điều hướng chính"
+              className="flex items-center gap-1"
+            >
               <Link
                 href="/"
                 aria-current={pathname === "/" ? "page" : undefined}
@@ -39,13 +49,15 @@ export default function RecipesLayout({ children }: RecipesLayoutProps) {
               </Link>
               <Link
                 href="/recipes"
-                aria-current={pathname.startsWith("/recipes") ? "page" : undefined}
+                aria-current={
+                  pathname.startsWith("/recipes") ? "page" : undefined
+                }
                 className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 outline-none ring-offset-2 hover:bg-zinc-100 hover:text-black focus-visible:ring-2 focus-visible:ring-black"
               >
                 Công thức
               </Link>
             </nav>
-            <AvatarMenu />
+            <AvatarMenu actions={AVATAR_ACTIONS} />
           </div>
         </div>
       </header>
