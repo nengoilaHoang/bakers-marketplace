@@ -3,6 +3,7 @@ import {
 	BaseCompositeComponentSchema,
 	CompositeComponentTypeSchema,
 	CreateBaseCompositeComponentSchema,
+	ResponsiveValueSchema,
 	UpdateBaseCompositeComponentSchema,
 } from './base-composite-components.model.js';
 import { BaseLayoutComponentConfigSchema } from '../base-layout-components.model.js';
@@ -12,9 +13,9 @@ export const GridLayoutTypeSchema = z.enum(['UNIFORM', 'BENTO']);
 // The start position of each cell is counted linearly from left to right, downwards.
 export const BaseGridConfigSchema = BaseLayoutComponentConfigSchema.extend({
 	layout: GridLayoutTypeSchema,
-	rows: z.uint32().min(1).max(50),
-	cols: z.uint32().min(1).max(50),
-	gap: z.uint32().min(0), // in px
+	rows: ResponsiveValueSchema(z.uint32().min(1).max(50)),
+	cols: ResponsiveValueSchema(z.uint32().min(1).max(50)),
+	gap: ResponsiveValueSchema(z.uint32().min(0)), // in px
 	borderRadius: z.union([
 		z.undefined(),
 		z.uint32(), // in px

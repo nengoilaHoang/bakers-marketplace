@@ -1,9 +1,9 @@
-import { CompositeComponent } from '#/models/layout-components/composite/composite-components.model.js';
 import { Knex } from 'knex';
 import layoutComponentDao, {
 	LayoutComponentDao,
 } from '../layouts/layout-components.dao.js';
 import database from '#/db/index.js';
+import { PutLayoutComponent } from '#/models/layout-components/layout-components.model.js';
 
 export class PageLayoutDao {
 	constructor(
@@ -43,7 +43,7 @@ export class PageLayoutDao {
 
 	public updatePageLayout = async (
 		pageId: string,
-		root: CompositeComponent,
+		root: PutLayoutComponent,
 		trx?: Knex.Transaction,
 	) => {
 		return await this.knex.transaction(async (trx) => {

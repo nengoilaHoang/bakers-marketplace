@@ -14,6 +14,9 @@ export const UpdateCompositeComponentSchema = z.discriminatedUnion(
 	'componentType',
 	[UpdateGridCompositeComponentSchema],
 );
+export type UpdateCompositeComponent = z.infer<
+	typeof UpdateCompositeComponentSchema
+>;
 
 export const CreateCompositeComponentSchema = z.discriminatedUnion(
 	'componentType',

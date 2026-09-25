@@ -1,8 +1,10 @@
-import pageLayoutDao, { PageLayoutDao } from '#/daos/layouts/page-layout.dao.js';
+import pageLayoutDao, {
+	PageLayoutDao,
+} from '#/daos/layouts/page-layout.dao.js';
 import {
-	CompositeComponent,
-	CompositeComponentSchema,
-} from '#/models/layout-components/composite/composite-components.model.js';
+	PutLayoutComponent,
+	PutLayoutComponentSchema,
+} from '#/models/layout-components/layout-components.model.js';
 import { UnprocessableEntityError } from '#/utils/http-errors.js';
 
 export class PageLayoutService {
@@ -44,9 +46,9 @@ export class PageLayoutService {
 
 	public updatePageLayout = async (
 		pageId: string,
-		root: CompositeComponent,
+		root: PutLayoutComponent,
 	) => {
-		const result = CompositeComponentSchema.safeParse(root);
+		const result = PutLayoutComponentSchema.safeParse(root);
 		if (!result.success) {
 			throw new UnprocessableEntityError(
 				`Invalid layout component schema: ${result.error}`,

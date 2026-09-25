@@ -932,9 +932,15 @@ export async function up(knex: Knex): Promise<void> {
         .uuid('child_id')
         .references('id')
         .inTable('layout_components')
-        .unique()
         .notNullable()
 				.onDelete('CASCADE');
+
+			table
+				.enum('breakpoint', ['mobile', 'tablet', 'desktop'], {
+					useNative: true,
+					enumName: 'breakpoint_type'
+				})
+				.notNullable();
 
       table
         .integer('sort_order')
@@ -942,9 +948,14 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table
-        .primary(['composite_id', 'sort_order'], {
-					constraintName: 'uniq_composite_children_order',
+        .primary(['composite_id', 'breakpoint', 'sort_order'], {
+					constraintName: 'uniq_composite_children_breakpoint_order',
 					deferrable: 'deferred',
+				});
+
+			table
+				.unique(['composite_id', 'breakpoint', 'child_id'], {
+					indexName: 'uniq_composite_breakpoint_child'
 				});
     })
 
@@ -1143,16 +1154,40 @@ export async function up(knex: Knex): Promise<void> {
 					SELECT jsonb_build_object(
 						'type', 'COMPOSITE',
 						'component_type', cc.component_type,
-						'children', COALESCE(
-							(
-								SELECT jsonb_object_agg(
-									ccc.sort_order,
-									get_layout_tree_json(ccc.child_id)
-								)
-								FROM composite_component_children ccc
-								WHERE ccc.composite_id = cc.id
+						'children', json_build_object(
+							'mobile', COALESCE(
+								(
+									SELECT jsonb_object_agg(
+										ccc.sort_order,
+										get_layout_tree_json(ccc.child_id)
+									)
+									FROM composite_component_children ccc
+									WHERE ccc.composite_id = cc.id AND ccc.breakpoint = 'mobile'
+								),
+								'{}'::jsonb
 							),
-							'{}'::jsonb
+							'tablet', COALESCE(
+								(
+									SELECT jsonb_object_agg(
+										ccc.sort_order,
+										get_layout_tree_json(ccc.child_id)
+									)
+									FROM composite_component_children ccc
+									WHERE ccc.composite_id = cc.id AND ccc.breakpoint = 'tablet'
+								),
+								'{}'::jsonb
+							),
+							'desktop', COALESCE(
+								(
+									SELECT jsonb_object_agg(
+										ccc.sort_order,
+										get_layout_tree_json(ccc.child_id)
+									)
+									FROM composite_component_children ccc
+									WHERE ccc.composite_id = cc.id AND ccc.breakpoint = 'desktop'
+								),
+								'{}'::jsonb
+							)
 						)
 					)
 					FROM composite_components cc
@@ -1228,6 +1263,7 @@ export async function down(knex: Knex): Promise<void> {
     DROP TYPE IF EXISTS repeater_component_type;
     DROP TYPE IF EXISTS leaf_component_type;
     DROP TYPE IF EXISTS commerce_component_type;
+    DROP TYPE IF EXISTS breakpoint_type;
     DROP TYPE IF EXISTS page_type;
 		DROP TYPE IF EXISTS stock_alert_type;
     DROP TYPE IF EXISTS user_role;
