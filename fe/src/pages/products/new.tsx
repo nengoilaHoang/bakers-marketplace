@@ -2,7 +2,8 @@ import { useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { ApiError, productApi } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { productApi } from '@/services/products';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -127,7 +128,7 @@ export default function NewProductPage() {
 		setDetails(null);
 
 		try {
-			const created = await productApi.create({
+			const res = await productApi.create({
 				brandId: form.brandId,
 				vendorId: form.vendorId || null,
 				title: form.title,
@@ -139,7 +140,7 @@ export default function NewProductPage() {
 				expirationDate: form.expirationDate || null,
 			});
 
-			router.push(`/products/${created.id}`);
+			router.push(`/products/${res.data.id}`);
 		} catch (err) {
 			setError((err as Error).message);
 

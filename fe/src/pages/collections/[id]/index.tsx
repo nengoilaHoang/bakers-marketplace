@@ -2,7 +2,8 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { collectionApi, type Collection } from '@/lib/api';
+import { collectionApi } from '@/services/collections';
+import { type Collection } from '@/types/collection';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -118,7 +119,7 @@ export default function CollectionDetailPage() {
 
 		collectionApi
 			.getById(id)
-			.then(setCollection)
+			.then((res) => setCollection(res.data))
 			.catch((err) => setError((err as Error).message))
 			.finally(() => setLoading(false));
 	}, [id]);

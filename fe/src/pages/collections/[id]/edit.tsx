@@ -2,7 +2,8 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { ApiError, collectionApi } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { collectionApi } from '@/services/collections';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -105,7 +106,8 @@ export default function EditCollectionPage() {
 
 		collectionApi
 			.getById(id)
-			.then((c) => {
+			.then((res) => {
+				const c = res.data;
 				setForm({
 					name: c.name,
 					slug: c.slug,

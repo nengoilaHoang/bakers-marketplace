@@ -1,7 +1,8 @@
 import { useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 
-import { productApi, type Product } from '@/lib/api';
+import { productApi } from '@/services/products';
+import { type Product } from '@/types/product';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -115,7 +116,8 @@ export default function SearchPage() {
 		setError(null);
 
 		try {
-			setResults(await productApi.search(keyword));
+			const res = await productApi.search(keyword);
+			setResults(res.data);
 		} catch (err) {
 			setError((err as Error).message);
 			setResults(null);

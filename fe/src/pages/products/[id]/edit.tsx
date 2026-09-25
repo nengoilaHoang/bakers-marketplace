@@ -2,7 +2,8 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { ApiError, productApi } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { productApi } from '@/services/products';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -123,7 +124,8 @@ export default function EditProductPage() {
 
 		productApi
 			.getById(id)
-			.then((p) => {
+			.then((res) => {
+				const p = res.data;
 				setForm({
 					title: p.title,
 					slug: p.slug,

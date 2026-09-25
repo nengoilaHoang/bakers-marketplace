@@ -16,11 +16,23 @@ type FilterDropdownProps = {
 };
 
 function normalizeSearch(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().trim();
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .trim();
 }
 
 export default function FilterDropdown({
-  name, title, icon, options, selected, onChange, open, onOpenChange,
+  name,
+  title,
+  icon,
+  options,
+  selected,
+  onChange,
+  open,
+  onOpenChange,
 }: FilterDropdownProps) {
   const id = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,8 +43,12 @@ export default function FilterDropdown({
   const [query, setQuery] = useState("");
   const allSelected = selected.length === options.length;
   const someSelected = selected.length > 0 && !allSelected;
-  const selectedLabels = options.filter((option) => selected.includes(option.value)).map((option) => option.label);
-  const filteredOptions = options.filter((option) => normalizeSearch(option.label).includes(normalizeSearch(query)));
+  const selectedLabels = options
+    .filter((option) => selected.includes(option.value))
+    .map((option) => option.label);
+  const filteredOptions = options.filter((option) =>
+    normalizeSearch(option.label).includes(normalizeSearch(query)),
+  );
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -44,7 +60,8 @@ export default function FilterDropdown({
       const bounds = trigger.getBoundingClientRect();
       const viewport = window.visualViewport;
       const viewportTop = viewport?.offsetTop ?? 0;
-      const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight);
+      const viewportBottom =
+        viewportTop + (viewport?.height ?? window.innerHeight);
       const below = viewportBottom - bounds.bottom - 16;
       const above = bounds.top - viewportTop - 16;
       const openAbove = below < 260 && above > below;
@@ -74,7 +91,10 @@ export default function FilterDropdown({
     searchRef.current?.focus();
 
     function handlePointerDown(event: PointerEvent) {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+      if (
+        event.target instanceof Node &&
+        !containerRef.current?.contains(event.target)
+      ) {
         onOpenChange(false);
       }
     }
@@ -99,7 +119,10 @@ export default function FilterDropdown({
       onBlur={(event) => {
         // Disabling the clear button after clearing may blur it without moving
         // focus outside. Keep the list open so another selection is possible.
-        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+        if (
+          event.relatedTarget &&
+          !event.currentTarget.contains(event.relatedTarget)
+        ) {
           onOpenChange(false);
         }
       }}
@@ -112,13 +135,18 @@ export default function FilterDropdown({
       }}
     >
       {/* Keep selected values in the GET form even while the popup is closed. */}
-      {selected.map((value) => <input key={value} type="hidden" name={name} value={value} />)}
+      {selected.map((value) => (
+        <input key={value} type="hidden" name={name} value={value} />
+      ))}
       <button
         ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-controls={`${id}-panel`}
-        onClick={() => { setQuery(""); onOpenChange(!open); }}
+        onClick={() => {
+          setQuery("");
+          onOpenChange(!open);
+        }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
             event.preventDefault();
@@ -134,17 +162,30 @@ export default function FilterDropdown({
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 text-sm font-medium text-zinc-900">
             {title}
-            {selected.length > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1.5 text-[10px] font-semibold leading-none text-white">{selected.length}</span>}
+            {selected.length > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1.5 text-[10px] font-semibold leading-none text-white">
+                {selected.length}
+              </span>
+            )}
           </span>
           <span className="mt-0.5 block truncate text-xs text-zinc-500">
-            {allSelected ? "Đã chọn tất cả" : selectedLabels.join(", ") || "Chọn những gì bạn có"}
+            {allSelected
+              ? "Đã chọn tất cả"
+              : selectedLabels.join(", ") || "Chọn những gì bạn có"}
           </span>
         </span>
-        <SearchIcon name="chevron" className={`size-4 text-zinc-400 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
+        <SearchIcon
+          name="chevron"
+          className={`size-4 text-zinc-400 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {open && (
-        <div ref={panelRef} id={`${id}-panel`} className="absolute inset-x-0 top-full z-30 mt-2 flex flex-col rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl shadow-zinc-950/10">
+        <div
+          ref={panelRef}
+          id={`${id}-panel`}
+          className="absolute inset-x-0 top-full z-30 mt-2 flex flex-col rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl shadow-zinc-950/10"
+        >
           <div className="flex h-11 shrink-0 items-center gap-2 rounded-lg bg-zinc-100 px-3 focus-within:ring-2 focus-within:ring-zinc-400">
             <SearchIcon name="search" className="size-4 text-zinc-500" />
             <input
@@ -153,43 +194,88 @@ export default function FilterDropdown({
               aria-label={`Tìm trong ${title.toLowerCase()}`}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.preventDefault();
+              }}
               placeholder={`Tìm ${title.toLowerCase()}...`}
               autoComplete="off"
               className="h-full min-w-0 flex-1 bg-transparent text-base text-zinc-900 outline-none placeholder:text-zinc-500 sm:text-sm"
             />
           </div>
 
-          <div role="group" aria-label={`${title} bạn có`} className="mt-1 flex min-h-0 min-w-0 flex-col">
+          <div
+            role="group"
+            aria-label={`${title} bạn có`}
+            className="mt-1 flex min-h-0 min-w-0 flex-col"
+          >
             <label className="flex min-h-11 shrink-0 cursor-pointer items-center gap-3 border-b border-zinc-100 px-3 text-sm font-medium text-zinc-900">
               <input
                 ref={allRef}
                 type="checkbox"
                 checked={allSelected}
-                onChange={() => onChange(allSelected ? [] : options.map((option) => option.value))}
+                onChange={() =>
+                  onChange(
+                    allSelected ? [] : options.map((option) => option.value),
+                  )
+                }
                 className="size-4 shrink-0 accent-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
               />
               <span className="flex-1">Tất cả</span>
-              <span className="text-xs font-normal text-zinc-400">{options.length} mục</span>
+              <span className="text-xs font-normal text-zinc-400">
+                {options.length} mục
+              </span>
             </label>
             <div className="min-h-0 max-h-60 overflow-y-auto overscroll-contain py-1">
-              {filteredOptions.length ? filteredOptions.map((option) => (
-                <label key={option.value} className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm transition hover:bg-zinc-100 ${selected.includes(option.value) ? "bg-zinc-50 text-zinc-950" : "text-zinc-600"} ${option.value === "other" ? "border-t border-zinc-100" : ""}`}>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(option.value)}
-                    onChange={(event) => onChange(event.target.checked ? [...selected, option.value] : selected.filter((value) => value !== option.value))}
-                    className="size-4 shrink-0 accent-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
-                  />
-                  <span>{option.label}</span>
-                </label>
-              )) : <p role="status" className="px-3 py-6 text-center text-sm text-zinc-500">Không tìm thấy mục phù hợp.</p>}
+              {filteredOptions.length ? (
+                filteredOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm transition hover:bg-zinc-100 ${selected.includes(option.value) ? "bg-zinc-50 text-zinc-950" : "text-zinc-600"} ${option.value === "other" ? "border-t border-zinc-100" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(option.value)}
+                      onChange={(event) =>
+                        onChange(
+                          event.target.checked
+                            ? [...selected, option.value]
+                            : selected.filter(
+                                (value) => value !== option.value,
+                              ),
+                        )
+                      }
+                      className="size-4 shrink-0 accent-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))
+              ) : (
+                <p
+                  role="status"
+                  className="px-3 py-6 text-center text-sm text-zinc-500"
+                >
+                  Không tìm thấy mục phù hợp.
+                </p>
+              )}
             </div>
           </div>
 
           <div className="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-100 px-1 pt-2">
-            <button type="button" disabled={!selected.length} onClick={() => onChange([])} className="min-h-10 rounded-lg px-2 text-xs font-medium text-zinc-600 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-950 disabled:cursor-not-allowed disabled:opacity-40">Bỏ chọn tất cả</button>
-            <button type="button" onClick={close} className="min-h-10 rounded-lg bg-zinc-900 px-4 text-xs font-semibold text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950">Xong{selected.length > 0 ? ` · ${selected.length}` : ""}</button>
+            <button
+              type="button"
+              disabled={!selected.length}
+              onClick={() => onChange([])}
+              className="min-h-10 rounded-lg px-2 text-xs font-medium text-zinc-600 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Bỏ chọn tất cả
+            </button>
+            <button
+              type="button"
+              onClick={close}
+              className="min-h-10 rounded-lg bg-zinc-900 px-4 text-xs font-semibold text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
+            >
+              Xong{selected.length > 0 ? ` · ${selected.length}` : ""}
+            </button>
           </div>
         </div>
       )}

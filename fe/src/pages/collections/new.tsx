@@ -2,7 +2,8 @@ import { useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { ApiError, collectionApi } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { collectionApi } from '@/services/collections';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -99,14 +100,14 @@ export default function NewCollectionPage() {
 		setDetails(null);
 
 		try {
-			const created = await collectionApi.create({
+			const res = await collectionApi.create({
 				name: form.name,
 				slug: form.slug,
 				description: form.description || null,
 				isActive: form.isActive,
 			});
 
-			router.push(`/collections/${created.id}`);
+			router.push(`/collections/${res.data.id}`);
 		} catch (err) {
 			setError((err as Error).message);
 
