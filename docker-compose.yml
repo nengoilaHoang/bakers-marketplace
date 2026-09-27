@@ -35,10 +35,17 @@ services:
     image: redis:8-alpine
     container_name: bakers_redis
     restart: always
+    networks:
+      - bakers_network
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # Backend
   backend:
@@ -55,8 +62,10 @@ services:
     env_file:
       - ./be/.env.${APP_ENV:-development}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_healthy
     command: npm run dev:docker
     develop:
       watch:

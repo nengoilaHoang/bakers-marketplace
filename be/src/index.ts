@@ -6,6 +6,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import router from './routes/index.route.js';
 import { errorMiddleware } from '#/middlewares/error.middleware.js';
+import { connectRedis, disconnectRedis } from './redis.js';
 
 const app = express();
 const PORT = 4000;
@@ -58,6 +59,28 @@ app.use("/api",router);
 
 app.use(errorMiddleware);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}/health`);
-});
+async function bootstrap(): Promise<void> {
+  try {
+    await connectRedis();
+
+    const server = app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}/health`);
+    });
+
+    const shutdown = async () => {
+      server.close(async () => {
+        await disconnectRedis();
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    process.exit(1);
+  }
+}
+
+void bootstrap();
+
