@@ -11,7 +11,7 @@ export const UserTableSchema = z.object({
 	id: z.uuidv4().readonly(),
 	email: z.email(),
 	phone: z.string().max(15),
-	password: z.string().max(255),
+	hashedPassword: z.string().max(255).nullable(),
 	displayName: z.string().max(255),
 	role: UserRoleSchema.default('CUSTOMER'),
 	status: UserStatusSchema,
