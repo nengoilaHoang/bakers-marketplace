@@ -5,7 +5,10 @@ services:
     container_name: bakers_postgres
     restart: always
     env_file:
-      - ./be/.env.${APP_ENV:-development}
+      - path: ./be/.env.development
+        required: true
+      - path: ./be/.env
+        required: false
     environment:
       POSTGRES_USER: ${DB_USER:-bakers_admin}
       POSTGRES_PASSWORD: ${DB_PASS:-secretpassword}
@@ -60,7 +63,13 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./be/.env.${APP_ENV:-development}
+      - path: ./be/.env.development
+        required: true
+      - path: ./be/.env
+        required: false
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
     depends_on:
       postgres:
         condition: service_started
@@ -87,7 +96,10 @@ services:
       target: base
     restart: always
     env_file:
-      - ./fe/.env.${APP_ENV:-development}
+      - path: ./fe/.env.development
+        required: true
+      - path: ./fe/.env
+        required: false
     networks:
       - bakers_network
     ports:
