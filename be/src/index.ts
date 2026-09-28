@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import router from './routes/index.route.js';
 import { errorMiddleware } from '#/middlewares/error.middleware.js';
 import { connectRedis, disconnectRedis } from './redis.js';
+import authenMailService from '#/services/authen-mail.service.js';
 
 const app = express();
 const PORT = 4000;
@@ -62,6 +63,33 @@ app.use(errorMiddleware);
 async function bootstrap(): Promise<void> {
   try {
     await connectRedis();
+
+    if (process.env.NODE_ENV !== 'production') {
+      const testRecipient = process.env.AUTH_MAIL_TEST_TO?.trim()
+        || process.env.EMAIL_USERNAME?.trim();
+
+      if (testRecipient) {
+        const verificationSent = await authenMailService.sendVerificationEmail(
+          testRecipient,
+          '',
+          'Test User',
+        );
+        const resetPasswordSent = await authenMailService.sendResetPasswordEmail(
+          testRecipient,
+          '',
+          'Test User',
+        );
+
+        console.log('Authentication email tests:', {
+          verificationSent,
+          resetPasswordSent,
+        });
+      } else {
+        console.warn(
+          'Authentication email tests skipped: AUTH_MAIL_TEST_TO is not configured',
+        );
+      }
+    }
 
     const server = app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}/health`);

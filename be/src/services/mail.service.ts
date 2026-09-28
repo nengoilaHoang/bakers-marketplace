@@ -36,6 +36,8 @@ class MailService {
 				throw new Error('RESEND_FROM is not configured');
 			}
 
+			this.assertSenderCanReceiveReplies(from);
+
 			const baseMail = {
 				from,
 				to: mail.to,
@@ -79,6 +81,15 @@ class MailService {
 
 		this.client = new Resend(apiKey);
 		return this.client;
+	}
+
+	private assertSenderCanReceiveReplies(from: string): void {
+		const address = from.match(/<([^<>]+)>/)?.[1] ?? from;
+		const localPart = address.split('@')[0]?.replace(/[._-]/g, '').toLowerCase();
+
+		if (localPart === 'noreply') {
+			throw new Error('RESEND_FROM must not use a no-reply address');
+		}
 	}
 }
 
