@@ -145,6 +145,24 @@ class JwtService {
 		}
 	}
 
+	public getUserIdFromRefreshToken(refreshToken: string): string | null {
+		if (!refreshToken) {
+			return null;
+		}
+
+		const secret = this.getSecret('refresh');
+
+		try {
+			const payload = this.parsePayload(
+				jwt.verify(refreshToken, secret, { ignoreExpiration: true }),
+			);
+
+			return payload.id ?? null;
+		} catch {
+			return null;
+		}
+	}
+
 	private signToken(
 		userInfo: UserInfo,
 		type: 'access' | 'refresh',

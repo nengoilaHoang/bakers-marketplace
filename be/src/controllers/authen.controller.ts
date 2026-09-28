@@ -126,6 +126,27 @@ class AuthenController {
 			res.status(200).json({ data: user });
 		},
 	);
+
+	public logout = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			const refreshToken = cookieService.getTokenFromRequest(req, 'refresh');
+
+			try {
+				if (refreshToken) {
+					const userId = jwtService.getUserIdFromRefreshToken(refreshToken);
+
+					if (userId) {
+						await bcryptService.deleteRefreshToken(userId, refreshToken);
+					}
+				}
+			} finally {
+				cookieService.clearTokenCookie(res, 'access');
+				cookieService.clearTokenCookie(res, 'refresh');
+			}
+
+			res.status(204).send();
+		},
+	);
 }
 
 export default new AuthenController();

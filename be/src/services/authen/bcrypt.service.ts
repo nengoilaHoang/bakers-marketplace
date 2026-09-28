@@ -85,6 +85,19 @@ class BcryptService {
 
 		return updatedSession !== null;
 	}
+
+	public async deleteRefreshToken(
+		userId: string,
+		refreshToken: string,
+	): Promise<boolean> {
+		const session = await this.checkRefreshToken(userId, refreshToken);
+
+		if (!session?.id) {
+			return false;
+		}
+
+		return (await sessionDAO.delete(session.id)) !== null;
+	}
 }
 
 export default new BcryptService();
