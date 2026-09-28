@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import userDAO from '#/daos/users/users.dao.js';
 import { UserCreateSchema } from '#/models/users/users.model.js';
+import authenMailService from '#/services/authen/authen-mail.service.js';
 import authenRedisService from '#/services/authen/authen-redis.service.js';
 import bcryptService from '#/services/authen/bcrypt.service.js';
 import cookieService from '#/services/authen/cookie.service.js';
@@ -25,6 +26,22 @@ const LoginSchema = z.object({
 	email: z.email().max(255),
 	password: z.string().min(1).max(72),
 });
+
+const ResetPasswordSchema = z.object({
+	email: z.string().trim().pipe(z.email().max(255)),
+});
+
+const ChangePasswordSchema = z.object({
+	password: z.string().min(8).max(72),
+	confirmPassword: z.string().min(8).max(72),
+}).refine(({ password, confirmPassword }) => password === confirmPassword, {
+	message: 'Passwords do not match',
+	path: ['confirmPassword'],
+});
+
+type AuthenticatedRequest = Request & {
+	userId: string;
+};
 
 class AuthenController {
 	public register = asyncHandler(
@@ -127,6 +144,88 @@ class AuthenController {
 		},
 	);
 
+	public resetPassword = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			const { email } = ResetPasswordSchema.parse(req.body);
+			const user = await userDAO.getCredentialsByEmail(email);
+
+			if (user?.hashedPassword == null) {
+				throw new NotFoundError(
+					'Account was not found or cannot reset its password',
+				);
+			}
+
+			await this.sendPasswordResetEmail(user.email);
+
+			res.status(202).json({
+				message: 'Reset password email sent',
+			});
+		},
+	);
+
+	public resetCurrentUserPassword = asyncHandler(
+		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+			const user = await userDAO.getById(req.userId);
+
+			if (!user) {
+				throw new NotFoundError('Account is no longer available');
+			}
+
+			const credentials = await userDAO.getCredentialsByEmail(user.email);
+
+			if (credentials?.hashedPassword == null) {
+				throw new NotFoundError(
+					'Account was not found or cannot reset its password',
+				);
+			}
+
+			await this.sendPasswordResetEmail(user.email, user.displayName);
+
+			res.status(202).json({
+				message: 'Reset password email sent',
+			});
+		},
+	);
+
+	public changePassword = asyncHandler(
+		async (
+			req: Request<{ code: string }>,
+			res: Response,
+		): Promise<void> => {
+			const code = req.params.code?.trim();
+			const { password } = ChangePasswordSchema.parse(req.body);
+			const email = code
+				? await authenRedisService.getPasswordResetEmail(code)
+				: null;
+
+			if (!email) {
+				throw new NotFoundError('Reset password code is invalid or expired');
+			}
+
+			const user = await userDAO.getByEmail(email);
+
+			if (!user?.id) {
+				await authenRedisService.deletePasswordReset(code);
+				throw new NotFoundError('Account is no longer available');
+			}
+
+			const passwordSaved = await bcryptService.savePassword(
+				user.id,
+				password,
+			);
+
+			if (!passwordSaved) {
+				throw new InternalServerError('Password could not be changed');
+			}
+
+			await authenRedisService.deletePasswordReset(code);
+
+			res.status(200).json({
+				message: 'Password changed successfully',
+			});
+		},
+	);
+
 	public logout = asyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			const refreshToken = cookieService.getTokenFromRequest(req, 'refresh');
@@ -165,6 +264,39 @@ class AuthenController {
 			});
 		},
 	);
+
+	private async sendPasswordResetEmail(
+		email: string,
+		displayName?: string,
+	): Promise<void> {
+		const code = await authenRedisService.savePasswordReset(email);
+		const frontendUrl = process.env.FE_URL?.trim();
+
+		try {
+			if (!frontendUrl) {
+				throw new Error('FE_URL is not configured');
+			}
+
+			const resetPasswordUrl = new URL(
+				`/authen/reset-password/${encodeURIComponent(code)}`,
+				frontendUrl,
+			).toString();
+			const emailSent = await authenMailService.sendResetPasswordEmail(
+				email,
+				resetPasswordUrl,
+				displayName,
+			);
+
+			if (!emailSent) {
+				throw new InternalServerError(
+					'Reset password email could not be sent',
+				);
+			}
+		} catch (error) {
+			await authenRedisService.deletePasswordReset(code);
+			throw error;
+		}
+	}
 	
 }
 

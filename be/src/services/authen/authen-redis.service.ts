@@ -13,6 +13,8 @@ import {
 
 const VERIFY_EMAIL_PREFIX = 'verify-email:';
 const VERIFY_EMAIL_TTL_SECONDS = 15 * 60;
+const RESET_PASSWORD_PREFIX = 'reset-password:';
+const RESET_PASSWORD_TTL_SECONDS = 15 * 60;
 
 class AuthenRedisService {
 	public async saveUnverifiedUser(
@@ -90,6 +92,39 @@ class AuthenRedisService {
 			userInfo: parsedUser.data,
 			password: data.password,
 		};
+	}
+
+	public async savePasswordReset(email: string): Promise<string> {
+		const code = randomBytes(32).toString('hex');
+		const key = `${RESET_PASSWORD_PREFIX}${code}`;
+
+		await redisService.set(key, email, RESET_PASSWORD_TTL_SECONDS);
+
+		return code;
+	}
+
+	public async getPasswordResetEmail(code: string): Promise<string | null> {
+		const normalizedCode = code.trim();
+
+		if (!normalizedCode) {
+			return null;
+		}
+
+		const email = await redisService.get<unknown>(
+			`${RESET_PASSWORD_PREFIX}${normalizedCode}`,
+		);
+
+		return typeof email === 'string' && email.length > 0 ? email : null;
+	}
+
+	public async deletePasswordReset(code: string): Promise<boolean> {
+		const normalizedCode = code.trim();
+
+		if (!normalizedCode) {
+			return false;
+		}
+
+		return redisService.delete(`${RESET_PASSWORD_PREFIX}${normalizedCode}`);
 	}
 }
 

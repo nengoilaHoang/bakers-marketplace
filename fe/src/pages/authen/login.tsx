@@ -89,6 +89,14 @@ export default function LoginPage() {
 									className='mt-2 block w-full border border-zinc-300 bg-white px-3.5 py-3 text-sm outline-none transition hover:border-zinc-500 focus:border-black focus:ring-1 focus:ring-black'
 								/>
 							</label>
+							<div className='-mt-2 text-right'>
+								<Link
+									href='/authen/forgot-password'
+									className='text-xs font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 transition hover:text-black hover:decoration-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
+								>
+									Quên mật khẩu?
+								</Link>
+							</div>
 
 							{error && (
 								<div role='alert' className='border border-black bg-zinc-50 px-4 py-3 text-sm leading-6'>

@@ -78,6 +78,15 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
           aria-label='Tùy chọn tài khoản'
           className='absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg'
         >
+			<NavLink
+				href='/authen/change-password'
+				role='menuitem'
+				className='block cursor-pointer px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:bg-zinc-100 focus-visible:outline-none'
+				onClick={() => setIsOpen(false)}
+			>
+				Đổi mật khẩu
+			</NavLink>
+
           {actions.map((action) => (
             <NavLink
               key={`${action.href}-${action.label}`}
@@ -93,7 +102,7 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
             </NavLink>
           ))}
 
-					{actions.length > 0 && <div className='my-1 border-t border-zinc-200' />}
+					<div className='my-1 border-t border-zinc-200' />
 
 					<button
 						type='button'
