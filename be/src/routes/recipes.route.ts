@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import recipeController from '#/controllers/recipes.controller.js';
 import recipeSearchEngineController from '#/controllers/recipe-search-engine.controller.js';
-
+import { authenMiddleware } from '#/middlewares/authen.middleware.js';
 const router = Router();
 
 // router.get(
@@ -17,11 +17,13 @@ router.get(
 
 router.post(
   '/snapshot',
+  authenMiddleware,
   recipeController.createSnapshot,
 );
 
 router.get(
   '/mine',
+  authenMiddleware,
   recipeController.getMine,
 );
 
@@ -42,16 +44,19 @@ router.get(
 
 router.post(
   '/',
+  authenMiddleware,
   recipeController.create,
 );
 
 router.patch(
   '/',
+  authenMiddleware,
   recipeController.update,
 );
 
 router.delete(
   '/:id',
+  authenMiddleware,
   recipeController.delete,
 );
 

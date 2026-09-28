@@ -22,7 +22,11 @@ type RecipeUserIdParams = {
 	userId: string;
 };
 
-const CURRENT_USER_ID = '11111111-1111-4111-8111-111111111111';
+type AuthenticatedRequest<Params = Record<string, never>> = Request<
+	Params
+> & {
+	userId: string;
+};
 
 class RecipeController {
 	private recipeService = recipeService;
@@ -95,8 +99,8 @@ class RecipeController {
 	);
 
 	public getMine = asyncHandler(
-		async (_req: Request, res: Response): Promise<void> => {
-			const recipes = await recipeService.getByUserId(CURRENT_USER_ID);
+		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+			const recipes = await recipeService.getByUserId(req.userId);
 
 			res.status(200).json({
 				data: recipes,
@@ -105,19 +109,14 @@ class RecipeController {
 	);
 
 	public create = asyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
+		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const parsedRecipe = RecipeCreateSchema.parse(req.body);
 			const recipe = {
 				...parsedRecipe,
 				...req.body,
 			} as RecipeCreatePayload;
-			//hard code userId
-			const userId = CURRENT_USER_ID;
-			if (!userId) {
-				throw new Error('userId is required');
-			}
 			recipe.isSnapshot = false;
-			const createdRecipe = await recipeService.set(userId, recipe);
+			const createdRecipe = await recipeService.set(req.userId, recipe);
 
 			res.status(201).json({
 				data: createdRecipe,
@@ -126,16 +125,15 @@ class RecipeController {
 	);
 
 	public createSnapshot = asyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
+		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const parsedRecipe = RecipeCreateSchema.parse(req.body);
 			const recipe = {
 				...parsedRecipe,
 				...req.body,
 			} as RecipeCreatePayload;
-			const userId = CURRENT_USER_ID;
 			recipe.isSnapshot = true;
 			recipe.isPublic = true;
-			const createdRecipe = await recipeService.set(userId, recipe);
+			const createdRecipe = await recipeService.set(req.userId, recipe);
 
 			res.status(201).json({
 				data: createdRecipe,
@@ -145,7 +143,7 @@ class RecipeController {
 
 	public update = asyncHandler(
 		async (
-			req: Request<RecipeIdParams>,
+			req: AuthenticatedRequest<RecipeIdParams>,
 			res: Response,
 		): Promise<void> => {
 			const parsedRecipe = RecipeUpdateSchema.parse(req.body);
@@ -153,12 +151,11 @@ class RecipeController {
 				...parsedRecipe,
 				...req.body,
 			} as RecipeUpdatePayload;
-			const userId: string = CURRENT_USER_ID;
 			if (!recipe.id) {
 				throw new Error('recipe id is required');
 			}
 			const isOwner = await this.recipeService.checkRecipeOwner(
-				userId,
+				req.userId,
 				recipe.id,
 			);
 			if (!isOwner) {
@@ -181,12 +178,11 @@ class RecipeController {
 
 	public delete = asyncHandler(
 		async (
-			req: Request<RecipeIdParams>,
+			req: AuthenticatedRequest<RecipeIdParams>,
 			res: Response,
 		): Promise<void> => {
 			const { id } = req.params;
-			const userId: string = CURRENT_USER_ID;
-			const isOwner = await this.recipeService.checkRecipeOwner(userId, id);
+			const isOwner = await this.recipeService.checkRecipeOwner(req.userId, id);
 			if (!isOwner) {
 				throw new Error('you dont have permission');
 			}

@@ -147,6 +147,25 @@ class AuthenController {
 			res.status(204).send();
 		},
 	);
+
+	public refreshToken = asyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			const refreshToken =
+			cookieService.getTokenFromRequest(req, 'refresh');
+			if (!refreshToken) {
+				throw new UnauthorizedError(
+					'Refresh token is required',
+					'REFRESH_TOKEN_REQUIRED',
+				);
+			}
+			await jwtService.refreshToken(refreshToken, res);
+
+			res.status(200).json({
+				message: 'Token refreshed successfully',
+			});
+		},
+	);
+	
 }
 
 export default new AuthenController();

@@ -123,25 +123,43 @@ class JwtService {
 
 	public getUserIdFromAccessToken(accessToken: string): string {
 		if (!accessToken) {
-			throw new UnauthorizedError('Access token is required');
+			throw new UnauthorizedError(
+				'Access token is required',
+				'ACCESS_TOKEN_REQUIRED',
+			);
 		}
 
 		const secret = this.getSecret('access');
 
 		try {
-			const payload = this.parsePayload(jwt.verify(accessToken, secret));
+			const payload = this.parsePayload(
+				jwt.verify(accessToken, secret),
+			);
 
 			if (!payload.id) {
-				throw new UnauthorizedError('Token user id is missing');
+				throw new UnauthorizedError(
+					'Token user id is missing',
+					'ACCESS_TOKEN_INVALID',
+				);
 			}
 
 			return payload.id;
 		} catch (error) {
+			if (error instanceof jwt.TokenExpiredError) {
+				throw new UnauthorizedError(
+					'Access token has expired',
+					'ACCESS_TOKEN_EXPIRED',
+				);
+			}
+
 			if (error instanceof UnauthorizedError) {
 				throw error;
 			}
 
-			throw new UnauthorizedError('Access token is invalid or expired');
+			throw new UnauthorizedError(
+				'Access token is invalid',
+				'ACCESS_TOKEN_INVALID',
+			);
 		}
 	}
 

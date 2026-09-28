@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+let refreshAccessTokenPromise: Promise<void> | null = null;
 
 type QueryPrimitive = string | number | boolean;
 type QueryValue =
@@ -39,17 +40,28 @@ export default async function request<T>(
 	// Get only the part after the domain name, e.g. "/api/products" instead of "http://localhost:4000/api/products"
 	const relativeUrl = url.pathname + url.search;
 
-	const res = await fetch(relativeUrl, {
+	const requestInit: RequestInit = {
 		headers: { 'Content-Type': 'application/json' },
 		credentials: init?.credentials ?? 'include',
 		...init,
-	});
+	};
+
+	let res = await fetch(relativeUrl, requestInit);
+	let body = res.status === 204 ? null : await res.json().catch(() => null);
+
+	if (
+		res.status === 401 &&
+		body?.code === 'ACCESS_TOKEN_EXPIRED' &&
+		path !== '/authen/refresh'
+	) {
+		await refreshAccessToken();
+		res = await fetch(relativeUrl, requestInit);
+		body = res.status === 204 ? null : await res.json().catch(() => null);
+	}
 
 	if (res.status === 204) {
 		return undefined as T;
 	}
-
-	const body = await res.json().catch(() => null);
 
 	if (!res.ok) {
 		throw new ApiError(
@@ -63,6 +75,36 @@ export default async function request<T>(
 		...body,
 		data: normalizeNumbers(body?.data),
 	} as T;
+}
+
+async function refreshAccessToken(): Promise<void> {
+	if (!refreshAccessTokenPromise) {
+		const refreshUrl = new URL(`${BASE_URL}/authen/refresh`);
+		const relativeRefreshUrl = refreshUrl.pathname + refreshUrl.search;
+
+		refreshAccessTokenPromise = fetch(relativeRefreshUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+		})
+			.then(async (res) => {
+				if (res.ok) {
+					return;
+				}
+
+				const body = await res.json().catch(() => null);
+				throw new ApiError(
+					res.status,
+					body?.message ?? `Request failed (${res.status})`,
+					body?.errors,
+				);
+			})
+			.finally(() => {
+				refreshAccessTokenPromise = null;
+			});
+	}
+
+	return refreshAccessTokenPromise;
 }
 
 /**
