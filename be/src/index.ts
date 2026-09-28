@@ -7,13 +7,14 @@ import cookieParser from 'cookie-parser';
 import router from './routes/index.route.js';
 import { errorMiddleware } from '#/middlewares/error.middleware.js';
 import { connectRedis, disconnectRedis } from './redis.js';
-import authenMailService from '#/services/authen-mail.service.js';
+import authenMailService from '#/services/authen/authen-mail.service.js';
 
 const app = express();
 const PORT = 4000;
 
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(cors({
   origin: 'http://localhost:3000',

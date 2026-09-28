@@ -35,17 +35,6 @@ class SessionDAO {
 		return sessions.map((session) => new Session(session));
 	}
 
-	public async getByRefreshTokenHash(
-		refreshTokenHash: string,
-	): Promise<Session | null> {
-		const session = await this.db.instance<Session>(this.tableName)
-			.select('*')
-			.where('refreshTokenHash', refreshTokenHash)
-			.first();
-
-		return session ? new Session(session) : null;
-	}
-
 	public async create(session: SessionCreate): Promise<Session> {
 		const [created] = await this.db.instance<Session>(this.tableName)
 			.insert(session)
