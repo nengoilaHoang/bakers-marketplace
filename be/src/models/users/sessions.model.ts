@@ -15,6 +15,8 @@ export const SessionCreateSchema = SessionSchema.omit({
 });
 
 export const SessionUpdateSchema = SessionSchema.omit({
+	id: true,
+	userId: true,
   createdAt: true,
   updatedAt: true,
 }).partial();

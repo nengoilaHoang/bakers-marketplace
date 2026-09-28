@@ -18,6 +18,8 @@ export const AuthAccountCreateSchema = AuthAccountSchema.omit({
 });
 
 export const AuthAccountUpdateSchema = AuthAccountSchema.omit({
+	id: true,
+	userId: true,
   createdAt: true,
   updatedAt: true,
 }).partial();
