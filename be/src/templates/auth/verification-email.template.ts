@@ -52,6 +52,7 @@ export function createVerificationEmailTemplate({
 									</td>
 								</tr>
 							</table>
+							<p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#444444;">Lưu ý: Liên kết kích hoạt sẽ hết hạn sau 15 phút.</p>
 							<p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#444444;">Nếu bạn không tạo tài khoản này, bạn có thể bỏ qua email.</p>
 						</td>
 					</tr>
@@ -70,6 +71,7 @@ export function createVerificationEmailTemplate({
 			`Xin chào ${displayName ?? 'bạn'},`,
 			'Hãy xác minh địa chỉ email để hoàn tất việc thiết lập tài khoản của bạn.',
 			`Liên kết xác minh: ${verificationUrl}`,
+			'Lưu ý: Liên kết kích hoạt sẽ hết hạn sau 15 phút.',
 			'',
 			'Nếu bạn không tạo tài khoản này, bạn có thể bỏ qua email.',
 		].join('\n'),
