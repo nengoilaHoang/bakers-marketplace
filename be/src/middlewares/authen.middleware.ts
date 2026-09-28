@@ -12,7 +12,10 @@ export function authenMiddleware(
 		const accessToken = cookieService.getTokenFromRequest(request, 'access');
 
 		if (!accessToken) {
-			throw new UnauthorizedError('Access token is required');
+			throw new UnauthorizedError(
+				'Access token is required',
+				'ACCESS_TOKEN_REQUIRED',
+			);
 		}
 
 		Object.assign(request, {

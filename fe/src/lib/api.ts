@@ -1,6 +1,11 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 let refreshAccessTokenPromise: Promise<void> | null = null;
 
+const REFRESHABLE_ACCESS_TOKEN_CODES = new Set([
+	'ACCESS_TOKEN_EXPIRED',
+	'ACCESS_TOKEN_REQUIRED',
+]);
+
 type QueryPrimitive = string | number | boolean;
 type QueryValue =
 	| QueryPrimitive
@@ -51,7 +56,7 @@ export default async function request<T>(
 
 	if (
 		res.status === 401 &&
-		body?.code === 'ACCESS_TOKEN_EXPIRED' &&
+		REFRESHABLE_ACCESS_TOKEN_CODES.has(body?.code) &&
 		path !== '/authen/refresh'
 	) {
 		await refreshAccessToken();
