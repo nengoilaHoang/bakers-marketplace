@@ -34,6 +34,15 @@ class UserDAO {
 		return user ?? null;
 	}
 
+	public async getByEmail(email: string): Promise<UserInfo | null> {
+		const user = await this.db.instance<UserInfo>(this.tableName)
+			.select(this.infoColumns)
+			.where('email', email)
+			.first();
+
+		return user ?? null;
+	}
+
 	public async getCredentialsByEmail(
 		email: string,
 	): Promise<UserCredentials | null> {

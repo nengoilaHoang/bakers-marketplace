@@ -15,7 +15,10 @@ const VERIFY_EMAIL_PREFIX = 'verify-email:';
 const VERIFY_EMAIL_TTL_SECONDS = 15 * 60;
 
 class AuthenRedisService {
-	public async saveUnverifiedUser(userInfo: UserCreate): Promise<string> {
+	public async saveUnverifiedUser(
+		userInfo: UserCreate,
+		password: string,
+	): Promise<string> {
 		const parsedUser = UserCreateSchema.parse(userInfo);
 		const existingUser = await userDAO.getCredentialsByEmail(parsedUser.email);
 
@@ -26,7 +29,11 @@ class AuthenRedisService {
 		const code = randomBytes(32).toString('hex');
 		const key = `${VERIFY_EMAIL_PREFIX}${code}`;
 
-		await redisService.set(key, parsedUser, VERIFY_EMAIL_TTL_SECONDS);
+		await redisService.set(
+			key,
+			{ userInfo: parsedUser, password },
+			VERIFY_EMAIL_TTL_SECONDS,
+		);
 
 		const frontendUrl = process.env.FE_URL?.trim();
 
@@ -57,19 +64,32 @@ class AuthenRedisService {
 		return code;
 	}
 
-	public async checkVerificationStatus(code: string): Promise<UserCreate | null> {
+	public async checkVerificationStatus(code: string): Promise<{
+		userInfo: UserCreate;
+		password: string;
+	} | null> {
 		const normalizedCode = code.trim();
 
 		if (!normalizedCode) {
 			return null;
 		}
 
-		const data = await redisService.get<UserCreate>(
+		const data = await redisService.get<{
+			userInfo: UserCreate;
+			password: string;
+		}>(
 			`${VERIFY_EMAIL_PREFIX}${normalizedCode}`,
 		);
-		const parsedUser = UserCreateSchema.safeParse(data);
+		const parsedUser = UserCreateSchema.safeParse(data?.userInfo);
 
-		return parsedUser.success ? parsedUser.data : null;
+		if (!parsedUser.success || !data?.password) {
+			return null;
+		}
+
+		return {
+			userInfo: parsedUser.data,
+			password: data.password,
+		};
 	}
 }
 
