@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useRef, useState } from 'react';
 import request, { ApiError } from '@/lib/api';
@@ -11,12 +12,41 @@ type AvatarMenuProps = Readonly<{
   }>;
 }>;
 
+type SessionState =
+	| { status: 'loading' }
+	| { status: 'anonymous' }
+	| { status: 'authenticated'; displayName: string };
+
 export default function AvatarMenu({ actions }: AvatarMenuProps) {
 	const router = useRouter();
+	const [session, setSession] = useState<SessionState>({ status: 'loading' });
   const [isOpen, setIsOpen] = useState(false);
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [logoutError, setLogoutError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		let isActive = true;
+
+		void request<{ data: { displayName: string } }>('/authen/session')
+			.then(({ data }) => {
+				if (isActive) {
+					setSession({
+						status: 'authenticated',
+						displayName: data.displayName,
+					});
+				}
+			})
+			.catch(() => {
+				if (isActive) {
+					setSession({ status: 'anonymous' });
+				}
+			});
+
+		return () => {
+			isActive = false;
+		};
+	}, []);
 
   useEffect(() => {
     function closeWhenClickingOutside(event: MouseEvent) {
@@ -47,6 +77,7 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
 		try {
 			await request('/authen/logout', { method: 'POST' });
 			setIsOpen(false);
+			setSession({ status: 'anonymous' });
 			await router.replace('/authen/login');
 		} catch (error) {
 			setLogoutError(
@@ -59,6 +90,36 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
 		}
 	};
 
+	if (session.status === 'loading') {
+		return (
+			<div
+				aria-label='Đang kiểm tra trạng thái đăng nhập'
+				className='size-9 animate-pulse rounded-full bg-zinc-200'
+			/>
+		);
+	}
+
+	if (session.status === 'anonymous') {
+		return (
+			<div className='flex items-center gap-2'>
+				<Link
+					href='/authen/login'
+					className='inline-flex min-h-9 items-center justify-center rounded-full border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 transition hover:border-black hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black'
+				>
+					Đăng nhập
+				</Link>
+				<Link
+					href='/authen/register'
+					className='inline-flex min-h-9 items-center justify-center rounded-full bg-black px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black'
+				>
+					Đăng ký
+				</Link>
+			</div>
+		);
+	}
+
+	const avatarLabel = session.displayName.trim().charAt(0).toUpperCase() || 'U';
+
   return (
     <div ref={menuRef} className='relative'>
       <button
@@ -69,7 +130,7 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
         aria-label='Mở tùy chọn tài khoản'
         className='flex size-9 cursor-pointer items-center justify-center rounded-full bg-zinc-950 text-sm font-semibold text-white transition hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
       >
-        U
+        {avatarLabel}
       </button>
 
       {isOpen && (

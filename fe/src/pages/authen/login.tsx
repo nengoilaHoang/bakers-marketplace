@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, type FormEvent } from 'react';
+import GoogleOAuthButton from '@/components/authen/GoogleOAuthButton';
 import request, { ApiError } from '@/lib/api';
 
 export default function LoginPage() {
@@ -59,7 +60,21 @@ export default function LoginPage() {
 							Nhập email và mật khẩu để tiếp tục.
 						</p>
 
-						<form className='mt-8 space-y-5' onSubmit={handleSubmit}>
+						<div className='mt-8'>
+							<GoogleOAuthButton flow='login' onError={setError}>
+								Đăng nhập bằng Google
+							</GoogleOAuthButton>
+						</div>
+
+						<div className='my-6 flex items-center gap-4' aria-hidden='true'>
+							<div className='h-px flex-1 bg-zinc-200' />
+							<span className='text-xs font-medium uppercase tracking-wider text-zinc-400'>
+								hoặc
+							</span>
+							<div className='h-px flex-1 bg-zinc-200' />
+						</div>
+
+						<form className='space-y-5' onSubmit={handleSubmit}>
 							<label className='block text-sm font-medium' htmlFor='email'>
 								Email
 								<input

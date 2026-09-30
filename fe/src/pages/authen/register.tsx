@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
+import GoogleOAuthButton from '@/components/authen/GoogleOAuthButton';
 import request, { ApiError } from '@/lib/api';
 
 export default function RegisterPage() {
@@ -106,7 +107,21 @@ export default function RegisterPage() {
 									Điền đầy đủ thông tin. Chúng tôi sẽ gửi email để xác minh tài khoản của bạn.
 								</p>
 
-								<form className='mt-8 space-y-5' onSubmit={handleSubmit}>
+								<div className='mt-8'>
+									<GoogleOAuthButton flow='register' onError={setError}>
+										Đăng ký bằng Google
+									</GoogleOAuthButton>
+								</div>
+
+								<div className='my-6 flex items-center gap-4' aria-hidden='true'>
+									<div className='h-px flex-1 bg-zinc-200' />
+									<span className='text-xs font-medium uppercase tracking-wider text-zinc-400'>
+										hoặc
+									</span>
+									<div className='h-px flex-1 bg-zinc-200' />
+								</div>
+
+								<form className='space-y-5' onSubmit={handleSubmit}>
 									<label className='block text-sm font-medium' htmlFor='displayName'>
 										Tên hiển thị
 										<input
@@ -200,6 +215,16 @@ export default function RegisterPage() {
 										{submitting ? 'Đang gửi email...' : 'Đăng ký'}
 									</button>
 								</form>
+
+								<p className='mt-7 text-center text-sm text-zinc-600'>
+									Đã có tài khoản?{' '}
+									<Link
+										href='/authen/login'
+										className='font-semibold text-black underline decoration-zinc-400 underline-offset-4 transition hover:decoration-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
+									>
+										Đăng nhập
+									</Link>
+								</p>
 							</>
 						)}
 					</div>
