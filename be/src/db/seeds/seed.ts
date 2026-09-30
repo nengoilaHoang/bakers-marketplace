@@ -46,31 +46,31 @@ const users = [
 		id: HARD_CODED_USER_ID,
 		email: 'minhanh@example.com',
 		displayname: 'Nguyễn Minh Anh',
-		password: 'password123',
+		hashed_password: null,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'baongoc@example.com',
 		displayname: 'Trần Bảo Ngọc',
-		password: 'password123',
+		hashed_password: null,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'hoangnam@example.com',
 		displayname: 'Lê Hoàng Nam',
-		password: 'password123',
+		hashed_password: null,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'thaovy@example.com',
 		displayname: 'Phạm Thảo Vy',
-		password: 'password123',
+		hashed_password: null,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'quochuy@example.com',
 		displayname: 'Đặng Quốc Huy',
-		password: 'password123',
+		hashed_password: null,
 		role: 'CUSTOMER',
 	},
 ];
@@ -201,14 +201,14 @@ const vendorUsers = [
 	{
 		email: 'vendor.hoasen@example.com',
 		displayname: 'Tiệm Bánh Hoa Sen',
-		password: 'password123',
+		hashed_password: null,
 		role: 'VENDOR' as const,
 		taxCode: '0312345678',
 	},
 	{
 		email: 'vendor.mattroi@example.com',
 		displayname: 'Bánh Ngọt Mặt Trời',
-		password: 'password123',
+		hashed_password: null,
 		role: 'VENDOR' as const,
 		taxCode: '0398765432',
 	},
@@ -450,10 +450,10 @@ export async function seed(knex: Knex): Promise<void> {
 		// =========================================================================
 		const vendorRows = await trx('users')
 			.insert(
-				vendorUsers.map(({ email, displayname, password, role }) => ({
+				vendorUsers.map(({ email, displayname, hashed_password, role }) => ({
 					email,
 					displayname,
-					password,
+					hashed_password,
 					role,
 				})),
 			)

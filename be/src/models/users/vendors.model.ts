@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { UserTableSchema } from './users.model.js';
+import { UserSchema } from './users.model.js';
 
-export const VendorTableSchema = UserTableSchema.extend({
+export const VendorTableSchema = UserSchema.extend({
 	taxCode: z.string().min(10).max(13),
 	registeredAt: z.date().nullable().readonly(),
 });
