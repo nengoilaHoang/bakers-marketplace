@@ -22,7 +22,15 @@ export default function LoginPage() {
 				method: 'POST',
 				body: JSON.stringify({ email: email.trim(), password }),
 			});
-			await router.replace('/');
+
+			const nextPath =
+				typeof router.query.next === 'string' &&
+				router.query.next.startsWith('/') &&
+				!router.query.next.startsWith('//')
+					? router.query.next
+					: '/';
+
+			await router.replace(nextPath);
 		} catch (requestError) {
 			setError(
 				requestError instanceof ApiError
