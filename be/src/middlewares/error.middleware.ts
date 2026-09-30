@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { HttpError } from '#/utils/http-errors.js';
+import { HttpError, UnauthorizedError } from '#/utils/http-errors.js';
 
 export function errorMiddleware(
 	error: unknown,
@@ -8,6 +8,14 @@ export function errorMiddleware(
 	res: Response,
 	_next: NextFunction,
 ): void {
+	if (error instanceof UnauthorizedError) {
+		res.status(401).json({
+			message: error.message,
+			code: error.code,
+		});
+
+		return;
+	}
 	if (error instanceof ZodError) {
 		res.status(400).json({
 			message: 'Validation failed',

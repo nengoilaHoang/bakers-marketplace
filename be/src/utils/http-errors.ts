@@ -14,9 +14,13 @@ export class BadRequestError extends HttpError {
 	}
 }
 
-export class UnauthorizedError extends HttpError {
-	constructor(message = 'Unauthorized') {
-		super('401', message);
+export class UnauthorizedError extends Error {
+	public readonly statusCode = 401;
+	constructor(
+		message: string,
+		public readonly code?: string,
+	) {
+		super(message);
 	}
 }
 

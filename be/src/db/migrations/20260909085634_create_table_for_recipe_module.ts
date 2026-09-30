@@ -29,8 +29,8 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table
-        .text('password')
-        .notNullable();
+        .text('hashed_password')
+        .nullable();
 
       table
         .specificType('role', 'user_role')
@@ -1223,10 +1223,13 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+	await knex.raw('DROP FUNCTION IF EXISTS get_layout_tree_json(uuid);');
+
 	await knex.schema
     .dropTableIfExists('typography')
     .dropTableIfExists('color_palettes')
     .dropTableIfExists('theme_settings')
+    .dropTableIfExists('page_layouts')
     .dropTableIfExists('component_templates')
     .dropTableIfExists('composite_component_children')
     .dropTableIfExists('composite_components')
@@ -1234,11 +1237,8 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('leaf_components')
     .dropTableIfExists('commerce_components')
     .dropTableIfExists('layout_components')
-    .dropTableIfExists('page_layouts')
     .dropTableIfExists('storefront_releases')
     .dropTableIfExists('storefronts')
-    .dropTableIfExists('social_links')
-    .dropTableIfExists('brands')
     .dropTableIfExists('product_collections')
     .dropTableIfExists('collections')
     .dropTableIfExists('stock_alerts')
@@ -1247,6 +1247,8 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('product_notes')
     .dropTableIfExists('product_images')
     .dropTableIfExists('products')
+    .dropTableIfExists('brands')
+    .dropTableIfExists('social_links')
     .dropTableIfExists('recipe_tags')
     .dropTableIfExists('recipe_notes')
     .dropTableIfExists('recipe_tools')
@@ -1255,7 +1257,6 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('recipes')
     .dropTableIfExists('vendors')
     .dropTableIfExists('images')
-    .dropTableIfExists('vendors')
     .dropTableIfExists('users');
 
 	await knex.raw(`

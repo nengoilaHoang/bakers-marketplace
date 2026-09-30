@@ -5,7 +5,10 @@ services:
     container_name: bakers_postgres
     restart: always
     env_file:
-      - ./be/.env.${APP_ENV:-development}
+      - path: ./be/.env.development
+        required: true
+      - path: ./be/.env
+        required: false
     environment:
       POSTGRES_USER: ${DB_USER:-bakers_admin}
       POSTGRES_PASSWORD: ${DB_PASS:-secretpassword}
@@ -35,10 +38,17 @@ services:
     image: redis:8-alpine
     container_name: bakers_redis
     restart: always
+    networks:
+      - bakers_network
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # Backend
   backend:
@@ -53,10 +63,18 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./be/.env.${APP_ENV:-development}
+      - path: ./be/.env.development
+        required: true
+      - path: ./be/.env
+        required: false
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_healthy
     command: npm run dev:docker
     develop:
       watch:
@@ -78,7 +96,10 @@ services:
       target: base
     restart: always
     env_file:
-      - ./fe/.env.${APP_ENV:-development}
+      - path: ./fe/.env.development
+        required: true
+      - path: ./fe/.env
+        required: false
     networks:
       - bakers_network
     ports:

@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
 	/* config options here */
 	reactCompiler: true,
 	reactStrictMode: true,
+	env: {
+		GOOGLE_CLIENT_ID: process.env.NEXT_GOOGLE_CLIENT_ID ?? '',
+	},
 	async rewrites() {
 		return [
 			{
