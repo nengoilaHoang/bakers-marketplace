@@ -22,11 +22,11 @@ const getDimensionClass = (
 		switch (prefix) {
 			case 'h':
 				return {
-					width: `${value}px`,
+					height: `${value}px`,
 				};
 			case 'w':
 				return {
-					height: `${value}px`,
+					width: `${value}px`,
 				};
 			default:
 				return '';
@@ -136,6 +136,12 @@ export function getBaseLayoutClassesAndStyles(
 		config.padding && getPaddingClass('b', config.padding.bottom),
 		config.padding && getPaddingClass('l', config.padding.left),
 		config.padding && getPaddingClass('r', config.padding.right),
+
+		// Color Palette
+		config.colorPalette?.type === 'custom' && {
+			backgroundColor: config.colorPalette.bgColor,
+			color: config.colorPalette.fgColor,
+		}
 	];
 
 	objects.forEach((element) => {
