@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ============================================================================
    DESIGN SYSTEM TOKENS
@@ -13,125 +13,125 @@
      Đổi màu: sửa mã hex ở đây (cả 11 bậc của màu đó để thang đều nhau).
      ========================================================================== */
   /* plum — primary */
-  --color-plum-50: #F2EFF0;
-  --color-plum-100: #E3DDE0;
-  --color-plum-200: #C9BEC3;
-  --color-plum-300: #AA9CA2;
-  --color-plum-400: #89787F;
-  --color-plum-500: #69585F;
-  --color-plum-600: #56464C;
-  --color-plum-700: #42353A;
+  --color-plum-50: #f2eff0;
+  --color-plum-100: #e3dde0;
+  --color-plum-200: #c9bec3;
+  --color-plum-300: #aa9ca2;
+  --color-plum-400: #89787f;
+  --color-plum-500: #69585f;
+  --color-plum-600: #56464c;
+  --color-plum-700: #42353a;
   --color-plum-800: #302529;
-  --color-plum-900: #1E1619;
-  --color-plum-950: #100A0C;
+  --color-plum-900: #1e1619;
+  --color-plum-950: #100a0c;
   /* rose — accent (CTA) */
-  --color-rose-50: #FFF2F2;
-  --color-rose-100: #FFE6E8;
-  --color-rose-200: #FFD2D5;
-  --color-rose-300: #FFBDC2;
-  --color-rose-400: #FAA8AE;
-  --color-rose-500: #EF959D;
-  --color-rose-600: #C8767E;
-  --color-rose-700: #A05A61;
+  --color-rose-50: #fff2f2;
+  --color-rose-100: #ffe6e8;
+  --color-rose-200: #ffd2d5;
+  --color-rose-300: #ffbdc2;
+  --color-rose-400: #faa8ae;
+  --color-rose-500: #ef959d;
+  --color-rose-600: #c8767e;
+  --color-rose-700: #a05a61;
   --color-rose-800: #784046;
-  --color-rose-900: #53282D;
+  --color-rose-900: #53282d;
   --color-rose-950: #341619;
   /* sage — secondary */
-  --color-sage-50: #F4F9F4;
-  --color-sage-100: #ECF6ED;
-  --color-sage-200: #DFF1E0;
-  --color-sage-300: #D1E9D3;
-  --color-sage-400: #C4E1C5;
-  --color-sage-500: #B8D8BA;
-  --color-sage-600: #94B196;
-  --color-sage-700: #738C74;
+  --color-sage-50: #f4f9f4;
+  --color-sage-100: #ecf6ed;
+  --color-sage-200: #dff1e0;
+  --color-sage-300: #d1e9d3;
+  --color-sage-400: #c4e1c5;
+  --color-sage-500: #b8d8ba;
+  --color-sage-600: #94b196;
+  --color-sage-700: #738c74;
   --color-sage-800: #536855;
   --color-sage-900: #364537;
-  --color-sage-950: #1F2A20;
+  --color-sage-950: #1f2a20;
   /* khaki — surface */
-  --color-khaki-50: #F8F8F4;
-  --color-khaki-100: #F5F5EC;
-  --color-khaki-200: #EFF0DF;
-  --color-khaki-300: #E8EAD2;
-  --color-khaki-400: #E0E2C6;
-  --color-khaki-500: #D9DBBC;
-  --color-khaki-600: #B1B397;
-  --color-khaki-700: #8B8D74;
+  --color-khaki-50: #f8f8f4;
+  --color-khaki-100: #f5f5ec;
+  --color-khaki-200: #eff0df;
+  --color-khaki-300: #e8ead2;
+  --color-khaki-400: #e0e2c6;
+  --color-khaki-500: #d9dbbc;
+  --color-khaki-600: #b1b397;
+  --color-khaki-700: #8b8d74;
   --color-khaki-800: #676855;
   --color-khaki-900: #454637;
-  --color-khaki-950: #2A2A20;
+  --color-khaki-950: #2a2a20;
   /* peach — highlight */
-  --color-peach-50: #FDF8F3;
-  --color-peach-100: #FEF5EB;
-  --color-peach-200: #FFEFDD;
-  --color-peach-300: #FFE9D0;
-  --color-peach-400: #FFE3C5;
-  --color-peach-500: #FCDDBC;
-  --color-peach-600: #D0B496;
-  --color-peach-700: #A58D73;
-  --color-peach-800: #7C6853;
+  --color-peach-50: #fdf8f3;
+  --color-peach-100: #fef5eb;
+  --color-peach-200: #ffefdd;
+  --color-peach-300: #ffe9d0;
+  --color-peach-400: #ffe3c5;
+  --color-peach-500: #fcddbc;
+  --color-peach-600: #d0b496;
+  --color-peach-700: #a58d73;
+  --color-peach-800: #7c6853;
   --color-peach-900: #544536;
-  --color-peach-950: #342A1F;
+  --color-peach-950: #342a1f;
   /* success — thành công */
-  --color-success-50: #EAF7ED;
-  --color-success-100: #D5EEDC;
-  --color-success-200: #AFDFBD;
-  --color-success-300: #89CA9E;
-  --color-success-400: #62B27F;
-  --color-success-500: #3E9B63;
-  --color-success-600: #25804C;
+  --color-success-50: #eaf7ed;
+  --color-success-100: #d5eedc;
+  --color-success-200: #afdfbd;
+  --color-success-300: #89ca9e;
+  --color-success-400: #62b27f;
+  --color-success-500: #3e9b63;
+  --color-success-600: #25804c;
   --color-success-700: #126438;
-  --color-success-800: #034A26;
+  --color-success-800: #034a26;
   --color-success-900: #003116;
-  --color-success-950: #001C09;
+  --color-success-950: #001c09;
   /* warning — cảnh báo */
-  --color-warning-50: #FEF4E6;
-  --color-warning-100: #FEEBCF;
-  --color-warning-200: #FED9A5;
-  --color-warning-300: #F7C67E;
-  --color-warning-400: #EDB257;
-  --color-warning-500: #E0A030;
-  --color-warning-600: #BB8001;
+  --color-warning-50: #fef4e6;
+  --color-warning-100: #feebcf;
+  --color-warning-200: #fed9a5;
+  --color-warning-300: #f7c67e;
+  --color-warning-400: #edb257;
+  --color-warning-500: #e0a030;
+  --color-warning-600: #bb8001;
   --color-warning-700: #956300;
   --color-warning-800: #704700;
-  --color-warning-900: #4D2E00;
-  --color-warning-950: #301A00;
+  --color-warning-900: #4d2e00;
+  --color-warning-950: #301a00;
   /* danger — lỗi */
-  --color-danger-50: #FFECE9;
-  --color-danger-100: #FFD8D4;
-  --color-danger-200: #FFB5AE;
-  --color-danger-300: #FF9089;
-  --color-danger-400: #ED6A65;
-  --color-danger-500: #D64545;
-  --color-danger-600: #B52D30;
-  --color-danger-700: #921A20;
-  --color-danger-800: #6E0A13;
-  --color-danger-900: #4C0107;
+  --color-danger-50: #ffece9;
+  --color-danger-100: #ffd8d4;
+  --color-danger-200: #ffb5ae;
+  --color-danger-300: #ff9089;
+  --color-danger-400: #ed6a65;
+  --color-danger-500: #d64545;
+  --color-danger-600: #b52d30;
+  --color-danger-700: #921a20;
+  --color-danger-800: #6e0a13;
+  --color-danger-900: #4c0107;
   --color-danger-950: #300002;
   /* info — thông tin */
-  --color-info-50: #EAF4FE;
-  --color-info-100: #D6E8FD;
-  --color-info-200: #B2D4F9;
-  --color-info-300: #8EBBED;
-  --color-info-400: #6AA0DA;
-  --color-info-500: #4A86C5;
-  --color-info-600: #346CA6;
+  --color-info-50: #eaf4fe;
+  --color-info-100: #d6e8fd;
+  --color-info-200: #b2d4f9;
+  --color-info-300: #8ebbed;
+  --color-info-400: #6aa0da;
+  --color-info-500: #4a86c5;
+  --color-info-600: #346ca6;
   --color-info-700: #235486;
-  --color-info-800: #143D65;
+  --color-info-800: #143d65;
   --color-info-900: #082745;
-  --color-info-950: #02152B;
+  --color-info-950: #02152b;
   /* neutral — xám ấm (chữ, viền, nền) */
-  --color-neutral-50: #FBF9FA;
-  --color-neutral-100: #F6F3F4;
-  --color-neutral-200: #E7E4E5;
-  --color-neutral-300: #D7D3D4;
-  --color-neutral-400: #A49FA1;
+  --color-neutral-50: #fbf9fa;
+  --color-neutral-100: #f6f3f4;
+  --color-neutral-200: #e7e4e5;
+  --color-neutral-300: #d7d3d4;
+  --color-neutral-400: #a49fa1;
   --color-neutral-500: #777274;
   --color-neutral-600: #555153;
-  --color-neutral-700: #433E40;
+  --color-neutral-700: #433e40;
   --color-neutral-800: #292526;
   --color-neutral-900: #191617;
-  --color-neutral-950: #0B090A;
+  --color-neutral-950: #0b090a;
 
   /* --- Vai trò màu (semantic) — component dùng các tên này ---------------- */
   /* primary: nền section đậm, nhấn thương hiệu. Chữ trắng đặt lên được. */
@@ -162,7 +162,7 @@
   --color-highlight-soft: var(--color-peach-200);
 
   /* media: nền placeholder ảnh (khaki pha chút plum). */
-  --color-media: #C7C6AD;
+  --color-media: #c7c6ad;
 
   /* Trạng thái: màu chính, nền nhạt, viền, chữ đậm trên nền sáng. */
   --color-success: var(--color-success-500);
@@ -233,9 +233,11 @@
   --radius-modal: 1.25rem;
 
   /* --- Đổ bóng ------------------------------------------------------------ */
-  --shadow-card: -3px -3px 7px 0 rgb(0 0 0 / 0.25), 3px 3px 7px 0 rgb(0 0 0 / 0.25);
+  --shadow-card:
+    -3px -3px 7px 0 rgb(0 0 0 / 0.25), 3px 3px 7px 0 rgb(0 0 0 / 0.25);
   --shadow-header: 0 3px 2px 0 rgb(0 0 0 / 0.25);
-  --shadow-raised: 0 -3px 7px 0 rgb(0 0 0 / 0.25), 0 8px 4px 0 rgb(0 0 0 / 0.25);
+  --shadow-raised:
+    0 -3px 7px 0 rgb(0 0 0 / 0.25), 0 8px 4px 0 rgb(0 0 0 / 0.25);
   --shadow-soft: 0 2px 4px 0 rgb(0 0 0 / 0.25);
 
   /* --- Độ rộng nội dung --------------------------------------------------- */
@@ -249,9 +251,15 @@
 @layer base {
   :root {
     color-scheme: light;
+
+    --clip-triangle-up: polygon(0 100%, 50% 0, 100% 100%);
   }
 
   body {
     @apply bg-page font-body text-ink;
   }
+}
+
+@utility clip-triangle-up {
+  clip-path: var(--clip-triangle-up);
 }
