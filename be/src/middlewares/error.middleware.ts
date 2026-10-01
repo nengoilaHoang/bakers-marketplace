@@ -29,7 +29,7 @@ export function errorMiddleware(
 	}
 
 	if (error instanceof HttpError) {
-		res.status(Number(error.code)).json({ message: error.message });
+		res.status(error.statusCode).json({ message: error.message });
 		return;
 	}
 
