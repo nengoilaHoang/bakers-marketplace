@@ -1,9 +1,9 @@
-import { useDraggable } from "@dnd-kit/react";
-import useStorefrontContext from "./useStorefrontContext";
-import React, { useMemo } from "react";
-import { getBaseLayoutClassesAndStyles as getBaseLayoutClassesAndStyle } from "@/utils/layoutClasses";
-import useStorefrontCanvasContext from "./useStorefrontCanvasContext";
-import { FlattenComponent } from "@/utils/flattenLayout";
+import { useDraggable } from '@dnd-kit/react';
+import useStorefrontContext from './useStorefrontContext';
+import React, { useMemo } from 'react';
+import { getBaseLayoutClassesAndStyles as getBaseLayoutClassesAndStyle } from '@/utils/layoutClasses';
+import useStorefrontCanvasContext from './useStorefrontCanvasContext';
+import { FlattenComponent } from '@/utils/flattenLayout';
 
 const useLayoutComponent = ({
   component,
@@ -15,7 +15,8 @@ const useLayoutComponent = ({
   sourceSlot?: number;
 }) => {
   const { removeComponent } = useStorefrontContext();
-  const { selectComponent, selectedComponentId } = useStorefrontCanvasContext();
+  const { selectComponent, selectedComponentId, isResizing } =
+    useStorefrontCanvasContext();
   const isSelected = useMemo(
     () => selectedComponentId === component.id,
     [component.id, selectedComponentId],
@@ -27,7 +28,7 @@ const useLayoutComponent = ({
   const { ref, handleRef, isDragging, isDropping } = useDraggable({
     id: component.id,
     type: component.type,
-    disabled: isRoot,
+    disabled: isRoot || isResizing,
     data: {
       componentId: component.id,
       sourceParentId,
@@ -36,14 +37,13 @@ const useLayoutComponent = ({
   });
 
   const handleMouseDown = (e: React.MouseEvent<HTMLElement>) => {
-		e.preventDefault();
     e.stopPropagation();
     selectComponent(component.id);
     e.currentTarget.focus({ preventScroll: true });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
       selectComponent(null);
@@ -51,7 +51,7 @@ const useLayoutComponent = ({
       return;
     }
 
-    if (e.key === "Delete") {
+    if (e.key === 'Delete') {
       e.stopPropagation();
       if (!isRoot && sourceParentId !== undefined && sourceSlot !== undefined) {
         removeComponent(sourceParentId, sourceSlot, component.id);
