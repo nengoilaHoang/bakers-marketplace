@@ -60,17 +60,20 @@ const useLayoutComponent = ({
     }
   };
 
-  let baseClasses =
-    "relative select-none outline-none focus:select-text focus-within:select-text";
-  let baseStyle = {};
-  const result = getBaseLayoutClassesAndStyle(component.config);
-  if (result) {
-    const [classes, style] = result;
-    baseClasses += ` ${classes}`;
-    baseStyle = {
-      ...style,
-    };
-  }
+  const { baseClasses, baseStyle } = useMemo(() => {
+    let classes =
+      'relative max-h-full max-w-full min-h-0 min-w-0 overflow-hidden select-none outline-none focus:select-text focus-within:select-text';
+    let style = {};
+    const result = getBaseLayoutClassesAndStyle(component.config);
+
+    if (result) {
+      const [additionalClasses, additionalStyle] = result;
+      classes += ` ${additionalClasses}`;
+      style = { ...additionalStyle };
+    }
+
+    return { baseClasses: classes, baseStyle: style };
+  }, [component.config]);
 
   return {
     id: component.id,

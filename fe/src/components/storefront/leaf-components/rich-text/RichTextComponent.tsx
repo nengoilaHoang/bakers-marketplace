@@ -16,6 +16,7 @@ const RichTextComponent = ({
   const {
     id,
     baseClasses: className,
+		baseStyle,
     ref,
     isDragging,
     isSelected,
@@ -55,7 +56,7 @@ const RichTextComponent = ({
 
   return (
     <div
-      className={`min-w-0 max-w-full wrap-break-word ${className} `}
+      className={`wrap-break-word ${className} `}
       id={id}
       ref={ref}
       role='button'
@@ -70,6 +71,7 @@ const RichTextComponent = ({
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
+			style={baseStyle}
     >
       {openEditor ? (
         <RichTextEditor
@@ -80,7 +82,7 @@ const RichTextComponent = ({
         ></RichTextEditor>
       ) : null}
       <div
-        className='min-w-0 max-w-full wrap-break-word'
+        className='max-h-full max-w-full wrap-break-word whitespace-pre-wrap overflow-hidden'
         dangerouslySetInnerHTML={{
           __html: component.config.content.body,
         }}
