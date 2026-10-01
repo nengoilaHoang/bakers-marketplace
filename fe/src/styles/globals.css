@@ -1,11 +1,18 @@
 @import 'tailwindcss';
 
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
 /* ============================================================================
    DESIGN SYSTEM TOKENS
    Dùng qua class Tailwind: bg-primary, text-ink-muted, font-heading,
    text-h2, rounded-field, shadow-card, max-w-page…
    Tài liệu: fe/.claude/skills/design-system/SKILL.md
    ============================================================================ */
+
 @theme inline {
   /* ==========================================================================
      BẢNG MÀU — mỗi màu có 11 bậc 50→950, bậc 500 là màu gốc.
