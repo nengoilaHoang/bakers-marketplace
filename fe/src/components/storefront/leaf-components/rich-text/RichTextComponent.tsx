@@ -49,13 +49,7 @@ const RichTextComponent = ({
   };
 
   const handleOnSave = (newContent: string) => {
-    updateConfig(component.id, {
-      ...component.config,
-      content: {
-        ...component.config.content,
-        body: newContent,
-      },
-    });
+    updateConfig(component.id, 'content.body', newContent);
     setOpenEditor(() => false);
   };
 

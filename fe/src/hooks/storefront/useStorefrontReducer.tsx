@@ -1,15 +1,15 @@
-import { PageLayoutType } from "@/types/page-layout";
+import { PageLayoutType } from '@/types/page-layout';
 import {
   FlattenComponent,
   FlattenCompositeComponent,
-} from "@/utils/flattenLayout";
-import { useReducer } from "react";
+} from '@/utils/flattenLayout';
+import { useReducer } from 'react';
 
 type LayoutAction =
   | {
-      type: "MOVE_COMPONENT";
+      type: 'MOVE_COMPONENT';
       payload: {
-        breakpoint: "mobile" | "desktop" | "tablet";
+        breakpoint: 'mobile' | 'desktop' | 'tablet';
         sourceParentId: string;
         sourceSlot: number;
         targetParentId: string;
@@ -17,21 +17,22 @@ type LayoutAction =
       };
     }
   | {
-      type: "UPDATE_CONFIG";
+      type: 'UPDATE_CONFIG';
       payload: {
         targetComponentId: string;
-        config: Record<string, unknown>;
+        pathname: string;
+        value: unknown;
       };
     }
   | {
-      type: "NEW_COMPONENT";
+      type: 'NEW_COMPONENT';
       payload: {
         targetParentId: string;
         // newComponent
       };
     }
   | {
-      type: "REMOVE_COMPONENT";
+      type: 'REMOVE_COMPONENT';
       payload: {
         parentId: string;
         slot: number;
@@ -53,8 +54,26 @@ const storefrontReducer = (
   action: LayoutAction,
 ): LayoutState => {
   switch (action.type) {
-    case "UPDATE_CONFIG": {
-      const { targetComponentId, config } = action.payload;
+    case 'UPDATE_CONFIG': {
+      const { targetComponentId, pathname, value } = action.payload;
+
+      const { config } = state.components[targetComponentId];
+      const keys = pathname.split('.');
+
+      const update = (
+        current: Record<string, unknown>,
+        index: number,
+      ): unknown => {
+        if (index === keys.length) return value;
+        const key = keys[index];
+        const nextCurrent =
+          current && typeof current === 'object' ? current[key] : {};
+        return {
+          ...current,
+          [key]: update(nextCurrent as Record<string, unknown>, index + 1),
+        };
+      };
+
       return {
         ...state,
         components: {
@@ -62,14 +81,13 @@ const storefrontReducer = (
           [targetComponentId]: {
             ...state.components[targetComponentId],
             config: {
-              ...state.components[targetComponentId].config,
-              ...config,
+              ...(update(config, 0) as typeof config),
             },
           } as FlattenComponent,
         },
       };
     }
-    case "REMOVE_COMPONENT": {
+    case 'REMOVE_COMPONENT': {
       const { parentId, targetComponentId } = action.payload;
       const parent = state.components[parentId];
       const targetComponent = state.components[targetComponentId];
@@ -83,7 +101,7 @@ const storefrontReducer = (
         parent: FlattenComponent,
         components: Record<string, FlattenComponent>,
       ) => {
-        if (parent.type === "COMPOSITE") {
+        if (parent.type === 'COMPOSITE') {
           const bps = Object.entries(parent.children);
           bps.forEach(([bp, map]) => {
             const seen = new Set<string>();
@@ -108,7 +126,7 @@ const storefrontReducer = (
             });
             seen.forEach((value) => delete components[value]);
           });
-        } else if (parent.type === "REPEATER") {
+        } else if (parent.type === 'REPEATER') {
           const itemTemplateId = parent.itemTemplate;
           if (itemTemplateId) {
             const component = components[itemTemplateId];
@@ -121,7 +139,7 @@ const storefrontReducer = (
       };
 
       switch (parent.type) {
-        case "COMPOSITE": {
+        case 'COMPOSITE': {
           const newComponents = { ...state.components };
           const newChildren = Object.fromEntries(
             Object.entries(parent.children).map(([breakpoint, map]) => [
@@ -151,7 +169,7 @@ const storefrontReducer = (
             },
           };
         }
-        case "REPEATER": {
+        case 'REPEATER': {
           const newComponents = { ...state.components };
           traverseDeleteChildren(targetComponent, newComponents);
           return {
@@ -174,7 +192,7 @@ const storefrontReducer = (
           return state;
       }
     }
-    case "MOVE_COMPONENT": {
+    case 'MOVE_COMPONENT': {
       const {
         breakpoint,
         sourceParentId,
@@ -189,8 +207,8 @@ const storefrontReducer = (
       const targetParent = state.components[targetParentId];
 
       if (
-        sourceParent?.type !== "COMPOSITE" ||
-        targetParent?.type !== "COMPOSITE"
+        sourceParent?.type !== 'COMPOSITE' ||
+        targetParent?.type !== 'COMPOSITE'
       ) {
         return state;
       }
@@ -203,7 +221,7 @@ const storefrontReducer = (
       const isSelfOrDescendant = (
         rootId: string,
         candidateId: string,
-        breakpoint: "mobile" | "tablet" | "desktop",
+        breakpoint: 'mobile' | 'tablet' | 'desktop',
       ) => {
         const stack = [rootId];
         const seen = new Set<string>();
@@ -213,9 +231,9 @@ const storefrontReducer = (
           if (seen.has(currentId)) continue;
           seen.add(currentId);
           const node = state.components[currentId];
-          if (node?.type === "COMPOSITE") {
+          if (node?.type === 'COMPOSITE') {
             stack.push(...Object.values(node.children[breakpoint]));
-          } else if (node?.type === "REPEATER" && node.itemTemplate) {
+          } else if (node?.type === 'REPEATER' && node.itemTemplate) {
             stack.push(node.itemTemplate);
           }
         }

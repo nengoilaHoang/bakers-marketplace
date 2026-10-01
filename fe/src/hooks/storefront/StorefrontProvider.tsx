@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo } from "react";
-import StorefrontContext, { StorefrontContextValue } from "./StorefrontContext";
-import useStorefrontReducer, { LayoutState } from "./useStorefrontReducer";
-import { DeviceBreakpoint } from "@/types/canvas";
-import { FlattenComponent } from "@/utils/flattenLayout";
+import React, { useCallback, useMemo } from 'react';
+import StorefrontContext, { StorefrontContextValue } from './StorefrontContext';
+import useStorefrontReducer, { LayoutState } from './useStorefrontReducer';
+import { DeviceBreakpoint } from '@/types/canvas';
+import { FlattenComponent } from '@/utils/flattenLayout';
 
 const StorefrontProvider = ({
   children,
@@ -17,10 +17,10 @@ const StorefrontProvider = ({
   const { state, dispatch } = useStorefrontReducer(initialState);
 
   const updateConfig = useCallback(
-    (targetComponentId: string, config: Record<string, unknown>) => {
+    (targetComponentId: string, pathname: string, value: unknown) => {
       dispatch({
-        type: "UPDATE_CONFIG",
-        payload: { targetComponentId, config },
+        type: 'UPDATE_CONFIG',
+        payload: { targetComponentId, pathname, value },
       });
     },
     [dispatch],
@@ -35,7 +35,7 @@ const StorefrontProvider = ({
       targetSlot: number,
     ) => {
       dispatch({
-        type: "MOVE_COMPONENT",
+        type: 'MOVE_COMPONENT',
         payload: {
           breakpoint,
           sourceParentId,
@@ -51,7 +51,7 @@ const StorefrontProvider = ({
   const removeComponent = useCallback(
     (parentId: string, slot: number, targetComponentId: string) => {
       dispatch({
-        type: "REMOVE_COMPONENT",
+        type: 'REMOVE_COMPONENT',
         payload: { parentId, slot, targetComponentId },
       });
     },
@@ -77,7 +77,7 @@ const StorefrontProvider = ({
 
   return (
     <StorefrontContext.Provider value={value}>
-      {typeof children === "function" ? children(extraProps) : children}
+      {typeof children === 'function' ? children(extraProps) : children}
     </StorefrontContext.Provider>
   );
 };
