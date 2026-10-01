@@ -1253,29 +1253,27 @@ export async function up(knex: Knex): Promise<void> {
         .primary()
         .onDelete('CASCADE');
 
-      const addColorColumn = (columnName: string, defaultValue = 0) => {
+      const addColorColumn = (columnName: string, defaultValue = '0x000000') => {
         return table
-          .integer(columnName)
-          .unsigned()
-          .checkBetween([0, 16777215])
+					.string(columnName)
           .notNullable()
           .defaultTo(defaultValue);
       }
 
-      addColorColumn('color_background', 0xFFFFFF);
-      addColorColumn('color_surface', 0xF8FAFC);
-      addColorColumn('color_border', 0xE2E8F0);
+      addColorColumn('color_background', '#FFFFFF');
+      addColorColumn('color_surface', '#F8FAFC');
+      addColorColumn('color_border', '#E2E8F0');
 
-      addColorColumn('color_text_primary', 0x0F172A);
-      addColorColumn('color_text_secondary', 0x64748B);
+      addColorColumn('color_text_primary', '#0F172A');
+      addColorColumn('color_text_secondary', '#64748B');
 
-      addColorColumn('color_primary', 0x2563EB);
-      addColorColumn('color_primary_foreground', 0xFFFFFF);
-      addColorColumn('color_secondary', 0x475569);
-			addColorColumn('color_secondary_foreground', 0xFFFFFF);
+      addColorColumn('color_primary', '#2563EB');
+      addColorColumn('color_primary_foreground', '#FFFFFF');
+      addColorColumn('color_secondary', '#475569');
+			addColorColumn('color_secondary_foreground', '#FFFFFF');
 
-      addColorColumn('color_accent', 0xF59E0B);
-      addColorColumn('color_accent_foreground', 0x000000);
+      addColorColumn('color_accent', '#F59E0B');
+      addColorColumn('color_accent_foreground', '#000000');
     })
 
     .createTable('typography', (table) => {

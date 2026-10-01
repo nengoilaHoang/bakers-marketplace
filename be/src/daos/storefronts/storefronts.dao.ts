@@ -57,17 +57,17 @@ export class StorefrontDao {
 							),
 							'colorPalette', jsonb_build_object(
 								'id', cp.id,
-								'colorBackground', lpad(to_hex(cp.color_background), 6, '0'),
-								'colorSurface', lpad(to_hex(cp.color_surface), 6, '0'),
-								'colorBorder', lpad(to_hex(cp.color_border), 6, '0'),
-								'colorTextPrimary', lpad(to_hex(cp.color_text_primary), 6, '0'),
-								'colorTextSecondary', lpad(to_hex(cp.color_text_secondary), 6, '0'),
-								'colorPrimary', lpad(to_hex(cp.color_primary), 6, '0'),
-								'colorPrimaryForeground', lpad(to_hex(cp.color_primary_foreground), 6, '0'),
-								'colorSecondary', lpad(to_hex(cp.color_secondary), 6, '0'),
-								'colorSecondaryForeground', lpad(to_hex(cp.color_secondary_foreground), 6, '0'),
-								'colorAccent', lpad(to_hex(cp.color_accent), 6, '0'),
-								'colorAccentForeground', lpad(to_hex(cp.color_accent_foreground), 6, '0')
+								'colorBackground', cp.color_background,
+								'colorSurface', cp.color_surface,
+								'colorBorder', cp.color_border,
+								'colorTextPrimary', cp.color_text_primary,
+								'colorTextSecondary', cp.color_text_secondary,
+								'colorPrimary', cp.color_primary,
+								'colorPrimaryForeground', cp.color_primary_foreground,
+								'colorSecondary', cp.color_secondary,
+								'colorSecondaryForeground', cp.color_secondary_foreground,
+								'colorAccent', cp.color_accent,
+								'colorAccentForeground', cp.color_accent_foreground
 							)
 						)
 						FROM theme_settings ts
@@ -135,17 +135,17 @@ export class StorefrontDao {
 							),
 							'colorPalette', jsonb_build_object(
 								'id', cp.id,
-								'colorBackground', lpad(to_hex(cp.color_background), 6, '0'),
-								'colorSurface', lpad(to_hex(cp.color_surface), 6, '0'),
-								'colorBorder', lpad(to_hex(cp.color_border), 6, '0'),
-								'colorTextPrimary', lpad(to_hex(cp.color_text_primary), 6, '0'),
-								'colorTextSecondary', lpad(to_hex(cp.color_text_secondary), 6, '0'),
-								'colorPrimary', lpad(to_hex(cp.color_primary), 6, '0'),
-								'colorPrimaryForeground', lpad(to_hex(cp.color_primary_foreground), 6, '0'),
-								'colorSecondary', lpad(to_hex(cp.color_secondary), 6, '0'),
-								'colorSecondaryForeground', lpad(to_hex(cp.color_secondary_foreground), 6, '0'),
-								'colorAccent', lpad(to_hex(cp.color_accent), 6, '0'),
-								'colorAccentForeground', lpad(to_hex(cp.color_accent_foreground), 6, '0')
+								'colorBackground', cp.color_background,
+								'colorSurface', cp.color_surface,
+								'colorBorder', cp.color_border,
+								'colorTextPrimary', cp.color_text_primary,
+								'colorTextSecondary', cp.color_text_secondary,
+								'colorPrimary', cp.color_primary,
+								'colorPrimaryForeground', cp.color_primary_foreground,
+								'colorSecondary', cp.color_secondary,
+								'colorSecondaryForeground', cp.color_secondary_foreground,
+								'colorAccent', cp.color_accent,
+								'colorAccentForeground', cp.color_accent_foreground
 							)
 						)
 						FROM theme_settings ts

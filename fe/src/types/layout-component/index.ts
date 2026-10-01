@@ -51,7 +51,7 @@ type BaseProps = {
 		| {
 				type: 'custom';
 				bgColor: string;
-				txtColor: string;
+				fgColor: string;
 		  };
 	wSpan: number | undefined;
 	hSpan: number | undefined;
