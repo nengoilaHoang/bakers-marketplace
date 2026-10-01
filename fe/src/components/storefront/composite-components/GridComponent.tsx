@@ -59,8 +59,8 @@ const GridComponent = ({
 
         const style: CSSProperties = {
           gap: gapValue + 'px',
-          gridTemplateColumns: 'repeat(' + colsValue + ', 1fr)',
-          gridTemplateRows: 'repeat(' + rowsValue + ', 1fr)',
+          gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rowsValue}, minmax(0, 1fr))`,
           ...baseStyle,
         };
 
