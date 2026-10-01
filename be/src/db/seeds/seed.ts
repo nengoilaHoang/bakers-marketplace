@@ -292,6 +292,219 @@ const products: SeedProduct[] = [
 	},
 ];
 
+// ==========================================================
+// POSTS CONFIG
+// ==========================================================
+type PostSeed = {
+	title: string;
+	content: string;
+	tags: string[];
+	recipeTitle?: string;
+	reportReasons?: string[];
+};
+
+const posts: PostSeed[] = [
+	{
+		title: 'Mousse dâu cho buổi chiều cuối tuần',
+		content:
+			'Mùa này dâu Đà Lạt đang ngon nên mình làm liền một mẻ mousse. Lớp mousse mềm, chua ngọt vừa phải, cả nhà ăn hết trong một buổi. Công thức mình để bên dưới nha.',
+		tags: ['mousse', 'strawberry'],
+		recipeTitle: 'Mousse Dâu',
+	},
+	{
+		title: 'Chiffon dâu bị xẹp, mọi người giúp mình với',
+		content:
+			'Mình làm theo công thức này mà lấy ra khỏi lò được 5 phút là bánh xẹp hẳn. Có phải do mình mở lò sớm quá không ạ?',
+		tags: ['chiffon', 'hoi-dap'],
+		recipeTitle: 'Chiffon Cake Dâu',
+	},
+	{
+		title: 'Mẹo rây bột matcha không bị vón',
+		content:
+			'Trộn matcha với một ít đường bột trước rồi mới rây. Bột tơi hơn hẳn, lên màu cũng đều hơn.',
+		tags: ['matcha', 'tips'],
+	},
+	{
+		title: 'Mousse matcha vị trà đậm mà không đắng',
+		content:
+			'Bí quyết là hòa matcha với nước ấm khoảng 70°C, không dùng nước sôi. Vị trà thơm, hậu ngọt, không bị chát.',
+		tags: ['matcha', 'mousse'],
+		recipeTitle: 'Mousse Matcha',
+	},
+	{
+		title: 'Khoe mẻ croissant đầu tiên',
+		content:
+			'Cán bột 3 lần gấp, ủ lạnh cả đêm, cuối cùng cũng thấy được mấy lớp vỏ. Chưa đẹp như ngoài tiệm nhưng giòn và thơm bơ lắm.',
+		tags: ['croissant', 'khoe-banh'],
+	},
+	{
+		title: 'Chiffon matcha cao 12cm',
+		content:
+			'Lần này mình đánh lòng trắng đến chóp mềm thay vì chóp cứng, bánh nở cao và không bị nứt mặt.',
+		tags: ['chiffon', 'matcha'],
+		recipeTitle: 'Chiffon Cake Matcha',
+	},
+	{
+		title: 'Nên dùng bơ lạt hay bơ có muối khi làm bánh?',
+		content:
+			'Nhiều công thức ghi bơ lạt, nhưng nhà mình chỉ còn bơ có muối. Dùng thay được không, có cần bớt muối trong công thức không mọi người?',
+		tags: ['hoi-dap', 'nguyen-lieu'],
+	},
+	{
+		title: 'Mousse caramel cho tiệc sinh nhật',
+		content:
+			'Sinh nhật em gái nên mình làm mousse caramel phủ thêm lớp sốt bóng. Để tủ lạnh qua đêm, cắt ra lát nào cũng đẹp.',
+		tags: ['caramel', 'mousse', 'birthday'],
+		recipeTitle: 'Mousse Caramel',
+	},
+	{
+		title: 'Nhiệt độ lò thật khác xa số trên núm vặn',
+		content:
+			'Mua thử nhiệt kế lò mới biết lò nhà mình lệch gần 20°C. Ai hay bị bánh cháy đáy hoặc sống ruột thì nên kiểm tra thử.',
+		tags: ['tips', 'lo-nuong'],
+	},
+	{
+		title: 'Chiffon caramel thơm lừng cả bếp',
+		content:
+			'Caramel nấu hơi già một chút sẽ có vị đắng nhẹ, ăn cùng cốt chiffon ngọt dịu rất cân bằng.',
+		tags: ['chiffon', 'caramel'],
+		recipeTitle: 'Chiffon Cake Caramel',
+	},
+	{
+		title: 'Bánh mì hoa cúc lần thứ 3 cuối cùng cũng mềm',
+		content:
+			'Hai lần trước bánh khô và chặt. Lần này mình nhồi lâu hơn, đến khi kéo được màng mỏng thì bánh xé ra từng thớ luôn.',
+		tags: ['banh-mi', 'khoe-banh'],
+	},
+	{
+		title: 'Xin gợi ý khuôn tròn 20cm chống dính tốt',
+		content:
+			'Mọi người đang dùng khuôn hãng nào? Khuôn cũ của mình bong lớp chống dính rồi, bánh chocolate lấy ra rất khó.',
+		tags: ['dung-cu', 'hoi-dap'],
+	},
+	{
+		title: 'Bánh trung thu nhân trứng muối tự làm',
+		content:
+			'Năm nay mình tự làm 12 cái để biếu. Vỏ hồi dầu sau 2 ngày, nhân không quá ngọt, ông bà khen lắm.',
+		tags: ['trung-thu', 'banh-nuong'],
+	},
+	{
+		title: 'Cách bảo quản kem tươi đã đánh bông',
+		content:
+			'Kem đánh xong chưa dùng hết thì cho vào hộp kín, để ngăn mát được 2 ngày. Trước khi dùng đánh lại vài giây là bông như cũ.',
+		tags: ['tips', 'whipping-cream'],
+	},
+	{
+		title: 'Tiramisu không dùng trứng sống',
+		content:
+			'Mình thay trứng sống bằng mascarpone trộn whipping cream, vị vẫn béo mà yên tâm cho trẻ con ăn.',
+		tags: ['tiramisu', 'dessert'],
+	},
+	{
+		title: 'Làm bánh quy bơ cùng con gái',
+		content:
+			'Công thức đơn giản chỉ 4 nguyên liệu, bé tự cắt khuôn hình ngôi sao. Bánh hơi xấu nhưng hai mẹ con vui cả buổi.',
+		tags: ['cookie', 'gia-dinh'],
+	},
+	{
+		title: 'Bột mì số 8 và số 11 khác nhau thế nào?',
+		content:
+			'Mình mới tập làm bánh, thấy ngoài chợ bán nhiều loại bột quá. Làm bánh bông lan thì nên chọn loại nào ạ?',
+		tags: ['hoi-dap', 'nguyen-lieu'],
+	},
+	{
+		title: 'Tart trứng Bồ Đào Nha vỏ ngàn lớp',
+		content:
+			'Nhân trứng cháy xém nhẹ trên mặt, vỏ giòn rụm. Mẹo là nướng ở nhiệt độ cao nhất của lò trong 12 phút.',
+		tags: ['tart', 'khoe-banh'],
+	},
+	{
+		title: 'Thanh lý dụng cụ làm bánh giá rẻ, inbox ngay!!!',
+		content:
+			'Bán lỗ máy đánh trứng, khuôn các loại, giảm 70%. Liên hệ zalo để được giá tốt nhất!!!',
+		tags: ['thanh-ly'],
+		reportReasons: [
+			'Spam quảng cáo bán hàng',
+			'Nội dung không liên quan đến làm bánh',
+		],
+	},
+	{
+		title: 'Bánh chocolate không cần lò nướng',
+		content:
+			'Chỉ cần nồi cơm điện là có bánh chocolate ẩm mịn. Mình nấu 2 lần chế độ cook, để nguội rồi rắc thêm cacao.',
+		tags: ['chocolate', 'khong-lo'],
+		reportReasons: ['Thông tin không chính xác'],
+	},
+];
+
+const postComments = [
+	'Nhìn ngon quá, cuối tuần mình làm thử!',
+	'Công thức này để được mấy ngày vậy bạn?',
+	'Mình cũng từng bị y như vậy, giảm đường xuống là ổn hơn.',
+	'Cảm ơn bạn đã chia sẻ, lưu lại liền.',
+	'Màu bánh đẹp ghê, bạn dùng khuôn gì thế?',
+	'Làm theo thành công rồi nè, cả nhà khen.',
+];
+
+const POST_AUTHOR_REPLY = 'Cảm ơn bạn nha, làm xong nhớ khoe mình với!';
+
+function pickOtherUsers<T extends { id: string }>(
+	userRows: T[],
+	excludedUserId: string,
+	offset: number,
+	count: number,
+): T[] {
+	const others = userRows.filter((user) => user.id !== excludedUserId);
+
+	return Array.from(
+		{ length: Math.min(count, others.length) },
+		(_, index) => others[(offset + index) % others.length],
+	);
+}
+
+/** Copies a recipe and all of its details into a public snapshot, returning the snapshot id. */
+async function createRecipeSnapshot(
+	trx: Knex.Transaction,
+	recipeId: string,
+): Promise<string> {
+	const result = await trx.raw(
+		`INSERT INTO recipes (cover_img_id, user_id, title, description, portion, is_public, is_snapshot, created_at, updated_at)
+		SELECT cover_img_id, user_id, title, description, portion, TRUE, TRUE, created_at, updated_at
+		FROM recipes WHERE id = ?
+		RETURNING id`,
+		[recipeId],
+	);
+	const snapshotId: string = result.rows[0].id;
+
+	await trx.raw(
+		`INSERT INTO recipe_ingredients (recipe_id, cover_img_id, name, amount, unit)
+		SELECT ?, cover_img_id, name, amount, unit FROM recipe_ingredients WHERE recipe_id = ?`,
+		[snapshotId, recipeId],
+	);
+	await trx.raw(
+		`INSERT INTO recipe_tools (recipe_id, cover_img_id, name, amount)
+		SELECT ?, cover_img_id, name, amount FROM recipe_tools WHERE recipe_id = ?`,
+		[snapshotId, recipeId],
+	);
+	await trx.raw(
+		`INSERT INTO recipe_steps (recipe_id, step_order, description)
+		SELECT ?, step_order, description FROM recipe_steps WHERE recipe_id = ?`,
+		[snapshotId, recipeId],
+	);
+	await trx.raw(
+		`INSERT INTO recipe_notes (recipe_id, note_order, content)
+		SELECT ?, note_order, content FROM recipe_notes WHERE recipe_id = ?`,
+		[snapshotId, recipeId],
+	);
+	await trx.raw(
+		`INSERT INTO recipe_tags (recipe_id, name)
+		SELECT ?, name FROM recipe_tags WHERE recipe_id = ?`,
+		[snapshotId, recipeId],
+	);
+
+	return snapshotId;
+}
+
 export async function seed(knex: Knex): Promise<void> {
 	await knex.transaction(async (trx) => {
 		// =========================================================================
@@ -326,6 +539,15 @@ export async function seed(knex: Knex): Promise<void> {
 		await trx('collections').del();
 		await trx('brands').del();
 		await trx('vendors').del();
+
+		// Posts Module
+		await trx('post_reports').del();
+		await trx('reports').del();
+		await trx('post_saves').del();
+		await trx('post_likes').del();
+		await trx('post_comments').del();
+		await trx('post_tags').del();
+		await trx('posts').del();
 
 		// Recipe Search & Module
 		await trx('recipe_search').del();
@@ -990,5 +1212,130 @@ export async function seed(knex: Knex): Promise<void> {
 			type: 'HOME',
 			root_component_id: homeRootGrid.id,
 		});
+
+		// =========================================================================
+		// 7. SEED POSTS, COMMENTS, LIKES, SAVES & REPORTS
+		// =========================================================================
+		const publicRecipeRows = await trx('recipes')
+			.select('id', 'title', 'user_id')
+			.where({ is_public: true, is_snapshot: false });
+
+		const recipeByTitle = new Map<string, { id: string; userId: string }>(
+			publicRecipeRows.map(
+				(row: { id: string; title: string; userId: string }) => [
+					row.title,
+					{ id: row.id, userId: row.userId },
+				],
+			),
+		);
+
+		for (let index = 0; index < posts.length; index += 1) {
+			const post = posts[index];
+			const recipe = post.recipeTitle
+				? recipeByTitle.get(post.recipeTitle)
+				: undefined;
+			// A post sharing a recipe is written by that recipe's owner and is
+			// attached to a snapshot of it, like posts created through the API
+			const authorId = recipe?.userId ?? userRows[index % userRows.length].id;
+			const snapshotId = recipe
+				? await createRecipeSnapshot(trx, recipe.id)
+				: null;
+			const hoursAgo = (index + 1) * 6;
+
+			const [createdPost] = await trx('posts')
+				.insert({
+					author_id: authorId,
+					recipe_id: snapshotId,
+					title: post.title,
+					content: post.content,
+					created_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hoursAgo]),
+					updated_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hoursAgo]),
+				})
+				.returning(['id']);
+
+			const postId = createdPost.id;
+
+			await trx('post_tags').insert(
+				post.tags.map((name) => ({
+					post_id: postId,
+					name,
+				})),
+			);
+
+			const commenters = pickOtherUsers(userRows, authorId, index + 1, index % 4);
+
+			if (commenters.length > 0) {
+				const commentRows = await trx('post_comments')
+					.insert(
+						commenters.map((user, commentIndex) => ({
+							post_id: postId,
+							user_id: user.id,
+							content: postComments[(index + commentIndex) % postComments.length],
+							created_at: trx.raw(
+								`NOW() - (? * INTERVAL '1 hour') + (? * INTERVAL '30 minute')`,
+								[hoursAgo, commentIndex + 1],
+							),
+						})),
+					)
+					.returning(['id']);
+
+				if (index % 2 === 0) {
+					await trx('post_comments').insert({
+						post_id: postId,
+						user_id: authorId,
+						parent_comment_id: commentRows[0].id,
+						content: POST_AUTHOR_REPLY,
+						created_at: trx.raw(
+							`NOW() - (? * INTERVAL '1 hour') + (? * INTERVAL '30 minute')`,
+							[hoursAgo, commenters.length + 1],
+						),
+					});
+				}
+			}
+
+			const likers = pickOtherUsers(userRows, authorId, index, index % 5);
+
+			if (likers.length > 0) {
+				await trx('post_likes').insert(
+					likers.map((user) => ({
+						post_id: postId,
+						user_id: user.id,
+					})),
+				);
+			}
+
+			const savers = pickOtherUsers(userRows, authorId, index + 2, index % 3);
+
+			if (savers.length > 0) {
+				await trx('post_saves').insert(
+					savers.map((user) => ({
+						user_id: user.id,
+						post_id: postId,
+					})),
+				);
+			}
+
+			const reportReasons = post.reportReasons ?? [];
+			const reporters = pickOtherUsers(
+				userRows,
+				authorId,
+				index,
+				reportReasons.length,
+			);
+
+			for (let reportIndex = 0; reportIndex < reporters.length; reportIndex += 1) {
+				const [report] = await trx('reports')
+					.insert({
+						reporter_id: reporters[reportIndex].id,
+						reason: reportReasons[reportIndex],
+					})
+					.returning(['id']);
+
+				await trx('post_reports').insert({
+					id: report.id,
+					post_id: postId,
+				});
+			}
+		}
 	});
 }

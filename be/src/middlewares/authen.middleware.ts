@@ -27,3 +27,24 @@ export function authenMiddleware(
 		next(error);
 	}
 }
+
+/** Attaches userId when a valid access token is present; never rejects the request. */
+export function optionalAuthenMiddleware(
+	request: Request,
+	_response: Response,
+	next: NextFunction,
+): void {
+	const accessToken = cookieService.getTokenFromRequest(request, 'access');
+
+	if (accessToken) {
+		try {
+			Object.assign(request, {
+				userId: jwtService.getUserIdFromAccessToken(accessToken),
+			});
+		} catch {
+			// Invalid or expired token: continue as an anonymous viewer
+		}
+	}
+
+	next();
+}

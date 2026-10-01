@@ -1,5 +1,5 @@
-import collectionDAO from '#/daos/collections.dao.js';
-import productDAO from '#/daos/products.dao.js';
+import collectionDAO from '#/daos/products/collections.dao.js';
+import productDAO from '#/daos/products/products.dao.js';
 
 import { ConflictError } from '#/utils/http-errors.js';
 
