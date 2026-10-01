@@ -7,7 +7,11 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      quotes: ['error', 'single', { avoidEscape: true }],
+      quotes: [
+        'error',
+        'single',
+        { avoidEscape: true, allowTemplateLiterals: true },
+      ],
       'jsx-quotes': ['error', 'prefer-single'],
     },
   },

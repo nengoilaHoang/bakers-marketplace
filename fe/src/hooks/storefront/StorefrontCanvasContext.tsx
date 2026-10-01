@@ -1,5 +1,5 @@
-import { DeviceBreakpointWithFluid } from "@/types/canvas";
-import { createContext } from "react";
+import { DeviceBreakpointWithFluid } from '@/types/canvas';
+import { createContext } from 'react';
 
 type StorefrontCanvasContextType = {
   zoom: number;

@@ -1,10 +1,10 @@
-import { ApiError } from "@/lib/api";
+import { ApiError } from '@/lib/api';
 import {
   getStorefrontActiveRelease,
   getStorefrontRelease,
-} from "@/services/storefront";
-import { StorefrontRelease } from "@/types/storefront";
-import { useEffect, useState } from "react";
+} from '@/services/storefront';
+import { StorefrontRelease } from '@/types/storefront';
+import { useEffect, useState } from 'react';
 
 const useStorefront = (storeId: string, releaseId?: string) => {
   const [release, setRelease] = useState<StorefrontRelease | null>(null);
@@ -30,12 +30,17 @@ const useStorefront = (storeId: string, releaseId?: string) => {
         }
       } catch (e) {
         if (e instanceof Error) {
-          if (e.name === "AbortError" || controller.signal.aborted) {
-            console.log("Request was aborted");
+          if (e.name === 'AbortError' || controller.signal.aborted) {
+            console.log('Request was aborted');
           } else if (e instanceof ApiError) {
-            console.error("Error loading storefront:", e.message, "Status code:", e.status);
+            console.error(
+              'Error loading storefront:',
+              e.message,
+              'Status code:',
+              e.status,
+            );
           } else {
-            console.error("Error loading storefront:", e.message);
+            console.error('Error loading storefront:', e.message);
           }
         }
       }
