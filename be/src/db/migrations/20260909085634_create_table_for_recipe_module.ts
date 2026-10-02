@@ -388,7 +388,233 @@ export async function up(knex: Knex): Promise<void> {
         },
       );
     })
-    
+
+    .createTable('posts', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('author_id')
+        .references('id')
+        .inTable('users')
+        .onDelete('SET NULL');
+
+      table
+        .uuid('recipe_id')
+        .references('id')
+        .inTable('recipes')
+        .onDelete('SET NULL');
+
+      table
+        .text('title')
+        .notNullable();
+
+      table
+        .text('content')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table
+        .timestamp('updated_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['author_id'], 'idx_posts_author_id');
+
+      table.unique(['recipe_id'], {
+        indexName: 'uq_posts_recipe_id',
+      });
+    })
+
+    .createTable('post_tags', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('post_id')
+        .notNullable()
+        .references('id')
+        .inTable('posts')
+        .onDelete('CASCADE');
+
+      table
+        .text('name')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.unique(['post_id', 'name'], {
+        indexName: 'uq_post_tags_post_name',
+      });
+    })
+
+    .createTable('post_comments', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('post_id')
+        .notNullable()
+        .references('id')
+        .inTable('posts')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('user_id')
+        .references('id')
+        .inTable('users')
+        .onDelete('SET NULL');
+
+      table.uuid('parent_comment_id');
+
+      table
+        .text('content')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.unique(['id', 'post_id'], {
+        indexName: 'uq_post_comments_id_post',
+        useConstraint: true,
+      });
+
+      // A reply must belong to the same post as its parent comment
+      table
+        .foreign(['parent_comment_id', 'post_id'], 'fk_post_comments_parent')
+        .references(['id', 'post_id'])
+        .inTable('post_comments')
+        .onDelete('CASCADE');
+
+      table.check(
+        'parent_comment_id IS NULL OR parent_comment_id <> id',
+        [],
+        'chk_post_comments_not_self_parent',
+      );
+
+      table.index(
+        ['post_id', 'created_at'],
+        'idx_post_comments_post_created',
+      );
+
+      table.index(
+        ['parent_comment_id'],
+        'idx_post_comments_parent_comment_id',
+      );
+
+      table.index(
+        ['user_id'],
+        'idx_post_comments_user_id',
+      );
+    })
+
+    .createTable('post_likes', (table) => {
+      table
+        .uuid('post_id')
+        .notNullable()
+        .references('id')
+        .inTable('posts')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('user_id')
+        .notNullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('CASCADE');
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.primary(['post_id', 'user_id']);
+
+      table.index(['user_id'], 'idx_post_likes_user_id');
+    })
+
+    .createTable('post_saves', (table) => {
+      table
+        .uuid('user_id')
+        .notNullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('post_id')
+        .notNullable()
+        .references('id')
+        .inTable('posts')
+        .onDelete('CASCADE');
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.primary(['user_id', 'post_id']);
+
+      table.index(['post_id'], 'idx_post_saves_post_id');
+    })
+
+    .createTable('reports', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('reporter_id')
+        .references('id')
+        .inTable('users')
+        .onDelete('SET NULL');
+
+      table
+        .text('reason')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['reporter_id'], 'idx_reports_reporter_id');
+    })
+
+    .createTable('post_reports', (table) => {
+      table
+        .uuid('id')
+        .references('id')
+        .inTable('reports')
+        .primary()
+        .onDelete('CASCADE');
+
+      table
+        .uuid('post_id')
+        .notNullable()
+        .references('id')
+        .inTable('posts')
+        .onDelete('CASCADE');
+
+      table.index(['post_id'], 'idx_post_reports_post_id');
+    })
+
     .createTable('brands', (table) => {
       table
         .uuid('id')
@@ -1220,6 +1446,11 @@ export async function up(knex: Knex): Promise<void> {
     CREATE INDEX idx_products_title_trgm
     ON products USING gin (title gin_trgm_ops);
   `);
+
+  await knex.raw(`
+    CREATE INDEX idx_posts_created_at_id
+    ON posts (created_at DESC, id DESC);
+  `);
 }
 
 export async function down(knex: Knex): Promise<void> {
@@ -1249,6 +1480,13 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('products')
     .dropTableIfExists('brands')
     .dropTableIfExists('social_links')
+    .dropTableIfExists('post_reports')
+    .dropTableIfExists('reports')
+    .dropTableIfExists('post_saves')
+    .dropTableIfExists('post_likes')
+    .dropTableIfExists('post_comments')
+    .dropTableIfExists('post_tags')
+    .dropTableIfExists('posts')
     .dropTableIfExists('recipe_tags')
     .dropTableIfExists('recipe_notes')
     .dropTableIfExists('recipe_tools')

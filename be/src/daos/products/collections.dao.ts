@@ -4,7 +4,7 @@ import type {
 	CollectionRow,
 } from '#/models/products/collections.model.js';
 
-import productDAO from '#/daos/products.dao.js';
+import productDAO from '#/daos/products/products.dao.js';
 
 class CollectionDAO {
 	private readonly tableName = 'collections';
