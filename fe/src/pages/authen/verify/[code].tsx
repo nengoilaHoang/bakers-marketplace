@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import request, { ApiError } from '@/lib/api';
+import AuthLayout from '@/components/layout/AuthLayout';
 
 export default function VerifyEmailPage() {
 	const router = useRouter();
@@ -67,78 +68,80 @@ export default function VerifyEmailPage() {
 				<title>Xác minh email | Bakers Marketplace</title>
 			</Head>
 
-			<main className='flex min-h-screen items-center justify-center bg-white px-4 py-12 text-zinc-950 sm:px-6'>
-				<section
-					aria-live='polite'
-					className='w-full max-w-md border border-zinc-200 bg-white p-7 text-center shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:p-10'
-				>
-					{status === 'loading' && (
-						<>
-							<div
-								aria-hidden='true'
-								className='mx-auto size-11 animate-spin rounded-full border-2 border-zinc-200 border-t-black'
-							/>
-							<p className='mt-6 text-xs font-bold uppercase tracking-[0.2em] text-zinc-500'>
-								Bakers Marketplace
-							</p>
-							<h1 className='mt-3 text-2xl font-semibold tracking-tight'>
-								Xác minh email
-							</h1>
-						</>
-					)}
+			<section
+				aria-live='polite'
+				className='w-full max-w-md border border-zinc-200 bg-white p-7 text-center shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:p-10'
+			>
+				{status === 'loading' && (
+					<>
+						<div
+							aria-hidden='true'
+							className='mx-auto size-11 animate-spin rounded-full border-2 border-zinc-200 border-t-black'
+						/>
+						<p className='mt-6 text-xs font-bold uppercase tracking-[0.2em] text-zinc-500'>
+							Bakers Marketplace
+						</p>
+						<h1 className='mt-3 text-2xl font-semibold tracking-tight'>
+							Xác minh email
+						</h1>
+					</>
+				)}
 
-					{status === 'success' && (
-						<>
-							<div className='mx-auto flex size-12 items-center justify-center rounded-full bg-black text-xl text-white'>
-								✓
-							</div>
-							<h1 className='mt-6 text-2xl font-semibold tracking-tight'>
-								Xác minh thành công
-							</h1>
-						</>
-					)}
-
-					{status === 'error' && (
-						<>
-							<div className='mx-auto flex size-12 items-center justify-center rounded-full border-2 border-black text-xl font-semibold'>
-								!
-							</div>
-							<h1 className='mt-6 text-2xl font-semibold tracking-tight'>
-								Không thể xác minh
-							</h1>
-						</>
-					)}
-
-					<p className='mt-3 text-sm leading-6 text-zinc-600'>{message}</p>
-
-					{status === 'success' && (
-						<Link
-							href='/'
-							className='mt-8 inline-flex w-full items-center justify-center bg-black px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
-						>
-							Tiếp tục
-						</Link>
-					)}
-
-					{status === 'error' && (
-						<div className='mt-8 flex flex-col gap-3'>
-							<button
-								type='button'
-								onClick={() => setAttempt((current) => current + 1)}
-								className='w-full cursor-pointer bg-black px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
-							>
-								Thử lại
-							</button>
-							<Link
-								href='/authen/register'
-								className='inline-flex w-full items-center justify-center border border-zinc-300 px-4 py-3 text-sm font-semibold transition hover:border-black hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
-							>
-								Đăng ký lại
-							</Link>
+				{status === 'success' && (
+					<>
+						<div className='mx-auto flex size-12 items-center justify-center rounded-full bg-black text-xl text-white'>
+							✓
 						</div>
-					)}
-				</section>
-			</main>
+						<h1 className='mt-6 text-2xl font-semibold tracking-tight'>
+							Xác minh thành công
+						</h1>
+					</>
+				)}
+
+				{status === 'error' && (
+					<>
+						<div className='mx-auto flex size-12 items-center justify-center rounded-full border-2 border-black text-xl font-semibold'>
+							!
+						</div>
+						<h1 className='mt-6 text-2xl font-semibold tracking-tight'>
+							Không thể xác minh
+						</h1>
+					</>
+				)}
+
+				<p className='mt-3 text-sm leading-6 text-zinc-600'>{message}</p>
+
+				{status === 'success' && (
+					<Link
+						href='/'
+						className='mt-8 inline-flex w-full items-center justify-center bg-black px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
+					>
+						Tiếp tục
+					</Link>
+				)}
+
+				{status === 'error' && (
+					<div className='mt-8 flex flex-col gap-3'>
+						<button
+							type='button'
+							onClick={() => setAttempt((current) => current + 1)}
+							className='w-full cursor-pointer bg-black px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
+						>
+							Thử lại
+						</button>
+						<Link
+							href='/authen/register'
+							className='inline-flex w-full items-center justify-center border border-zinc-300 px-4 py-3 text-sm font-semibold transition hover:border-black hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
+						>
+							Đăng ký lại
+						</Link>
+					</div>
+				)}
+			</section>
 		</>
 	);
 }
+
+VerifyEmailPage.getLayout = function getLayout(page: React.ReactElement) {
+	return <AuthLayout>{page}</AuthLayout>;
+};

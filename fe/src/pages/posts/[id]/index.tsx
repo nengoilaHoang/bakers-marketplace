@@ -18,6 +18,7 @@ import {
   unsavePost,
 } from '@/services/posts';
 import type { Post, PostComment, SessionUser } from '@/types/post';
+import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error && error.message
@@ -125,7 +126,7 @@ export default function PostDetailPage() {
 
     try {
       await deletePost(post.id);
-      await router.push('/posts/mine');
+      await router.push('/me');
     } catch (requestError) {
       window.alert(getErrorMessage(requestError));
     }
@@ -270,8 +271,8 @@ export default function PostDetailPage() {
         <title>{post ? post.title : 'Bài viết'}</title>
       </Head>
 
-      <main className='mx-auto max-w-3xl p-4'>
-        <Link href='/posts' className='text-sm underline'>
+      <div className='mx-auto max-w-3xl'>
+        <Link href='/' className='text-sm underline'>
           ← Quay lại danh sách
         </Link>
 
@@ -301,8 +302,16 @@ export default function PostDetailPage() {
               )}
 
               {post.tags.length > 0 && (
-                <p className='mt-2 text-sm text-blue-700'>
-                  {post.tags.map((tag) => `#${tag.name}`).join(' ')}
+                <p className='mt-2 flex flex-wrap gap-2 text-sm'>
+                  {post.tags.map((tag) => (
+                    <Link
+                      key={tag.id}
+                      href={{ pathname: '/', query: { tag: tag.name } }}
+                      className='text-blue-700 underline'
+                    >
+                      #{tag.name}
+                    </Link>
+                  ))}
                 </p>
               )}
 
@@ -379,7 +388,11 @@ export default function PostDetailPage() {
             </section>
           </>
         ) : null}
-      </main>
+      </div>
     </>
   );
 }
+
+PostDetailPage.getLayout = function getLayout(page: React.ReactElement) {
+  return <AppLayout>{page}</AppLayout>;
+};

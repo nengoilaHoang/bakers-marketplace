@@ -1,4 +1,4 @@
-export default function HomeRecipeCardSkeleton() {
+export default function LandingRecipeCardSkeleton() {
   return (
     <div
       aria-hidden="true"

@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ApiError } from '@/lib/api';
 import { getCurrentUser, getPostById, updatePost } from '@/services/posts';
 import type { PostRecipeSummary } from '@/types/post';
+import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError && Array.isArray(error.details)) {
@@ -101,8 +102,8 @@ export default function EditPostPage() {
         <title>Sửa bài viết</title>
       </Head>
 
-      <main className='mx-auto max-w-3xl p-4'>
-        <Link href={id ? `/posts/${id}` : '/posts'} className='text-sm underline'>
+      <div className='mx-auto max-w-3xl'>
+        <Link href={id ? `/posts/${id}` : '/'} className='text-sm underline'>
           ← Quay lại bài viết
         </Link>
 
@@ -162,7 +163,11 @@ export default function EditPostPage() {
             </button>
           </form>
         )}
-      </main>
+      </div>
     </>
   );
 }
+
+EditPostPage.getLayout = function getLayout(page: React.ReactElement) {
+  return <AppLayout>{page}</AppLayout>;
+};

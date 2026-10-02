@@ -9,7 +9,7 @@ const GUEST_ROUTES = new Set([
 
 const PUBLIC_ROUTES = new Set([
 	'/',
-	'/posts',
+	'/recipes',
 	'/recipes/search',
 	'/vendors/products/search',
 	'/authen/google/callback',
@@ -21,13 +21,14 @@ const PUBLIC_ROUTE_PREFIXES = [
 	'/authen/reset-password/',
 ];
 
-// Chỉ khớp /posts/<uuid>, không khớp /posts/new, /posts/mine, /posts/saved, /posts/<uuid>/edit
-const POST_DETAIL_PATTERN = /^\/posts\/[0-9a-f-]{36}$/i;
+// Chỉ khớp trang chi tiết /posts/<uuid> và /recipes/<uuid>,
+// không khớp /posts/new, /recipes/new, /<...>/<uuid>/edit
+const PUBLIC_DETAIL_PATTERN = /^\/(posts|recipes)\/[0-9a-f-]{36}$/i;
 
 function isPublicRoute(pathname: string): boolean {
 	return (
 		PUBLIC_ROUTES.has(pathname) ||
-		POST_DETAIL_PATTERN.test(pathname) ||
+		PUBLIC_DETAIL_PATTERN.test(pathname) ||
 		PUBLIC_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 	);
 }

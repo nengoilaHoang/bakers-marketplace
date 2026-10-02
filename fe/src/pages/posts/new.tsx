@@ -7,6 +7,7 @@ import RecipeForm from '@/components/recipe/RecipeForm';
 import { ApiError } from '@/lib/api';
 import { createPost } from '@/services/posts';
 import type { RecipeMutationPayload } from '@/types/recipe';
+import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError && Array.isArray(error.details)) {
@@ -73,8 +74,8 @@ export default function NewPostPage() {
         <title>Tạo bài viết</title>
       </Head>
 
-      <main className='mx-auto max-w-3xl p-4'>
-        <Link href='/posts' className='text-sm underline'>
+      <div className='mx-auto max-w-3xl'>
+        <Link href='/' className='text-sm underline'>
           ← Quay lại danh sách
         </Link>
 
@@ -132,7 +133,7 @@ export default function NewPostPage() {
 
             <RecipeForm
               submitLabel='Đăng bài kèm công thức'
-              cancelHref='/posts'
+              cancelHref='/'
               onSubmit={(recipe) => submitPost({ ...recipe, isPublic: true })}
             />
           </section>
@@ -150,7 +151,11 @@ export default function NewPostPage() {
             </button>
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 }
+
+NewPostPage.getLayout = function getLayout(page: React.ReactElement) {
+  return <AppLayout>{page}</AppLayout>;
+};

@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useState, type FormEvent } from 'react';
 
 import {
@@ -13,10 +14,21 @@ import {
 } from '@/services/posts';
 import type { Post, PostCursor, PostSearchParams } from '@/types/post';
 
+type FeedResult = {
+  searchKey: string;
+  posts: Post[];
+  cursor: PostCursor | null;
+  error: string | null;
+};
+
 function getErrorMessage(error: unknown): string {
   return error instanceof Error && error.message
     ? error.message
     : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+}
+
+function readQueryValue(value: string | string[] | undefined): string {
+  return typeof value === 'string' ? value : '';
 }
 
 function loadPostsPage(search: PostSearchParams, cursor?: PostCursor | null) {
@@ -25,15 +37,14 @@ function loadPostsPage(search: PostSearchParams, cursor?: PostCursor | null) {
     : getPosts({ cursor });
 }
 
-export default function PostsPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [cursor, setCursor] = useState<PostCursor | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function Feed() {
+  const router = useRouter();
+  // Bộ lọc nằm trên URL (/?q=&tag=) để tag ở trang khác có thể dẫn thẳng về bảng tin đã lọc
+  const q = readQueryValue(router.query.q);
+  const tag = readQueryValue(router.query.tag);
+  const searchKey = `${q}\n${tag}`;
+  const [result, setResult] = useState<FeedResult | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [keywordInput, setKeywordInput] = useState('');
-  const [tagInput, setTagInput] = useState('');
-  const [search, setSearch] = useState<PostSearchParams>({});
 
   useEffect(() => {
     let ignore = false;
@@ -42,20 +53,14 @@ export default function PostsPage() {
       try {
         // Làm mới token (nếu cần) trước, để isLiked/isSaved trả về đúng
         await getCurrentUser().catch(() => null);
-        const page = await loadPostsPage(search);
+        const page = await loadPostsPage({ q, tag });
 
         if (!ignore) {
-          setPosts(page.posts);
-          setCursor(page.cursor);
-          setError(null);
+          setResult({ searchKey, posts: page.posts, cursor: page.cursor, error: null });
         }
       } catch (requestError) {
         if (!ignore) {
-          setError(getErrorMessage(requestError));
-        }
-      } finally {
-        if (!ignore) {
-          setIsLoading(false);
+          setResult({ searchKey, posts: [], cursor: null, error: getErrorMessage(requestError) });
         }
       }
     }
@@ -65,39 +70,48 @@ export default function PostsPage() {
     return () => {
       ignore = true;
     };
-  }, [search]);
+  }, [q, tag, searchKey]);
+
+  // Ẩn kết quả của bộ lọc cũ ngay khi URL đổi
+  const current = result?.searchKey === searchKey ? result : null;
+  const isLoading = !current;
+  const posts = current?.posts ?? [];
+  const isSearching = Boolean(q || tag);
+
+  function updatePosts(update: (posts: Post[]) => Post[]) {
+    setResult((previous) => previous && { ...previous, posts: update(previous.posts) });
+  }
 
   function applySearch(nextSearch: PostSearchParams) {
-    setIsLoading(true);
-    setSearch(nextSearch);
+    const query: Record<string, string> = {};
+    if (nextSearch.q) query.q = nextSearch.q;
+    if (nextSearch.tag) query.tag = nextSearch.tag;
+
+    void router.push({ pathname: '/', query }, undefined, { shallow: true });
   }
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    applySearch({ q: keywordInput.trim(), tag: tagInput.trim() });
-  }
+    const formData = new FormData(event.currentTarget);
 
-  function handleTagClick(tagName: string) {
-    setKeywordInput('');
-    setTagInput(tagName);
-    applySearch({ tag: tagName });
-  }
-
-  function handleClearSearch() {
-    setKeywordInput('');
-    setTagInput('');
-    applySearch({});
+    applySearch({
+      q: String(formData.get('q') ?? '').trim(),
+      tag: String(formData.get('tag') ?? '').trim(),
+    });
   }
 
   async function handleLoadMore() {
-    if (!cursor) return;
+    if (!current?.cursor) return;
 
     setIsLoadingMore(true);
 
     try {
-      const page = await loadPostsPage(search, cursor);
-      setPosts((current) => [...current, ...page.posts]);
-      setCursor(page.cursor);
+      const page = await loadPostsPage({ q, tag }, current.cursor);
+      setResult((previous) =>
+        previous?.searchKey === searchKey
+          ? { ...previous, posts: [...previous.posts, ...page.posts], cursor: page.cursor }
+          : previous,
+      );
     } catch (requestError) {
       window.alert(getErrorMessage(requestError));
     } finally {
@@ -111,7 +125,7 @@ export default function PostsPage() {
         ? await unlikePost(post.id)
         : await likePost(post.id);
 
-      setPosts((current) =>
+      updatePosts((current) =>
         current.map((item) =>
           item.id === post.id
             ? { ...item, isLiked: status.liked, likeCount: status.likeCount }
@@ -129,7 +143,7 @@ export default function PostsPage() {
         ? await unsavePost(post.id)
         : await savePost(post.id);
 
-      setPosts((current) =>
+      updatePosts((current) =>
         current.map((item) =>
           item.id === post.id ? { ...item, isSaved: status.saved } : item,
         ),
@@ -139,34 +153,25 @@ export default function PostsPage() {
     }
   }
 
-  const isSearching = Boolean(search.q || search.tag);
-
   return (
     <>
       <Head>
-        <title>Bài viết</title>
+        <title>Diễn đàn | Bakers Marketplace</title>
       </Head>
 
-      <main className='mx-auto max-w-3xl p-4'>
-        <nav className='mb-4 flex flex-wrap gap-4 text-sm underline'>
-          <Link href='/posts'>Bài viết</Link>
-          <Link href='/posts/new'>Tạo bài viết</Link>
-          <Link href='/posts/mine'>Bài của tôi</Link>
-          <Link href='/posts/saved'>Đã lưu</Link>
-        </nav>
+      <div className='mx-auto max-w-3xl'>
+        <h1 className='mb-4 text-2xl font-bold'>Diễn đàn</h1>
 
-        <h1 className='mb-4 text-2xl font-bold'>Bài viết</h1>
-
-        <form onSubmit={handleSearchSubmit} className='mb-4 flex flex-wrap gap-2'>
+        <form key={searchKey} onSubmit={handleSearchSubmit} className='mb-4 flex flex-wrap gap-2'>
           <input
-            value={keywordInput}
-            onChange={(event) => setKeywordInput(event.target.value)}
+            name='q'
+            defaultValue={q}
             placeholder='Từ khoá (vd: banh)'
             className='border px-2 py-1'
           />
           <input
-            value={tagInput}
-            onChange={(event) => setTagInput(event.target.value)}
+            name='tag'
+            defaultValue={tag}
             placeholder='Tag (vd: hoi-dap)'
             className='border px-2 py-1'
           />
@@ -174,7 +179,7 @@ export default function PostsPage() {
             Tìm
           </button>
           {isSearching && (
-            <button type='button' onClick={handleClearSearch} className='border px-3 py-1'>
+            <button type='button' onClick={() => applySearch({})} className='border px-3 py-1'>
               Xoá tìm kiếm
             </button>
           )}
@@ -182,15 +187,15 @@ export default function PostsPage() {
 
         {isSearching && (
           <p className='mb-4 text-sm'>
-            Đang tìm: {search.q && <b>&quot;{search.q}&quot; </b>}
-            {search.tag && <b>#{search.tag}</b>}
+            Đang tìm: {q && <b>&quot;{q}&quot; </b>}
+            {tag && <b>#{tag}</b>}
           </p>
         )}
 
         {isLoading ? (
           <p>Đang tải...</p>
-        ) : error ? (
-          <p className='text-red-600'>Lỗi: {error}</p>
+        ) : current.error ? (
+          <p className='text-red-600'>Lỗi: {current.error}</p>
         ) : posts.length === 0 ? (
           <p>Không có bài viết nào.</p>
         ) : (
@@ -223,14 +228,14 @@ export default function PostsPage() {
 
                   {post.tags.length > 0 && (
                     <div className='mt-2 flex flex-wrap gap-2 text-sm'>
-                      {post.tags.map((tag) => (
+                      {post.tags.map((postTag) => (
                         <button
-                          key={tag.id}
+                          key={postTag.id}
                           type='button'
-                          onClick={() => handleTagClick(tag.name)}
+                          onClick={() => applySearch({ tag: postTag.name })}
                           className='text-blue-700 underline'
                         >
-                          #{tag.name}
+                          #{postTag.name}
                         </button>
                       ))}
                     </div>
@@ -260,7 +265,7 @@ export default function PostsPage() {
             </ul>
 
             <div className='mt-4'>
-              {cursor ? (
+              {current.cursor ? (
                 <button
                   type='button'
                   onClick={() => void handleLoadMore()}
@@ -275,7 +280,7 @@ export default function PostsPage() {
             </div>
           </>
         )}
-      </main>
+      </div>
     </>
   );
 }

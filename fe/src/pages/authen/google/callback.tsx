@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import request, { ApiError } from '@/lib/api';
+import AuthLayout from '@/components/layout/AuthLayout';
 import {
 	consumeGoogleOAuthState,
 	getGoogleOAuthRedirectUri,
@@ -73,36 +74,38 @@ export default function GoogleOAuthCallbackPage() {
 				<meta name='robots' content='noindex' />
 			</Head>
 
-			<main className='flex min-h-screen items-center justify-center bg-white px-4 py-12 text-black sm:px-6'>
-				<section className='w-full max-w-md border border-black bg-white p-8 text-center shadow-[8px_8px_0_#000]'>
-					{error ? (
-						<>
-							<h1 className='text-2xl font-semibold tracking-tight'>
-								Không thể xác thực
-							</h1>
-							<p role='alert' className='mt-3 text-sm leading-6 text-black'>
-								{error}
-							</p>
-							<Link
-								href='/authen/login'
-								className='mt-7 inline-flex border border-black bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
-							>
-								Quay lại đăng nhập
-							</Link>
-						</>
-					) : (
-						<div aria-live='polite'>
-							<div className='mx-auto size-9 animate-spin rounded-full border-2 border-black border-t-transparent' />
-							<h1 className='mt-6 text-xl font-semibold tracking-tight'>
-								Đang xác thực với Google...
-							</h1>
-							<p className='mt-2 text-sm text-black'>
-								Vui lòng không đóng trang này.
-							</p>
-						</div>
-					)}
-				</section>
-			</main>
+			<section className='w-full max-w-md border border-black bg-white p-8 text-center shadow-[8px_8px_0_#000]'>
+				{error ? (
+					<>
+						<h1 className='text-2xl font-semibold tracking-tight'>
+							Không thể xác thực
+						</h1>
+						<p role='alert' className='mt-3 text-sm leading-6 text-black'>
+							{error}
+						</p>
+						<Link
+							href='/authen/login'
+							className='mt-7 inline-flex border border-black bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
+						>
+							Quay lại đăng nhập
+						</Link>
+					</>
+				) : (
+					<div aria-live='polite'>
+						<div className='mx-auto size-9 animate-spin rounded-full border-2 border-black border-t-transparent' />
+						<h1 className='mt-6 text-xl font-semibold tracking-tight'>
+							Đang xác thực với Google...
+						</h1>
+						<p className='mt-2 text-sm text-black'>
+							Vui lòng không đóng trang này.
+						</p>
+					</div>
+				)}
+			</section>
 		</>
 	);
 }
+
+GoogleOAuthCallbackPage.getLayout = function getLayout(page: React.ReactElement) {
+	return <AuthLayout>{page}</AuthLayout>;
+};

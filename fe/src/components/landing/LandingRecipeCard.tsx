@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import type { Recipe } from "@/types/recipe";
 
-type HomeRecipeCardProps = {
+type LandingRecipeCardProps = {
   recipe: Recipe;
 };
 
@@ -12,7 +12,7 @@ function getAuthorLabel(userId: string | null | undefined) {
     : "Thành viên cộng đồng";
 }
 
-export default function HomeRecipeCard({ recipe }: HomeRecipeCardProps) {
+export default function LandingRecipeCard({ recipe }: LandingRecipeCardProps) {
   return (
     <article className="h-full">
       <Link
