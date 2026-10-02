@@ -3,6 +3,7 @@ import { z } from 'zod';
 import authAccountDAO from '#/daos/users/auth-accounts.dao.js';
 import userDAO from '#/daos/users/users.dao.js';
 import { UserCreateSchema } from '#/models/users/users.model.js';
+import { AuthenticatedRequest } from '#/types/request.types.js';
 import authenMailService from '#/services/authen/authen-mail.service.js';
 import authenRedisService from '#/services/authen/authen-redis.service.js';
 import bcryptService from '#/services/authen/bcrypt.service.js';
@@ -50,10 +51,6 @@ const ChangePasswordSchema = z.object({
 	message: 'Passwords do not match',
 	path: ['confirmPassword'],
 });
-
-type AuthenticatedRequest = Request & {
-	userId: string;
-};
 
 class AuthenController {
 	public register = asyncHandler(
@@ -270,7 +267,7 @@ class AuthenController {
 
 	public resetCurrentUserPassword = asyncHandler(
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-			const user = await userDAO.getById(req.userId);
+			const user = await userDAO.getById(req.user.id);
 
 			if (!user) {
 				throw new NotFoundError('Account is no longer available');
@@ -361,7 +358,7 @@ class AuthenController {
 				? jwtService.getUserIdFromRefreshToken(refreshToken)
 				: null;
 
-			if (!refreshToken || refreshUserId !== req.userId) {
+			if (!refreshToken || refreshUserId !== req.user.id) {
 				cookieService.clearTokenCookie(res, 'access');
 				cookieService.clearTokenCookie(res, 'refresh');
 				throw new UnauthorizedError(
@@ -371,7 +368,7 @@ class AuthenController {
 			}
 
 			const activeSession = await bcryptService.checkRefreshToken(
-				req.userId,
+				req.user.id,
 				refreshToken,
 			);
 
@@ -384,7 +381,7 @@ class AuthenController {
 				);
 			}
 
-			const user = await userDAO.getById(req.userId);
+			const user = await userDAO.getById(req.user.id);
 
 			if (!user) {
 				cookieService.clearTokenCookie(res, 'access');

@@ -14,17 +14,12 @@ import {
 	RecipeUpdateSchema,
 	type RecipeCursor,
 } from '#/models/recipes/recipes.model.js';
+import { AuthenticatedRequest } from '#/types/request.types.js';
 
 type RecipeIdParams = {
 	id: string;
 };
 type RecipeUserIdParams = {
-	userId: string;
-};
-
-type AuthenticatedRequest<Params = Record<string, never>> = Request<
-	Params
-> & {
 	userId: string;
 };
 
@@ -100,7 +95,7 @@ class RecipeController {
 
 	public getMine = asyncHandler(
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-			const recipes = await recipeService.getByUserId(req.userId);
+			const recipes = await recipeService.getByUserId(req.user.id);
 
 			res.status(200).json({
 				data: recipes,
@@ -116,7 +111,7 @@ class RecipeController {
 				...req.body,
 			} as RecipeCreatePayload;
 			recipe.isSnapshot = false;
-			const createdRecipe = await recipeService.set(req.userId, recipe);
+			const createdRecipe = await recipeService.set(req.user.id, recipe);
 
 			res.status(201).json({
 				data: createdRecipe,
@@ -133,7 +128,7 @@ class RecipeController {
 			} as RecipeCreatePayload;
 			recipe.isSnapshot = true;
 			recipe.isPublic = true;
-			const createdRecipe = await recipeService.set(req.userId, recipe);
+			const createdRecipe = await recipeService.set(req.user.id, recipe);
 
 			res.status(201).json({
 				data: createdRecipe,
@@ -155,7 +150,7 @@ class RecipeController {
 				throw new Error('recipe id is required');
 			}
 			const isOwner = await this.recipeService.checkRecipeOwner(
-				req.userId,
+				req.user.id,
 				recipe.id,
 			);
 			if (!isOwner) {
@@ -182,7 +177,7 @@ class RecipeController {
 			res: Response,
 		): Promise<void> => {
 			const { id } = req.params;
-			const isOwner = await this.recipeService.checkRecipeOwner(req.userId, id);
+			const isOwner = await this.recipeService.checkRecipeOwner(req.user.id, id);
 			if (!isOwner) {
 				throw new Error('you dont have permission');
 			}

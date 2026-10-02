@@ -203,14 +203,14 @@ const vendorUsers = [
 	{
 		email: 'vendor.hoasen@example.com',
 		displayname: 'Tiệm Bánh Hoa Sen',
-		hashed_password: null,
+		hashed_password: '$2a$12$V9Z42j4jaMguY0Sg/kh/yuOq/czIJE4CA1n/vzjL6iVVVJFzY6lqy',
 		role: 'VENDOR' as const,
 		taxCode: '0312345678',
 	},
 	{
 		email: 'vendor.mattroi@example.com',
 		displayname: 'Bánh Ngọt Mặt Trời',
-		hashed_password: null,
+		hashed_password: '$2a$12$V9Z42j4jaMguY0Sg/kh/yuOq/czIJE4CA1n/vzjL6iVVVJFzY6lqy',
 		role: 'VENDOR' as const,
 		taxCode: '0398765432',
 	},
