@@ -6,7 +6,6 @@ import { RecipeCreateSchema } from '#/models/recipes/recipes.model.js';
 export const PostSchema = z.object({
 	id: z.uuidv4().optional(),
 	authorId: z.uuidv4().nullable().optional(),
-	recipeId: z.uuidv4().nullable().optional(),
 	title: z.string().trim().min(1).max(255),
 	content: z.string().trim().min(1).max(10000),
 	createdAt: z.date().optional(),
@@ -31,7 +30,10 @@ const PostRecipeSchema = RecipeCreateSchema.omit({
 	recipeIngredients: z.unknown().optional(),
 });
 
-/** With `recipe`, the post is created together with a recipe and its snapshot. */
+/**
+ * With `recipe`, the post is created together with a recipe and its snapshot,
+ * and a [[recipe:<snapshot id>]] token is appended to the content.
+ */
 export const PostCreateSchema = PostSchema.pick({
 	title: true,
 	content: true,
@@ -40,7 +42,10 @@ export const PostCreateSchema = PostSchema.pick({
 	recipe: PostRecipeSchema.optional(),
 });
 
-/** The attached recipe is a snapshot, so it cannot be changed after creation. */
+/**
+ * The attached recipe is a snapshot, so it cannot be changed after creation:
+ * the content may keep its recipe token or leave it out (it is appended again).
+ */
 export const PostUpdateSchema = PostSchema.pick({
 	title: true,
 	content: true,
@@ -97,7 +102,6 @@ export type GetPostsResult = {
 export class Post implements PostData {
 	id!: string;
 	authorId?: string | null;
-	recipeId?: string | null;
 	title!: string;
 	content!: string;
 	createdAt?: Date;

@@ -20,6 +20,7 @@ import type {
 	PostWithDetails,
 } from '#/models/posts/posts.model.js';
 import type { PostTag } from '#/models/posts/post-tags.model.js';
+import { appendRecipeToken, extractRecipeIds } from '#/utils/post-content.js';
 
 class PostService {
 	private postDAO = postDAO;
@@ -90,6 +91,12 @@ class PostService {
 		payload: PostCreate,
 	): Promise<PostWithDetails> {
 		const { tags, recipe, ...post } = payload;
+
+		// The only recipe a post can link to is the snapshot created below
+		if (extractRecipeIds(post.content).length > 0) {
+			throw new BadRequestError('Post content must not contain recipe tokens');
+		}
+
 		const recipes = recipe
 			? await this.createRecipeWithSnapshot(authorId, recipe)
 			: null;
@@ -100,7 +107,12 @@ class PostService {
 			postId = await db.instance.transaction(async (trx) => {
 				const createdPost = await this.postDAO.create(
 					authorId,
-					{ ...post, recipeId: recipes?.snapshotId ?? null },
+					{
+						...post,
+						content: recipes
+							? appendRecipeToken(post.content, recipes.snapshotId)
+							: post.content,
+					},
 					trx,
 				);
 
@@ -136,6 +148,10 @@ class PostService {
 
 		const { tags, ...post } = payload;
 
+		if (post.content !== undefined) {
+			post.content = await this.keepRecipeToken(id, post.content);
+		}
+
 		await db.instance.transaction(async (trx) => {
 			await this.postDAO.update(id, post, trx);
 
@@ -160,8 +176,10 @@ class PostService {
 			throw new NotFoundError('Post not found');
 		}
 
-		if (deletedPost.recipeId) {
-			await this.deleteSnapshot(deletedPost.recipeId);
+		const [recipeId] = extractRecipeIds(deletedPost.content);
+
+		if (recipeId) {
+			await this.deleteSnapshot(recipeId);
 		}
 
 		return deletedPost;
@@ -225,6 +243,30 @@ class PostService {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * The attached recipe cannot change after creation. New content may keep the
+	 * post's recipe token where the author placed it, or leave it out, in which
+	 * case the token is appended again. Any other recipe token is rejected.
+	 */
+	private async keepRecipeToken(id: string, content: string): Promise<string> {
+		const existingPost = await this.postDAO.getById(id);
+		const [recipeId] = extractRecipeIds(existingPost?.content ?? '');
+		const newRecipeIds = extractRecipeIds(content);
+
+		if (
+			newRecipeIds.length > 1 ||
+			newRecipeIds.some((newRecipeId) => newRecipeId !== recipeId)
+		) {
+			throw new BadRequestError('The recipe attached to a post cannot be changed');
+		}
+
+		if (!recipeId || newRecipeIds.length === 1) {
+			return content;
+		}
+
+		return appendRecipeToken(content, recipeId);
 	}
 
 	/** A snapshot only exists for its post, so it is removed together with the post. */

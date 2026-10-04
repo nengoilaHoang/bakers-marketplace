@@ -6,6 +6,7 @@ import LandingRecipeCardSkeleton from '@/components/landing/LandingRecipeCardSke
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useLatestPosts } from '@/hooks/useLatestPosts';
 import { useLatestRecipes } from '@/hooks/useLatestRecipes';
+import { stripRecipeToken } from '@/utils/postContent';
 
 const topics = [
   'Bánh mì',
@@ -151,7 +152,7 @@ export default function Landing() {
                       {post.author?.displayName ?? 'Người dùng đã xoá'}
                     </span>
                     <span className='mt-3 line-clamp-3 text-sm leading-6 text-zinc-600'>
-                      {post.content}
+                      {stripRecipeToken(post.content)}
                     </span>
                     <span className='mt-auto pt-4 text-xs text-zinc-500'>
                       {post.likeCount} lượt thích · {post.commentCount} bình luận

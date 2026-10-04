@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ApiError } from '@/lib/api';
 import { getCurrentUser, getPostById, updatePost } from '@/services/posts';
 import type { PostRecipeSummary } from '@/types/post';
+import { stripRecipeToken } from '@/utils/postContent';
 import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
@@ -55,7 +56,8 @@ export default function EditPostPage() {
         }
 
         setTitle(post.title);
-        setContent(post.content);
+        // BE tự giữ lại token công thức nếu content gửi lên không có
+        setContent(stripRecipeToken(post.content));
         setTagsInput(post.tags.map((tag) => tag.name).join(', '));
         setRecipe(post.recipe);
       } catch (requestError) {

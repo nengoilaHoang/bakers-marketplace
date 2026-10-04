@@ -1,5 +1,7 @@
 import type { Knex } from 'knex';
 
+import { appendRecipeToken } from '../../utils/post-content.js';
+
 type Ingredient = [name: string, amount: number, unit: string];
 type Tool = [name: string, amount: number];
 
@@ -1234,8 +1236,8 @@ export async function seed(knex: Knex): Promise<void> {
 			const recipe = post.recipeTitle
 				? recipeByTitle.get(post.recipeTitle)
 				: undefined;
-			// A post sharing a recipe is written by that recipe's owner and is
-			// attached to a snapshot of it, like posts created through the API
+			// A post sharing a recipe is written by that recipe's owner and links
+			// to a snapshot of it through its content, like posts created through the API
 			const authorId = recipe?.userId ?? userRows[index % userRows.length].id;
 			const snapshotId = recipe
 				? await createRecipeSnapshot(trx, recipe.id)
@@ -1245,9 +1247,10 @@ export async function seed(knex: Knex): Promise<void> {
 			const [createdPost] = await trx('posts')
 				.insert({
 					author_id: authorId,
-					recipe_id: snapshotId,
 					title: post.title,
-					content: post.content,
+					content: snapshotId
+						? appendRecipeToken(post.content, snapshotId)
+						: post.content,
 					created_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hoursAgo]),
 					updated_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hoursAgo]),
 				})

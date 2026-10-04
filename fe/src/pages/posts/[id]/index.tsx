@@ -18,6 +18,7 @@ import {
   unsavePost,
 } from '@/services/posts';
 import type { Post, PostComment, SessionUser } from '@/types/post';
+import { stripRecipeToken } from '@/utils/postContent';
 import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
@@ -290,7 +291,7 @@ export default function PostDetailPage() {
                 {post.updatedAt !== post.createdAt && ' · đã chỉnh sửa'}
               </p>
 
-              <p className='mt-3 whitespace-pre-line'>{post.content}</p>
+              <p className='mt-3 whitespace-pre-line'>{stripRecipeToken(post.content)}</p>
 
               {post.recipe && (
                 <p className='mt-3'>

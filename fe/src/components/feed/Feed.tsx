@@ -13,6 +13,7 @@ import {
   unsavePost,
 } from '@/services/posts';
 import type { Post, PostCursor, PostSearchParams } from '@/types/post';
+import { stripRecipeToken } from '@/utils/postContent';
 
 type FeedResult = {
   searchKey: string;
@@ -25,6 +26,10 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error && error.message
     ? error.message
     : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+}
+
+function toExcerpt(text: string): string {
+  return text.length > 200 ? `${text.slice(0, 200)}...` : text;
 }
 
 function readQueryValue(value: string | string[] | undefined): string {
@@ -212,9 +217,7 @@ export default function Feed() {
                   </p>
 
                   <p className='mt-2 whitespace-pre-line'>
-                    {post.content.length > 200
-                      ? `${post.content.slice(0, 200)}...`
-                      : post.content}
+                    {toExcerpt(stripRecipeToken(post.content))}
                   </p>
 
                   {post.recipe && (
