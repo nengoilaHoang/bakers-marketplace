@@ -1,9 +1,11 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
+
+import AuthShell from '@/components/authen/AuthShell';
+import Alert from '@/components/ui/Alert';
+import { ButtonLink } from '@/components/ui/Button';
 import request, { ApiError } from '@/lib/api';
-import AuthLayout from '@/components/layout/AuthLayout';
 import {
 	consumeGoogleOAuthState,
 	getGoogleOAuthRedirectUri,
@@ -70,42 +72,22 @@ export default function GoogleOAuthCallbackPage() {
 	return (
 		<>
 			<Head>
-				<title>Xác thực Google | Bakers Marketplace</title>
 				<meta name='robots' content='noindex' />
 			</Head>
-
-			<section className='w-full max-w-md border border-black bg-white p-8 text-center shadow-[8px_8px_0_#000]'>
-				{error ? (
-					<>
-						<h1 className='text-2xl font-semibold tracking-tight'>
-							Không thể xác thực
-						</h1>
-						<p role='alert' className='mt-3 text-sm leading-6 text-black'>
-							{error}
-						</p>
-						<Link
-							href='/authen/login'
-							className='mt-7 inline-flex border border-black bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
-						>
+			<AuthShell
+				title={error ? 'Không thể xác thực' : 'Đang xác thực với Google'}
+				status={error ? 'error' : 'loading'}
+				description={error ? undefined : 'Vui lòng không đóng trang này.'}
+			>
+				{error && (
+					<div className='flex flex-col gap-4'>
+						<Alert tone='danger'>{error}</Alert>
+						<ButtonLink href='/authen/login' size='lg' shape='rounded' block>
 							Quay lại đăng nhập
-						</Link>
-					</>
-				) : (
-					<div aria-live='polite'>
-						<div className='mx-auto size-9 animate-spin rounded-full border-2 border-black border-t-transparent' />
-						<h1 className='mt-6 text-xl font-semibold tracking-tight'>
-							Đang xác thực với Google...
-						</h1>
-						<p className='mt-2 text-sm text-black'>
-							Vui lòng không đóng trang này.
-						</p>
+						</ButtonLink>
 					</div>
 				)}
-			</section>
+			</AuthShell>
 		</>
 	);
 }
-
-GoogleOAuthCallbackPage.getLayout = function getLayout(page: React.ReactElement) {
-	return <AuthLayout>{page}</AuthLayout>;
-};

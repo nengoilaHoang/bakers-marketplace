@@ -1,27 +1,257 @@
 @import "tailwindcss";
 
-:root {
-	color-scheme: light;
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ============================================================================
+   DESIGN SYSTEM TOKENS
+   Dùng qua class Tailwind: bg-primary, text-ink-muted, font-heading,
+   text-h2, rounded-field, shadow-card, max-w-page…
+   Tài liệu: fe/.claude/skills/design-system/SKILL.md
+   ============================================================================ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* ==========================================================================
+     BẢNG MÀU — mỗi màu có 11 bậc 50→950, bậc 500 là màu gốc.
+     Dùng: bg-plum-100, text-rose-700, border-neutral-300, bg-success-50…
+     Đổi màu: sửa mã hex ở đây (cả 11 bậc của màu đó để thang đều nhau).
+     ========================================================================== */
+  /* plum — primary */
+  --color-plum-50: #F2EFF0;
+  --color-plum-100: #E3DDE0;
+  --color-plum-200: #C9BEC3;
+  --color-plum-300: #AA9CA2;
+  --color-plum-400: #89787F;
+  --color-plum-500: #69585F;
+  --color-plum-600: #56464C;
+  --color-plum-700: #42353A;
+  --color-plum-800: #302529;
+  --color-plum-900: #1E1619;
+  --color-plum-950: #100A0C;
+  /* rose — accent (CTA) */
+  --color-rose-50: #FFF2F2;
+  --color-rose-100: #FFE6E8;
+  --color-rose-200: #FFD2D5;
+  --color-rose-300: #FFBDC2;
+  --color-rose-400: #FAA8AE;
+  --color-rose-500: #EF959D;
+  --color-rose-600: #C8767E;
+  --color-rose-700: #A05A61;
+  --color-rose-800: #784046;
+  --color-rose-900: #53282D;
+  --color-rose-950: #341619;
+  /* sage — secondary */
+  --color-sage-50: #F4F9F4;
+  --color-sage-100: #ECF6ED;
+  --color-sage-200: #DFF1E0;
+  --color-sage-300: #D1E9D3;
+  --color-sage-400: #C4E1C5;
+  --color-sage-500: #B8D8BA;
+  --color-sage-600: #94B196;
+  --color-sage-700: #738C74;
+  --color-sage-800: #536855;
+  --color-sage-900: #364537;
+  --color-sage-950: #1F2A20;
+  /* khaki — surface */
+  --color-khaki-50: #F8F8F4;
+  --color-khaki-100: #F5F5EC;
+  --color-khaki-200: #EFF0DF;
+  --color-khaki-300: #E8EAD2;
+  --color-khaki-400: #E0E2C6;
+  --color-khaki-500: #D9DBBC;
+  --color-khaki-600: #B1B397;
+  --color-khaki-700: #8B8D74;
+  --color-khaki-800: #676855;
+  --color-khaki-900: #454637;
+  --color-khaki-950: #2A2A20;
+  /* peach — highlight */
+  --color-peach-50: #FDF8F3;
+  --color-peach-100: #FEF5EB;
+  --color-peach-200: #FFEFDD;
+  --color-peach-300: #FFE9D0;
+  --color-peach-400: #FFE3C5;
+  --color-peach-500: #FCDDBC;
+  --color-peach-600: #D0B496;
+  --color-peach-700: #A58D73;
+  --color-peach-800: #7C6853;
+  --color-peach-900: #544536;
+  --color-peach-950: #342A1F;
+  /* success — thành công */
+  --color-success-50: #EAF7ED;
+  --color-success-100: #D5EEDC;
+  --color-success-200: #AFDFBD;
+  --color-success-300: #89CA9E;
+  --color-success-400: #62B27F;
+  --color-success-500: #3E9B63;
+  --color-success-600: #25804C;
+  --color-success-700: #126438;
+  --color-success-800: #034A26;
+  --color-success-900: #003116;
+  --color-success-950: #001C09;
+  /* warning — cảnh báo */
+  --color-warning-50: #FEF4E6;
+  --color-warning-100: #FEEBCF;
+  --color-warning-200: #FED9A5;
+  --color-warning-300: #F7C67E;
+  --color-warning-400: #EDB257;
+  --color-warning-500: #E0A030;
+  --color-warning-600: #BB8001;
+  --color-warning-700: #956300;
+  --color-warning-800: #704700;
+  --color-warning-900: #4D2E00;
+  --color-warning-950: #301A00;
+  /* danger — lỗi */
+  --color-danger-50: #FFECE9;
+  --color-danger-100: #FFD8D4;
+  --color-danger-200: #FFB5AE;
+  --color-danger-300: #FF9089;
+  --color-danger-400: #ED6A65;
+  --color-danger-500: #D64545;
+  --color-danger-600: #B52D30;
+  --color-danger-700: #921A20;
+  --color-danger-800: #6E0A13;
+  --color-danger-900: #4C0107;
+  --color-danger-950: #300002;
+  /* info — thông tin */
+  --color-info-50: #EAF4FE;
+  --color-info-100: #D6E8FD;
+  --color-info-200: #B2D4F9;
+  --color-info-300: #8EBBED;
+  --color-info-400: #6AA0DA;
+  --color-info-500: #4A86C5;
+  --color-info-600: #346CA6;
+  --color-info-700: #235486;
+  --color-info-800: #143D65;
+  --color-info-900: #082745;
+  --color-info-950: #02152B;
+  /* neutral — xám ấm (chữ, viền, nền) */
+  --color-neutral-50: #FBF9FA;
+  --color-neutral-100: #F6F3F4;
+  --color-neutral-200: #E7E4E5;
+  --color-neutral-300: #D7D3D4;
+  --color-neutral-400: #A49FA1;
+  --color-neutral-500: #777274;
+  --color-neutral-600: #555153;
+  --color-neutral-700: #433E40;
+  --color-neutral-800: #292526;
+  --color-neutral-900: #191617;
+  --color-neutral-950: #0B090A;
+
+  /* --- Vai trò màu (semantic) — component dùng các tên này ---------------- */
+  /* primary: nền section đậm, nhấn thương hiệu. Chữ trắng đặt lên được. */
+  --color-primary: var(--color-plum-500);
+  --color-primary-strong: var(--color-plum-700);
+  --color-primary-deep: var(--color-plum-900);
+  --color-primary-soft: var(--color-plum-300);
+  --color-primary-tint: var(--color-plum-50);
+  --color-on-primary: #ffffff;
+
+  /* accent: nút hành động chính (CTA). Luôn dùng chữ tối (text-on-accent). */
+  --color-accent: var(--color-rose-500);
+  --color-accent-strong: var(--color-rose-600);
+  --color-accent-soft: var(--color-rose-100);
+  --color-on-accent: var(--color-neutral-900);
+
+  /* secondary: badge, tag, trạng thái được chọn. Chữ tối. */
+  --color-secondary: var(--color-sage-500);
+  --color-secondary-soft: var(--color-sage-200);
+  --color-on-secondary: var(--color-neutral-900);
+
+  /* surface: nền form / panel lớn. Chữ tối. */
+  --color-surface: var(--color-khaki-500);
+  --color-surface-soft: var(--color-khaki-200);
+
+  /* highlight: hộp thông tin nhấn nhẹ (thời gian nấu, thanh chia sẻ). */
+  --color-highlight: var(--color-peach-500);
+  --color-highlight-soft: var(--color-peach-200);
+
+  /* media: nền placeholder ảnh (khaki pha chút plum). */
+  --color-media: #C7C6AD;
+
+  /* Trạng thái: màu chính, nền nhạt, viền, chữ đậm trên nền sáng. */
+  --color-success: var(--color-success-500);
+  --color-success-soft: var(--color-success-50);
+  --color-success-border: var(--color-success-200);
+  --color-success-strong: var(--color-success-700);
+  --color-warning: var(--color-warning-500);
+  --color-warning-soft: var(--color-warning-50);
+  --color-warning-border: var(--color-warning-200);
+  --color-warning-strong: var(--color-warning-700);
+  --color-danger: var(--color-danger-500);
+  --color-danger-soft: var(--color-danger-50);
+  --color-danger-border: var(--color-danger-200);
+  --color-danger-strong: var(--color-danger-700);
+  --color-info: var(--color-info-500);
+  --color-info-soft: var(--color-info-50);
+  --color-info-border: var(--color-info-200);
+  --color-info-strong: var(--color-info-700);
+
+  /* Chữ, nền, viền trung tính — lấy từ thang neutral. */
+  --color-page: #ffffff;
+  --color-field: var(--color-neutral-50);
+  --color-ink: var(--color-neutral-900);
+  --color-ink-muted: var(--color-neutral-700);
+  --color-ink-subtle: var(--color-neutral-500);
+  --color-placeholder: var(--color-neutral-400);
+  --color-line: var(--color-neutral-200);
+  --color-border: var(--color-neutral-400);
+  --color-border-soft: var(--color-neutral-300);
+
+  /* --- Font (biến CSS do next/font tạo trong src/styles/fonts.ts) --------- */
+  --font-body: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-playfair-display), ui-serif, Georgia, serif;
+  --font-brand: var(--font-play), var(--font-be-vietnam-pro), sans-serif;
+
+  /* --- Thang chữ (Figma 1920px quy đổi ×0.75, co giãn trên mobile) -------- */
+  --text-display: clamp(2.25rem, 1.6rem + 2vw, 3rem);
+  --text-display--line-height: 1.15;
+  --text-h1: clamp(1.875rem, 1.45rem + 1.3vw, 2.5rem);
+  --text-h1--line-height: 1.2;
+  --text-h2: clamp(1.5rem, 1.25rem + 0.8vw, 1.875rem);
+  --text-h2--line-height: 1.25;
+  --text-h3: clamp(1.375rem, 1.2rem + 0.55vw, 1.6875rem);
+  --text-h3--line-height: 1.3;
+  --text-h4: clamp(1.25rem, 1.1rem + 0.45vw, 1.5rem);
+  --text-h4--line-height: 1.35;
+  --text-h5: 1.25rem;
+  --text-h5--line-height: 1.4;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.55;
+  --text-body: 1rem;
+  --text-body--line-height: 1.75;
+  --text-body-sm: 0.9375rem;
+  --text-body-sm--line-height: 1.6;
+  --text-caption: 0.875rem;
+  --text-caption--line-height: 1.5;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.4;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.35;
+
+  /* --- Bo góc ------------------------------------------------------------- */
+  --radius-media: 0.375rem;
+  --radius-control: 0.5rem;
+  --radius-field: 0.875rem;
+  --radius-box: 0.75rem;
+  --radius-panel: 1rem;
+  --radius-modal: 1.25rem;
+
+  /* --- Đổ bóng ------------------------------------------------------------ */
+  --shadow-card: -3px -3px 7px 0 rgb(0 0 0 / 0.25), 3px 3px 7px 0 rgb(0 0 0 / 0.25);
+  --shadow-header: 0 3px 2px 0 rgb(0 0 0 / 0.25);
+  --shadow-raised: 0 -3px 7px 0 rgb(0 0 0 / 0.25), 0 8px 4px 0 rgb(0 0 0 / 0.25);
+  --shadow-soft: 0 2px 4px 0 rgb(0 0 0 / 0.25);
+
+  /* --- Độ rộng nội dung --------------------------------------------------- */
+  --container-page: 76rem;
+  --container-content: 66.5rem;
+  --container-narrow: 62rem;
 }
 
-/* @media (prefers-color-scheme: dark) {
+/* Mặc định cho mọi trang, kể cả trang chưa bọc SiteLayout/ThemeRoot.
+   Biến font (--font-be-vietnam-pro…) được khai báo ở :root trong pages/_app.tsx. */
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: light;
   }
-} */
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-page font-body text-ink;
+  }
 }

@@ -1,209 +1,88 @@
-import Head from 'next/head';
-import Link from 'next/link';
-
-import LandingRecipeCard from '@/components/landing/LandingRecipeCard';
-import LandingRecipeCardSkeleton from '@/components/landing/LandingRecipeCardSkeleton';
+import PostCard, { PostCardSkeleton } from '@/components/posts/PostCard';
+import { ButtonLink } from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import EmptyState from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import PageTitle from '@/components/ui/PageTitle';
+import RecipeGrid, { RecipeGridSkeleton } from '@/components/ui/RecipeGrid';
+import SectionHeading from '@/components/ui/SectionHeading';
 import { useLatestPosts } from '@/hooks/useLatestPosts';
 import { useLatestRecipes } from '@/hooks/useLatestRecipes';
-import { stripRecipeToken } from '@/utils/postContent';
+import { toRecipeCardData } from '@/utils/recipeCard';
 
-const topics = [
-  'Bánh mì',
-  'Bánh kem',
-  'Cookie',
-  'Chocolate',
-  'Healthy',
-  'Dễ làm',
-];
+import LandingHero from './LandingHero';
+import TopicSection from './TopicSection';
 
+// Trang chủ cho khách: giới thiệu, công thức mới, chủ đề, bài viết diễn đàn, lời mời đăng ký.
 export default function Landing() {
-  const { recipes, isLoading, error, retry } = useLatestRecipes(12);
+  const { recipes, isLoading, error, retry } = useLatestRecipes(8);
   const latestPosts = useLatestPosts(3);
 
   return (
     <>
-      <Head>
-        <title>Bakers Marketplace | Cộng đồng làm bánh</title>
-        <meta
-          name='description'
-          content='Tìm công thức, học hỏi từ cộng đồng và chuẩn bị nguyên liệu cho món bánh tiếp theo.'
-        />
-      </Head>
+      <PageTitle
+        title='Cộng đồng làm bánh'
+        description='Tìm công thức, học hỏi từ cộng đồng và chuẩn bị nguyên liệu cho món bánh tiếp theo.'
+      />
 
-      <section className='overflow-hidden rounded-3xl border border-zinc-200 bg-white px-6 py-14 sm:px-10 sm:py-20 lg:px-16'>
-        <p className='text-sm font-medium uppercase tracking-[0.18em] text-zinc-500'>
-          Bakers Marketplace
-        </p>
-        <h1 className='mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl'>
-          Khám phá thế giới làm bánh
-        </h1>
-        <p className='mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg'>
-          Tìm công thức, học hỏi từ cộng đồng và chuẩn bị nguyên liệu cho món
-          bánh tiếp theo.
-        </p>
-        <div className='mt-8 flex flex-col gap-3 sm:flex-row'>
-          <Link
-            href='/recipes'
-            className='inline-flex min-h-11 items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-medium text-white transition hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
-          >
-            Khám phá công thức
-          </Link>
-          <Link
-            href='/authen/register'
-            className='inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-800 transition hover:border-zinc-500 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
-          >
-            Tạo tài khoản
-          </Link>
-        </div>
-      </section>
+      <LandingHero />
 
-      <section
-        id='latest-recipes'
-        className='mt-16 scroll-mt-8'
-        aria-labelledby='latest-recipes-title'
-      >
-        <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-end'>
-          <div>
-            <p className='text-sm font-medium uppercase tracking-[0.18em] text-zinc-500'>
-              Từ cộng đồng
-            </p>
-            <h2
-              id='latest-recipes-title'
-              className='mt-2 text-3xl font-semibold tracking-tight text-zinc-950'
-            >
-              Công thức mới nhất
-            </h2>
-          </div>
-          <Link
-            href='/recipes'
-            className='w-fit text-sm font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
-          >
-            Xem thêm
-          </Link>
-        </div>
-
-        <div className='mt-8'>
+      <Container as='section' className='py-20 lg:py-24'>
+        <SectionHeading title='Mới cập nhật' actionHref='/recipes' />
+        <div className='mt-4'>
           {isLoading ? (
-            <div
-              className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-              aria-busy='true'
-            >
-              {Array.from({ length: 8 }, (_, index) => (
-                <LandingRecipeCardSkeleton key={index} />
-              ))}
-            </div>
+            <RecipeGridSkeleton />
           ) : error ? (
-            <ErrorState
-              title='Không thể tải công thức mới nhất'
-              message={error}
-              onRetry={retry}
-            />
+            <ErrorState title='Không thể tải công thức mới nhất' message={error} onRetry={retry} />
           ) : recipes.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-zinc-600'>
-              Chưa có công thức nào để hiển thị.
-            </div>
+            <EmptyState title='Chưa có công thức nào để hiển thị' />
           ) : (
-            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-              {recipes.map((recipe) => (
-                <LandingRecipeCard key={recipe.id} recipe={recipe} />
-              ))}
-            </div>
+            <RecipeGrid recipes={recipes.map(toRecipeCardData)} savable={false} />
           )}
         </div>
+      </Container>
+
+      <TopicSection />
+
+      <section id='featured-posts' className='scroll-mt-8'>
+        <Container className='py-20 lg:py-24'>
+          <SectionHeading
+            title='Từ diễn đàn'
+            actionHref='/authen/login?next=%2F'
+            actionLabel='Tham gia thảo luận'
+          />
+          <div className='mx-auto mt-8 max-w-200'>
+            {latestPosts.isLoading ? (
+              <div role='status' aria-label='Đang tải bài viết' className='flex flex-col gap-7.5'>
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+              </div>
+            ) : latestPosts.hasError || latestPosts.posts.length === 0 ? (
+              <EmptyState icon='message' title='Chưa có bài viết nào để hiển thị' />
+            ) : (
+              <ul className='flex flex-col gap-7.5'>
+                {latestPosts.posts.map((post) => (
+                  <li key={post.id}>
+                    <PostCard post={post} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Container>
       </section>
 
-      <section
-        id='featured-posts'
-        className='mt-16 scroll-mt-8'
-        aria-labelledby='featured-posts-title'
-      >
-        <p className='text-sm font-medium uppercase tracking-[0.18em] text-zinc-500'>
-          Diễn đàn
-        </p>
-        <h2
-          id='featured-posts-title'
-          className='mt-2 text-3xl font-semibold tracking-tight text-zinc-950'
-        >
-          Bài viết nổi bật
-        </h2>
-
-        <div className='mt-8'>
-          {latestPosts.isLoading ? (
-            <p className='text-sm text-zinc-500' aria-busy='true'>
-              Đang tải bài viết...
+      <section className='bg-primary-strong py-10 lg:py-14'>
+        <Container size='narrow'>
+          <div className='mx-auto flex max-w-196 flex-col items-center justify-center gap-8 rounded-control border-2 border-dashed border-accent px-6 py-12 text-center sm:flex-row sm:gap-16 lg:min-h-60'>
+            <p className='max-w-xs text-h1 font-medium text-balance text-on-primary'>
+              Chia sẻ công thức của bạn
             </p>
-          ) : latestPosts.hasError || latestPosts.posts.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-zinc-600'>
-              Chưa có bài viết nào để hiển thị.
-            </div>
-          ) : (
-            <ul className='grid grid-cols-1 gap-5 lg:grid-cols-3'>
-              {latestPosts.posts.map((post) => (
-                <li key={post.id}>
-                  <Link
-                    href={`/posts/${post.id}`}
-                    className='flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 transition hover:border-zinc-400 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
-                  >
-                    <span className='text-base font-semibold text-zinc-950'>
-                      {post.title}
-                    </span>
-                    <span className='mt-1 text-sm text-zinc-500'>
-                      {post.author?.displayName ?? 'Người dùng đã xoá'}
-                    </span>
-                    <span className='mt-3 line-clamp-3 text-sm leading-6 text-zinc-600'>
-                      {stripRecipeToken(post.content)}
-                    </span>
-                    <span className='mt-auto pt-4 text-xs text-zinc-500'>
-                      {post.likeCount} lượt thích · {post.commentCount} bình luận
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-
-      <section className='mt-16' aria-labelledby='topics-title'>
-        <p className='text-sm font-medium uppercase tracking-[0.18em] text-zinc-500'>
-          Bắt đầu từ sở thích
-        </p>
-        <h2
-          id='topics-title'
-          className='mt-2 text-3xl font-semibold tracking-tight text-zinc-950'
-        >
-          Khám phá theo chủ đề
-        </h2>
-        <div className='mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
-          {topics.map((topic) => (
-            <div
-              key={topic}
-              className='rounded-2xl border border-zinc-200 bg-white px-4 py-6 text-center text-sm font-medium text-zinc-800'
-            >
-              {topic}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section
-        id='join-community'
-        className='mt-16 rounded-3xl bg-zinc-950 px-6 py-14 text-white sm:px-10 sm:py-16 lg:px-16'
-      >
-        <h2 className='text-3xl font-semibold tracking-tight sm:text-4xl'>
-          Chia sẻ công thức của bạn
-        </h2>
-        <p className='mt-4 max-w-2xl leading-7 text-zinc-300'>
-          Tạo tài khoản để đăng công thức, thảo luận trên diễn đàn và lưu lại
-          những bài viết bạn yêu thích.
-        </p>
-        <Link
-          href='/authen/register'
-          className='mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white'
-        >
-          Tạo tài khoản
-        </Link>
+            <ButtonLink href='/authen/register' variant='outline-inverse' size='xl'>
+              + Tạo tài khoản
+            </ButtonLink>
+          </div>
+        </Container>
       </section>
     </>
   );

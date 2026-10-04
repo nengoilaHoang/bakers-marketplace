@@ -1,9 +1,13 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+
+import AuthShell from '@/components/authen/AuthShell';
+import Alert from '@/components/ui/Alert';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
 import request, { ApiError } from '@/lib/api';
-import AuthLayout from '@/components/layout/AuthLayout';
 import {
 	consumeGoogleOAuthState,
 	getGoogleOAuthRedirectUri,
@@ -95,88 +99,52 @@ export default function GoogleOAuthRegisterCallbackPage() {
 	return (
 		<>
 			<Head>
-				<title>Hoàn tất đăng ký | Bakers Marketplace</title>
 				<meta name='robots' content='noindex' />
 			</Head>
-
-			<section className='w-full max-w-md border border-black bg-white p-6 shadow-[8px_8px_0_#000] sm:p-9'>
-				{error && !authorizationCode ? (
-					<div className='text-center'>
-						<p className='text-xs font-bold uppercase tracking-[0.2em]'>
-							Bakers Marketplace
-						</p>
-						<h1 className='mt-3 text-2xl font-semibold tracking-tight'>
-							Không thể tiếp tục đăng ký
-						</h1>
-						<p role='alert' className='mt-3 text-sm leading-6'>
-							{error}
-						</p>
-						<Link
-							href='/authen/register'
-							className='mt-7 inline-flex border border-black bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black'
-						>
+			{error && !authorizationCode ? (
+				<AuthShell title='Không thể tiếp tục đăng ký' status='error'>
+					<div className='flex flex-col gap-4'>
+						<Alert tone='danger'>{error}</Alert>
+						<ButtonLink href='/authen/register' size='lg' shape='rounded' block>
 							Quay lại đăng ký
-						</Link>
+						</ButtonLink>
 					</div>
-				) : authorizationCode ? (
-					<>
-						<p className='text-xs font-bold uppercase tracking-[0.2em]'>
-							Bakers Marketplace
-						</p>
-						<h1 className='mt-3 text-3xl font-semibold tracking-tight'>
-							Hoàn tất đăng ký
-						</h1>
-						<p className='mt-2 text-sm leading-6'>
-							Nhập tên hiển thị. Email sẽ được lấy trực tiếp từ tài khoản Google của bạn.
-						</p>
+				</AuthShell>
+			) : authorizationCode ? (
+				<AuthShell
+					title='Hoàn tất đăng ký'
+					description='Nhập tên hiển thị. Email sẽ được lấy trực tiếp từ tài khoản Google của bạn.'
+				>
+					<form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+						<Field label='Tên hiển thị' htmlFor='google-display-name' size='sm'>
+							<Input
+								id='google-display-name'
+								name='displayName'
+								size='lg'
+								autoComplete='name'
+								required
+								minLength={1}
+								maxLength={255}
+								value={displayName}
+								onChange={(event) => setDisplayName(event.target.value)}
+								placeholder='Nguyễn Văn An'
+							/>
+						</Field>
 
-						<form className='mt-8 space-y-5' onSubmit={handleSubmit}>
-							<label className='block text-sm font-medium' htmlFor='displayName'>
-								Tên hiển thị
-								<input
-									id='displayName'
-									name='displayName'
-									type='text'
-									autoComplete='name'
-									required
-									minLength={1}
-									maxLength={255}
-									value={displayName}
-									onChange={(event) => setDisplayName(event.target.value)}
-									className='mt-2 block w-full border border-black bg-white px-3.5 py-3 text-sm text-black outline-none placeholder:text-black focus:ring-2 focus:ring-black'
-									placeholder='Nguyễn Văn An'
-								/>
-							</label>
+						{error && <Alert tone='danger'>{error}</Alert>}
 
-							{error && (
-								<div role='alert' className='border border-black bg-white px-4 py-3 text-sm leading-6'>
-									{error}
-								</div>
-							)}
-
-							<button
-								type='submit'
-								disabled={submitting}
-								className='flex w-full cursor-pointer items-center justify-center border border-black bg-black px-4 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black disabled:cursor-wait disabled:bg-white disabled:text-black'
-							>
-								{submitting ? 'Đang hoàn tất...' : 'Hoàn tất đăng ký'}
-							</button>
-						</form>
-					</>
-				) : (
-					<div className='py-8 text-center' aria-live='polite'>
-						<div className='mx-auto size-9 animate-spin rounded-full border-2 border-black border-t-transparent' />
-						<h1 className='mt-6 text-xl font-semibold tracking-tight'>
-							Đang xác thực tài khoản Google...
-						</h1>
-						<p className='mt-2 text-sm'>Vui lòng không đóng trang này.</p>
-					</div>
-				)}
-			</section>
+						<Button type='submit' size='lg' shape='rounded' block disabled={submitting} className='mt-2'>
+							{submitting ? 'Đang hoàn tất...' : 'Hoàn tất đăng ký'}
+						</Button>
+					</form>
+				</AuthShell>
+			) : (
+				<AuthShell
+					title='Đang xác thực tài khoản Google'
+					status='loading'
+					description='Vui lòng không đóng trang này.'
+				/>
+			)}
 		</>
 	);
 }
-
-GoogleOAuthRegisterCallbackPage.getLayout = function getLayout(page: React.ReactElement) {
-	return <AuthLayout>{page}</AuthLayout>;
-};

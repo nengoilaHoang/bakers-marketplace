@@ -1,6 +1,9 @@
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import PostCard, { PostCardSkeleton } from '@/components/posts/PostCard';
+import Alert from '@/components/ui/Alert';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import { getSavedPosts, unsavePost } from '@/services/posts';
 import type { Post, PostCursor } from '@/types/post';
 
@@ -67,44 +70,44 @@ export default function SavedPostsTab() {
     }
   }
 
-  if (isLoading) return <p>Đang tải...</p>;
+  if (isLoading) {
+    return (
+      <div role='status' aria-label='Đang tải bài viết đã lưu' className='flex flex-col gap-7.5'>
+        <PostCardSkeleton />
+        <PostCardSkeleton />
+      </div>
+    );
+  }
 
-  if (error) return <p className='text-red-600'>Lỗi: {error}</p>;
+  if (error) return <Alert tone='danger'>{error}</Alert>;
 
-  if (posts.length === 0) return <p>Bạn chưa lưu bài viết nào.</p>;
+  if (posts.length === 0) {
+    return (
+      <EmptyState
+        icon='bookmark'
+        title='Bạn chưa lưu bài viết nào'
+        description='Bấm "Lưu" trên bài viết ở diễn đàn để xem lại sau.'
+        action={<ButtonLink href='/'>Đến diễn đàn</ButtonLink>}
+      />
+    );
+  }
 
   return (
     <>
-      <ul className='space-y-3'>
+      <ul className='flex flex-col gap-7.5'>
         {posts.map((post) => (
-          <li key={post.id} className='border p-3'>
-            <Link href={`/posts/${post.id}`} className='font-semibold underline'>
-              {post.title}
-            </Link>
-            <p className='text-sm text-gray-600'>
-              {post.author?.displayName ?? 'Người dùng đã xoá'} ·{' '}
-              {new Date(post.createdAt).toLocaleString('vi-VN')}
-            </p>
-            <button
-              type='button'
-              onClick={() => void handleUnsave(post)}
-              className='mt-2 border px-2 py-1 text-sm'
-            >
-              Bỏ lưu
-            </button>
+          <li key={post.id}>
+            <PostCard post={post} onToggleSave={(item) => void handleUnsave(item)} />
           </li>
         ))}
       </ul>
 
       {cursor && (
-        <button
-          type='button'
-          onClick={() => void handleLoadMore()}
-          disabled={isLoadingMore}
-          className='mt-4 border px-3 py-1'
-        >
-          {isLoadingMore ? 'Đang tải...' : 'Tải thêm'}
-        </button>
+        <div className='mt-8 flex justify-center'>
+          <Button variant='outline' onClick={() => void handleLoadMore()} disabled={isLoadingMore}>
+            {isLoadingMore ? 'Đang tải...' : 'Tải thêm'}
+          </Button>
+        </div>
       )}
     </>
   );

@@ -1,112 +1,93 @@
-import Head from 'next/head';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
+import MeHeader from '@/components/me/MeHeader';
+import Alert from '@/components/ui/Alert';
+import Button from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import PageTitle from '@/components/ui/PageTitle';
+import { useSessionUser } from '@/hooks/useSessionUser';
 import request, { ApiError } from '@/lib/api';
-
-type AccountInfo = {
-	displayName: string;
-	email: string;
-};
 
 type ResetEmailStatus = 'idle' | 'sending' | 'success' | 'error';
 
 export default function SettingsPage() {
-	const [account, setAccount] = useState<AccountInfo | null>(null);
-	const [status, setStatus] = useState<ResetEmailStatus>('idle');
-	const [message, setMessage] = useState<string | null>(null);
+  const account = useSessionUser();
+  const [status, setStatus] = useState<ResetEmailStatus>('idle');
+  const [message, setMessage] = useState<string | null>(null);
 
-	useEffect(() => {
-		let isActive = true;
+  const sendResetEmail = async () => {
+    setStatus('sending');
+    setMessage(null);
 
-		void request<{ data: AccountInfo }>('/authen/session')
-			.then(({ data }) => {
-				if (isActive) setAccount(data);
-			})
-			.catch(() => {
-				// Proxy đã chặn khách, lỗi ở đây chỉ làm thiếu phần thông tin tài khoản.
-			});
+    try {
+      await request<{ message: string }>('/authen/reset-password/me', {
+        method: 'POST',
+      });
+      setStatus('success');
+      setMessage(
+        'Email đổi mật khẩu đã được gửi. Hãy mở email và sử dụng liên kết trong vòng 15 phút. Nếu chưa thấy email, hãy kiểm tra thư mục Spam hoặc Thư rác.',
+      );
+    } catch (requestError) {
+      setStatus('error');
+      setMessage(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Không thể gửi email đổi mật khẩu. Vui lòng thử lại.',
+      );
+    }
+  };
 
-		return () => {
-			isActive = false;
-		};
-	}, []);
+  return (
+    <>
+      <PageTitle title='Cài đặt' />
+      <MeHeader title='Cài đặt' active='settings' account={account} />
 
-	const sendResetEmail = async () => {
-		setStatus('sending');
-		setMessage(null);
+      <Container size='narrow' className='flex flex-col gap-8 py-12'>
+        <section
+          aria-labelledby='account-title'
+          className='flex flex-col gap-5 rounded-panel bg-surface px-5 py-6 sm:px-8'
+        >
+          <h2 id='account-title' className='text-h3 text-ink'>
+            Tài khoản
+          </h2>
+          <dl className='grid gap-x-8 gap-y-3 text-body sm:grid-cols-[10rem_1fr]'>
+            <dt className='font-medium text-ink'>Tên hiển thị</dt>
+            <dd className='text-ink-muted'>{account?.displayName ?? '…'}</dd>
+            <dt className='font-medium text-ink'>Email</dt>
+            <dd className='break-all text-ink-muted'>{account?.email ?? '…'}</dd>
+          </dl>
+        </section>
 
-		try {
-			await request<{ message: string }>('/authen/reset-password/me', {
-				method: 'POST',
-			});
-			setStatus('success');
-			setMessage(
-				'Email đổi mật khẩu đã được gửi. Hãy mở email và sử dụng liên kết trong vòng 15 phút. Nếu chưa thấy email, hãy kiểm tra thư mục Spam hoặc Thư rác.',
-			);
-		} catch (requestError) {
-			setStatus('error');
-			setMessage(
-				requestError instanceof ApiError
-					? requestError.message
-					: 'Không thể gửi email đổi mật khẩu. Vui lòng thử lại.',
-			);
-		}
-	};
-
-	return (
-		<>
-			<Head>
-				<title>Cài đặt | Bakers Marketplace</title>
-			</Head>
-
-			<div className='mx-auto max-w-2xl'>
-				<h1 className='text-3xl font-semibold tracking-tight'>Cài đặt</h1>
-
-				<section className='mt-8 rounded-2xl border border-zinc-200 bg-white p-6'>
-					<h2 className='text-lg font-semibold'>Tài khoản</h2>
-					<dl className='mt-4 grid grid-cols-[8rem_1fr] gap-y-2 text-sm'>
-						<dt className='text-zinc-500'>Tên hiển thị</dt>
-						<dd>{account?.displayName ?? '…'}</dd>
-						<dt className='text-zinc-500'>Email</dt>
-						<dd>{account?.email ?? '…'}</dd>
-					</dl>
-				</section>
-
-				<section
-					aria-live='polite'
-					className='mt-6 rounded-2xl border border-zinc-200 bg-white p-6'
-				>
-					<h2 className='text-lg font-semibold'>Đổi mật khẩu</h2>
-					<p className='mt-2 text-sm leading-6 text-zinc-600'>
-						Chúng tôi sẽ gửi liên kết đổi mật khẩu tới email của bạn.
-					</p>
-					<button
-						type='button'
-						onClick={() => void sendResetEmail()}
-						disabled={status === 'sending'}
-						className='mt-4 inline-flex min-h-10 cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-wait disabled:bg-zinc-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
-					>
-						{status === 'sending'
-							? 'Đang gửi...'
-							: status === 'success'
-								? 'Gửi lại email'
-								: 'Gửi email đổi mật khẩu'}
-					</button>
-					{message && (
-						<p
-							role={status === 'error' ? 'alert' : undefined}
-							className={`mt-4 text-sm leading-6 ${status === 'error' ? 'text-red-700' : 'text-zinc-600'}`}
-						>
-							{message}
-						</p>
-					)}
-				</section>
-			</div>
-		</>
-	);
+        <section
+          aria-labelledby='password-title'
+          aria-live='polite'
+          className='flex flex-col items-start gap-4 rounded-panel bg-surface px-5 py-6 sm:px-8'
+        >
+          <h2 id='password-title' className='text-h3 text-ink'>
+            Đổi mật khẩu
+          </h2>
+          <p className='text-body-sm text-ink-muted'>
+            Chúng tôi sẽ gửi liên kết đổi mật khẩu tới email của bạn.
+          </p>
+          <Button onClick={() => void sendResetEmail()} disabled={status === 'sending'}>
+            {status === 'sending'
+              ? 'Đang gửi...'
+              : status === 'success'
+                ? 'Gửi lại email'
+                : 'Gửi email đổi mật khẩu'}
+          </Button>
+          {message && (
+            <Alert tone={status === 'error' ? 'danger' : 'success'} className='w-full'>
+              {message}
+            </Alert>
+          )}
+        </section>
+      </Container>
+    </>
+  );
 }
 
 SettingsPage.getLayout = function getLayout(page: React.ReactElement) {
-	return <AppLayout>{page}</AppLayout>;
+  return <AppLayout>{page}</AppLayout>;
 };

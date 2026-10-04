@@ -1,8 +1,13 @@
-import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 
+import PostCard, { PostCardSkeleton } from '@/components/posts/PostCard';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import EmptyState from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import PageTitle from '@/components/ui/PageTitle';
+import SearchBar from '@/components/ui/SearchBar';
 import {
   getCurrentUser,
   getPosts,
@@ -13,7 +18,6 @@ import {
   unsavePost,
 } from '@/services/posts';
 import type { Post, PostCursor, PostSearchParams } from '@/types/post';
-import { stripRecipeToken } from '@/utils/postContent';
 
 type FeedResult = {
   searchKey: string;
@@ -28,10 +32,6 @@ function getErrorMessage(error: unknown): string {
     : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
 }
 
-function toExcerpt(text: string): string {
-  return text.length > 200 ? `${text.slice(0, 200)}...` : text;
-}
-
 function readQueryValue(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
 }
@@ -42,6 +42,12 @@ function loadPostsPage(search: PostSearchParams, cursor?: PostCursor | null) {
     : getPosts({ cursor });
 }
 
+// "#tag" → lọc theo tag, còn lại → tìm theo từ khoá.
+function parseSearchInput(value: string): PostSearchParams {
+  if (value.startsWith('#')) return { tag: value.slice(1).trim() };
+  return { q: value };
+}
+
 export default function Feed() {
   const router = useRouter();
   // Bộ lọc nằm trên URL (/?q=&tag=) để tag ở trang khác có thể dẫn thẳng về bảng tin đã lọc
@@ -49,6 +55,7 @@ export default function Feed() {
   const tag = readQueryValue(router.query.tag);
   const searchKey = `${q}\n${tag}`;
   const [result, setResult] = useState<FeedResult | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
@@ -75,12 +82,10 @@ export default function Feed() {
     return () => {
       ignore = true;
     };
-  }, [q, tag, searchKey]);
+  }, [q, tag, searchKey, attempt]);
 
   // Ẩn kết quả của bộ lọc cũ ngay khi URL đổi
   const current = result?.searchKey === searchKey ? result : null;
-  const isLoading = !current;
-  const posts = current?.posts ?? [];
   const isSearching = Boolean(q || tag);
 
   function updatePosts(update: (posts: Post[]) => Post[]) {
@@ -95,14 +100,9 @@ export default function Feed() {
     void router.push({ pathname: '/', query }, undefined, { shallow: true });
   }
 
-  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-
-    applySearch({
-      q: String(formData.get('q') ?? '').trim(),
-      tag: String(formData.get('tag') ?? '').trim(),
-    });
+  function retry() {
+    setResult(null);
+    setAttempt((value) => value + 1);
   }
 
   async function handleLoadMore() {
@@ -130,8 +130,8 @@ export default function Feed() {
         ? await unlikePost(post.id)
         : await likePost(post.id);
 
-      updatePosts((current) =>
-        current.map((item) =>
+      updatePosts((posts) =>
+        posts.map((item) =>
           item.id === post.id
             ? { ...item, isLiked: status.liked, likeCount: status.likeCount }
             : item,
@@ -148,8 +148,8 @@ export default function Feed() {
         ? await unsavePost(post.id)
         : await savePost(post.id);
 
-      updatePosts((current) =>
-        current.map((item) =>
+      updatePosts((posts) =>
+        posts.map((item) =>
           item.id === post.id ? { ...item, isSaved: status.saved } : item,
         ),
       );
@@ -160,130 +160,95 @@ export default function Feed() {
 
   return (
     <>
-      <Head>
-        <title>Diễn đàn | Bakers Marketplace</title>
-      </Head>
+      <PageTitle title='Diễn đàn' />
 
-      <div className='mx-auto max-w-3xl'>
-        <h1 className='mb-4 text-2xl font-bold'>Diễn đàn</h1>
+      <section className='bg-primary text-on-primary'>
+        <Container size='content' className='flex flex-col gap-6 py-10 lg:py-12'>
+          <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-end'>
+            <div>
+              <h1 className='font-heading text-h1 font-semibold'>Diễn đàn</h1>
+              <p className='mt-2 text-lead font-light text-on-primary/90'>
+                Hỏi đáp, chia sẻ kinh nghiệm và công thức cùng cộng đồng làm bánh.
+              </p>
+            </div>
+            <ButtonLink href='/posts/new' variant='outline-inverse' className='self-start sm:self-auto'>
+              + Viết bài mới
+            </ButtonLink>
+          </div>
 
-        <form key={searchKey} onSubmit={handleSearchSubmit} className='mb-4 flex flex-wrap gap-2'>
-          <input
-            name='q'
-            defaultValue={q}
-            placeholder='Từ khoá (vd: banh)'
-            className='border px-2 py-1'
+          <SearchBar
+            key={searchKey}
+            variant='hero'
+            id='feed-search'
+            placeholder='Tìm bài viết hoặc #tag'
+            defaultValue={q || (tag ? `#${tag}` : '')}
+            onSearch={(value) => applySearch(parseSearchInput(value))}
           />
-          <input
-            name='tag'
-            defaultValue={tag}
-            placeholder='Tag (vd: hoi-dap)'
-            className='border px-2 py-1'
-          />
-          <button type='submit' className='border px-3 py-1'>
-            Tìm
-          </button>
+
           {isSearching && (
-            <button type='button' onClick={() => applySearch({})} className='border px-3 py-1'>
-              Xoá tìm kiếm
-            </button>
+            <p className='flex flex-wrap items-center gap-x-3 gap-y-1 text-body-sm'>
+              <span>
+                Đang lọc: {q && <strong className='font-semibold'>“{q}” </strong>}
+                {tag && <strong className='font-semibold'>#{tag}</strong>}
+              </span>
+              <button
+                type='button'
+                onClick={() => applySearch({})}
+                className='rounded-control underline decoration-accent underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent'
+              >
+                Xoá bộ lọc
+              </button>
+            </p>
           )}
-        </form>
+        </Container>
+      </section>
 
-        {isSearching && (
-          <p className='mb-4 text-sm'>
-            Đang tìm: {q && <b>&quot;{q}&quot; </b>}
-            {tag && <b>#{tag}</b>}
-          </p>
-        )}
-
-        {isLoading ? (
-          <p>Đang tải...</p>
+      <Container size='content' className='py-12 lg:py-16'>
+        {!current ? (
+          <div role='status' aria-label='Đang tải bài viết' className='flex flex-col gap-7.5'>
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+          </div>
         ) : current.error ? (
-          <p className='text-red-600'>Lỗi: {current.error}</p>
-        ) : posts.length === 0 ? (
-          <p>Không có bài viết nào.</p>
+          <ErrorState title='Không thể tải bài viết' message={current.error} onRetry={retry} />
+        ) : current.posts.length === 0 ? (
+          <EmptyState
+            icon='message'
+            title={isSearching ? 'Không có bài viết phù hợp' : 'Chưa có bài viết nào'}
+            description={
+              isSearching
+                ? 'Hãy thử từ khoá khác hoặc xoá bộ lọc.'
+                : 'Hãy là người mở đầu cuộc trò chuyện.'
+            }
+            action={<ButtonLink href='/posts/new'>Viết bài mới</ButtonLink>}
+          />
         ) : (
           <>
-            <ul className='space-y-4'>
-              {posts.map((post) => (
-                <li key={post.id} className='border p-3'>
-                  <Link href={`/posts/${post.id}`} className='text-lg font-semibold underline'>
-                    {post.title}
-                  </Link>
-                  <p className='text-sm text-gray-600'>
-                    {post.author?.displayName ?? 'Người dùng đã xoá'} ·{' '}
-                    {new Date(post.createdAt).toLocaleString('vi-VN')}
-                  </p>
-
-                  <p className='mt-2 whitespace-pre-line'>
-                    {toExcerpt(stripRecipeToken(post.content))}
-                  </p>
-
-                  {post.recipe && (
-                    <p className='mt-2 text-sm'>
-                      Công thức:{' '}
-                      <Link href={`/recipes/${post.recipe.id}`} className='underline'>
-                        {post.recipe.title}
-                      </Link>
-                    </p>
-                  )}
-
-                  {post.tags.length > 0 && (
-                    <div className='mt-2 flex flex-wrap gap-2 text-sm'>
-                      {post.tags.map((postTag) => (
-                        <button
-                          key={postTag.id}
-                          type='button'
-                          onClick={() => applySearch({ tag: postTag.name })}
-                          className='text-blue-700 underline'
-                        >
-                          #{postTag.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className='mt-2 flex flex-wrap gap-2 text-sm'>
-                    <button
-                      type='button'
-                      onClick={() => void handleToggleLike(post)}
-                      className='border px-2 py-1'
-                    >
-                      {post.isLiked ? '♥ Bỏ thích' : '♡ Thích'} ({post.likeCount})
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => void handleToggleSave(post)}
-                      className='border px-2 py-1'
-                    >
-                      {post.isSaved ? 'Bỏ lưu' : 'Lưu'}
-                    </button>
-                    <Link href={`/posts/${post.id}`} className='border px-2 py-1'>
-                      Bình luận ({post.commentCount})
-                    </Link>
-                  </div>
+            <ul className='flex flex-col gap-7.5'>
+              {current.posts.map((post) => (
+                <li key={post.id}>
+                  <PostCard
+                    post={post}
+                    onToggleLike={(item) => void handleToggleLike(item)}
+                    onToggleSave={(item) => void handleToggleSave(item)}
+                  />
                 </li>
               ))}
             </ul>
 
-            <div className='mt-4'>
+            <div className='mt-10 flex justify-center'>
               {current.cursor ? (
-                <button
-                  type='button'
-                  onClick={() => void handleLoadMore()}
-                  disabled={isLoadingMore}
-                  className='border px-3 py-1'
-                >
-                  {isLoadingMore ? 'Đang tải...' : 'Tải thêm'}
-                </button>
+                <Button variant='outline' onClick={() => void handleLoadMore()} disabled={isLoadingMore}>
+                  {isLoadingMore ? 'Đang tải...' : 'Tải thêm bài viết'}
+                </Button>
               ) : (
-                <p className='text-sm text-gray-600'>Đã xem hết.</p>
+                <p className='text-body-sm font-light text-ink-muted'>Bạn đã xem hết bài viết.</p>
               )}
             </div>
           </>
         )}
-      </div>
+      </Container>
     </>
   );
 }

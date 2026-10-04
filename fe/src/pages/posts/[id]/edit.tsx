@@ -1,13 +1,19 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState, type FormEvent } from 'react';
 
+import AppLayout from '@/components/layout/AppLayout';
+import PostFields from '@/components/posts/PostFields';
+import Alert from '@/components/ui/Alert';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import Icon from '@/components/ui/Icon';
+import PageTitle from '@/components/ui/PageTitle';
 import { ApiError } from '@/lib/api';
 import { getCurrentUser, getPostById, updatePost } from '@/services/posts';
 import type { PostRecipeSummary } from '@/types/post';
 import { stripRecipeToken } from '@/utils/postContent';
-import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError && Array.isArray(error.details)) {
@@ -98,74 +104,79 @@ export default function EditPostPage() {
     }
   }
 
+  const postHref = id ? `/posts/${id}` : '/';
+
   return (
     <>
-      <Head>
-        <title>Sửa bài viết</title>
-      </Head>
+      <PageTitle title='Sửa bài viết' />
 
-      <div className='mx-auto max-w-3xl'>
-        <Link href={id ? `/posts/${id}` : '/'} className='text-sm underline'>
-          ← Quay lại bài viết
-        </Link>
+      <Container size='narrow' className='pt-6 pb-20'>
+        <Breadcrumb
+          className='-ml-2'
+          items={[
+            { label: 'Diễn đàn', href: '/' },
+            { label: title || 'Bài viết', href: postHref },
+            { label: 'Sửa' },
+          ]}
+        />
+        <h1 className='mt-6 font-heading text-h2 font-bold text-ink [font-variant-caps:small-caps]'>
+          Sửa bài viết
+        </h1>
 
-        <h1 className='mt-4 mb-4 text-2xl font-bold'>Sửa bài viết</h1>
-
-        {isLoading ? (
-          <p>Đang tải...</p>
-        ) : loadError ? (
-          <p className='text-red-600'>Lỗi: {loadError}</p>
-        ) : (
-          <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
-            <label className='flex flex-col gap-1'>
-              Tiêu đề *
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                maxLength={255}
-                className='border px-2 py-1'
+        <div className='mt-5'>
+          {isLoading ? (
+            <div
+              role='status'
+              aria-label='Đang tải bài viết'
+              className='h-96 animate-pulse rounded-control bg-surface-soft'
+            />
+          ) : loadError ? (
+            <Alert tone='danger' action={<ButtonLink href={postHref} variant='outline' size='sm'>Quay lại bài viết</ButtonLink>}>
+              {loadError}
+            </Alert>
+          ) : (
+            <form
+              onSubmit={handleSubmit}
+              className='flex flex-col gap-8 rounded-control bg-page px-5 pt-8 pb-10 shadow-raised sm:px-9'
+            >
+              <PostFields
+                title={title}
+                content={content}
+                tagsInput={tagsInput}
+                onTitleChange={setTitle}
+                onContentChange={setContent}
+                onTagsInputChange={setTagsInput}
+                disabled={isSubmitting}
               />
-            </label>
 
-            <label className='flex flex-col gap-1'>
-              Nội dung *
-              <textarea
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                required
-                rows={8}
-                className='border px-2 py-1'
-              />
-            </label>
+              {recipe && (
+                <p className='flex flex-wrap items-center gap-2 rounded-box bg-highlight px-5 py-4 text-body-sm text-ink'>
+                  <Icon name='chef-hat' className='size-5 text-primary' />
+                  Công thức đính kèm:
+                  <Link
+                    href={`/recipes/${encodeURIComponent(recipe.id)}`}
+                    className='rounded-control font-medium underline decoration-accent underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent'
+                  >
+                    {recipe.title}
+                  </Link>
+                  <span className='font-light text-ink-muted'>(không đổi được sau khi đăng)</span>
+                </p>
+              )}
 
-            <label className='flex flex-col gap-1'>
-              Tag (cách nhau bằng dấu phẩy, tối đa 10)
-              <input
-                value={tagsInput}
-                onChange={(event) => setTagsInput(event.target.value)}
-                className='border px-2 py-1'
-              />
-            </label>
+              {error && <Alert tone='danger'>{error}</Alert>}
 
-            {recipe && (
-              <p className='text-sm'>
-                Công thức đính kèm:{' '}
-                <Link href={`/recipes/${recipe.id}`} className='underline'>
-                  {recipe.title}
-                </Link>{' '}
-                <span className='text-gray-600'>(không đổi được sau khi đăng)</span>
-              </p>
-            )}
-
-            {error && <p className='text-red-600'>Lỗi: {error}</p>}
-
-            <button type='submit' disabled={isSubmitting} className='w-fit border px-4 py-1'>
-              {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
-          </form>
-        )}
-      </div>
+              <div className='flex flex-wrap gap-4'>
+                <Button type='submit' disabled={isSubmitting} className='min-w-38'>
+                  {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </Button>
+                <ButtonLink href={postHref} variant='outline'>
+                  Hủy
+                </ButtonLink>
+              </div>
+            </form>
+          )}
+        </div>
+      </Container>
     </>
   );
 }

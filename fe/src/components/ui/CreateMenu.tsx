@@ -1,66 +1,48 @@
-import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 
-import NavLink from './NavLink';
+import { useDropdown } from '@/hooks/useDropdown';
+import { cn } from '@/lib/cn';
+
+import { buttonClasses } from './Button';
 
 const CREATE_ACTIONS = [
-  { label: 'Bài viết', href: '/posts/new' },
-  { label: 'Công thức', href: '/recipes/new' },
+  { label: 'Viết bài mới', href: '/posts/new' },
+  { label: 'Thêm công thức', href: '/recipes/new' },
 ];
 
+// Nút "+ Tạo" trên header: chọn tạo bài viết hoặc công thức.
 export default function CreateMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function closeWhenClickingOutside(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', closeWhenClickingOutside);
-    document.addEventListener('keydown', closeOnEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', closeWhenClickingOutside);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, []);
+  const { ref, isOpen, toggle, close } = useDropdown();
 
   return (
-    <div ref={menuRef} className='relative'>
+    <div ref={ref} className='relative'>
       <button
         type='button'
-        onClick={() => setIsOpen((previous) => !previous)}
+        onClick={toggle}
         aria-expanded={isOpen}
         aria-haspopup='menu'
-        className='inline-flex min-h-9 cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
+        aria-label='Tạo mới'
+        className={cn(buttonClasses({ size: 'sm' }), 'uppercase')}
       >
-        + Tạo
+        +<span className='max-sm:sr-only'>Tạo</span>
       </button>
 
       {isOpen && (
         <div
           role='menu'
           aria-label='Tạo mới'
-          className='absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg'
+          className='absolute top-full right-0 z-30 mt-2 w-48 overflow-hidden rounded-box bg-page py-1 shadow-soft'
         >
           {CREATE_ACTIONS.map((action) => (
-            <NavLink
+            <Link
               key={action.href}
               href={action.href}
               role='menuitem'
-              className='block cursor-pointer px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:bg-zinc-100 focus-visible:outline-none'
-              onClick={() => setIsOpen(false)}
+              onClick={close}
+              className='block px-4 py-2 text-body-sm text-ink outline-none hover:bg-highlight-soft focus-visible:bg-highlight-soft'
             >
               {action.label}
-            </NavLink>
+            </Link>
           ))}
         </div>
       )}

@@ -1,8 +1,19 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 
+import AppLayout from '@/components/layout/AppLayout';
+import Alert from '@/components/ui/Alert';
+import Avatar from '@/components/ui/Avatar';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import Chip from '@/components/ui/Chip';
+import Container from '@/components/ui/Container';
+import EmptyState from '@/components/ui/EmptyState';
+import Field from '@/components/ui/Field';
+import Icon from '@/components/ui/Icon';
+import Input, { Textarea } from '@/components/ui/Input';
+import PageTitle from '@/components/ui/PageTitle';
 import { ApiError } from '@/lib/api';
 import {
   createPostComment,
@@ -18,8 +29,8 @@ import {
   unsavePost,
 } from '@/services/posts';
 import type { Post, PostComment, SessionUser } from '@/types/post';
+import { formatDateTime } from '@/utils/format';
 import { stripRecipeToken } from '@/utils/postContent';
-import AppLayout from '@/components/layout/AppLayout';
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error && error.message
@@ -97,6 +108,12 @@ export default function PostDetailPage() {
   async function handleToggleLike() {
     if (!post) return;
 
+    // Khách: chuyển sang đăng nhập rồi quay lại bài viết này
+    if (!currentUser) {
+      void router.push({ pathname: '/authen/login', query: { next: router.asPath } });
+      return;
+    }
+
     try {
       const status = post.isLiked
         ? await unlikePost(post.id)
@@ -110,6 +127,12 @@ export default function PostDetailPage() {
 
   async function handleToggleSave() {
     if (!post) return;
+
+    // Khách: chuyển sang đăng nhập rồi quay lại bài viết này
+    if (!currentUser) {
+      void router.push({ pathname: '/authen/login', query: { next: router.asPath } });
+      return;
+    }
 
     try {
       const status = post.isSaved
@@ -205,60 +228,89 @@ export default function PostDetailPage() {
     if (items.length === 0) return null;
 
     return (
-      <ul className={parentId ? 'mt-2 ml-6 space-y-2 border-l pl-3' : 'space-y-3'}>
+      <ul
+        className={
+          parentId
+            ? 'mt-2 flex flex-col border-l-2 border-line pl-4'
+            : 'divide-y divide-line border-b border-line'
+        }
+      >
         {items.map((comment) => {
+          const authorName = comment.author?.displayName ?? 'Người dùng đã xoá';
           const canDelete = Boolean(
             currentUser &&
               (comment.userId === currentUser.id || post?.authorId === currentUser.id),
           );
 
           return (
-            <li key={comment.id}>
-              <p className='text-sm text-gray-600'>
-                <b>{comment.author?.displayName ?? 'Người dùng đã xoá'}</b> ·{' '}
-                {new Date(comment.createdAt).toLocaleString('vi-VN')}
-              </p>
-              <p className='whitespace-pre-line'>{comment.content}</p>
+            <li key={comment.id} className={parentId ? 'py-3' : 'py-6'}>
+              <div className='flex gap-4'>
+                <Avatar size='sm' label={`Ảnh đại diện ${authorName}`} />
+                <div className='flex min-w-0 flex-1 flex-col gap-2 pt-1'>
+                  <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
+                    <p className='text-lead font-semibold text-ink'>{authorName}</p>
+                    <time
+                      dateTime={comment.createdAt}
+                      className='ml-auto text-meta font-medium text-ink-muted'
+                    >
+                      {formatDateTime(comment.createdAt)}
+                    </time>
+                  </div>
+                  <p className='text-body-sm wrap-break-word whitespace-pre-line text-ink-muted'>
+                    {comment.content}
+                  </p>
 
-              <div className='flex gap-3 text-sm underline'>
-                <button
-                  type='button'
-                  onClick={() => {
-                    setReplyToId(replyToId === comment.id ? null : comment.id);
-                    setReplyInput('');
-                  }}
-                >
-                  Trả lời
-                </button>
-                {canDelete && (
-                  <button
-                    type='button'
-                    onClick={() => void handleDeleteComment(comment.id)}
-                    className='text-red-600'
-                  >
-                    Xoá
-                  </button>
-                )}
+                  {(currentUser || canDelete) && (
+                    <div className='flex items-center gap-4 text-body-sm text-ink'>
+                      {currentUser && (
+                        <button
+                          type='button'
+                          aria-expanded={replyToId === comment.id}
+                          onClick={() => {
+                            setReplyToId(replyToId === comment.id ? null : comment.id);
+                            setReplyInput('');
+                          }}
+                          className='inline-flex items-center gap-1.5 rounded-control outline-none hover:underline focus-visible:ring-2 focus-visible:ring-accent'
+                        >
+                          <Icon name='reply' className='size-4' />
+                          Trả lời
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type='button'
+                          onClick={() => void handleDeleteComment(comment.id)}
+                          className='inline-flex items-center gap-1.5 rounded-control text-danger-strong outline-none hover:underline focus-visible:ring-2 focus-visible:ring-accent'
+                        >
+                          <Icon name='trash' className='size-4' />
+                          Xoá
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {replyToId === comment.id && (
+                    <form
+                      onSubmit={(event) => void handleReplySubmit(event, comment.id)}
+                      className='flex flex-col gap-2 sm:flex-row'
+                    >
+                      <Input
+                        aria-label={`Trả lời ${authorName}`}
+                        size='sm'
+                        autoFocus
+                        value={replyInput}
+                        onChange={(event) => setReplyInput(event.target.value)}
+                        placeholder={`Trả lời ${authorName}...`}
+                      />
+                      <Button type='submit' disabled={!replyInput.trim()}>
+                        Gửi
+                      </Button>
+                    </form>
+                  )}
+
+                  {renderComments(comment.id)}
+                </div>
               </div>
-
-              {replyToId === comment.id && (
-                <form
-                  onSubmit={(event) => void handleReplySubmit(event, comment.id)}
-                  className='mt-2 flex gap-2'
-                >
-                  <input
-                    value={replyInput}
-                    onChange={(event) => setReplyInput(event.target.value)}
-                    placeholder={`Trả lời ${comment.author?.displayName ?? ''}...`}
-                    className='flex-1 border px-2 py-1'
-                  />
-                  <button type='submit' className='border px-3 py-1'>
-                    Gửi
-                  </button>
-                </form>
-              )}
-
-              {renderComments(comment.id)}
             </li>
           );
         })}
@@ -268,128 +320,196 @@ export default function PostDetailPage() {
 
   return (
     <>
-      <Head>
-        <title>{post ? post.title : 'Bài viết'}</title>
-      </Head>
+      <PageTitle title={post?.title ?? 'Bài viết'} />
 
-      <div className='mx-auto max-w-3xl'>
-        <Link href='/' className='text-sm underline'>
-          ← Quay lại danh sách
-        </Link>
+      <Container size='content' className='pt-6 pb-20'>
+        <Breadcrumb
+          className='-ml-2'
+          items={[{ label: 'Diễn đàn', href: '/' }, { label: post?.title ?? 'Bài viết' }]}
+        />
 
         {isLoading ? (
-          <p className='mt-4'>Đang tải...</p>
+          <div role='status' aria-label='Đang tải bài viết' className='mt-4 flex flex-col gap-4 motion-safe:animate-pulse'>
+            <div className='h-10 w-2/3 rounded-media bg-surface-soft' />
+            <div className='h-4 w-48 rounded-media bg-surface-soft' />
+            <div className='mt-6 h-4 w-full rounded-media bg-surface-soft' />
+            <div className='h-4 w-5/6 rounded-media bg-surface-soft' />
+            <div className='h-4 w-3/4 rounded-media bg-surface-soft' />
+          </div>
         ) : error ? (
-          <p className='mt-4 text-red-600'>Lỗi: {error}</p>
+          <EmptyState
+            icon='search'
+            className='mt-8'
+            title={error}
+            action={<ButtonLink href='/'>Về diễn đàn</ButtonLink>}
+          />
         ) : post ? (
           <>
-            <article className='mt-4 border p-4'>
-              <h1 className='text-2xl font-bold'>{post.title}</h1>
-              <p className='text-sm text-gray-600'>
-                {post.author?.displayName ?? 'Người dùng đã xoá'} ·{' '}
-                {new Date(post.createdAt).toLocaleString('vi-VN')}
-                {post.updatedAt !== post.createdAt && ' · đã chỉnh sửa'}
+            <article>
+              <h1 className='mt-4 text-h1 font-semibold wrap-break-word text-ink'>{post.title}</h1>
+              <p className='mt-1 flex flex-wrap items-center gap-x-2.5 text-caption font-light text-ink'>
+                <span>
+                  Bởi{' '}
+                  <span className='text-body-sm font-normal text-ink-muted uppercase'>
+                    {post.author?.displayName ?? 'Người dùng đã xoá'}
+                  </span>
+                </span>
+                <time dateTime={post.createdAt}>{formatDateTime(post.createdAt)}</time>
+                {post.updatedAt !== post.createdAt && <span>· đã chỉnh sửa</span>}
               </p>
 
-              <p className='mt-3 whitespace-pre-line'>{stripRecipeToken(post.content)}</p>
+              <div className='mt-7 flex flex-wrap items-center justify-between gap-4'>
+                <div className='flex flex-wrap gap-3'>
+                  <Button
+                    variant='outline'
+                    aria-pressed={post.isLiked}
+                    onClick={() => void handleToggleLike()}
+                    className='uppercase'
+                  >
+                    <Icon
+                      name='heart'
+                      fill={post.isLiked ? 'currentColor' : 'none'}
+                      className={post.isLiked ? 'size-5 text-accent-strong' : 'size-5'}
+                    />
+                    {post.isLiked ? 'Đã thích' : 'Thích'} · {post.likeCount}
+                  </Button>
+                  <Button
+                    variant='outline'
+                    aria-pressed={post.isSaved}
+                    onClick={() => void handleToggleSave()}
+                    className='uppercase'
+                  >
+                    <Icon
+                      name='bookmark'
+                      fill={post.isSaved ? 'currentColor' : 'none'}
+                      className={post.isSaved ? 'size-5 text-primary' : 'size-5'}
+                    />
+                    {post.isSaved ? 'Đã lưu' : 'Lưu'}
+                  </Button>
+                </div>
+                {isOwner && (
+                  <div className='flex flex-wrap gap-3'>
+                    <ButtonLink href={`/posts/${post.id}/edit`} variant='ghost'>
+                      <Icon name='edit' className='size-5' />
+                      Sửa
+                    </ButtonLink>
+                    <Button variant='ghost' onClick={() => void handleDeletePost()}>
+                      <Icon name='trash' className='size-5' />
+                      Xoá bài
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className='mt-10 text-body wrap-break-word whitespace-pre-line text-ink-muted'>
+                {stripRecipeToken(post.content)}
+              </div>
 
               {post.recipe && (
-                <p className='mt-3'>
-                  Công thức đính kèm:{' '}
-                  <Link href={`/recipes/${post.recipe.id}`} className='underline'>
-                    {post.recipe.title}
-                  </Link>
-                </p>
+                <section className='mt-10 flex flex-col items-start gap-4 rounded-panel bg-highlight px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <Icon name='chef-hat' strokeWidth={1.5} className='size-10 text-primary' />
+                    <div>
+                      <p className='text-meta text-ink-muted uppercase'>Công thức đính kèm</p>
+                      <p className='text-h5 font-medium text-ink'>{post.recipe.title}</p>
+                    </div>
+                  </div>
+                  <ButtonLink href={`/recipes/${encodeURIComponent(post.recipe.id)}`}>
+                    Xem công thức
+                  </ButtonLink>
+                </section>
               )}
 
               {post.tags.length > 0 && (
-                <p className='mt-2 flex flex-wrap gap-2 text-sm'>
-                  {post.tags.map((tag) => (
-                    <Link
-                      key={tag.id}
-                      href={{ pathname: '/', query: { tag: tag.name } }}
-                      className='text-blue-700 underline'
-                    >
-                      #{tag.name}
-                    </Link>
-                  ))}
+                <section className='mt-10'>
+                  <h2 className='text-h3 font-medium text-ink'>Tag</h2>
+                  <ul className='mt-4 flex flex-wrap gap-3.5'>
+                    {post.tags.map((tag) => (
+                      <li key={tag.id}>
+                        <Chip href={{ pathname: '/', query: { tag: tag.name } }}>#{tag.name}</Chip>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </article>
+
+            <section
+              id='comments'
+              aria-labelledby='comments-title'
+              className='mt-12 flex scroll-mt-8 flex-col gap-3 border-2 border-ink px-1 pb-6'
+            >
+              <h2 id='comments-title' className='px-2.5 pt-2 text-h3 font-medium text-ink'>
+                Bình luận ({post.commentCount})
+              </h2>
+
+              {currentUser ? (
+                <form
+                  onSubmit={handleCommentSubmit}
+                  className='flex flex-col gap-4 bg-surface-soft px-4 py-6 sm:px-8'
+                >
+                  <Field label='Bình luận của bạn' htmlFor='comment-input'>
+                    <Textarea
+                      id='comment-input'
+                      rows={3}
+                      value={commentInput}
+                      onChange={(event) => setCommentInput(event.target.value)}
+                      placeholder='Chia sẻ cảm nhận hoặc câu hỏi của bạn...'
+                    />
+                  </Field>
+                  <Button type='submit' className='self-start' disabled={!commentInput.trim()}>
+                    Gửi bình luận
+                  </Button>
+                </form>
+              ) : (
+                <p className='bg-surface-soft px-4 py-6 text-body-sm text-ink sm:px-8'>
+                  <Link
+                    href={{ pathname: '/authen/login', query: { next: `/posts/${post.id}` } }}
+                    className='rounded-control font-medium underline decoration-accent underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent'
+                  >
+                    Đăng nhập
+                  </Link>{' '}
+                  để tham gia bình luận.
                 </p>
               )}
 
-              <div className='mt-3 flex flex-wrap gap-2 text-sm'>
-                <button
-                  type='button'
-                  onClick={() => void handleToggleLike()}
-                  className='border px-2 py-1'
-                >
-                  {post.isLiked ? '♥ Bỏ thích' : '♡ Thích'} ({post.likeCount})
-                </button>
-                <button
-                  type='button'
-                  onClick={() => void handleToggleSave()}
-                  className='border px-2 py-1'
-                >
-                  {post.isSaved ? 'Bỏ lưu' : 'Lưu'}
-                </button>
-                {isOwner && (
-                  <>
-                    <Link href={`/posts/${post.id}/edit`} className='border px-2 py-1'>
-                      Sửa
-                    </Link>
-                    <button
-                      type='button'
-                      onClick={() => void handleDeletePost()}
-                      className='border px-2 py-1 text-red-600'
-                    >
-                      Xoá bài
-                    </button>
-                  </>
+              <div className='px-4'>
+                {comments.length === 0 ? (
+                  <p className='py-6 text-body-sm font-light text-ink-muted'>Chưa có bình luận nào.</p>
+                ) : (
+                  renderComments(null)
                 )}
               </div>
-            </article>
+            </section>
 
             {!isOwner && currentUser && (
-              <section className='mt-4 border p-4'>
-                <h2 className='font-semibold'>Báo cáo bài viết</h2>
-                <form onSubmit={handleReportSubmit} className='mt-2 flex gap-2'>
-                  <input
+              <details className='mt-8 rounded-box border border-line px-5 py-4'>
+                <summary className='flex cursor-pointer list-none items-center gap-2 rounded-control text-body-sm text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-accent'>
+                  <Icon name='flag' className='size-4' />
+                  Báo cáo bài viết
+                </summary>
+                <form onSubmit={handleReportSubmit} className='mt-4 flex flex-col gap-3 sm:flex-row'>
+                  <Input
+                    aria-label='Lý do báo cáo'
+                    size='sm'
                     value={reportReason}
                     onChange={(event) => setReportReason(event.target.value)}
                     placeholder='Lý do (vd: spam, sai thông tin...)'
-                    className='flex-1 border px-2 py-1'
                   />
-                  <button type='submit' className='border px-3 py-1'>
+                  <Button type='submit' variant='outline' disabled={!reportReason.trim()}>
                     Gửi báo cáo
-                  </button>
+                  </Button>
                 </form>
-                {reportMessage && <p className='mt-2 text-sm'>{reportMessage}</p>}
-              </section>
+                {reportMessage && (
+                  <Alert tone={reportMessage.startsWith('Lỗi') ? 'danger' : 'success'} className='mt-3'>
+                    {reportMessage}
+                  </Alert>
+                )}
+              </details>
             )}
-
-            <section className='mt-4 border p-4'>
-              <h2 className='mb-3 font-semibold'>Bình luận ({post.commentCount})</h2>
-
-              <form onSubmit={handleCommentSubmit} className='mb-4 flex gap-2'>
-                <input
-                  value={commentInput}
-                  onChange={(event) => setCommentInput(event.target.value)}
-                  placeholder='Viết bình luận...'
-                  className='flex-1 border px-2 py-1'
-                />
-                <button type='submit' className='border px-3 py-1'>
-                  Gửi
-                </button>
-              </form>
-
-              {comments.length === 0 ? (
-                <p className='text-sm text-gray-600'>Chưa có bình luận nào.</p>
-              ) : (
-                renderComments(null)
-              )}
-            </section>
           </>
         ) : null}
-      </div>
+      </Container>
     </>
   );
 }
