@@ -1,10 +1,10 @@
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
-import useStorefrontContext from '@/hooks/storefront/useStorefrontContext';
-import ConfigSidebar from './ConfigSidebar';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { useCallback, useState } from 'react';
+import ConfigSidebar from './ConfigSidebar';
 
 const StorefrontConfigSidebar = () => {
-  const { state, updateConfig } = useStorefrontContext();
+  const { state, updateConfig } = useStorefrontLayoutContext();
   const { selectedComponentId } = useStorefrontCanvasContext();
   const [openConfig, setOpenConfig] = useState(false);
 

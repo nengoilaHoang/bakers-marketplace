@@ -1,5 +1,5 @@
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
-import useStorefrontContext from '@/hooks/storefront/useStorefrontContext';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import React, {
   useCallback,
   useEffect,
@@ -32,7 +32,7 @@ type CanvasSelectionOverlayProps = {
 const CanvasSelectionOverlay = ({
   artboardRef,
 }: CanvasSelectionOverlayProps) => {
-  const { state, updateConfig } = useStorefrontContext();
+  const { state, updateConfig } = useStorefrontLayoutContext();
   const { selectComponent } = useStorefrontCanvasContext();
   const { zoom, selectedComponentId, isDragging, isResizing, setIsResizing } =
     useStorefrontCanvasContext();

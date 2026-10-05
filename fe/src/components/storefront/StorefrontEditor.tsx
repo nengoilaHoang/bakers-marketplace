@@ -1,28 +1,22 @@
-import StorefrontProvider from '@/hooks/storefront/StorefrontProvider';
-import { StorefrontRelease } from '@/types/storefront';
+import StorefrontLayoutProvider from '@/hooks/storefront/StorefrontLayoutProvider';
+import { LayoutState } from '@/hooks/storefront/useLayoutReducer';
+import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { StorefrontReleaseWithLayout } from '@/types/storefront';
 import flattenLayout, { FlattenComponent } from '@/utils/flattenLayout';
+import { PointerActivationConstraints, PointerSensor } from '@dnd-kit/dom';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useMemo } from 'react';
-import ComponentRenderer from './ComponentRenderer';
-import { PointerSensor, PointerActivationConstraints } from '@dnd-kit/dom';
-import useStorefrontContext from '@/hooks/storefront/useStorefrontContext';
-import { LayoutState } from '@/hooks/storefront/useStorefrontReducer';
-import useStorefront from '@/hooks/storefront/useStorefront';
 import CanvasStage from './canvas/CanvasStage';
-import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
+import ComponentRenderer from './ComponentRenderer';
 import StorefrontConfigSidebar from './StorefrontConfigSidebar';
 
 type StorefrontEditorProps = {
-  storeId: string;
-  releaseId?: string;
-};
-
-type StorefrontEditorContentProps = {
-  release: StorefrontRelease;
+  release: StorefrontReleaseWithLayout;
 };
 
 const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
-  const { moveComponent } = useStorefrontContext();
+  const { moveComponent } = useStorefrontLayoutContext();
   const {
     breakpoint,
     zoom,
@@ -100,7 +94,7 @@ const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
   );
 };
 
-const StorefrontEditorContent = ({ release }: StorefrontEditorContentProps) => {
+const StorefrontEditor = ({ release }: StorefrontEditorProps) => {
   const layout = useMemo<LayoutState | undefined>(() => {
     if (!release?.layouts || release.layouts.length === 0) {
       return undefined;
@@ -133,20 +127,10 @@ const StorefrontEditorContent = ({ release }: StorefrontEditorContentProps) => {
   }
 
   return (
-    <StorefrontProvider initialState={layout}>
+    <StorefrontLayoutProvider initialState={layout}>
       {({ root }) => <StorefrontDndContainer root={root} />}
-    </StorefrontProvider>
+    </StorefrontLayoutProvider>
   );
-};
-
-const StorefrontEditor = ({ storeId, releaseId }: StorefrontEditorProps) => {
-  const { release, isLoading } = useStorefront(storeId, releaseId);
-
-  if (isLoading || !release) {
-    return null;
-  }
-
-  return <StorefrontEditorContent release={release} />;
 };
 
 export default StorefrontEditor;

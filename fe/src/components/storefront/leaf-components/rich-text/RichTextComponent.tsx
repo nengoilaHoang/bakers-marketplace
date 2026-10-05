@@ -1,8 +1,8 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { RichTextLeafComponent } from '@/types/layout-component/leaf-component';
 import { useRef, useState } from 'react';
 import RichTextEditor from './RichTextEditor';
-import useStorefrontContext from '@/hooks/storefront/useStorefrontContext';
 
 const RichTextComponent = ({
   component,
@@ -16,7 +16,7 @@ const RichTextComponent = ({
   const {
     id,
     baseClasses: className,
-		baseStyle,
+    baseStyle,
     ref,
     isDragging,
     isSelected,
@@ -25,7 +25,7 @@ const RichTextComponent = ({
   } = useLayoutComponent({ component, sourceParentId, sourceSlot });
 
   const [openEditor, setOpenEditor] = useState(false);
-  const { updateConfig } = useStorefrontContext();
+  const { updateConfig } = useStorefrontLayoutContext();
   const lastClickTime = useRef(0);
   const THRESHOLD_MS = 400;
   const richTextBody =
@@ -71,7 +71,7 @@ const RichTextComponent = ({
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
-			style={baseStyle}
+      style={baseStyle}
     >
       {openEditor ? (
         <RichTextEditor

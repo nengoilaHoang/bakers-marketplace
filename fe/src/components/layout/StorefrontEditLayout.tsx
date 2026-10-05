@@ -1,6 +1,6 @@
+import StorefrontCanvasProvider from '@/hooks/storefront/StorefrontCanvasProvider';
 import React from 'react';
 import CanvasTopBar from '../storefront/canvas/CanvasTopBar';
-import StorefrontCanvasProvider from '@/hooks/storefront/StorefrontCanvasProvider';
 
 type StorefrontEditLayoutProps = Readonly<{
   children: React.ReactNode;
