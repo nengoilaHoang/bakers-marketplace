@@ -16,6 +16,7 @@ type TypeableSelectProps<T extends string | number | boolean> = {
   onValueChange: (value: T) => void;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  isTypeable?: boolean;
 };
 
 const TypeableSelect = <T extends string | number | boolean>({
@@ -26,6 +27,7 @@ const TypeableSelect = <T extends string | number | boolean>({
   onValueChange,
   isOpen,
   onOpenChange,
+  isTypeable = true,
 }: TypeableSelectProps<T>) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
@@ -182,7 +184,7 @@ const TypeableSelect = <T extends string | number | boolean>({
 
   const handleSelectOption = (value: string) => {
     setInputValue(getKey(value));
-		onValueChange(value as T);
+    onValueChange(value as T);
     onOpenChange(false);
   };
 
@@ -209,6 +211,7 @@ const TypeableSelect = <T extends string | number | boolean>({
             className='flex-1 min-w-0 px-2.5 py-1.5 bg-transparent focus:outline-none focus:border-none'
             type='text'
             autoComplete='off'
+            readOnly={isTypeable}
             onChange={handleInputChange}
             value={inputValue}
           ></input>
@@ -249,19 +252,19 @@ const TypeableSelect = <T extends string | number | boolean>({
         >
           {convertedValues.map((val, idx) => {
             return (
-              <div
+              <button
                 key={`${String(val)}-${idx}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  handleSelectOption(val);
+                  handleSelectOption(String(val));
                 }}
-                className='flex  min-h-0 w-full items-center justify-between px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
+                className='appearance-none flex min-h-0 w-full items-center justify-between px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
               >
                 <span>{enumKeys[idx]}</span>
                 <span className='font-mono text-[10px] text-zinc-400'>
                   {val}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>

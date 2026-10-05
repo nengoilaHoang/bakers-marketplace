@@ -1,7 +1,8 @@
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
-import NavLink from '../ui/NavLink';
+import ReleaseSelect from '../storefront/ReleaseSelect';
 import AvatarMenu from '../ui/AvatarMenu';
+import NavLink from '../ui/NavLink';
 
 type SidebarTabProps = Readonly<{
   id: string;
@@ -145,6 +146,7 @@ const VendorLayout = ({
 }>) => {
   const router = useRouter();
   const { pathname } = router;
+  const isStorefront = router.pathname.startsWith('/vendors/storefronts');
 
   return (
     <div className='grid grid-cols-[280px_1fr] w-screen h-dvh overflow-hidden bg-white'>
@@ -195,6 +197,10 @@ const VendorLayout = ({
         >
           <div className='flex items-center h-full px-6 border-l border-zinc-200'>
             <AvatarMenu actions={[]}></AvatarMenu>
+          </div>
+
+          <div className='flex items-center me-3.5'>
+            {isStorefront ? <ReleaseSelect /> : null}
           </div>
         </header>
         <main id='main' className='bg-white overflow-y-auto flex-1 min-h-0'>
