@@ -8,55 +8,29 @@ import {
 import { UnprocessableEntityError } from '#/utils/http-errors.js';
 
 export class PageLayoutService {
-	constructor(private readonly pageLayoutDao: PageLayoutDao) {}
+  constructor(private readonly pageLayoutDao: PageLayoutDao) {}
 
-	public ensureExists = async (pageId: string) => {
-		// Skip for now
-	};
+  public ensurePageExists = async (pageId: string) => {
+    // Skip for now
+  };
 
-	// public ensureBelongsTo = async (
-	// 	pageId: string,
-	// 	releaseId?: string,
-	// 	storeId?: string,
-	// ) => {
-	// 	const exists = await this.pageLayoutDao.checkIfExists(
-	// 		pageId,
-	// 		releaseId,
-	// 		storeId,
-	// 	);
+  public getReleaseLayouts = async (releaseId: string) => {
+    return await this.pageLayoutDao.getReleaseLayouts(releaseId);
+  };
 
-	// 	if (!exists && releaseId && storeId) {
-	// 		throw new NotFoundError(
-	// 			`Page layout with id '${pageId}' does not belong to release '${releaseId}' and store '${storeId}'`,
-	// 		);
-	// 	}
+  public updatePageLayout = async (
+    pageId: string,
+    root: PutLayoutComponent,
+  ) => {
+    const result = PutLayoutComponentSchema.safeParse(root);
+    if (!result.success) {
+      throw new UnprocessableEntityError(
+        `Invalid layout component schema: ${result.error}`,
+      );
+    }
 
-	// 	if (!exists && releaseId) {
-	// 		throw new NotFoundError(
-	// 			`Page layout with id '${pageId}' does not belong to release '${releaseId}'`,
-	// 		);
-	// 	}
-
-	// 	if (!exists) {
-	// 		throw new NotFoundError(
-	// 			`Page layout with id '${pageId}' does not exist.`,
-	// 		);
-	// 	}
-	// };
-
-	public updatePageLayout = async (
-		pageId: string,
-		root: PutLayoutComponent,
-	) => {
-		const result = PutLayoutComponentSchema.safeParse(root);
-		if (!result.success) {
-			throw new UnprocessableEntityError(
-				`Invalid layout component schema: ${result.error}`,
-			);
-		}
-
-		await this.pageLayoutDao.updatePageLayout(pageId, result.data);
-	};
+    await this.pageLayoutDao.updatePageLayout(pageId, result.data);
+  };
 }
 
 const pageLayoutService = new PageLayoutService(pageLayoutDao);

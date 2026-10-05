@@ -11,6 +11,10 @@ const router = e.Router();
 router.use(authenMiddleware, validateRole(['VENDOR']));
 
 router.get('/mine', storefrontController.getMyStorefronts);
+router.get(
+  '/releases/:releaseId/layouts',
+  pageLayoutController.getReleaseLayouts,
+);
 router.get('/:id/releases/active', storefrontController.getActiveRelease);
 router.get('/:storeId/releases/:releaseId', storefrontController.getRelease);
 
