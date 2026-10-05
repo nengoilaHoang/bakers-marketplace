@@ -1,8 +1,8 @@
-import { createContext } from 'react';
-import { LayoutState } from './useStorefrontReducer';
 import { DeviceBreakpoint } from '@/types/canvas';
+import { createContext } from 'react';
+import { LayoutState } from './useLayoutReducer';
 
-export interface StorefrontContextValue {
+export interface StorefrontLayoutContextValue {
   state: LayoutState;
   updateConfig: (
     targetComponentId: string,
@@ -23,5 +23,6 @@ export interface StorefrontContextValue {
   ) => void;
 }
 
-const StorefrontContext = createContext<StorefrontContextValue | null>(null);
-export default StorefrontContext;
+const StorefrontLayoutContext =
+  createContext<StorefrontLayoutContextValue | null>(null);
+export default StorefrontLayoutContext;

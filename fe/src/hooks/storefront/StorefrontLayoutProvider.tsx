@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
-import StorefrontContext, { StorefrontContextValue } from './StorefrontContext';
-import useStorefrontReducer, { LayoutState } from './useStorefrontReducer';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenComponent } from '@/utils/flattenLayout';
+import React, { useCallback, useMemo } from 'react';
+import StorefrontLayoutContext, {
+  StorefrontLayoutContextValue,
+} from './StorefrontLayoutContext';
+import useLayoutReducer, { LayoutState } from './useLayoutReducer';
 
-const StorefrontProvider = ({
+const StorefrontLayoutProvider = ({
   children,
   initialState,
 }: {
@@ -14,7 +16,7 @@ const StorefrontProvider = ({
     | ((props: { root: FlattenComponent }) => React.ReactNode);
   initialState: LayoutState;
 }) => {
-  const { state, dispatch } = useStorefrontReducer(initialState);
+  const { state, dispatch } = useLayoutReducer(initialState);
 
   const updateConfig = useCallback(
     (targetComponentId: string, pathname: string, value: unknown) => {
@@ -58,7 +60,7 @@ const StorefrontProvider = ({
     [dispatch],
   );
 
-  const value: StorefrontContextValue = useMemo(
+  const value: StorefrontLayoutContextValue = useMemo(
     () => ({
       state,
       updateConfig,
@@ -76,10 +78,10 @@ const StorefrontProvider = ({
   const extraProps = { root };
 
   return (
-    <StorefrontContext.Provider value={value}>
+    <StorefrontLayoutContext.Provider value={value}>
       {typeof children === 'function' ? children(extraProps) : children}
-    </StorefrontContext.Provider>
+    </StorefrontLayoutContext.Provider>
   );
 };
 
-export default StorefrontProvider;
+export default StorefrontLayoutProvider;

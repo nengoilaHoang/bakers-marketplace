@@ -49,7 +49,7 @@ export type LayoutState = {
   // newComponents
 };
 
-const storefrontReducer = (
+const layoutReducer = (
   state: LayoutState,
   action: LayoutAction,
 ): LayoutState => {
@@ -316,9 +316,9 @@ const storefrontReducer = (
   }
 };
 
-const useStorefrontReducer = (initialState: LayoutState) => {
-  const [state, dispatch] = useReducer(storefrontReducer, initialState);
+const useLayoutReducer = (initialState: LayoutState) => {
+  const [state, dispatch] = useReducer(layoutReducer, initialState);
   return { state, dispatch };
 };
 
-export default useStorefrontReducer;
+export default useLayoutReducer;

@@ -1,9 +1,9 @@
-import { useDraggable } from '@dnd-kit/react';
-import useStorefrontContext from './useStorefrontContext';
-import React, { useMemo } from 'react';
-import { getBaseLayoutClassesAndStyles as getBaseLayoutClassesAndStyle } from '@/utils/layoutClasses';
-import useStorefrontCanvasContext from './useStorefrontCanvasContext';
 import { FlattenComponent } from '@/utils/flattenLayout';
+import { getBaseLayoutClassesAndStyles as getBaseLayoutClassesAndStyle } from '@/utils/layoutClasses';
+import { useDraggable } from '@dnd-kit/react';
+import React, { useMemo } from 'react';
+import useStorefrontCanvasContext from './useStorefrontCanvasContext';
+import useStorefrontLayoutContext from './useStorefrontLayoutContext';
 
 const useLayoutComponent = ({
   component,
@@ -14,7 +14,7 @@ const useLayoutComponent = ({
   sourceParentId?: string;
   sourceSlot?: number;
 }) => {
-  const { removeComponent } = useStorefrontContext();
+  const { removeComponent } = useStorefrontLayoutContext();
   const { selectComponent, selectedComponentId, isResizing } =
     useStorefrontCanvasContext();
   const isSelected = useMemo(
