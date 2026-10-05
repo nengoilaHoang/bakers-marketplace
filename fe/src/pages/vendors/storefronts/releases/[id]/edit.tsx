@@ -1,4 +1,5 @@
 import StorefrontEditLayout from '@/components/layout/StorefrontEditLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
 import StorefrontEditor from '@/components/storefront/StorefrontEditor';
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { NextPageWithLayout } from '@/pages/_app';
@@ -6,7 +7,7 @@ import { useRouter } from 'next/router';
 
 import React from 'react';
 
-const StorefrontReleasePage: NextPageWithLayout = () => {
+const StorefrontReleaseEditPage: NextPageWithLayout = () => {
   const router = useRouter();
   const { currentRelease } = useVendorContext();
 
@@ -21,8 +22,14 @@ const StorefrontReleasePage: NextPageWithLayout = () => {
   );
 };
 
-StorefrontReleasePage.getLayout = function getLayout(page: React.ReactElement) {
-  return <StorefrontEditLayout>{page}</StorefrontEditLayout>;
+StorefrontReleaseEditPage.getLayout = function getLayout(
+  page: React.ReactElement,
+) {
+  return (
+    <VendorShellLayout>
+      <StorefrontEditLayout>{page}</StorefrontEditLayout>
+    </VendorShellLayout>
+  );
 };
 
-export default StorefrontReleasePage;
+export default StorefrontReleaseEditPage;
