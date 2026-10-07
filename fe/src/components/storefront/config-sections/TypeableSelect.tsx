@@ -1,3 +1,4 @@
+import Icon from '@/components/ui/Icon';
 import useDebouncedCallback from '@/hooks/useDebounceCallback';
 import React, {
   useCallback,
@@ -203,7 +204,7 @@ const TypeableSelect = <T extends string | number | boolean>({
           isOpen ? 'bg-white border-zinc-950' : 'bg-zinc-50/50 hover:bg-white'
         }	focus-within:bg-white focus-within:border-zinc-950 focus-within:outline-none focus-within:ring-1 focus-within:ring-zinc-950`}
       >
-        <div className='relative flex w-full min-w-0'>
+        <div className='relative flex items-center w-full min-w-0'>
           <input
             id={id}
             name={name}
@@ -215,22 +216,11 @@ const TypeableSelect = <T extends string | number | boolean>({
             onChange={handleInputChange}
             value={inputValue}
           ></input>
-          <div
-            className={`pointer-events-none mr-2.5 shrink-0 inset-y-0 right-0 flex items-center transition-transform duration-200 ease-in-out ${arrowRotation}`}
-          >
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              width='16'
-              height='16'
-              fill='currentColor'
-              viewBox='0 0 16 16'
-            >
-              <path
-                fillRule='evenodd'
-                d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0'
-              />
-            </svg>
-          </div>
+          <Icon
+            name='chevron-left'
+            label={`Arrow icon indicating the dropdown is ${isOpen ? 'open' : 'closed'}`}
+            className={`pointer-events-none mr-1 inset-y-0 right-0 flex items-center transition-transform duration-200 ease-in-out ${arrowRotation}`}
+          ></Icon>
         </div>
       </button>
       <div
