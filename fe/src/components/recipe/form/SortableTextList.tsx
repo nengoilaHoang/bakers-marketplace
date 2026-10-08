@@ -1,5 +1,3 @@
-"use client";
-
 import {
   closestCenter,
   DndContext,
@@ -9,16 +7,23 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useId, type CSSProperties } from "react";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useId, type CSSProperties } from 'react';
+
+import Icon from '@/components/ui/Icon';
+import { Textarea } from '@/components/ui/Input';
+import { cn } from '@/lib/cn';
+
+import ListPanel, { AddRowButton, EmptyRows } from './ListPanel';
+import RemoveButton from './RemoveButton';
 
 /**
  * A key must remain unchanged while an item is edited or reordered. Persisted
@@ -66,54 +71,6 @@ type SortableTextListRowProps = {
   onRemove: (key: SortableTextItemKey) => void;
 };
 
-function DragHandleIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="size-5"
-    >
-      <circle cx="6" cy="5" r="1.25" />
-      <circle cx="14" cy="5" r="1.25" />
-      <circle cx="6" cy="10" r="1.25" />
-      <circle cx="14" cy="10" r="1.25" />
-      <circle cx="6" cy="15" r="1.25" />
-      <circle cx="14" cy="15" r="1.25" />
-    </svg>
-  );
-}
-
-function RemoveIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      className="size-4"
-    >
-      <path d="M4 5.5h12M8 3.5h4M6.5 5.5l.65 11h5.7l.65-11M8.5 8.5v5M11.5 8.5v5" />
-    </svg>
-  );
-}
-
-function AddIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      className="size-4"
-    >
-      <path d="M10 4v12M4 10h12" />
-    </svg>
-  );
-}
-
 function SortableTextListRow({
   item,
   index,
@@ -150,38 +107,31 @@ function SortableTextListRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`relative grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-start gap-2 rounded-xl border bg-white p-3 transition-shadow sm:gap-3 ${
-        isDragging
-          ? "border-zinc-400 opacity-90 shadow-lg"
-          : "border-zinc-200"
-      }`}
+      className={cn(
+        'relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2 sm:gap-3',
+        isDragging && 'rounded-box bg-page opacity-90 shadow-soft',
+      )}
     >
       <button
         {...attributes}
         {...listeners}
         ref={setActivatorNodeRef}
-        type="button"
+        type='button'
         disabled={disabled}
         aria-label={`Kéo để đổi vị trí ${accessibleItemLabel}`}
         aria-describedby={instructionsId}
-        className="mt-1 inline-flex size-9 touch-none select-none items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50 sm:cursor-grab"
+        className='mt-7 grid size-7.5 touch-none place-items-center rounded-control text-ink-muted outline-none select-none hover:bg-ink/5 hover:text-ink focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50 sm:cursor-grab'
       >
-        <DragHandleIcon />
+        <Icon name='grip-vertical' className='size-5' />
       </button>
 
-      <span
-        aria-hidden="true"
-        className="mt-1 inline-flex size-9 items-center justify-center rounded-full bg-zinc-100 text-sm font-semibold text-zinc-700"
-      >
-        {index + 1}
-      </span>
-
-      <div className="min-w-0">
-        <label htmlFor={textareaId} className="sr-only">
+      <div className='flex min-w-0 flex-col gap-1.5'>
+        <label htmlFor={textareaId} className='text-body font-medium text-ink-muted'>
           {accessibleItemLabel}
         </label>
-        <textarea
+        <Textarea
           id={textareaId}
+          tone='accent'
           value={item.text}
           onChange={(event) => onTextChange(item.key, event.target.value)}
           rows={rows}
@@ -189,19 +139,16 @@ function SortableTextListRow({
           required={required}
           disabled={disabled}
           placeholder={placeholder}
-          className="block w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
         />
       </div>
 
-      <button
-        type="button"
-        onClick={() => onRemove(item.key)}
-        disabled={disabled || !canRemove}
-        aria-label={`Xóa ${accessibleItemLabel}`}
-        className="mt-1 inline-flex size-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <RemoveIcon />
-      </button>
+      <div className='mt-7'>
+        <RemoveButton
+          label={`Xóa ${accessibleItemLabel}`}
+          onClick={() => onRemove(item.key)}
+          disabled={disabled || !canRemove}
+        />
+      </div>
     </li>
   );
 }
@@ -217,7 +164,7 @@ export default function SortableTextList<
   addLabel = `Thêm ${itemLabel.toLowerCase()}`,
   emptyMessage = `Chưa có ${itemLabel.toLowerCase()} nào.`,
   instructions =
-    "Dùng tay cầm để kéo thả. Khi dùng bàn phím, nhấn phím cách để chọn, dùng các phím mũi tên để di chuyển, rồi nhấn phím cách lần nữa để thả.",
+    'Dùng tay cầm để kéo thả. Khi dùng bàn phím, nhấn phím cách để chọn, dùng các phím mũi tên để di chuyển, rồi nhấn phím cách lần nữa để thả.',
   placeholder,
   rows = 3,
   maxLength,
@@ -282,64 +229,53 @@ export default function SortableTextList<
   const canRemove = items.length > minItems;
 
   return (
-    <fieldset className="min-w-0" disabled={disabled}>
-      <legend className="text-sm font-semibold text-zinc-900">{label}</legend>
-      <p id={instructionsId} className="mt-1 text-sm text-zinc-500">
-        {instructions}
-      </p>
+    <fieldset className='min-w-0' disabled={disabled}>
+      <legend className='sr-only'>{label}</legend>
+      <ListPanel>
+        <p id={instructionsId} className='text-caption font-light text-ink-muted'>
+          {instructions}
+        </p>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        accessibility={{
-          screenReaderInstructions: { draggable: instructions },
-        }}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={items.map((item) => item.key)}
-          strategy={verticalListSortingStrategy}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          accessibility={{
+            screenReaderInstructions: { draggable: instructions },
+          }}
+          onDragEnd={handleDragEnd}
         >
-          {items.length > 0 ? (
-            <ol className="mt-4 space-y-3">
-              {items.map((item, index) => (
-                <SortableTextListRow
-                  key={item.key}
-                  item={item}
-                  index={index}
-                  itemLabel={itemLabel}
-                  instructionsId={instructionsId}
-                  placeholder={placeholder}
-                  rows={rows}
-                  maxLength={maxLength}
-                  required={required}
-                  disabled={disabled}
-                  canRemove={canRemove}
-                  onTextChange={handleTextChange}
-                  onRemove={handleRemove}
-                />
-              ))}
-            </ol>
-          ) : (
-            <p
-              className="mt-4 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-center text-sm text-zinc-500"
-              role="status"
-            >
-              {emptyMessage}
-            </p>
-          )}
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={items.map((item) => item.key)}
+            strategy={verticalListSortingStrategy}
+          >
+            {items.length > 0 ? (
+              <ol className='flex flex-col gap-4'>
+                {items.map((item, index) => (
+                  <SortableTextListRow
+                    key={item.key}
+                    item={item}
+                    index={index}
+                    itemLabel={itemLabel}
+                    instructionsId={instructionsId}
+                    placeholder={placeholder}
+                    rows={rows}
+                    maxLength={maxLength}
+                    required={required}
+                    disabled={disabled}
+                    canRemove={canRemove}
+                    onTextChange={handleTextChange}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </ol>
+            ) : (
+              <EmptyRows>{emptyMessage}</EmptyRows>
+            )}
+          </SortableContext>
+        </DndContext>
 
-      <button
-        type="button"
-        onClick={handleAdd}
-        disabled={disabled || !canAdd}
-        className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-800 transition hover:border-zinc-500 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <AddIcon />
-        {addLabel}
-      </button>
+        <AddRowButton label={addLabel} onClick={handleAdd} disabled={disabled || !canAdd} />
+      </ListPanel>
     </fieldset>
   );
 }

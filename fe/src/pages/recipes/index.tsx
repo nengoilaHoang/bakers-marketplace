@@ -1,12 +1,15 @@
-import Head from "next/head";
-
-import RecipesLayout from "@/components/layout/RecipesLayout";
-import RecipeGrid from "@/components/recipe/RecipeGrid";
-import RecipeGridSkeleton from "@/components/recipe/RecipeGridSkeleton";
-import RecipesEmptyState from "@/components/recipe/RecipesEmptyState";
-import RecipeSearchPanel from "@/components/recipe/search/RecipeSearchPanel";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { useInfiniteRecipes } from "@/hooks/useInfiniteRecipes";
+import AppLayout from '@/components/layout/AppLayout';
+import RecipeSearchHero from '@/components/recipe/search/RecipeSearchHero';
+import RecipeSearchPanel from '@/components/recipe/search/RecipeSearchPanel';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import EmptyState from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import PageTitle from '@/components/ui/PageTitle';
+import RecipeGrid, { RecipeGridSkeleton } from '@/components/ui/RecipeGrid';
+import SectionHeading from '@/components/ui/SectionHeading';
+import { useInfiniteRecipes } from '@/hooks/useInfiniteRecipes';
+import { toRecipeCardData } from '@/utils/recipeCard';
 
 export default function RecipesPage() {
   const {
@@ -22,62 +25,46 @@ export default function RecipesPage() {
 
   return (
     <>
-      <Head>
-        <title>Công thức | Recipe Book</title>
-        <meta
-          name="description"
-          content="Khám phá danh sách công thức nấu ăn mới nhất."
-        />
-      </Head>
+      <PageTitle
+        title='Công thức'
+        description='Khám phá công thức mới nhất và tìm món phù hợp với nguyên liệu bạn có.'
+      />
 
-      <RecipesLayout>
-        <header className="mb-8 sm:mb-10">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-500">
-            Recipe Book
-          </p>
-          <div className="mt-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-black sm:text-4xl">
-              Tìm công thức phù hợp với bạn
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-600">
-              Tìm theo tên món hoặc chọn những dụng cụ, nguyên liệu bạn đang có.
-            </p>
-          </div>
-        </header>
-
+      <RecipeSearchHero
+        breadcrumb={[{ label: 'Trang chủ', href: '/' }, { label: 'Công thức' }]}
+        title='Tìm công thức phù hợp với bạn'
+        description='Tìm theo tên món hoặc chọn những dụng cụ, nguyên liệu bạn đang có.'
+      >
         <RecipeSearchPanel />
+      </RecipeSearchHero>
 
-        <section className="mt-14" aria-labelledby="latest-recipes-title">
-          <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-500">
-                Khám phá thêm
-              </p>
-              <h2 id="latest-recipes-title" className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
-                Công thức mới nhất
-              </h2>
-            </div>
-            {!isInitialLoading && recipes.length > 0 && (
-              <p className="shrink-0 text-sm text-zinc-500" aria-live="polite">
-                Đã tải {recipes.length} công thức
-              </p>
-            )}
-          </div>
+      <Container as='section' className='py-16 lg:py-24'>
+        <SectionHeading title='Công thức mới nhất' />
+        {!isInitialLoading && recipes.length > 0 && (
+          <p className='mt-1 text-caption font-light text-ink-muted' aria-live='polite'>
+            Đã tải {recipes.length} công thức
+          </p>
+        )}
 
+        <div className='mt-8'>
           {isInitialLoading ? (
             <RecipeGridSkeleton />
           ) : error && recipes.length === 0 ? (
             <ErrorState message={error} onRetry={retry} />
           ) : recipes.length === 0 ? (
-            <RecipesEmptyState />
+            <EmptyState
+              title='Chưa có công thức nào'
+              description='Các công thức mới sẽ xuất hiện tại đây.'
+              action={<ButtonLink href='/recipes/new'>Thêm công thức</ButtonLink>}
+            />
           ) : (
             <>
-              <RecipeGrid recipes={recipes} />
+              <RecipeGrid recipes={recipes.map(toRecipeCardData)} savable={false} />
 
               {error && (
-                <div className="mt-8">
+                <div className='mt-8'>
                   <ErrorState
-                    title="Không thể tải thêm công thức"
+                    title='Không thể tải thêm công thức'
                     message={error}
                     onRetry={retry}
                     compact
@@ -87,35 +74,35 @@ export default function RecipesPage() {
 
               <div
                 ref={sentinelRef}
-                className="flex min-h-24 items-center justify-center py-6 text-center"
-                aria-live="polite"
+                className='flex min-h-24 items-center justify-center py-6 text-center'
+                aria-live='polite'
               >
                 {isLoadingMore ? (
-                  <div className="flex items-center gap-3 text-sm text-zinc-600">
+                  <p className='flex items-center gap-3 text-body-sm text-ink-muted'>
                     <span
-                      className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900"
-                      aria-hidden="true"
+                      aria-hidden
+                      className='size-5 animate-spin rounded-full border-2 border-line border-t-primary'
                     />
                     Đang tải thêm công thức...
-                  </div>
+                  </p>
                 ) : hasMore && !error ? (
-                  <button
-                    type="button"
-                    onClick={() => void loadMore()}
-                    className="rounded-full border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-800 transition hover:border-zinc-500 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
-                  >
+                  <Button variant='outline' onClick={() => void loadMore()}>
                     Tải thêm công thức
-                  </button>
+                  </Button>
                 ) : !hasMore ? (
-                  <p className="text-sm text-zinc-500">
+                  <p className='text-body-sm font-light text-ink-muted'>
                     Bạn đã xem hết danh sách công thức.
                   </p>
                 ) : null}
               </div>
             </>
           )}
-        </section>
-      </RecipesLayout>
+        </div>
+      </Container>
     </>
   );
 }
+
+RecipesPage.getLayout = function getLayout(page: React.ReactElement) {
+  return <AppLayout>{page}</AppLayout>;
+};

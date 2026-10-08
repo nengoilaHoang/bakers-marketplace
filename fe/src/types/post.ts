@@ -20,7 +20,6 @@ export type PostTag = {
 export type Post = {
   id: string;
   authorId: string | null;
-  recipeId: string | null;
   title: string;
   content: string;
   createdAt: string;
@@ -63,7 +62,7 @@ export type PostCreatePayload = {
   title: string;
   content: string;
   tags: string[];
-  // Có recipe thì BE tạo 2 công thức giống nhau, bản snapshot được gắn vào bài viết
+  // Có recipe thì BE tạo 2 công thức giống nhau và thêm token [[recipe:<id bản snapshot>]] vào cuối content
   recipe?: RecipeMutationPayload;
 };
 

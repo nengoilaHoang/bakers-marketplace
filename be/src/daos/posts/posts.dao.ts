@@ -8,11 +8,13 @@ import {
 	type PostUpdate,
 	type PostView,
 } from '#/models/posts/posts.model.js';
+import { RECIPE_TOKEN_SQL_PATTERN } from '#/utils/post-content.js';
 
 const PAGE_SIZE = 20;
 
 type PostViewRow = Post & {
 	authorDisplayName: string | null;
+	recipeId: string | null;
 	recipeTitle: string | null;
 	recipeCoverImgUrl: string | null;
 	likeCount: number;
@@ -49,7 +51,11 @@ class PostDAO {
 			query.where((builder) => {
 				builder
 					.whereRaw('unaccent(p.title) ILIKE unaccent(?)', [pattern])
-					.orWhereRaw('unaccent(p.content) ILIKE unaccent(?)', [pattern])
+					// Recipe tokens are not part of the text the author wrote
+					.orWhereRaw(
+						`unaccent(regexp_replace(p.content, ?, '', 'g')) ILIKE unaccent(?)`,
+						[RECIPE_TOKEN_SQL_PATTERN, pattern],
+					)
 					.orWhereRaw(
 						'EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND unaccent(pt.name) ILIKE unaccent(?))',
 						[pattern],
@@ -111,7 +117,7 @@ class PostDAO {
 
 	public async create(
 		authorId: string,
-		post: Pick<PostCreate, 'title' | 'content'> & { recipeId: string | null },
+		post: Pick<PostCreate, 'title' | 'content'>,
 		trx?: Knex.Transaction,
 	): Promise<Post> {
 		const [createdPost] = await (trx ?? this.db.instance)<Post>(
@@ -192,6 +198,7 @@ class PostDAO {
 			.select(
 				'p.*',
 				'u.displayname as authorDisplayName',
+				'r.id as recipeId',
 				'r.title as recipeTitle',
 				'i.url as recipeCoverImgUrl',
 				knex.raw(
@@ -210,13 +217,17 @@ class PostDAO {
 				),
 			)
 			.leftJoin('users as u', 'u.id', 'p.authorId')
-			.leftJoin('recipes as r', 'r.id', 'p.recipeId')
+			// The recipe is linked by the [[recipe:<id>]] token in the content
+			.joinRaw('LEFT JOIN recipes AS r ON r.id = substring(p.content from ?)::uuid', [
+				RECIPE_TOKEN_SQL_PATTERN,
+			])
 			.leftJoin('images as i', 'i.id', 'r.coverImgId');
 	}
 
 	private toPostView(row: PostViewRow): PostView {
 		const {
 			authorDisplayName,
+			recipeId,
 			recipeTitle,
 			recipeCoverImgUrl,
 			likeCount,
@@ -231,9 +242,9 @@ class PostDAO {
 			author: post.authorId
 				? { id: post.authorId, displayName: authorDisplayName ?? '' }
 				: null,
-			recipe: post.recipeId
+			recipe: recipeId
 				? {
-						id: post.recipeId,
+						id: recipeId,
 						title: recipeTitle ?? '',
 						coverImgUrl: recipeCoverImgUrl,
 					}

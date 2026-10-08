@@ -1,13 +1,15 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
-import SearchIcon from "./SearchIcon";
+import Button from '@/components/ui/Button';
+import Icon from '@/components/ui/Icon';
+import { cn } from '@/lib/cn';
 
 export type FilterOption = { value: string; label: string };
 
 type FilterDropdownProps = {
   name: string;
   title: string;
-  icon: "tool" | "ingredient";
+  icon: 'utensils' | 'wheat';
   options: FilterOption[];
   selected: string[];
   onChange: (values: string[]) => void;
@@ -17,9 +19,9 @@ type FilterDropdownProps = {
 
 function normalizeSearch(value: string) {
   return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/gi, "d")
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
     .toLowerCase()
     .trim();
 }
@@ -40,7 +42,7 @@ export default function FilterDropdown({
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const allRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const allSelected = selected.length === options.length;
   const someSelected = selected.length > 0 && !allSelected;
   const selectedLabels = options
@@ -66,23 +68,23 @@ export default function FilterDropdown({
       const above = bounds.top - viewportTop - 16;
       const openAbove = below < 260 && above > below;
 
-      panel.style.top = openAbove ? "auto" : "100%";
-      panel.style.bottom = openAbove ? "100%" : "auto";
-      panel.style.marginTop = openAbove ? "0" : "8px";
-      panel.style.marginBottom = openAbove ? "8px" : "0";
+      panel.style.top = openAbove ? 'auto' : '100%';
+      panel.style.bottom = openAbove ? '100%' : 'auto';
+      panel.style.marginTop = openAbove ? '0' : '8px';
+      panel.style.marginBottom = openAbove ? '8px' : '0';
       panel.style.maxHeight = `${Math.max(180, openAbove ? above : below)}px`;
     }
 
     positionPanel();
-    window.addEventListener("resize", positionPanel);
-    window.addEventListener("scroll", positionPanel, true);
-    window.visualViewport?.addEventListener("resize", positionPanel);
-    window.visualViewport?.addEventListener("scroll", positionPanel);
+    window.addEventListener('resize', positionPanel);
+    window.addEventListener('scroll', positionPanel, true);
+    window.visualViewport?.addEventListener('resize', positionPanel);
+    window.visualViewport?.addEventListener('scroll', positionPanel);
     return () => {
-      window.removeEventListener("resize", positionPanel);
-      window.removeEventListener("scroll", positionPanel, true);
-      window.visualViewport?.removeEventListener("resize", positionPanel);
-      window.visualViewport?.removeEventListener("scroll", positionPanel);
+      window.removeEventListener('resize', positionPanel);
+      window.removeEventListener('scroll', positionPanel, true);
+      window.visualViewport?.removeEventListener('resize', positionPanel);
+      window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
   }, [open]);
 
@@ -99,8 +101,8 @@ export default function FilterDropdown({
       }
     }
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [open, onOpenChange]);
 
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function FilterDropdown({
   return (
     <div
       ref={containerRef}
-      className="relative min-w-0"
+      className='relative min-w-0'
       onBlur={(event) => {
         // Disabling the clear button after clearing may blur it without moving
         // focus outside. Keep the list open so another selection is possible.
@@ -127,7 +129,7 @@ export default function FilterDropdown({
         }
       }}
       onKeyDown={(event) => {
-        if (event.key === "Escape" && open) {
+        if (event.key === 'Escape' && open) {
           event.preventDefault();
           event.stopPropagation();
           close();
@@ -136,47 +138,55 @@ export default function FilterDropdown({
     >
       {/* Keep selected values in the GET form even while the popup is closed. */}
       {selected.map((value) => (
-        <input key={value} type="hidden" name={name} value={value} />
+        <input key={value} type='hidden' name={name} value={value} />
       ))}
       <button
         ref={triggerRef}
-        type="button"
+        type='button'
         aria-expanded={open}
         aria-controls={`${id}-panel`}
         onClick={() => {
-          setQuery("");
+          setQuery('');
           onOpenChange(!open);
         }}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown") {
+          if (event.key === 'ArrowDown') {
             event.preventDefault();
-            setQuery("");
+            setQuery('');
             onOpenChange(true);
           }
         }}
-        className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 ${open ? "border-zinc-900 bg-white ring-1 ring-zinc-900" : selected.length ? "border-zinc-300 bg-white hover:border-zinc-500" : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-white"}`}
+        className={cn(
+          'flex min-h-14 w-full items-center gap-3 rounded-control border px-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent',
+          open
+            ? 'border-accent bg-page ring-2 ring-accent/40'
+            : selected.length
+              ? 'border-ink bg-page hover:border-accent'
+              : 'border-border bg-field hover:border-accent',
+        )}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center text-zinc-500">
-          <SearchIcon name={icon} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 text-sm font-medium text-zinc-900">
+        <Icon name={icon} className='size-6 text-primary' />
+        <span className='min-w-0 flex-1'>
+          <span className='flex items-center gap-2 text-body-sm font-medium text-ink'>
             {title}
             {selected.length > 0 && (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1.5 text-[10px] font-semibold leading-none text-white">
+              <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-micro font-semibold text-on-primary'>
                 {selected.length}
               </span>
             )}
           </span>
-          <span className="mt-0.5 block truncate text-xs text-zinc-500">
+          <span className='mt-0.5 block truncate text-caption font-light text-ink-muted'>
             {allSelected
-              ? "Đã chọn tất cả"
-              : selectedLabels.join(", ") || "Chọn những gì bạn có"}
+              ? 'Đã chọn tất cả'
+              : selectedLabels.join(', ') || 'Chọn những gì bạn có'}
           </span>
         </span>
-        <SearchIcon
-          name="chevron"
-          className={`size-4 text-zinc-400 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+        <Icon
+          name='chevron-down'
+          className={cn(
+            'size-4 text-ink-subtle transition-transform motion-reduce:transition-none',
+            open && 'rotate-180',
+          )}
         />
       </button>
 
@@ -184,56 +194,60 @@ export default function FilterDropdown({
         <div
           ref={panelRef}
           id={`${id}-panel`}
-          className="absolute inset-x-0 top-full z-30 mt-2 flex flex-col rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl shadow-zinc-950/10"
+          className='absolute inset-x-0 top-full z-30 mt-2 flex flex-col rounded-box border border-line bg-page p-2 shadow-soft'
         >
-          <div className="flex h-11 shrink-0 items-center gap-2 rounded-lg bg-zinc-100 px-3 focus-within:ring-2 focus-within:ring-zinc-400">
-            <SearchIcon name="search" className="size-4 text-zinc-500" />
+          <div className='flex h-11 shrink-0 items-center gap-2 rounded-full bg-surface-soft px-3 focus-within:ring-2 focus-within:ring-accent/50'>
+            <Icon name='search' className='size-4 text-ink-muted' />
             <input
               ref={searchRef}
-              type="text"
+              type='text'
               aria-label={`Tìm trong ${title.toLowerCase()}`}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") event.preventDefault();
+                if (event.key === 'Enter') event.preventDefault();
               }}
               placeholder={`Tìm ${title.toLowerCase()}...`}
-              autoComplete="off"
-              className="h-full min-w-0 flex-1 bg-transparent text-base text-zinc-900 outline-none placeholder:text-zinc-500 sm:text-sm"
+              autoComplete='off'
+              className='h-full min-w-0 flex-1 bg-transparent text-body-sm text-ink outline-none placeholder:text-placeholder'
             />
           </div>
 
           <div
-            role="group"
+            role='group'
             aria-label={`${title} bạn có`}
-            className="mt-1 flex min-h-0 min-w-0 flex-col"
+            className='mt-1 flex min-h-0 min-w-0 flex-col'
           >
-            <label className="flex min-h-11 shrink-0 cursor-pointer items-center gap-3 border-b border-zinc-100 px-3 text-sm font-medium text-zinc-900">
+            <label className='flex min-h-11 shrink-0 cursor-pointer items-center gap-3 border-b border-line px-3 text-body-sm font-medium text-ink'>
               <input
                 ref={allRef}
-                type="checkbox"
+                type='checkbox'
                 checked={allSelected}
                 onChange={() =>
                   onChange(
                     allSelected ? [] : options.map((option) => option.value),
                   )
                 }
-                className="size-4 shrink-0 accent-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
+                className='size-4 shrink-0 accent-primary outline-none focus-visible:ring-2 focus-visible:ring-accent'
               />
-              <span className="flex-1">Tất cả</span>
-              <span className="text-xs font-normal text-zinc-400">
+              <span className='flex-1'>Tất cả</span>
+              <span className='text-caption font-light text-ink-subtle'>
                 {options.length} mục
               </span>
             </label>
-            <div className="min-h-0 max-h-60 overflow-y-auto overscroll-contain py-1">
+            <div className='max-h-60 min-h-0 overflow-y-auto overscroll-contain py-1'>
               {filteredOptions.length ? (
                 filteredOptions.map((option) => (
                   <label
                     key={option.value}
-                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm transition hover:bg-zinc-100 ${selected.includes(option.value) ? "bg-zinc-50 text-zinc-950" : "text-zinc-600"} ${option.value === "other" ? "border-t border-zinc-100" : ""}`}
+                    className={cn(
+                      'flex min-h-11 cursor-pointer items-center gap-3 rounded-control px-3 text-body-sm transition-colors hover:bg-highlight-soft',
+                      selected.includes(option.value) ? 'text-ink' : 'text-ink-muted',
+                      option.value === 'other' && 'border-t border-line',
+                    )}
                   >
                     <input
-                      type="checkbox"
+                      type='checkbox'
                       checked={selected.includes(option.value)}
                       onChange={(event) =>
                         onChange(
@@ -244,15 +258,15 @@ export default function FilterDropdown({
                               ),
                         )
                       }
-                      className="size-4 shrink-0 accent-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
+                      className='size-4 shrink-0 accent-primary outline-none focus-visible:ring-2 focus-visible:ring-accent'
                     />
                     <span>{option.label}</span>
                   </label>
                 ))
               ) : (
                 <p
-                  role="status"
-                  className="px-3 py-6 text-center text-sm text-zinc-500"
+                  role='status'
+                  className='px-3 py-6 text-center text-body-sm text-ink-muted'
                 >
                   Không tìm thấy mục phù hợp.
                 </p>
@@ -260,22 +274,18 @@ export default function FilterDropdown({
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-100 px-1 pt-2">
-            <button
-              type="button"
+          <div className='flex shrink-0 items-center justify-between gap-2 border-t border-line px-1 pt-2'>
+            <Button
+              variant='ghost'
+              size='sm'
               disabled={!selected.length}
               onClick={() => onChange([])}
-              className="min-h-10 rounded-lg px-2 text-xs font-medium text-zinc-600 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Bỏ chọn tất cả
-            </button>
-            <button
-              type="button"
-              onClick={close}
-              className="min-h-10 rounded-lg bg-zinc-900 px-4 text-xs font-semibold text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
-            >
-              Xong{selected.length > 0 ? ` · ${selected.length}` : ""}
-            </button>
+            </Button>
+            <Button size='sm' onClick={close}>
+              Xong{selected.length > 0 ? ` · ${selected.length}` : ''}
+            </Button>
           </div>
         </div>
       )}

@@ -15,6 +15,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-bakers_marketplace}
     networks:
       - bakers_network
+    ports:
+      - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
 
