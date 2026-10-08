@@ -402,12 +402,6 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('SET NULL');
 
       table
-        .uuid('recipe_id')
-        .references('id')
-        .inTable('recipes')
-        .onDelete('SET NULL');
-
-      table
         .text('title')
         .notNullable();
 
@@ -426,10 +420,6 @@ export async function up(knex: Knex): Promise<void> {
         .defaultTo(knex.fn.now());
 
       table.index(['author_id'], 'idx_posts_author_id');
-
-      table.unique(['recipe_id'], {
-        indexName: 'uq_posts_recipe_id',
-      });
     })
 
     .createTable('post_tags', (table) => {
