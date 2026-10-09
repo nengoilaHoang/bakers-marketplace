@@ -115,7 +115,6 @@ const ColorPicker = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDraggingRef = useRef(false);
-  const rootRef = useRef<HTMLDivElement>(null);
 
   const canvasWidth = 100;
   const radius = canvasWidth / 2;
@@ -326,16 +325,6 @@ const ColorPicker = ({
   );
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (e.target instanceof Node && !rootRef.current?.contains(e.target)) {
-        onOpenChange(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onOpenChange]);
-
-  useEffect(() => {
     drawColorWheel();
   }, [drawColorWheel]);
 
@@ -346,7 +335,6 @@ const ColorPicker = ({
 
   return (
     <div
-      ref={rootRef}
       style={
         {
           '--current-color': currentValue,

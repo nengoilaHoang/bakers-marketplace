@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import TypeableSelect from './TypeableSelect';
+import { useDropdown } from '@/hooks/useDropdown';
 import ColorPicker from './ColorPicker';
 import RadioButton from './RadioButton';
+import TypeableSelect from './TypeableSelect';
 
 type ConfigInputProps<T extends string | number | boolean> = {
   id: string;
@@ -12,7 +12,7 @@ type ConfigInputProps<T extends string | number | boolean> = {
   value?: T;
   selectOptions?: Readonly<Record<string, T>>;
   onValueChange: (value: T) => void;
-	onOpenStateChange?: (isOpen: boolean) => void;
+  onOpenStateChange?: (isOpen: boolean) => void;
   arrangement?: 'horizontal' | 'vertical';
 };
 
@@ -25,18 +25,19 @@ const ConfigInput = <T extends string | number | boolean>({
   currentValue,
   selectOptions,
   onValueChange,
-	onOpenStateChange,
+  onOpenStateChange,
   arrangement = 'vertical',
 }: ConfigInputProps<T>) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { ref, isOpen, toggle } = useDropdown();
 
-	const handleOpenChange = (open: boolean) => {
-		setIsOpen(open);
-		onOpenStateChange?.(open);
-	};
+  const handleOpenChange = () => {
+    toggle();
+    onOpenStateChange?.(isOpen);
+  };
 
   return (
     <div
+      ref={ref}
       className={`relative min-w-0 flex ${
         arrangement === 'horizontal'
           ? 'flex-row-reverse justify-between items-center gap-2 space-x-2'
@@ -87,7 +88,7 @@ const ConfigInput = <T extends string | number | boolean>({
                 options={selectOptions}
                 currentValue={currentValue}
                 onValueChange={onValueChange}
-								isOpen={isOpen}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               />
             );

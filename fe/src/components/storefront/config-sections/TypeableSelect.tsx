@@ -2,7 +2,6 @@ import Icon from '@/components/ui/Icon';
 import useDebouncedCallback from '@/hooks/useDebounceCallback';
 import React, {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -20,6 +19,18 @@ type TypeableSelectProps<T extends string | number | boolean> = {
   isTypeable?: boolean;
 };
 
+/**
+ * A select component that allows users to type in a value to filter the options.
+ * It supports string, number, and boolean types for the options.
+ *
+ * > **Note:** Open state is handled by the parent
+ *
+ * @template T - The type of the options (string, number, or boolean).
+ * @param {TypeableSelectProps<T>} props - The props for the component.
+ * @returns {JSX.Element} The rendered TypeableSelect component.
+ *
+ * @
+ */
 const TypeableSelect = <T extends string | number | boolean>({
   id,
   name,
@@ -32,7 +43,6 @@ const TypeableSelect = <T extends string | number | boolean>({
 }: TypeableSelectProps<T>) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -100,36 +110,6 @@ const TypeableSelect = <T extends string | number | boolean>({
     };
   }, [updateView]);
 
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     if (containerRef.current) {
-  //       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-  //       setIsNearBottom(scrollTop + clientHeight >= scrollHeight - 5);
-  //     }
-  //   };
-
-  //   const container = containerRef.current;
-  //   if (container) {
-  //     container.addEventListener('scroll', handleScroll);
-  //   }
-
-  //   return () => {
-  //     if (container) {
-  //       container.removeEventListener('scroll', handleScroll);
-  //     }
-  //   };
-  // }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (e.target instanceof Node && !rootRef.current?.contains(e.target)) {
-        onOpenChange(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onOpenChange]);
-
   const handleContainerClick = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -195,7 +175,7 @@ const TypeableSelect = <T extends string | number | boolean>({
   }
 
   return (
-    <div ref={rootRef} className='relative block w-full'>
+    <div className='relative block w-full'>
       <button
         ref={containerRef}
         tabIndex={-1}
@@ -212,7 +192,7 @@ const TypeableSelect = <T extends string | number | boolean>({
             className='flex-1 min-w-0 px-2.5 py-1.5 bg-transparent focus:outline-none focus:border-none'
             type='text'
             autoComplete='off'
-            readOnly={isTypeable}
+            readOnly={!isTypeable}
             onChange={handleInputChange}
             value={inputValue}
           ></input>
