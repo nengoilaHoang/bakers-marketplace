@@ -1,12 +1,10 @@
 import useVendorContext from '@/hooks/storefront/useVendorContext';
-import { useRouter } from 'next/router';
 import { useMemo, useState } from 'react';
 import TypeableSelect from './config-sections/TypeableSelect';
 
 const ReleaseSelect = () => {
-  const router = useRouter();
-  const { id } = router.query;
-  const { currentStorefront, setCurrentReleaseId } = useVendorContext();
+  const { currentStorefront, currentRelease, setCurrentReleaseId } =
+    useVendorContext();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (value: string) => {
@@ -24,7 +22,7 @@ const ReleaseSelect = () => {
     [currentStorefront?.releases],
   );
 
-  if (!currentStorefront) return null;
+  if (!currentStorefront || !currentRelease) return null;
 
   return (
     <div className='flex items-center gap-2'>
@@ -39,7 +37,7 @@ const ReleaseSelect = () => {
         name='releaseId'
         isOpen={isOpen}
         onValueChange={handleChange}
-        currentValue={id as string}
+        currentValue={currentRelease.id}
         options={releaseOptions}
         onOpenChange={setIsOpen}
         isTypeable={false}
