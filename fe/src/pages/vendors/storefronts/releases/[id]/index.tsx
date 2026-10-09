@@ -1,4 +1,5 @@
 import StorefrontEditLayout from '@/components/layout/StorefrontEditLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
 import StorefrontEditor from '@/components/storefront/StorefrontEditor';
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { NextPageWithLayout } from '@/pages/_app';
@@ -22,7 +23,11 @@ const StorefrontReleasePage: NextPageWithLayout = () => {
 };
 
 StorefrontReleasePage.getLayout = function getLayout(page: React.ReactElement) {
-  return <StorefrontEditLayout>{page}</StorefrontEditLayout>;
+  return (
+    <VendorShellLayout>
+      <StorefrontEditLayout>{page}</StorefrontEditLayout>
+    </VendorShellLayout>
+  );
 };
 
 export default StorefrontReleasePage;

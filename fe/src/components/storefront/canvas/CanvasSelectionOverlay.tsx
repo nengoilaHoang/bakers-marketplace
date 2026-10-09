@@ -1,3 +1,4 @@
+import Icon from '@/components/ui/Icon';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import React, {
@@ -370,6 +371,7 @@ const CanvasSelectionOverlay = ({
           </>
         )}
 
+      {/* Rectangle Overlay */}
       {resizeRect && (
         <div
           className={`${
@@ -383,19 +385,20 @@ const CanvasSelectionOverlay = ({
         ></div>
       )}
 
+      {/* Badge Info */}
       <div
         ref={badgeRef}
         style={{
           width: '100%',
           maxWidth: '220px',
         }}
-        className={`pointer-events-auto absolute left-0 ${badgePositionClass} flex items-center justify-between gap-2 bg-blue-600 px-2 py-0.5 text-[11px] font-medium text-white shadow-md`}
+        className={`pointer-events-auto absolute left-0 ${badgePositionClass} flex h-5 items-center justify-between gap-2 bg-blue-600 px-2 py-0.5 text-[11px] font-medium text-white shadow-md`}
       >
-        <div className='flex min-w-0 items-center justify-center gap-2'>
-          <span className='min-w-0 truncate text-ellipsis'>
+        <div className='flex min-w-0 items-center justify-center gap-2 leading-none'>
+          <span className='min-w-0 truncate text-ellipsis text-[11px] leading-none'>
             {activeComponent?.name || 'Component'}
           </span>
-          <span className='shrink-0 text-blue-200 font-mono text-[9px]'>
+          <span className='shrink-0 mt-0.5 font-mono text-[9px] leading-none text-blue-200'>
             {Math.round(overlayRect.width)} &#215;{' '}
             {Math.round(overlayRect.height)}
           </span>
@@ -408,7 +411,7 @@ const CanvasSelectionOverlay = ({
           }}
           className='ml-1 text-white/80 hover:text-white'
         >
-          &#215;
+          <Icon className='size-3' name='close'></Icon>
         </button>
       </div>
     </div>
