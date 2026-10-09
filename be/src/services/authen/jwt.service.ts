@@ -121,7 +121,7 @@ class JwtService {
 		};
 	}
 
-	public getUserIdFromAccessToken(accessToken: string): string {
+	public getUserIdAndRoleFromAccessToken(accessToken: string): { id: string; role: string } {
 		if (!accessToken) {
 			throw new UnauthorizedError(
 				'Access token is required',
@@ -143,7 +143,10 @@ class JwtService {
 				);
 			}
 
-			return payload.id;
+			return {
+				id: payload.id,
+				role: payload.role,
+			}
 		} catch (error) {
 			if (error instanceof jwt.TokenExpiredError) {
 				throw new UnauthorizedError(

@@ -1,7 +1,8 @@
 export class HttpError extends Error {
 	constructor(
-		readonly code: string = '500',
-		message: string,
+		readonly statusCode: number = 500,
+		readonly message: string,
+		readonly code?: string,
 	) {
 		super(message);
 		this.name = new.target.name;
@@ -9,47 +10,46 @@ export class HttpError extends Error {
 }
 
 export class BadRequestError extends HttpError {
-	constructor(message = 'Bad request') {
-		super('400', message);
+	constructor(message = 'Bad request', code?: string) {
+		super(400, message, code);
 	}
 }
 
-export class UnauthorizedError extends Error {
-	public readonly statusCode = 401;
+export class UnauthorizedError extends HttpError {
 	constructor(
 		message: string,
-		public readonly code?: string,
+		readonly code?: string,
 	) {
-		super(message);
+		super(401, message, code);
 	}
 }
 
 export class ForbiddenError extends HttpError {
-	constructor(message = 'Forbidden') {
-		super('403', message);
+	constructor(message = 'Forbidden', code?: string) {
+		super(403, message, code);
 	}
 }
 
 export class NotFoundError extends HttpError {
-	constructor(message = 'Not found') {
-		super('404', message);
+	constructor(message = 'Not found', code?: string) {
+		super(404, message, code);
 	}
 }
 
 export class ConflictError extends HttpError {
-	constructor(message = 'Conflict') {
-		super('409', message);
+	constructor(message = 'Conflict', code?: string) {
+		super(409, message, code);
 	}
 }
 
 export class UnprocessableEntityError extends HttpError {
-	constructor(message = 'Unprocessable entity') {
-		super('422', message);
+	constructor(message = 'Unprocessable entity', code?: string) {
+		super(422, message, code);
 	}
 }
 
 export class InternalServerError extends HttpError {
-	constructor(message = 'Internal server error') {
-		super('500', message);
+	constructor(message = 'Internal server error', code?: string) {
+		super(500, message, code);
 	}
 }

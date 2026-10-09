@@ -2,12 +2,13 @@ import { z } from 'zod';
 
 export const HexColorSchema = z
 	.string()
-	.regex(/^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+	.regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
+export const ColorSchema = z.union([z.string(), HexColorSchema]);
 const TextAlignmentTypeSchema = z.enum(['left', 'center', 'right', 'justify']);
 export const TextStyle = z.object({
 	textAlign: TextAlignmentTypeSchema.default('left'),
 	decoration: z.enum(['strikethrough', 'underline']),
-	txtColor: HexColorSchema,
+	txtColor: ColorSchema,
 	fontWeight: z
 		.union([
 			z.enum(['bold', 'semi-bold', 'extra-bold']),
@@ -89,8 +90,8 @@ const ColorPaletteSchema = z.discriminatedUnion('type', [
 	}),
 	z.object({
 		type: z.literal('custom'),
-		bgColor: HexColorSchema,
-		txtColor: HexColorSchema,
+		bgColor: ColorSchema,
+		fgColor: ColorSchema,
 	}),
 ]);
 

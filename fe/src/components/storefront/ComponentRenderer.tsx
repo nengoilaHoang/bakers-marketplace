@@ -1,6 +1,6 @@
-import { FlattenComponent } from "@/hooks/storefront/useStorefrontReducer";
-import GridComponent from "./composite-components/GridComponent";
-import RichTextComponent from "./leaf-components/rich-text/RichTextComponent";
+import { FlattenComponent } from '@/utils/flattenLayout';
+import GridComponent from './composite-components/GridComponent';
+import RichTextComponent from './leaf-components/rich-text/RichTextComponent';
 
 type ComponentRendererProps = {
   component: FlattenComponent;
@@ -14,9 +14,9 @@ const ComponentRenderer = ({
   sourceSlot,
 }: ComponentRendererProps) => {
   switch (component.type) {
-    case "COMPOSITE": {
+    case 'COMPOSITE': {
       switch (component.componentType) {
-        case "GRID":
+        case 'GRID':
           return (
             <GridComponent
               component={component}
@@ -28,17 +28,17 @@ const ComponentRenderer = ({
           return null;
       }
     }
-    case "COMMERCE":
+    case 'COMMERCE':
       break;
-    case "LEAF":
+    case 'LEAF':
       if (sourceParentId === undefined || sourceSlot === undefined) {
         console.error(
-          "Leaf components must have a sourceParentId and sourceSlot.",
+          'Leaf components must have a sourceParentId and sourceSlot.',
         );
         return null;
       }
       switch (component.componentType) {
-        case "RICH_TEXT":
+        case 'RICH_TEXT':
           return (
             <RichTextComponent
               component={component}
@@ -49,7 +49,7 @@ const ComponentRenderer = ({
         default:
           return null;
       }
-    case "REPEATER":
+    case 'REPEATER':
       break;
     default:
       return null;

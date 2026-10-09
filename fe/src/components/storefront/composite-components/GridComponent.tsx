@@ -1,11 +1,11 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
-import useStorefrontContext from '@/hooks/storefront/useStorefrontContext';
+import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { DeviceBreakpoint } from '@/types/canvas';
+import { FlattenCompositeComponent } from '@/utils/flattenLayout';
+import { CSSProperties, useMemo } from 'react';
 import ComponentRenderer from '../ComponentRenderer';
 import DropZone from '../DropZone';
-import { CSSProperties, useMemo } from 'react';
-import { FlattenCompositeComponent } from '@/utils/flattenLayout';
-import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
-import { DeviceBreakpoint } from '@/types/canvas';
 
 type CompositeComponentProps = {
   component: FlattenCompositeComponent;
@@ -32,7 +32,7 @@ const GridComponent = ({
     sourceParentId,
     sourceSlot,
   });
-  const { state } = useStorefrontContext();
+  const { state } = useStorefrontLayoutContext();
   const { components } = state;
 
   const config = component.config;
@@ -59,8 +59,8 @@ const GridComponent = ({
 
         const style: CSSProperties = {
           gap: gapValue + 'px',
-          gridTemplateColumns: 'repeat(' + colsValue + ', 1fr)',
-          gridTemplateRows: 'repeat(' + rowsValue + ', 1fr)',
+          gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rowsValue}, minmax(0, 1fr))`,
           ...baseStyle,
         };
 

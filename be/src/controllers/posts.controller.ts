@@ -18,6 +18,10 @@ import {
 } from '#/models/posts/posts.model.js';
 import { PostCommentCreateSchema } from '#/models/posts/post-comments.model.js';
 import { PostReportCreateSchema } from '#/models/posts/post-reports.model.js';
+import {
+	AuthenticatedRequest,
+	OptionalAuthenticatedRequest,
+} from '#/types/request.types.js';
 
 const PostIdParamsSchema = z.object({
 	id: z.uuidv4(),
@@ -30,14 +34,6 @@ const UserIdParamsSchema = z.object({
 const CommentParamsSchema = PostIdParamsSchema.extend({
 	commentId: z.uuidv4(),
 });
-
-type AuthenticatedRequest = Request & {
-	userId: string;
-};
-
-type OptionalAuthenticatedRequest = Request & {
-	userId?: string;
-};
 
 function readQueryString(value: unknown): string {
 	return typeof value === 'string' ? value : '';
@@ -64,7 +60,7 @@ class PostController {
 		async (req: OptionalAuthenticatedRequest, res: Response): Promise<void> => {
 			const posts = await this.postService.getPosts(
 				readCursor(req.query),
-				req.userId,
+				req.user?.id,
 			);
 
 			res.status(200).json({ data: posts });
@@ -77,7 +73,7 @@ class PostController {
 				readQueryString(req.query.q),
 				readQueryString(req.query.tag),
 				readCursor(req.query),
-				req.userId,
+				req.user?.id,
 			);
 
 			res.status(200).json({ data: posts });
@@ -87,9 +83,9 @@ class PostController {
 	public getMine = asyncHandler(
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const posts = await this.postService.getByAuthorId(
-				req.userId,
+				req.user.id,
 				readCursor(req.query),
-				req.userId,
+				req.user.id,
 			);
 
 			res.status(200).json({ data: posts });
@@ -99,7 +95,7 @@ class PostController {
 	public getSaved = asyncHandler(
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const posts = await this.postService.getSaved(
-				req.userId,
+				req.user.id,
 				readCursor(req.query),
 			);
 
@@ -114,7 +110,7 @@ class PostController {
 			const posts = await this.postService.getByAuthorId(
 				userId,
 				readCursor(req.query),
-				req.userId,
+				req.user?.id,
 			);
 
 			res.status(200).json({ data: posts });
@@ -125,7 +121,7 @@ class PostController {
 		async (req: OptionalAuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = PostIdParamsSchema.parse(req.params);
 
-			const post = await this.postService.getById(id, req.userId);
+			const post = await this.postService.getById(id, req.user?.id);
 
 			if (!post) {
 				res.status(404).json({ message: 'Post not found' });
@@ -141,7 +137,7 @@ class PostController {
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const input = PostCreateSchema.parse(req.body);
 
-			const post = await this.postService.create(req.userId, input);
+			const post = await this.postService.create(req.user.id, input);
 
 			res.status(201).json({ data: post });
 		},
@@ -152,7 +148,7 @@ class PostController {
 			const { id } = PostIdParamsSchema.parse(req.params);
 			const input = PostUpdateSchema.parse(req.body);
 
-			const post = await this.postService.update(req.userId, id, input);
+			const post = await this.postService.update(req.user.id, id, input);
 
 			res.status(200).json({ data: post });
 		},
@@ -162,7 +158,7 @@ class PostController {
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = PostIdParamsSchema.parse(req.params);
 
-			const post = await this.postService.delete(req.userId, id);
+			const post = await this.postService.delete(req.user.id, id);
 
 			res.status(200).json({ data: post });
 		},
@@ -174,7 +170,7 @@ class PostController {
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = PostIdParamsSchema.parse(req.params);
 
-			const status = await this.postLikeService.like(req.userId, id);
+			const status = await this.postLikeService.like(req.user.id, id);
 
 			res.status(200).json({ data: status });
 		},
@@ -184,7 +180,7 @@ class PostController {
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = PostIdParamsSchema.parse(req.params);
 
-			const status = await this.postLikeService.unlike(req.userId, id);
+			const status = await this.postLikeService.unlike(req.user.id, id);
 
 			res.status(200).json({ data: status });
 		},
@@ -196,7 +192,7 @@ class PostController {
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = PostIdParamsSchema.parse(req.params);
 
-			const status = await this.postSaveService.save(req.userId, id);
+			const status = await this.postSaveService.save(req.user.id, id);
 
 			res.status(200).json({ data: status });
 		},
@@ -206,7 +202,7 @@ class PostController {
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = PostIdParamsSchema.parse(req.params);
 
-			const status = await this.postSaveService.unsave(req.userId, id);
+			const status = await this.postSaveService.unsave(req.user.id, id);
 
 			res.status(200).json({ data: status });
 		},
@@ -220,7 +216,7 @@ class PostController {
 			const input = PostReportCreateSchema.parse(req.body);
 
 			const report = await this.postReportService.report(
-				req.userId,
+				req.user.id,
 				id,
 				input,
 			);
@@ -247,7 +243,7 @@ class PostController {
 			const input = PostCommentCreateSchema.parse(req.body);
 
 			const comment = await this.postCommentService.create(
-				req.userId,
+				req.user.id,
 				id,
 				input,
 			);
@@ -261,7 +257,7 @@ class PostController {
 			const { id, commentId } = CommentParamsSchema.parse(req.params);
 
 			const comment = await this.postCommentService.delete(
-				req.userId,
+				req.user.id,
 				id,
 				commentId,
 			);

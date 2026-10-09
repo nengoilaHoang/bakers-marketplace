@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo } from "react";
-import StorefrontContext, { StorefrontContextValue } from "./StorefrontContext";
-import useStorefrontReducer, { LayoutState } from "./useStorefrontReducer";
-import { DeviceBreakpoint } from "@/types/canvas";
-import { FlattenComponent } from "@/utils/flattenLayout";
+import { DeviceBreakpoint } from '@/types/canvas';
+import { FlattenComponent } from '@/utils/flattenLayout';
+import React, { useCallback, useMemo } from 'react';
+import StorefrontLayoutContext, {
+  StorefrontLayoutContextValue,
+} from './StorefrontLayoutContext';
+import useLayoutReducer, { LayoutState } from './useLayoutReducer';
 
-const StorefrontProvider = ({
+const StorefrontLayoutProvider = ({
   children,
   initialState,
 }: {
@@ -14,13 +16,13 @@ const StorefrontProvider = ({
     | ((props: { root: FlattenComponent }) => React.ReactNode);
   initialState: LayoutState;
 }) => {
-  const { state, dispatch } = useStorefrontReducer(initialState);
+  const { state, dispatch } = useLayoutReducer(initialState);
 
   const updateConfig = useCallback(
-    (targetComponentId: string, config: Record<string, unknown>) => {
+    (targetComponentId: string, pathname: string, value: unknown) => {
       dispatch({
-        type: "UPDATE_CONFIG",
-        payload: { targetComponentId, config },
+        type: 'UPDATE_CONFIG',
+        payload: { targetComponentId, pathname, value },
       });
     },
     [dispatch],
@@ -35,7 +37,7 @@ const StorefrontProvider = ({
       targetSlot: number,
     ) => {
       dispatch({
-        type: "MOVE_COMPONENT",
+        type: 'MOVE_COMPONENT',
         payload: {
           breakpoint,
           sourceParentId,
@@ -51,14 +53,14 @@ const StorefrontProvider = ({
   const removeComponent = useCallback(
     (parentId: string, slot: number, targetComponentId: string) => {
       dispatch({
-        type: "REMOVE_COMPONENT",
+        type: 'REMOVE_COMPONENT',
         payload: { parentId, slot, targetComponentId },
       });
     },
     [dispatch],
   );
 
-  const value: StorefrontContextValue = useMemo(
+  const value: StorefrontLayoutContextValue = useMemo(
     () => ({
       state,
       updateConfig,
@@ -76,10 +78,10 @@ const StorefrontProvider = ({
   const extraProps = { root };
 
   return (
-    <StorefrontContext.Provider value={value}>
-      {typeof children === "function" ? children(extraProps) : children}
-    </StorefrontContext.Provider>
+    <StorefrontLayoutContext.Provider value={value}>
+      {typeof children === 'function' ? children(extraProps) : children}
+    </StorefrontLayoutContext.Provider>
   );
 };
 
-export default StorefrontProvider;
+export default StorefrontLayoutProvider;

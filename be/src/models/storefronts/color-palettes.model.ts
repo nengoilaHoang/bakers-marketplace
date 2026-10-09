@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { HexColorSchema } from '../layout-components/base-layout-components.model.js';
+import { ColorSchema } from '../layout-components/base-layout-components.model.js';
 
 export const ColorPaletteTableSchema = z.object({
 	id: z.uuidv4().readonly(),
-	colorBackground: HexColorSchema,
-	colorSurface: HexColorSchema,
-	colorBorder: HexColorSchema,
-	colorTextPrimary: HexColorSchema,
-	colorTextSecondary: HexColorSchema,
-	colorPrimary: HexColorSchema,
-	colorPrimaryForeground: HexColorSchema,
-	colorSecondary: HexColorSchema,
-	colorSecondaryForeground: HexColorSchema,
-	colorAccent: HexColorSchema,
-	colorAccentForeground: HexColorSchema,
+	colorBackground: ColorSchema,
+	colorSurface: ColorSchema,
+	colorBorder: ColorSchema,
+	colorTextPrimary: ColorSchema,
+	colorTextSecondary: ColorSchema,
+	colorPrimary: ColorSchema,
+	colorPrimaryForeground: ColorSchema,
+	colorSecondary: ColorSchema,
+	colorSecondaryForeground: ColorSchema,
+	colorAccent: ColorSchema,
+	colorAccentForeground: ColorSchema,
 });
 
 export const ColorPaletteSchema = ColorPaletteTableSchema;

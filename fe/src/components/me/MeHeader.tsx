@@ -1,7 +1,7 @@
 import Avatar from '@/components/ui/Avatar';
 import Container from '@/components/ui/Container';
 import PillTabs from '@/components/ui/PillTabs';
-import type { SessionAccount } from '@/hooks/useSessionUser';
+import { User } from '@/types/user';
 
 export type MeSection = 'posts' | 'recipes' | 'saved' | 'settings';
 
@@ -15,7 +15,7 @@ const SECTIONS: Array<{ id: MeSection; label: string; href: string }> = [
 type MeHeaderProps = Readonly<{
   title: string;
   active: MeSection;
-  account: SessionAccount | null;
+  account: User | null;
 }>;
 
 // Đầu trang tài khoản: tiêu đề, ảnh đại diện + tên, tab chuyển mục.
@@ -25,15 +25,27 @@ export default function MeHeader({ title, active, account }: MeHeaderProps) {
       <Container size='narrow' className='pt-14 pb-9'>
         <h1 className='text-h2 font-semibold text-ink'>{title}</h1>
         <div className='mt-4 flex items-center gap-6'>
-          <Avatar size='md' label={account ? `Ảnh đại diện ${account.displayName}` : 'Ảnh đại diện'} />
+          <Avatar
+            size='md'
+            label={
+              account ? `Ảnh đại diện ${account.displayName}` : 'Ảnh đại diện'
+            }
+          />
           <div className='min-w-0'>
             {account ? (
               <>
-                <p className='truncate text-h4 font-medium text-ink'>{account.displayName}</p>
-                <p className='truncate text-body-sm font-light text-ink-muted'>{account.email}</p>
+                <p className='truncate text-h4 font-medium text-ink'>
+                  {account.displayName}
+                </p>
+                <p className='truncate text-body-sm font-light text-ink-muted'>
+                  {account.email}
+                </p>
               </>
             ) : (
-              <div aria-hidden className='flex flex-col gap-2 motion-safe:animate-pulse'>
+              <div
+                aria-hidden
+                className='flex flex-col gap-2 motion-safe:animate-pulse'
+              >
                 <div className='h-6 w-40 rounded-media bg-surface-soft' />
                 <div className='h-4 w-56 rounded-media bg-surface-soft' />
               </div>

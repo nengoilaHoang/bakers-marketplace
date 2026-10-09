@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { cn } from '@/lib/cn';
 
 import AccountMenu from './AccountMenu';
-import { ButtonLink } from './Button';
 import CreateMenu from './CreateMenu';
 import Icon from './Icon';
 import { IconLink } from './IconButton';
@@ -20,39 +19,10 @@ const MAIN_NAV: NavItem[] = [
 ];
 
 type SiteHeaderProps = Readonly<{
-  // guest: chưa đăng nhập (nút Đăng nhập/Đăng ký). member: đã đăng nhập (icon đã lưu, tài khoản).
-  // session: tự kiểm tra phiên đăng nhập rồi hiện một trong hai — dùng cho trang thật.
-  variant?: 'guest' | 'member' | 'session';
   activeHref?: string;
 }>;
 
-function AccountActions({ variant }: { variant: SiteHeaderProps['variant'] }) {
-  if (variant === 'session') return <AccountMenu />;
-
-  if (variant === 'member') {
-    return (
-      <>
-        <IconLink href='/me?tab=saved' label='Bài viết đã lưu' variant='ghost'>
-          <Icon name='bookmark' className='size-6.5' />
-        </IconLink>
-        <IconLink href='/me' label='Tài khoản' variant='ghost'>
-          <Icon name='user' className='size-6.5' />
-        </IconLink>
-      </>
-    );
-  }
-
-  return (
-    <ButtonLink href='/authen/login' size='sm' className='uppercase'>
-      Đăng nhập / Đăng ký
-    </ButtonLink>
-  );
-}
-
-export default function SiteHeader({
-  variant = 'member',
-  activeHref,
-}: SiteHeaderProps) {
+export default function SiteHeader({ activeHref }: SiteHeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -84,7 +54,14 @@ export default function SiteHeader({
         </nav>
 
         <div className='flex items-center gap-1.5 sm:gap-2.5'>
-          <AccountActions variant={variant} />
+          <IconLink
+            href='/me?tab=saved'
+            label='Bài viết đã lưu'
+            variant='ghost'
+          >
+            <Icon name='bookmark' className='size-6.5' />
+          </IconLink>
+          <AccountMenu />
           <button
             type='button'
             aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
@@ -135,7 +112,10 @@ export default function SiteHeader({
           <SearchBar
             formClassName='flex-1 lg:w-58 lg:flex-none'
             onSearch={(query) =>
-              void router.push({ pathname: '/recipes/search', query: query ? { q: query } : {} })
+              void router.push({
+                pathname: '/recipes/search',
+                query: query ? { q: query } : {},
+              })
             }
           />
           <CreateMenu />

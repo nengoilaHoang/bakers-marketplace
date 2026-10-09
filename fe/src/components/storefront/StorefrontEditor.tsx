@@ -1,86 +1,22 @@
-import StorefrontProvider from "@/hooks/storefront/StorefrontProvider";
-import { StorefrontRelease } from "@/types/storefront";
-import flattenLayout, {
-  FlattenComponent,
-  FlattenCompositeComponent,
-} from "@/utils/flattenLayout";
-import { DragDropProvider } from "@dnd-kit/react";
-import { useMemo } from "react";
-import ComponentRenderer from "./ComponentRenderer";
-import { PointerSensor, PointerActivationConstraints } from "@dnd-kit/dom";
-import useStorefrontContext from "@/hooks/storefront/useStorefrontContext";
-import { LayoutState } from "@/hooks/storefront/useStorefrontReducer";
-import useStorefront from "@/hooks/storefront/useStorefront";
-import CanvasStage from "./canvas/CanvasStage";
-import useStorefrontCanvasContext from "@/hooks/storefront/useStorefrontCanvasContext";
-import StorefrontConfigSidebar from "./StorefrontConfigSidebar";
+import StorefrontLayoutProvider from '@/hooks/storefront/StorefrontLayoutProvider';
+import { LayoutState } from '@/hooks/storefront/useLayoutReducer';
+import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { StorefrontReleaseWithLayout } from '@/types/storefront';
+import flattenLayout, { FlattenComponent } from '@/utils/flattenLayout';
+import { PointerActivationConstraints, PointerSensor } from '@dnd-kit/dom';
+import { DragDropProvider } from '@dnd-kit/react';
+import { useMemo } from 'react';
+import CanvasStage from './canvas/CanvasStage';
+import ComponentRenderer from './ComponentRenderer';
+import StorefrontConfigSidebar from './StorefrontConfigSidebar';
 
 type StorefrontEditorProps = {
-  storeId: string;
-  releaseId?: string;
+  release: StorefrontReleaseWithLayout;
 };
-
-type StorefrontEditorContentProps = {
-  release: StorefrontRelease;
-};
-
-// const DEFAULT_FALLBACK_LAYOUT: LayoutState = {
-//   id: "layout-default",
-//   type: "HOME",
-//   rootId: "root-grid",
-//   removedComponents: new Set(),
-//   components: {
-//     "root-grid": {
-//       id: "root-grid",
-//       name: "Main Grid Composite",
-//       type: "COMPOSITE",
-//       componentType: "GRID",
-//       config: {
-//         h: "auto",
-//         w: "full",
-//         alignX: "stretch",
-//         alignY: "stretch",
-//         padding: { top: "md", bottom: "md", left: "md", right: "md" },
-//         colorScheme: "default",
-//         colorPalette: { type: "palette", token: "surface" },
-//         wSpan: undefined,
-//         hSpan: undefined,
-//         layout: "UNIFORM",
-//         rows: 1,
-//         cols: 2,
-//         gap: 16,
-//         borderRadius: 8,
-//       },
-//       children: {
-//         1: "rich-text-leaf-1",
-//       },
-//     },
-//     "rich-text-leaf-1": {
-//       id: "rich-text-leaf-1",
-//       name: "Welcome Text",
-//       type: "LEAF",
-//       componentType: "RICH_TEXT",
-//       config: {
-//         h: "auto",
-//         w: "full",
-//         alignX: "stretch",
-//         alignY: "stretch",
-//         padding: { top: "sm", bottom: "sm", left: "sm", right: "sm" },
-//         colorScheme: "default",
-//         colorPalette: { type: "palette", token: "surface" },
-//         wSpan: 1,
-//         hSpan: 1,
-//         content: {
-//           format: "html",
-//           body: "",
-//         },
-//       },
-//     },
-//   },
-// };
 
 const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
-  const { moveComponent, state } = useStorefrontContext();
+  const { moveComponent } = useStorefrontLayoutContext();
   const {
     breakpoint,
     zoom,
@@ -123,7 +59,7 @@ const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
         };
 
         moveComponent(
-          breakpoint === "fluid" ? "desktop" : breakpoint,
+          breakpoint === 'fluid' ? 'desktop' : breakpoint,
           sourceParentId,
           sourceSlot,
           targetParentId,
@@ -143,7 +79,7 @@ const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
         }),
       ]}
     >
-      <div className="relative flex flex-1 size-full overflow-hidden">
+      <div className='relative flex flex-1 size-full overflow-hidden'>
         <CanvasStage
           currentBreakpoint={breakpoint}
           zoom={zoom}
@@ -158,7 +94,7 @@ const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
   );
 };
 
-const StorefrontEditorContent = ({ release }: StorefrontEditorContentProps) => {
+const StorefrontEditor = ({ release }: StorefrontEditorProps) => {
   const layout = useMemo<LayoutState | undefined>(() => {
     if (!release?.layouts || release.layouts.length === 0) {
       return undefined;
@@ -183,7 +119,7 @@ const StorefrontEditorContent = ({ release }: StorefrontEditorContentProps) => {
       removedComponents: new Set<string>(),
     }));
 
-    return layoutStates.find((item) => item.type === "HOME") ?? layoutStates[0];
+    return layoutStates.find((item) => item.type === 'HOME') ?? layoutStates[0];
   }, [release.layouts]);
 
   if (!layout) {
@@ -191,20 +127,10 @@ const StorefrontEditorContent = ({ release }: StorefrontEditorContentProps) => {
   }
 
   return (
-    <StorefrontProvider initialState={layout}>
+    <StorefrontLayoutProvider initialState={layout}>
       {({ root }) => <StorefrontDndContainer root={root} />}
-    </StorefrontProvider>
+    </StorefrontLayoutProvider>
   );
-};
-
-const StorefrontEditor = ({ storeId, releaseId }: StorefrontEditorProps) => {
-  const { release, isLoading } = useStorefront(storeId, releaseId);
-
-  if (isLoading || !release) {
-    return null;
-  }
-
-  return <StorefrontEditorContent release={release} />;
 };
 
 export default StorefrontEditor;

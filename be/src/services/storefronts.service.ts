@@ -5,24 +5,41 @@ import { StorefrontRelease } from '#/models/storefronts/storefront-releases.mode
 import { NotFoundError } from '#/utils/http-errors.js';
 
 export class StorefrontService {
-	constructor(private readonly storefrontDao: StorefrontDao) {}
+  constructor(private readonly storefrontDao: StorefrontDao) {}
 
-	public ensureExists = async (id: string): Promise<void> => {
-		const exists = await this.storefrontDao.checkIfExists(id);
-		if (!exists) {
-			throw new NotFoundError(`Storefront with ${id} does not exists.`);
-		}
-	};
+  public ensureStoreExists = async (id: string): Promise<void> => {
+    const exists = await this.storefrontDao.checkIfStoreExists(id);
+    if (!exists) {
+      throw new NotFoundError(`Storefront with ${id} does not exists.`);
+    }
+  };
 
-	public getActiveRelease = async (
-		id: string,
-	): Promise<StorefrontRelease | null> => {
-		return await this.storefrontDao.getActiveRelease(id);
-	};
+  public ensureReleaseExists = async (id: string): Promise<void> => {
+    const exists = await this.storefrontDao.checkIfStoreExists(id);
+    if (!exists) {
+      throw new NotFoundError(`Release with ${id} does not exists.`);
+    }
+  };
 
-	public getRelease = async (storeId: string, releaseId: string): Promise<StorefrontRelease | null> => {
-		return await this.storefrontDao.getRelease(storeId, releaseId);
-	};
+  public getVendorStorefronts = async (vendorId: string) => {
+    return await storefrontDao.getVendorStorefronts(vendorId);
+  };
+
+  public getActiveRelease = async (
+    id: string,
+  ): Promise<StorefrontRelease | null> => {
+    await this.ensureStoreExists(id);
+    return await this.storefrontDao.getActiveRelease(id);
+  };
+
+  public getRelease = async (
+    storeId: string,
+    releaseId: string,
+  ): Promise<StorefrontRelease | null> => {
+    await this.ensureStoreExists(storeId);
+    await this.ensureReleaseExists(releaseId);
+    return await this.storefrontDao.getRelease(storeId, releaseId);
+  };
 }
 
 const storefrontService = new StorefrontService(storefrontDao);

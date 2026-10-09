@@ -1,4 +1,5 @@
 import VendorLayout from '@/components/layout/VendorLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
 import { NextPageWithLayout } from '@/pages/_app';
 
 const StorefrontPage: NextPageWithLayout = () => {
@@ -14,7 +15,11 @@ const StorefrontPage: NextPageWithLayout = () => {
 };
 
 StorefrontPage.getLayout = function getLayout(page: React.ReactElement) {
-  return <VendorLayout>{page}</VendorLayout>;
+  return (
+    <VendorShellLayout>
+      <VendorLayout>{page}</VendorLayout>
+    </VendorShellLayout>
+  );
 };
 
 export default StorefrontPage;

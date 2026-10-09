@@ -1,8 +1,8 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
+import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { RichTextLeafComponent } from '@/types/layout-component/leaf-component';
 import { useRef, useState } from 'react';
 import RichTextEditor from './RichTextEditor';
-import useStorefrontContext from '@/hooks/storefront/useStorefrontContext';
 
 const RichTextComponent = ({
   component,
@@ -16,6 +16,7 @@ const RichTextComponent = ({
   const {
     id,
     baseClasses: className,
+    baseStyle,
     ref,
     isDragging,
     isSelected,
@@ -24,7 +25,7 @@ const RichTextComponent = ({
   } = useLayoutComponent({ component, sourceParentId, sourceSlot });
 
   const [openEditor, setOpenEditor] = useState(false);
-  const { updateConfig } = useStorefrontContext();
+  const { updateConfig } = useStorefrontLayoutContext();
   const lastClickTime = useRef(0);
   const THRESHOLD_MS = 400;
   const richTextBody =
@@ -49,19 +50,13 @@ const RichTextComponent = ({
   };
 
   const handleOnSave = (newContent: string) => {
-    updateConfig(component.id, {
-      ...component.config,
-      content: {
-        ...component.config.content,
-        body: newContent,
-      },
-    });
+    updateConfig(component.id, 'content.body', newContent);
     setOpenEditor(() => false);
   };
 
   return (
     <div
-      className={`min-w-0 max-w-full wrap-break-word ${className} `}
+      className={`wrap-break-word ${className} `}
       id={id}
       ref={ref}
       role='button'
@@ -76,6 +71,7 @@ const RichTextComponent = ({
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
+      style={baseStyle}
     >
       {openEditor ? (
         <RichTextEditor
@@ -86,7 +82,7 @@ const RichTextComponent = ({
         ></RichTextEditor>
       ) : null}
       <div
-        className='min-w-0 max-w-full wrap-break-word'
+        className='max-h-full max-w-full wrap-break-word whitespace-pre-wrap overflow-hidden'
         dangerouslySetInnerHTML={{
           __html: component.config.content.body,
         }}

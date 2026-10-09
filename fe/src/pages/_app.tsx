@@ -1,11 +1,12 @@
-import "@/styles/globals.css";
-import { NextPage } from "next";
-import type { AppProps } from "next/app";
-import { ReactElement, ReactNode } from "react";
+import AuthenticationProvider from '@/hooks/user/AuthenticationProvider';
+import '@/styles/globals.css';
+import { NextPage } from 'next';
+import type { AppProps } from 'next/app';
+import { ReactElement, ReactNode } from 'react';
 
 import { beVietnamPro, play, playfairDisplay } from '@/styles/fonts';
 
-export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
 
@@ -26,7 +27,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           --font-play: ${play.style.fontFamily};
         }
       `}</style>
-      {getLayout(<Component {...pageProps} />)}
+      {
+        <AuthenticationProvider>
+          {getLayout(<Component {...pageProps} />)}
+        </AuthenticationProvider>
+      }
     </>
   );
 }
