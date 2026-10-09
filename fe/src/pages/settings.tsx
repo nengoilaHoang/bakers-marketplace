@@ -6,13 +6,13 @@ import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
 import PageTitle from '@/components/ui/PageTitle';
-import { useSessionUser } from '@/hooks/useSessionUser';
+import useAuth from '@/hooks/user/useAuthContext';
 import request, { ApiError } from '@/lib/api';
 
 type ResetEmailStatus = 'idle' | 'sending' | 'success' | 'error';
 
 export default function SettingsPage() {
-  const account = useSessionUser();
+  const { account } = useAuth();
   const [status, setStatus] = useState<ResetEmailStatus>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -55,7 +55,9 @@ export default function SettingsPage() {
             <dt className='font-medium text-ink'>Tên hiển thị</dt>
             <dd className='text-ink-muted'>{account?.displayName ?? '…'}</dd>
             <dt className='font-medium text-ink'>Email</dt>
-            <dd className='break-all text-ink-muted'>{account?.email ?? '…'}</dd>
+            <dd className='break-all text-ink-muted'>
+              {account?.email ?? '…'}
+            </dd>
           </dl>
         </section>
 
@@ -70,7 +72,10 @@ export default function SettingsPage() {
           <p className='text-body-sm text-ink-muted'>
             Chúng tôi sẽ gửi liên kết đổi mật khẩu tới email của bạn.
           </p>
-          <Button onClick={() => void sendResetEmail()} disabled={status === 'sending'}>
+          <Button
+            onClick={() => void sendResetEmail()}
+            disabled={status === 'sending'}
+          >
             {status === 'sending'
               ? 'Đang gửi...'
               : status === 'success'
@@ -78,7 +83,10 @@ export default function SettingsPage() {
                 : 'Gửi email đổi mật khẩu'}
           </Button>
           {message && (
-            <Alert tone={status === 'error' ? 'danger' : 'success'} className='w-full'>
+            <Alert
+              tone={status === 'error' ? 'danger' : 'success'}
+              className='w-full'
+            >
               {message}
             </Alert>
           )}

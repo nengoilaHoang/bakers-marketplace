@@ -7,7 +7,7 @@ import MyRecipesTab from '@/components/me/MyRecipesTab';
 import SavedPostsTab from '@/components/me/SavedPostsTab';
 import Container from '@/components/ui/Container';
 import PageTitle from '@/components/ui/PageTitle';
-import { useSessionUser } from '@/hooks/useSessionUser';
+import useAuth from '@/hooks/user/useAuthContext';
 
 const TABS = [
   { id: 'posts', title: 'Bài viết của tôi', Content: MyPostsTab },
@@ -17,7 +17,7 @@ const TABS = [
 
 export default function MePage() {
   const router = useRouter();
-  const account = useSessionUser();
+  const { account } = useAuth();
   const activeTab = TABS.find((tab) => tab.id === router.query.tab) ?? TABS[0];
   const { Content } = activeTab;
 
