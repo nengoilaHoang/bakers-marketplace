@@ -12,7 +12,7 @@ type AvatarMenuProps = Readonly<{
 }>;
 
 export default function AvatarMenu({ actions }: AvatarMenuProps) {
-  const { user, isLoading, logout } = useAuth();
+  const { account, isAuthenticating, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -53,11 +53,11 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
     }
   };
 
-  if (isLoading) {
+  if (isAuthenticating) {
     return <div className='size-9 animate-pulse rounded-full bg-zinc-200' />;
   }
 
-  if (!user) {
+  if (!account) {
     return (
       <div className='flex items-center gap-2'>
         <Link
@@ -76,7 +76,7 @@ export default function AvatarMenu({ actions }: AvatarMenuProps) {
     );
   }
 
-  const avatarLabel = user.displayName.trim().charAt(0).toUpperCase() || 'U';
+  const avatarLabel = account.displayName.trim().charAt(0).toUpperCase() || 'U';
 
   return (
     <div ref={menuRef} className='relative'>

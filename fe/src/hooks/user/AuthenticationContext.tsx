@@ -2,9 +2,9 @@ import { User } from '@/types/user';
 import { createContext } from 'react';
 
 type AuthenticationContextValues = {
-  user: User | null;
-  setUser: (user: User | null) => void;
-  isLoading: boolean;
+  account: User | null;
+  setAccount: (user: User | null) => void;
+  isAuthenticating: boolean;
   isAuthenticated: boolean;
   logout: () => Promise<void>;
 };

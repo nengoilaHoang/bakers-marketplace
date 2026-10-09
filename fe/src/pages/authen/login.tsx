@@ -17,7 +17,7 @@ const LINK_CLASSES =
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { setAccount } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +30,7 @@ export default function LoginPage() {
 
     try {
       const user = await normalLogin(email.trim(), password);
-      setUser(user);
+      setAccount(user);
 
       const queryPath =
         typeof router.query.next === 'string' &&
@@ -47,7 +47,7 @@ export default function LoginPage() {
         destination = '/';
       }
 
-      await router.replace(destination);
+      return router.replace(destination);
     } catch (requestError) {
       setError(
         requestError instanceof ApiError

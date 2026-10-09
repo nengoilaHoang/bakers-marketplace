@@ -21,7 +21,7 @@ function firstQueryValue(value: string | string[] | undefined): string {
 
 export default function GoogleOAuthRegisterCallbackPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { setAccount } = useAuth();
   const callbackStarted = useRef(false);
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
     null,
@@ -85,7 +85,7 @@ export default function GoogleOAuthRegisterCallbackPage() {
       normalizedDisplayName,
     )
       .then((user) => {
-        setUser(user);
+        setAccount(user);
         return router.replace('/');
       })
       .catch((e) => {

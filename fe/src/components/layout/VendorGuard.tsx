@@ -3,18 +3,18 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 const VendorGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
+  const { account, isAuthenticating: isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user?.role !== 'VENDOR') {
+    if (!isLoading && account?.role !== 'VENDOR') {
       router.replace('/');
     }
-  }, [user, isLoading, router]);
+  }, [account, isLoading, router]);
 
   if (isLoading) return null;
 
-  if (user?.role !== 'VENDOR') {
+  if (account?.role !== 'VENDOR') {
     return null;
   }
 

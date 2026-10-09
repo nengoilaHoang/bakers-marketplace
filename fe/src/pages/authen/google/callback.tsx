@@ -19,7 +19,7 @@ function firstQueryValue(value: string | string[] | undefined): string {
 
 export default function GoogleOAuthCallbackPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { setAccount } = useAuth();
   const callbackStarted = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export default function GoogleOAuthCallbackPage() {
 
     void googleLogin(code, getGoogleOAuthRedirectUri('login'))
       .then((user) => {
-        setUser(user);
+        setAccount(user);
 
         const queryPath =
           typeof router.query.next === 'string' &&
@@ -87,7 +87,7 @@ export default function GoogleOAuthCallbackPage() {
             : 'Không thể đăng nhập bằng Google. Vui lòng thử lại.',
         );
       });
-  }, [router, setUser]);
+  }, [router, setAccount]);
 
   return (
     <>
