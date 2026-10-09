@@ -10,25 +10,35 @@ import VendorContext from './VendorContext';
 
 const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { account, isAuthenticating } = useAuth();
   const [storefronts, setStorefronts] = useState<Storefront[]>([]);
   const [currentStorefrontId, setCurrentStorefrontId] = useState<string>('');
   const [currentReleaseId, setCurrentReleaseId] = useState('');
   const [currentRelease, setCurrentRelease] =
     useState<StorefrontReleaseWithLayout | null>(null);
 
+  const isVendor = account?.role === 'VENDOR';
+
+  // Check if the current authenticated user is in /vendors
   useEffect(() => {
-    if (!router.isReady) return;
+    if (isAuthenticating || !router.isReady) return;
+    if (router.pathname.startsWith('/vendors') && !isVendor) {
+      void router.replace('/');
+    }
+  }, [isAuthenticating, isVendor, router]);
+
+  // Update currentReleaseId when the route changes
+  useEffect(() => {
+    if (!account || !router.isReady) return;
     const { id } = router.query;
     if (typeof id === 'string' && id !== currentReleaseId) {
       queueMicrotask(() => setCurrentReleaseId(id));
     }
-  }, [currentReleaseId, router.isReady, router.query]);
+  }, [currentReleaseId, router.isReady, router.query, account]);
 
+  // Fetch all vendors' storefronts on first load
   useEffect(() => {
-    if (!user || !router.isReady) return;
-    if (!router.pathname.startsWith('/vendors')) return;
-
+    if (!account || !router.isReady) return;
     const controller = new AbortController();
 
     const fetchMyStorefronts = async () => {
@@ -53,7 +63,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
             return defaultRelease ? defaultRelease.id : '';
           });
         }
-      } catch (err: Error) {
+      } catch (err: unknown) {
         const isAbortError =
           err instanceof DOMException && err.name === 'AbortError';
         if (isAbortError || controller.signal.aborted) return;
@@ -69,7 +79,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
       window.clearTimeout(requestTimer);
       controller.abort();
     };
-  }, [router.isReady, router.pathname, user]);
+  }, [router.isReady, router.pathname, account]);
 
   const activeStorefront = useMemo(
     function () {
