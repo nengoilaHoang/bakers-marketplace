@@ -143,10 +143,6 @@ export function getBaseLayoutClassesAndStyles(
     getDimensionClass('w', config.w),
     getDimensionClass('h', config.h),
 
-    // Grid Spans
-    config.wSpan ? `col-span-${config.wSpan}` : undefined,
-    config.hSpan ? `row-span-${config.hSpan}` : undefined,
-
     // Alignments
     getAlignXClass(config.alignX),
     getAlignYClass(config.alignY),

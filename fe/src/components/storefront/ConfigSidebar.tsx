@@ -1,11 +1,17 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
 import { useState } from 'react';
 import AlignmentSection from './config-sections/AlignmentSection';
+import BentoSection from './config-sections/BentoSection';
 import DimensionSection from './config-sections/DimensionSection';
 import PaddingSection from './config-sections/PaddingSection';
 import ThemeSection from './config-sections/ThemeSection';
 
-export type SectionId = 'dimensions' | 'alignment' | 'padding' | 'theme';
+export type SectionId =
+  | 'dimensions'
+  | 'alignment'
+  | 'padding'
+  | 'theme'
+  | 'bento';
 
 type ConfigSidebarProps<T extends BaseLayoutComponentConfig<unknown>> = {
   isOpen: boolean;
@@ -25,7 +31,10 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
     padding: true,
     alignment: true,
     theme: true,
+    bento: true,
   });
+
+  const bentoConfigExists = config.colSpan && config.rowSpan;
 
   const [activeSectionId, setActiveSectionId] = useState<SectionId | null>(
     null,
@@ -106,6 +115,21 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
           }
           zIndex={getSectionZIndex('theme')}
         />
+        {bentoConfigExists && (
+          <BentoSection
+            isOpen={openSections.bento}
+            toggleSection={toggleSection}
+            span={{
+              col: config.colSpan!,
+              row: config.rowSpan!,
+            }}
+            onUpdate={onUpdate}
+            onActiveSectionChange={(isActive) =>
+              setActiveSectionId(isActive ? 'bento' : null)
+            }
+            zIndex={getSectionZIndex('bento')}
+          />
+        )}
       </div>
     </aside>
   );

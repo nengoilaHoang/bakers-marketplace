@@ -38,17 +38,7 @@ const GridComponent = ({
   const config = component.config;
   const { rows, cols, gap, layout } = config;
 
-  const className = useMemo(() => {
-    switch (layout) {
-      case 'UNIFORM': {
-        return `grid ${baseClasses}`;
-      }
-      default:
-        return;
-    }
-  }, [baseClasses, layout]);
-
-  const { breakpoint } = useStorefrontCanvasContext();
+  const { breakpoint: currentBp } = useStorefrontCanvasContext();
 
   const gridStyles = useMemo<{ [K in DeviceBreakpoint]: CSSProperties }>(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
@@ -58,6 +48,7 @@ const GridComponent = ({
         const gapValue = gap[bp];
 
         const style: CSSProperties = {
+          display: 'grid',
           gap: gapValue + 'px',
           gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rowsValue}, minmax(0, 1fr))`,
@@ -88,17 +79,47 @@ const GridComponent = ({
   //   [cols, rows, gap],
   // );
 
-  const cellsStyles = useMemo(() => {
+  // Generate cell style for each breakpoint
+  const gridItems = useMemo(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
       (acc, bp) => {
-        const totalCells = cols[bp] * rows[bp];
+        const currentCols = cols[bp];
+        const currentRows = rows[bp];
+        const totalCells = currentCols * currentRows;
+        const activeSlots = component.children[bp];
         const cells = [];
-        for (let i = 0; i < totalCells; i++) {
-          const rowStart = Math.floor(i / cols[bp]) + 1;
-          const colStart = (i % cols[bp]) + 1;
+        for (let slot = 1; slot <= totalCells; slot++) {
+          const rowStart = Math.floor((slot - 1) / currentCols) + 1;
+          const colStart = ((slot - 1) % currentCols) + 1;
+
+          const childId = activeSlots[slot];
+          const child = childId ? components[childId] : undefined;
+
+          const isBento = layout === 'BENTO';
+          const colSpan =
+            isBento && child?.config.colSpan
+              ? Math.max(
+                  1,
+                  Math.min(child.config.colSpan),
+                  currentCols - colStart + 1,
+                )
+              : 1;
+          const rowSpan =
+            isBento && child?.config.rowSpan
+              ? Math.max(
+                  1,
+                  Math.min(child.config.rowSpan),
+                  currentRows - rowStart + 1,
+                )
+              : 1;
+          const style = {
+            gridColumn: `${colStart} / span ${colSpan}`,
+            gridRow: `${rowStart} / span ${rowSpan}`,
+          };
           cells.push({
-            gridRowStart: rowStart,
-            gridColumnStart: colStart,
+            slot,
+            childId,
+            style,
           });
         }
 
@@ -106,15 +127,19 @@ const GridComponent = ({
         return acc;
       },
       {} as {
-        [K in DeviceBreakpoint]: CSSProperties[];
+        [K in DeviceBreakpoint]: {
+          slot: number;
+          childId: string | undefined;
+          style: CSSProperties;
+        }[];
       },
     );
-  }, [cols, rows]);
+  }, [cols, component.children, rows]);
 
   return (
     <div
-      className={className}
-      style={{ ...gridStyles[breakpoint === 'fluid' ? 'desktop' : breakpoint] }}
+      className={`grid ${baseClasses}`}
+      style={{ ...gridStyles[currentBp === 'fluid' ? 'desktop' : currentBp] }}
       id={id}
       ref={ref}
       tabIndex={0}
@@ -127,14 +152,9 @@ const GridComponent = ({
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
     >
-      {cellsStyles[breakpoint === 'fluid' ? 'desktop' : breakpoint].map(
-        (style, idx) => {
-          const slot = idx + 1;
-          const childId =
-            component.children[breakpoint === 'fluid' ? 'desktop' : breakpoint][
-              slot
-            ];
-          const child = components[childId];
+      {gridItems[currentBp === 'fluid' ? 'desktop' : currentBp].map(
+        ({ slot, childId, style }) => {
+          const child = childId ? components[childId] : undefined;
           return (
             <DropZone
               key={`slot-${slot}`}
