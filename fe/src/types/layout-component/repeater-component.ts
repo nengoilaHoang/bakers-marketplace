@@ -6,51 +6,48 @@ import {
 
 export type RepeaterComponentType = 'COLLECTION_GRID' | 'COLLECTION_CAROUSEL';
 
-export type BaseRepeaterComponent<
-	TConfig = BaseLayoutComponentConfig<unknown>,
-> = BaseLayoutComponent<TConfig> & {
-	type: 'REPEATER';
-	componentType: RepeaterComponentType;
-	itemTemplate: LayoutComponent | null;
-};
+export interface BaseRepeaterComponent<
+  TConfig = BaseLayoutComponentConfig<unknown>,
+> extends BaseLayoutComponent<TConfig> {
+  type: 'REPEATER';
+  componentType: RepeaterComponentType;
+  itemTemplate: LayoutComponent | null;
+}
 
-export type UpdateBaseRepeaterComponent<
-	TConfig = BaseLayoutComponentConfig<unknown>,
-> = BaseRepeaterComponent<TConfig> & {
-	type: 'REPEATER';
-	componentType: RepeaterComponentType;
-	itemTemplate?: LayoutComponent | null;
-};
+export interface UpdateBaseRepeaterComponent<
+  TConfig = BaseLayoutComponentConfig<unknown>,
+> extends Omit<BaseRepeaterComponent<TConfig>, 'itemTemplate'> {
+  type: 'REPEATER';
+  componentType: RepeaterComponentType;
+  itemTemplate?: LayoutComponent | null;
+}
 
-export type CreateBaseRepeaterComponent<
-	TConfig = BaseLayoutComponentConfig<unknown>,
-> = BaseRepeaterComponent<TConfig> & {
-	type: 'REPEATER';
-	componentType: RepeaterComponentType;
-	itemTemplate: LayoutComponent | null;
-};
+export interface CreateBaseRepeaterComponent<
+  TConfig = BaseLayoutComponentConfig<unknown>,
+> extends BaseRepeaterComponent<TConfig> {
+  type: 'REPEATER';
+  componentType: RepeaterComponentType;
+  itemTemplate: LayoutComponent | null;
+}
 
 export type CollectionGridConfig =
-	| {
-			layout: 'infinite_scroll';
-	  }
-	| {
-			layout: 'pagination';
-			pageSize: number;
-	  };
+  | {
+      layout: 'infinite_scroll';
+    }
+  | {
+      layout: 'pagination';
+      pageSize: number;
+    };
 
-export type CollectionGridRepeaterComponent =
-	BaseRepeaterComponent<CollectionGridConfig> & {
-		componentType: 'COLLECTION_GRID';
-	};
-export type UpdateCollectionGridRepeaterComponent =
-	UpdateBaseRepeaterComponent<CollectionGridConfig> & {
-		componentType: 'COLLECTION_GRID';
-	};
-export type CreateCollectionGridRepeaterComponent =
-	CreateBaseRepeaterComponent<CollectionGridConfig> & {
-		componentType: 'COLLECTION_GRID';
-	};
+export interface CollectionGridRepeaterComponent extends BaseRepeaterComponent<CollectionGridConfig> {
+  componentType: 'COLLECTION_GRID';
+}
+export interface UpdateCollectionGridRepeaterComponent extends UpdateBaseRepeaterComponent<CollectionGridConfig> {
+  componentType: 'COLLECTION_GRID';
+}
+export interface CreateCollectionGridRepeaterComponent extends CreateBaseRepeaterComponent<CollectionGridConfig> {
+  componentType: 'COLLECTION_GRID';
+}
 
 export type RepeaterComponent = CollectionGridRepeaterComponent;
 
