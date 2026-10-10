@@ -1,13 +1,10 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import ConfigInput from './ConfigInput';
-import { SectionId } from '../ConfigSidebar';
 import { useCallback, useState } from 'react';
+import { SectionId } from '../ConfigSidebar';
+import ConfigInput from './ConfigInput';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type ThemeSectionProps = {
-  id: SectionId;
-  title: string;
-  description: string;
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   theme: {
@@ -39,9 +36,6 @@ const PALETTE_TOKENS = {
 } as const;
 
 const ThemeSection = ({
-  id,
-  title,
-  description,
   isOpen,
   toggleSection,
   theme,
@@ -49,6 +43,9 @@ const ThemeSection = ({
   onActiveSectionChange,
   zIndex,
 }: ThemeSectionProps) => {
+  const id = 'theme';
+  const title = 'Theme';
+  const description = 'Adjust the theme of the component.';
   const [palette, setPalette] = useState(() => {
     const defaultNormalPalette = {
       type: 'palette' as const,

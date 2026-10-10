@@ -1,13 +1,10 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import { SectionId } from '../ConfigSidebar';
 import { useMemo } from 'react';
-import ConfigSectionWrapper from './ConfigSectionWrapper';
+import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type AlignmentSectionProps = {
-  id: SectionId;
-  title: string;
-  description: string;
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   alignment: {
@@ -15,7 +12,7 @@ type AlignmentSectionProps = {
     vertical: BaseLayoutComponentConfig['alignY'];
   };
   onUpdate: (pathname: string, value: unknown) => void;
-	onActiveSectionChange: (isActive: boolean) => void;
+  onActiveSectionChange: (isActive: boolean) => void;
   zIndex: number;
 };
 
@@ -29,16 +26,17 @@ const ALIGNMENT_OPTIONS = {
 } as const;
 
 const AlignmentSection = ({
-  id,
-  title,
-  description,
   isOpen,
   toggleSection,
   alignment,
   onUpdate,
-	onActiveSectionChange,
+  onActiveSectionChange,
   zIndex,
 }: AlignmentSectionProps) => {
+  const id: SectionId = 'alignment';
+  const title = 'Alignment';
+  const description =
+    'Set the horizontal and vertical alignment of the component.';
   const sides: ReadonlyArray<
     Readonly<{ key: keyof typeof alignment; label: string }>
   > = useMemo(

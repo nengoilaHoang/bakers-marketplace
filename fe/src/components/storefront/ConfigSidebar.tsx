@@ -1,8 +1,8 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import AlignmentSection from './config-sections/AlignmentSection';
 import DimensionSection from './config-sections/DimensionSection';
 import PaddingSection from './config-sections/PaddingSection';
-import AlignmentSection from './config-sections/AlignmentSection';
 import ThemeSection from './config-sections/ThemeSection';
 
 export type SectionId = 'dimensions' | 'alignment' | 'padding' | 'theme';
@@ -41,10 +41,6 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
     return (sectionIds.length - sectionIds.indexOf(id)) * 10;
   };
 
-  useEffect(() => {
-    console.log('ConfigSidebar rendered with config:', config);
-  }, [config]);
-
   return (
     <aside
       aria-label='Configuration Panel'
@@ -68,9 +64,6 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
 
       <div className='flex flex-col h-full min-h-0 gap-3 p-6 flex-1 divide-y divide-zinc-100 overflow-y-auto scroll-smooth scroll-m-0 scroll-p-0 scrollbar-thin scrollbar-gutter-both'>
         <DimensionSection
-          id='dimensions'
-          title='Dimensions'
-          description='Adjust the width and height of the component.'
           isOpen={openSections.dimensions}
           toggleSection={toggleSection}
           dimensions={{ w: config.w, h: config.h }}
@@ -81,9 +74,6 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
           zIndex={getSectionZIndex('dimensions')}
         />
         <PaddingSection
-          id='padding'
-          title='Padding'
-          description='Adjust the padding of the component.'
           isOpen={openSections.padding}
           toggleSection={toggleSection}
           padding={config.padding}
@@ -94,9 +84,6 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
           zIndex={getSectionZIndex('padding')}
         />
         <AlignmentSection
-          id='alignment'
-          title='Alignment'
-          description='Set the horizontal and vertical alignment of the component.'
           isOpen={openSections.alignment}
           toggleSection={toggleSection}
           alignment={{ horizontal: config.alignX, vertical: config.alignY }}
@@ -107,9 +94,6 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
           zIndex={getSectionZIndex('alignment')}
         />
         <ThemeSection
-          id='theme'
-          title='Theme'
-          description='Adjust the theme of the component.'
           isOpen={openSections.theme}
           toggleSection={toggleSection}
           theme={{

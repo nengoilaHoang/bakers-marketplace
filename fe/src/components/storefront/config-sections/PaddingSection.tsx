@@ -1,13 +1,10 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import ConfigInput from './ConfigInput';
-import { SectionId } from '../ConfigSidebar';
-import ConfigSectionWrapper from './ConfigSectionWrapper';
 import { useMemo } from 'react';
+import { SectionId } from '../ConfigSidebar';
+import ConfigInput from './ConfigInput';
+import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type PaddingSectionProps = {
-  id: SectionId;
-  title: string;
-  description: string;
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   padding: BaseLayoutComponentConfig['padding'];
@@ -24,9 +21,6 @@ const PADDING_OPTIONS = {
 } as const;
 
 const PaddingSection = ({
-  id,
-  title,
-  description,
   isOpen,
   toggleSection,
   padding,
@@ -34,6 +28,9 @@ const PaddingSection = ({
   onActiveSectionChange,
   zIndex,
 }: PaddingSectionProps) => {
+  const id = 'padding';
+  const title = 'Padding';
+  const description = 'Adjust the padding of the component.';
   const sides: ReadonlyArray<
     Readonly<{ key: keyof typeof padding; label: string }>
   > = useMemo(
