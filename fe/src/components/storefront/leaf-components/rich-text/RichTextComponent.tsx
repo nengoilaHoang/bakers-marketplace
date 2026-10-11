@@ -4,17 +4,20 @@ import { RichTextLeafComponent } from '@/types/layout-component/leaf-component';
 import { useRef, useState } from 'react';
 import RichTextEditor from './RichTextEditor';
 
+type CompositeComponentProps = {
+  component: RichTextLeafComponent;
+  sourceParentId: string;
+  sourceSlot: number;
+};
+
 const RichTextComponent = ({
   component,
   sourceParentId,
   sourceSlot,
-}: {
-  component: RichTextLeafComponent;
-  sourceParentId: string;
-  sourceSlot: number;
-}) => {
+}: CompositeComponentProps) => {
   const {
     id,
+    tabIndex,
     baseClasses: className,
     baseStyle,
     ref,
@@ -22,6 +25,7 @@ const RichTextComponent = ({
     isSelected,
     handleKeyDown,
     handleMouseDown,
+    handleFocus,
   } = useLayoutComponent({ component, sourceParentId, sourceSlot });
 
   const [openEditor, setOpenEditor] = useState(false);
@@ -60,7 +64,8 @@ const RichTextComponent = ({
       id={id}
       ref={ref}
       role='button'
-      tabIndex={0}
+      tabIndex={tabIndex}
+      data-layout-node='true'
       data-source-parent-id={sourceParentId}
       data-source-slot={sourceSlot}
       aria-controls={sourceParentId}
@@ -70,6 +75,7 @@ const RichTextComponent = ({
       aria-pressed={isSelected || isDragging}
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
+      onFocus={handleFocus}
       onClick={handleClick}
       style={baseStyle}
     >

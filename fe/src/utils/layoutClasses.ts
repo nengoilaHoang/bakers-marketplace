@@ -130,7 +130,7 @@ function getColorPaletteType(token: PaletteTypeToken) {
 
 // TODO: function getColorSchemeClass
 
-export function getBaseLayoutClassesAndStyles(
+export function getBaseLayoutClassesAndStyle(
   config: FlattenComponent['config'],
 ): [string, CSSProperties] | null {
   if (!config) return null;

@@ -20,6 +20,7 @@ const GridComponent = ({
 }: CompositeComponentProps) => {
   const {
     id,
+    tabIndex,
     baseClasses,
     baseStyle,
     ref,
@@ -27,6 +28,7 @@ const GridComponent = ({
     isSelected,
     handleKeyDown,
     handleMouseDown,
+    handleFocus,
   } = useLayoutComponent({
     component,
     sourceParentId,
@@ -85,10 +87,15 @@ const GridComponent = ({
       (acc, bp) => {
         const currentCols = cols[bp];
         const currentRows = rows[bp];
-        const totalCells = currentCols * currentRows;
+
+        const totalSlots = currentCols * currentRows;
+        const coveredSlots = new Set<number>();
         const activeSlots = component.children[bp];
+
         const cells = [];
-        for (let slot = 1; slot <= totalCells; slot++) {
+        for (let slot = 1; slot <= totalSlots; slot++) {
+          if (coveredSlots.has(slot)) continue;
+
           const rowStart = Math.floor((slot - 1) / currentCols) + 1;
           const colStart = ((slot - 1) % currentCols) + 1;
 
@@ -100,18 +107,29 @@ const GridComponent = ({
             isBento && child?.config.colSpan
               ? Math.max(
                   1,
-                  Math.min(child.config.colSpan),
-                  currentCols - colStart + 1,
+                  Math.min(child.config.colSpan, currentCols - colStart + 1),
                 )
               : 1;
           const rowSpan =
             isBento && child?.config.rowSpan
               ? Math.max(
                   1,
-                  Math.min(child.config.rowSpan),
-                  currentRows - rowStart + 1,
+                  Math.min(child.config.rowSpan, currentRows - rowStart + 1),
                 )
               : 1;
+
+          if (colSpan > 1 || rowSpan > 1) {
+            for (let r = 0; r < rowSpan; r++) {
+              for (let c = 0; c < colSpan; c++) {
+                const targetSlot =
+                  (rowStart - 1 + r) * currentCols + (colStart + c);
+                if (targetSlot !== slot) {
+                  coveredSlots.add(targetSlot);
+                }
+              }
+            }
+          }
+
           const style = {
             gridColumn: `${colStart} / span ${colSpan}`,
             gridRow: `${rowStart} / span ${rowSpan}`,
@@ -134,7 +152,7 @@ const GridComponent = ({
         }[];
       },
     );
-  }, [cols, component.children, rows]);
+  }, [cols, component.children, components, layout, rows]);
 
   return (
     <div
@@ -142,7 +160,8 @@ const GridComponent = ({
       style={{ ...gridStyles[currentBp === 'fluid' ? 'desktop' : currentBp] }}
       id={id}
       ref={ref}
-      tabIndex={0}
+      tabIndex={tabIndex}
+      data-layout-node='true'
       data-source-parent-id={sourceParentId}
       data-source-slot={sourceSlot}
       aria-pressed={isSelected || isDragging}
@@ -151,6 +170,7 @@ const GridComponent = ({
       aria-label={`Hover over this component to see the available actions. Press Escape to deselect this component. Press Delete to remove this component.`}
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
+      onFocus={handleFocus}
     >
       {gridItems[currentBp === 'fluid' ? 'desktop' : currentBp].map(
         ({ slot, childId, style }) => {
