@@ -16,13 +16,18 @@ type AlignmentSectionProps = {
   zIndex: number;
 };
 
-const ALIGNMENT_OPTIONS = {
+const HORIZONTAL_OPTIONS = {
   Left: 'left',
   Center: 'center',
   Right: 'right',
+  Stretch: 'stretch',
+} as const;
+
+const VERTICAL_OPTIONS = {
   Top: 'top',
-  Middle: 'middle',
+  Center: 'center',
   Bottom: 'bottom',
+  Stretch: 'stretch',
 } as const;
 
 const AlignmentSection = ({
@@ -37,14 +42,23 @@ const AlignmentSection = ({
   const title = 'Alignment';
   const description =
     'Set the horizontal and vertical alignment of the component.';
-  const sides: ReadonlyArray<
-    Readonly<{ key: keyof typeof alignment; label: string }>
-  > = useMemo(
+
+  const configs = useMemo(
     () => [
-      { key: 'horizontal', label: 'Horizontal' },
-      { key: 'vertical', label: 'Vertical' },
+      {
+        key: 'alignX',
+        label: 'Horizontal',
+        options: HORIZONTAL_OPTIONS,
+        value: alignment.horizontal ?? 'left',
+      },
+      {
+        key: 'alignY',
+        label: 'Vertical',
+        options: VERTICAL_OPTIONS,
+        value: alignment.vertical ?? 'top',
+      },
     ],
-    [],
+    [alignment],
   );
 
   return (
@@ -56,16 +70,16 @@ const AlignmentSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      {sides.map(({ key, label }) => (
+      {configs.map(({ key, label, options, value }) => (
         <ConfigInput
           key={key}
           id={`alignment-${key}`}
-          name={`alignment.${key}`}
+          name={key}
           label={label}
           inputType='select'
-          selectOptions={ALIGNMENT_OPTIONS}
-          currentValue={alignment[key] ?? 'left'}
-          onValueChange={(val) => onUpdate(`alignment.${key}`, val)}
+          selectOptions={options}
+          currentValue={value}
+          onValueChange={(val) => onUpdate(key, val)}
           onOpenStateChange={onActiveSectionChange}
         />
       ))}
