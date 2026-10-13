@@ -4,6 +4,8 @@ import Link from 'next/link';
 
 import { ApiError } from '@/lib/api';
 import { collectionApi } from '@/services/collections';
+import VendorLayout from '@/components/layout/VendorLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -136,7 +138,7 @@ export default function EditCollectionPage() {
 				isActive: form.isActive,
 			});
 
-			router.push(`/collections/${id}`);
+			router.push(`/vendors/collections/${id}`);
 		} catch (err) {
 			setError((err as Error).message);
 
@@ -152,7 +154,7 @@ export default function EditCollectionPage() {
 
 	return (
 		<div style={page}>
-			<Link href={`/collections/${id}`} style={link}>
+			<Link href={`/vendors/collections/${id}`} style={link}>
 				← Chi tiết
 			</Link>
 
@@ -211,7 +213,7 @@ export default function EditCollectionPage() {
 					>
 						{saving ? 'Đang lưu...' : 'Lưu thay đổi'}
 					</button>
-					<Link href={`/collections/${id}`} style={button}>
+					<Link href={`/vendors/collections/${id}`} style={button}>
 						Hủy
 					</Link>
 				</div>
@@ -236,3 +238,11 @@ export default function EditCollectionPage() {
 		</div>
 	);
 }
+
+EditCollectionPage.getLayout = function getLayout(page: React.ReactElement) {
+	return (
+		<VendorShellLayout>
+			<VendorLayout>{page}</VendorLayout>
+		</VendorShellLayout>
+	);
+};

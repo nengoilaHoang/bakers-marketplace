@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { collectionApi } from "@/services/collections";
 import { type Collection } from "@/types/collection";
+import VendorLayout from "@/components/layout/VendorLayout";
+import VendorShellLayout from "@/components/layout/VendorShellLayout";
 
 const page: CSSProperties = {
   padding: "24px 32px",
@@ -141,7 +143,7 @@ export default function CollectionListPage() {
 
     try {
       await collectionApi.remove(id);
-      await load(onlyActive);
+      setCollections((current) => current.filter((c) => c.id !== id));
     } catch (err) {
       alert((err as Error).message);
     }
@@ -161,7 +163,7 @@ export default function CollectionListPage() {
       </h1>
 
       <div style={toolbar}>
-        <Link href="/collections/new" style={buttonPrimary}>
+        <Link href="/vendors/collections/new" style={buttonPrimary}>
           + Tạo bộ sưu tập
         </Link>
 
@@ -196,7 +198,7 @@ export default function CollectionListPage() {
             {collections.map((c) => (
               <tr key={c.id}>
                 <td style={td}>
-                  <Link href={`/collections/${c.id}`} style={link}>
+                  <Link href={`/vendors/collections/${c.id}`} style={link}>
                     {c.name}
                   </Link>
                   <div style={{ ...muted, fontSize: 12 }}>{c.slug}</div>
@@ -214,10 +216,10 @@ export default function CollectionListPage() {
 
                 <td style={{ ...td, whiteSpace: "nowrap" }}>
                   <div style={row}>
-                    <Link href={`/collections/${c.id}`} style={button}>
+                    <Link href={`/vendors/collections/${c.id}`} style={button}>
                       Xem
                     </Link>
-                    <Link href={`/collections/${c.id}/edit`} style={button}>
+                    <Link href={`/vendors/collections/${c.id}/edit`} style={button}>
                       Sửa
                     </Link>
                     <button
@@ -236,3 +238,11 @@ export default function CollectionListPage() {
     </div>
   );
 }
+
+CollectionListPage.getLayout = function getLayout(page: React.ReactElement) {
+  return (
+    <VendorShellLayout>
+      <VendorLayout>{page}</VendorLayout>
+    </VendorShellLayout>
+  );
+};

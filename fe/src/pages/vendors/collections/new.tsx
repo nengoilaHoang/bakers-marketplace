@@ -4,6 +4,8 @@ import Link from 'next/link';
 
 import { ApiError } from '@/lib/api';
 import { collectionApi } from '@/services/collections';
+import VendorLayout from '@/components/layout/VendorLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -107,7 +109,7 @@ export default function NewCollectionPage() {
 				isActive: form.isActive,
 			});
 
-			router.push(`/collections/${res.data.id}`);
+			router.push(`/vendors/collections/${res.data.id}`);
 		} catch (err) {
 			setError((err as Error).message);
 
@@ -121,7 +123,7 @@ export default function NewCollectionPage() {
 
 	return (
 		<div style={page}>
-			<Link href="/collections" style={link}>
+			<Link href="/vendors/collections" style={link}>
 				← Danh sách
 			</Link>
 
@@ -202,3 +204,11 @@ export default function NewCollectionPage() {
 		</div>
 	);
 }
+
+NewCollectionPage.getLayout = function getLayout(page: React.ReactElement) {
+	return (
+		<VendorShellLayout>
+			<VendorLayout>{page}</VendorLayout>
+		</VendorShellLayout>
+	);
+};

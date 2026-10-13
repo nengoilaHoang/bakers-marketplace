@@ -4,6 +4,8 @@ import Link from 'next/link';
 
 import { collectionApi } from '@/services/collections';
 import { type Collection } from '@/types/collection';
+import VendorLayout from '@/components/layout/VendorLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
 
 const page: CSSProperties = {
 	padding: '24px 32px',
@@ -129,7 +131,7 @@ export default function CollectionDetailPage() {
 	if (error)
 		return (
 			<div style={page}>
-				<Link href="/collections" style={link}>
+				<Link href="/vendors/collections" style={link}>
 					← Danh sách
 				</Link>
 				<div style={errorBox}>Lỗi: {error}</div>
@@ -142,7 +144,7 @@ export default function CollectionDetailPage() {
 
 	return (
 		<div style={page}>
-			<Link href="/collections" style={link}>
+			<Link href="/vendors/collections" style={link}>
 				← Danh sách
 			</Link>
 
@@ -155,7 +157,7 @@ export default function CollectionDetailPage() {
 
 			<div style={toolbar}>
 				<Link
-					href={`/collections/${collection.id}/edit`}
+					href={`/vendors/collections/${collection.id}/edit`}
 					style={buttonPrimary}
 				>
 					Sửa
@@ -212,3 +214,11 @@ export default function CollectionDetailPage() {
 		</div>
 	);
 }
+
+CollectionDetailPage.getLayout = function getLayout(page: React.ReactElement) {
+	return (
+		<VendorShellLayout>
+			<VendorLayout>{page}</VendorLayout>
+		</VendorShellLayout>
+	);
+};
