@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { productApi, type Product, type StockAlert } from '@/services/products';
+import { productApi, type Product } from '@/services/products';
+import { STOCK_STATUS_LABELS, getStockStatus } from '@/utils/stockStatus';
 import { collectionApi } from '@/services/collections';
 import { type Collection } from '@/types/collection';
 import { NextPageWithLayout } from '@/pages/_app';
@@ -152,12 +153,6 @@ const badge = (ok: boolean): CSSProperties => ({
   color: ok ? '#166534' : '#6b7280',
 });
 
-const ALERT_TYPES: StockAlert['alertType'][] = [
-  'MINIMUM',
-  'REORDER',
-  'MAXIMUM',
-];
-
 const ProductDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = router.query.id as string | undefined;
@@ -169,10 +164,6 @@ const ProductDetailPage: NextPageWithLayout = () => {
 
   const [tagName, setTagName] = useState('');
   const [noteContent, setNoteContent] = useState('');
-  const [stockValue, setStockValue] = useState('');
-  const [alertType, setAlertType] =
-    useState<StockAlert['alertType']>('MINIMUM');
-  const [threshold, setThreshold] = useState('');
   const [collectionId, setCollectionId] = useState('');
 
   const load = useCallback(async () => {
@@ -189,7 +180,6 @@ const ProductDetailPage: NextPageWithLayout = () => {
 
       setProduct(productRes.data);
       setCollections(collectionsRes.data);
-      setStockValue(String(productRes.data.stock?.stock ?? 0));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -290,80 +280,12 @@ const ProductDetailPage: NextPageWithLayout = () => {
           <span style={badge((product.stock?.stock ?? 0) > 0)}>
             {product.stock?.stock ?? 0} {product.unit}
           </span>
-
-          <input
-            type='number'
-            style={{ ...input, width: 110 }}
-            value={stockValue}
-            onChange={(e) => setStockValue(e.target.value)}
-          />
-          <button
-            style={button}
-            onClick={() =>
-              run(() => productApi.updateStock(product.id, Number(stockValue)))
-            }
-          >
-            Cập nhật
-          </button>
-        </div>
-      </div>
-
-      <div style={card}>
-        <div style={{ ...muted, marginBottom: 10 }}>Ngưỡng cảnh báo</div>
-
-        {alerts.length === 0 && <p style={muted}>Chưa đặt ngưỡng nào.</p>}
-
-        {alerts.map((a) => (
-          <div key={a.id} style={{ ...row, marginBottom: 8 }}>
-            <span style={{ ...chip, minWidth: 90 }}>{a.alertType}</span>
-            <b>{a.threshold}</b>
-            <button
-              style={buttonDanger}
-              onClick={() =>
-                run(() => productApi.removeAlert(product.id, a.alertType))
-              }
-            >
-              Xóa
-            </button>
-          </div>
-        ))}
-
-        <div style={{ ...row, marginTop: 12 }}>
-          <select
-            style={input}
-            value={alertType}
-            onChange={(e) =>
-              setAlertType(e.target.value as StockAlert['alertType'])
-            }
-          >
-            {ALERT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <input
-            type='number'
-            placeholder='ngưỡng'
-            style={{ ...input, width: 110 }}
-            value={threshold}
-            onChange={(e) => setThreshold(e.target.value)}
-          />
-          <button
-            style={button}
-            onClick={() =>
-              run(async () => {
-                await productApi.setAlert(
-                  product.id,
-                  alertType,
-                  Number(threshold),
-                );
-                setThreshold('');
-              })
-            }
-          >
-            Đặt ngưỡng
-          </button>
+          <span style={muted}>
+            {STOCK_STATUS_LABELS[getStockStatus(product.stock?.stock ?? 0, alerts)]}
+          </span>
+          <Link href={`/vendors/stocks/${product.id}`} style={link}>
+            Quản lý tồn kho và mốc cảnh báo →
+          </Link>
         </div>
       </div>
 

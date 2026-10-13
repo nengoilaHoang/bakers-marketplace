@@ -113,6 +113,7 @@ const VENDOR_NAV: Array<{
   inners?: Array<{ label: string; href: string; icon?: IconName }>;
 }> = [
   { label: 'Sản phẩm', href: '/vendors/products', icon: 'cart' },
+  { label: 'Tồn kho', href: '/vendors/stocks', icon: 'summary' },
   { label: 'Bộ sưu tập', href: '/vendors/collections', icon: 'hand-platter' },
   {
     label: 'Storefront',

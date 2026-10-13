@@ -14,6 +14,13 @@ import type {
 
 type ProductImageJoinRow = Image & { productId: string };
 type StockRow = { id: string; stock: number; createdAt: Date };
+
+/** Current stock of a product, read inside a transaction that locks it. */
+export type LockedStock = {
+	stock: number;
+	vendorId: string | null;
+	alerts: StockAlertRow[];
+};
 type CollectionJoinRow = ProductCollectionSummary & { productId: string };
 
 class ProductDAO {
@@ -44,6 +51,25 @@ class ProductDAO {
 			.orderBy('createdAt', 'desc');
 
 		return this.attachRelations(rows);
+	}
+
+	public async getByVendorId(vendorId: string): Promise<Product[]> {
+		const rows = await this.db.instance<ProductRow>(this.tableName)
+			.select('*')
+			.where('vendorId', vendorId)
+			.orderBy('createdAt', 'desc');
+
+		return this.attachRelations(rows);
+	}
+
+	/** undefined when the product does not exist, null when it has no vendor. */
+	public async getVendorId(productId: string): Promise<string | null | undefined> {
+		const row = await this.db.instance<ProductRow>(this.tableName)
+			.select('vendorId')
+			.where('id', productId)
+			.first();
+
+		return row ? row.vendorId : undefined;
 	}
 
 	public async getByCollectionId(
@@ -291,29 +317,55 @@ class ProductDAO {
 
 	// ---------- stock ----------
 
-	public async updateStock(
-		productId: string,
-		stock: number,
-	): Promise<ProductStock | null> {
-		const updated = await this.db.instance('product_stocks')
-			.where('id', productId)
-			.update({ stock });
-
-		if (!updated) {
-			return null;
-		}
-
+	public async getStock(productId: string): Promise<ProductStock | null> {
 		const stocks = await this.loadStocks([productId]);
 
 		return stocks.get(productId) ?? null;
+	}
+
+	/** Locks the product's stock row until the transaction ends. */
+	public async lockStock(
+		productId: string,
+		trx: Knex.Transaction,
+	): Promise<LockedStock | null> {
+		const row: { stock: number; vendorId: string | null } | undefined =
+			await trx('product_stocks as s')
+				.join('products as p', 'p.id', 's.id')
+				.select('s.stock', 'p.vendorId')
+				.where('s.id', productId)
+				.forUpdate('s')
+				.first();
+
+		if (!row) {
+			return null;
+		}
+
+		const alerts = await trx<StockAlertRow>('stock_alerts')
+			.select('*')
+			.where('productStockId', productId);
+
+		return { ...row, alerts };
+	}
+
+	public async updateStock(
+		productId: string,
+		stock: number,
+		trx?: Knex.Transaction,
+	): Promise<boolean> {
+		const updated = await (trx ?? this.db.instance)('product_stocks')
+			.where('id', productId)
+			.update({ stock });
+
+		return updated > 0;
 	}
 
 	public async setAlert(
 		productId: string,
 		alertType: StockAlertRow['alertType'],
 		threshold: number,
+		trx?: Knex.Transaction,
 	): Promise<StockAlertRow> {
-		const [alert] = await this.db.instance<StockAlertRow>('stock_alerts')
+		const [alert] = await (trx ?? this.db.instance)<StockAlertRow>('stock_alerts')
 			.insert({
 				productStockId: productId,
 				alertType,

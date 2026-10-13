@@ -43,36 +43,40 @@ const HARD_CODED_STOREFRONT_RELEASE_ID = '55555555-5555-4555-8555-555555555555';
 
 const BREAKPOINTS = ['mobile', 'tablet', 'desktop'] as const;
 
+// Mọi tài khoản mẫu dùng chung mật khẩu "Bakers@123" (bcrypt, 12 vòng như bcrypt.service).
+const SEED_PASSWORD_HASH =
+	'$2b$12$ZN9SBrqZPM3zIS2/JOUkX.8ffdiJ7LDy0O69ZMo.0HOlERB8pDc0K';
+
 const users = [
 	{
 		id: HARD_CODED_USER_ID,
 		email: 'minhanh@example.com',
 		displayname: 'Nguyễn Minh Anh',
-		hashed_password: null,
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'baongoc@example.com',
 		displayname: 'Trần Bảo Ngọc',
-		hashed_password: null,
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'hoangnam@example.com',
 		displayname: 'Lê Hoàng Nam',
-		hashed_password: null,
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'thaovy@example.com',
 		displayname: 'Phạm Thảo Vy',
-		hashed_password: null,
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'CUSTOMER',
 	},
 	{
 		email: 'quochuy@example.com',
 		displayname: 'Đặng Quốc Huy',
-		hashed_password: null,
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'CUSTOMER',
 	},
 ];
@@ -203,14 +207,14 @@ const vendorUsers = [
 	{
 		email: 'vendor.hoasen@example.com',
 		displayname: 'Tiệm Bánh Hoa Sen',
-		hashed_password: '$2a$12$V9Z42j4jaMguY0Sg/kh/yuOq/czIJE4CA1n/vzjL6iVVVJFzY6lqy',
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'VENDOR' as const,
 		taxCode: '0312345678',
 	},
 	{
 		email: 'vendor.mattroi@example.com',
 		displayname: 'Bánh Ngọt Mặt Trời',
-		hashed_password: '$2a$12$V9Z42j4jaMguY0Sg/kh/yuOq/czIJE4CA1n/vzjL6iVVVJFzY6lqy',
+		hashed_password: SEED_PASSWORD_HASH,
 		role: 'VENDOR' as const,
 		taxCode: '0398765432',
 	},
