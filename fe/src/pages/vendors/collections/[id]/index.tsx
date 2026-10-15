@@ -1,224 +1,141 @@
-import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-import { collectionApi } from '@/services/collections';
-import { type Collection } from '@/types/collection';
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import ProductTable from '@/components/product/ProductTable';
+import Badge from '@/components/ui/Badge';
+import { ButtonLink } from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import Icon from '@/components/ui/Icon';
+import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
+import VendorPage from '@/components/vendor/VendorPage';
+import type { NextPageWithLayout } from '@/pages/_app';
+import { collectionApi } from '@/services/collections';
+import type { Collection } from '@/types/collection';
+import { formatDate } from '@/utils/format';
 
-const page: CSSProperties = {
-	padding: '24px 32px',
-	fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-	fontSize: 14,
-	lineHeight: 1.6,
-	maxWidth: 780,
-	margin: '0 auto',
-	background: '#fff',
-	color: '#111827',
-	minHeight: '100vh',
-	colorScheme: 'light',
+const CollectionDetailPage: NextPageWithLayout = () => {
+  const router = useRouter();
+  const id = typeof router.query.id === 'string' ? router.query.id : undefined;
+
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!id) return;
+    let ignore = false;
+
+    collectionApi
+      .getById(id)
+      .then(({ data }) => {
+        if (ignore) return;
+        setCollection(data);
+        setLoadError(null);
+      })
+      .catch((requestError) => {
+        if (!ignore) setLoadError((requestError as Error).message);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [id, attempt]);
+
+  const breadcrumb = [
+    { label: 'Bộ sưu tập', href: '/vendors/collections' },
+    { label: collection?.name ?? 'Chi tiết' },
+  ];
+
+  if (loadError) {
+    return (
+      <VendorPage title='Bộ sưu tập' breadcrumb={breadcrumb}>
+        <ErrorState
+          title='Không thể tải bộ sưu tập'
+          message={loadError}
+          onRetry={() => setAttempt((current) => current + 1)}
+        />
+      </VendorPage>
+    );
+  }
+
+  if (!collection) {
+    return (
+      <VendorPage title='Bộ sưu tập' breadcrumb={breadcrumb}>
+        <PanelSkeleton className='h-32' />
+        <PanelSkeleton className='h-64' />
+      </VendorPage>
+    );
+  }
+
+  const products = collection.products ?? [];
+
+  return (
+    <VendorPage
+      title={collection.name}
+      heading={
+        <span className='flex flex-wrap items-center gap-3'>
+          {collection.name}
+          <Badge tone={collection.isActive ? 'success' : 'neutral'}>
+            {collection.isActive ? 'Hoạt động' : 'Tắt'}
+          </Badge>
+        </span>
+      }
+      description={collection.description || undefined}
+      breadcrumb={breadcrumb}
+      actions={
+        <ButtonLink href={`/vendors/collections/${collection.id}/edit`} size='sm'>
+          <Icon name='edit' className='size-4' />
+          Sửa bộ sưu tập
+        </ButtonLink>
+      }
+    >
+      <Panel>
+        <dl className='grid gap-4 text-body-sm sm:grid-cols-3'>
+          <div>
+            <dt className='text-ink-muted'>Slug</dt>
+            <dd className='text-ink'>{collection.slug}</dd>
+          </div>
+          <div>
+            <dt className='text-ink-muted'>Số sản phẩm</dt>
+            <dd className='text-ink'>{products.length}</dd>
+          </div>
+          <div>
+            <dt className='text-ink-muted'>Ngày tạo</dt>
+            <dd className='text-ink'>{formatDate(collection.createdAt) ?? '—'}</dd>
+          </div>
+        </dl>
+      </Panel>
+
+      <section className='flex flex-col gap-4'>
+        <h2 className='text-h4 font-semibold text-ink'>Sản phẩm ({products.length})</h2>
+        {products.length === 0 ? (
+          <EmptyState
+            icon='cart'
+            title='Chưa có sản phẩm nào'
+            description='Mở trang chi tiết của một sản phẩm và thêm sản phẩm vào bộ sưu tập này.'
+            action={
+              <ButtonLink href='/vendors/products' variant='outline'>
+                Đến danh sách sản phẩm
+              </ButtonLink>
+            }
+          />
+        ) : (
+          <ProductTable products={products} />
+        )}
+      </section>
+    </VendorPage>
+  );
 };
-
-const h1: CSSProperties = {
-	fontSize: 22,
-	fontWeight: 600,
-	margin: '12px 0 4px',
-};
-
-const h2: CSSProperties = {
-	fontSize: 16,
-	fontWeight: 600,
-	margin: '28px 0 8px',
-	paddingBottom: 6,
-	borderBottom: '1px solid #e5e7eb',
-};
-
-const muted: CSSProperties = { color: '#6b7280', fontSize: 13 };
-
-const link: CSSProperties = { color: '#2563eb', textDecoration: 'none' };
-
-const toolbar: CSSProperties = {
-	display: 'flex',
-	gap: 12,
-	alignItems: 'center',
-	flexWrap: 'wrap',
-	margin: '12px 0 20px',
-};
-
-const row: CSSProperties = {
-	display: 'flex',
-	gap: 8,
-	alignItems: 'center',
-	flexWrap: 'wrap',
-};
-
-const table: CSSProperties = {
-	width: '100%',
-	borderCollapse: 'collapse',
-	fontSize: 13,
-	border: '1px solid #d1d5db',
-};
-
-const td: CSSProperties = {
-	padding: '9px 12px',
-	border: '1px solid #d1d5db',
-	verticalAlign: 'top',
-};
-
-const buttonPrimary: CSSProperties = {
-	display: 'inline-block',
-	padding: '5px 12px',
-	border: '1px solid #2563eb',
-	borderRadius: 6,
-	background: '#2563eb',
-	color: '#fff',
-	fontWeight: 500,
-	cursor: 'pointer',
-	fontSize: 13,
-	textDecoration: 'none',
-	fontFamily: 'inherit',
-	lineHeight: 1.6,
-};
-
-const card: CSSProperties = {
-	border: '1px solid #e5e7eb',
-	borderRadius: 8,
-	padding: '14px 16px',
-	marginBottom: 12,
-};
-
-const errorBox: CSSProperties = {
-	marginTop: 16,
-	padding: '10px 14px',
-	background: '#fef2f2',
-	border: '1px solid #fecaca',
-	borderRadius: 6,
-	color: '#b91c1c',
-	fontSize: 13,
-};
-
-const badge = (ok: boolean): CSSProperties => ({
-	display: 'inline-block',
-	padding: '2px 9px',
-	borderRadius: 999,
-	fontSize: 12,
-	fontWeight: 500,
-	background: ok ? '#dcfce7' : '#f3f4f6',
-	color: ok ? '#166534' : '#6b7280',
-});
-
-export default function CollectionDetailPage() {
-	const router = useRouter();
-	const id = router.query.id as string | undefined;
-
-	const [collection, setCollection] = useState<Collection | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		if (!id) return;
-
-		collectionApi
-			.getById(id)
-			.then((res) => setCollection(res.data))
-			.catch((err) => setError((err as Error).message))
-			.finally(() => setLoading(false));
-	}, [id]);
-
-	if (loading) return <p style={page}>Đang tải...</p>;
-
-	if (error)
-		return (
-			<div style={page}>
-				<Link href="/vendors/collections" style={link}>
-					← Danh sách
-				</Link>
-				<div style={errorBox}>Lỗi: {error}</div>
-			</div>
-		);
-
-	if (!collection) return <p style={page}>Không tìm thấy.</p>;
-
-	const products = collection.products ?? [];
-
-	return (
-		<div style={page}>
-			<Link href="/vendors/collections" style={link}>
-				← Danh sách
-			</Link>
-
-			<h1 style={h1}>
-				{collection.name}{' '}
-				<span style={badge(collection.isActive)}>
-					{collection.isActive ? 'Hoạt động' : 'Tắt'}
-				</span>
-			</h1>
-
-			<div style={toolbar}>
-				<Link
-					href={`/vendors/collections/${collection.id}/edit`}
-					style={buttonPrimary}
-				>
-					Sửa
-				</Link>
-			</div>
-
-			<h2 style={h2}>Thông tin</h2>
-
-			<table style={table}>
-				<tbody>
-					{[
-						['Slug', collection.slug],
-						['Mô tả', collection.description ?? '—'],
-						['ID', collection.id],
-					].map(([key, value]) => (
-						<tr key={key}>
-							<td style={{ ...td, width: 120, color: '#6b7280' }}>
-								{key}
-							</td>
-							<td style={td}>{value}</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-
-			<h2 style={h2}>Sản phẩm ({products.length})</h2>
-
-			{products.length === 0 ? (
-				<p style={muted}>
-					Chưa có sản phẩm nào. Vào trang chi tiết sản phẩm để gán vào
-					bộ sưu tập này.
-				</p>
-			) : (
-				products.map((p) => (
-					<div key={p.id} style={card}>
-						<Link
-							href={`/products/${p.id}`}
-							style={{ ...link, fontWeight: 500 }}
-						>
-							{p.title}
-						</Link>
-
-						<div style={{ ...row, marginTop: 8 }}>
-							<b>
-								{p.unitPrice.toLocaleString('vi-VN')} {p.currency}
-							</b>
-							<span style={badge((p.stock?.stock ?? 0) > 0)}>
-								tồn {p.stock?.stock ?? 0}
-							</span>
-						</div>
-					</div>
-				))
-			)}
-		</div>
-	);
-}
 
 CollectionDetailPage.getLayout = function getLayout(page: React.ReactElement) {
-	return (
-		<VendorShellLayout>
-			<VendorLayout>{page}</VendorLayout>
-		</VendorShellLayout>
-	);
+  return (
+    <VendorShellLayout>
+      <VendorLayout>{page}</VendorLayout>
+    </VendorShellLayout>
+  );
 };
+
+export default CollectionDetailPage;

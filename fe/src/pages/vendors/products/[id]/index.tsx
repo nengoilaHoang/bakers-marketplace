@@ -1,166 +1,43 @@
-import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 
-import { productApi, type Product } from '@/services/products';
-import { STOCK_STATUS_LABELS, getStockStatus } from '@/utils/stockStatus';
-import { collectionApi } from '@/services/collections';
-import { type Collection } from '@/types/collection';
-import { NextPageWithLayout } from '@/pages/_app';
 import VendorLayout from '@/components/layout/VendorLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import StockStatusBadge from '@/components/stock/StockStatusBadge';
+import Alert from '@/components/ui/Alert';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import { ErrorState } from '@/components/ui/ErrorState';
+import Icon from '@/components/ui/Icon';
+import IconButton from '@/components/ui/IconButton';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
+import RemovableTag from '@/components/vendor/RemovableTag';
+import VendorPage from '@/components/vendor/VendorPage';
+import type { NextPageWithLayout } from '@/pages/_app';
+import { collectionApi, type Collection } from '@/services/collections';
+import { productApi, type Product } from '@/services/products';
+import { formatDate, formatMoney } from '@/utils/format';
+import { getStockStatus } from '@/utils/stockStatus';
 
-const page: CSSProperties = {
-  padding: '24px 32px',
-  fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-  fontSize: 14,
-  lineHeight: 1.6,
-  maxWidth: 780,
-  margin: '0 auto',
-  background: '#fff',
-  color: '#111827',
-  minHeight: '100vh',
-  colorScheme: 'light',
-};
-
-const h1: CSSProperties = {
-  fontSize: 22,
-  fontWeight: 600,
-  margin: '12px 0 4px',
-};
-
-const h2: CSSProperties = {
-  fontSize: 16,
-  fontWeight: 600,
-  margin: '28px 0 8px',
-  paddingBottom: 6,
-  borderBottom: '1px solid #e5e7eb',
-};
-
-const muted: CSSProperties = { color: '#6b7280', fontSize: 13 };
-
-const link: CSSProperties = { color: '#2563eb', textDecoration: 'none' };
-
-const toolbar: CSSProperties = {
-  display: 'flex',
-  gap: 12,
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  margin: '12px 0 20px',
-};
-
-const row: CSSProperties = {
-  display: 'flex',
-  gap: 8,
-  alignItems: 'center',
-  flexWrap: 'wrap',
-};
-
-const table: CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  fontSize: 13,
-  border: '1px solid #d1d5db',
-};
-
-const td: CSSProperties = {
-  padding: '9px 12px',
-  border: '1px solid #d1d5db',
-  verticalAlign: 'top',
-};
-
-const button: CSSProperties = {
-  display: 'inline-block',
-  padding: '5px 12px',
-  border: '1px solid #d1d5db',
-  borderRadius: 6,
-  background: '#fff',
-  color: '#111827',
-  cursor: 'pointer',
-  fontSize: 13,
-  textDecoration: 'none',
-  fontFamily: 'inherit',
-  lineHeight: 1.6,
-};
-
-const buttonPrimary: CSSProperties = {
-  ...button,
-  background: '#2563eb',
-  borderColor: '#2563eb',
-  color: '#fff',
-  fontWeight: 500,
-};
-
-const buttonDanger: CSSProperties = {
-  ...button,
-  color: '#dc2626',
-  borderColor: '#fca5a5',
-};
-
-const buttonX: CSSProperties = {
-  border: 'none',
-  background: 'none',
-  cursor: 'pointer',
-  color: '#dc2626',
-  padding: 0,
-  fontSize: 14,
-};
-
-const input: CSSProperties = {
-  padding: '7px 10px',
-  border: '1px solid #d1d5db',
-  borderRadius: 6,
-  fontSize: 13,
-  fontFamily: 'inherit',
-  background: '#fff',
-  color: '#111827',
-};
-
-const card: CSSProperties = {
-  border: '1px solid #e5e7eb',
-  borderRadius: 8,
-  padding: '14px 16px',
-  marginBottom: 12,
-};
-
-const chip: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  padding: '3px 10px',
-  background: '#f3f4f6',
-  color: '#374151',
-  borderRadius: 999,
-  fontSize: 12,
-};
-
-const errorBox: CSSProperties = {
-  marginTop: 16,
-  padding: '10px 14px',
-  background: '#fef2f2',
-  border: '1px solid #fecaca',
-  borderRadius: 6,
-  color: '#b91c1c',
-  fontSize: 13,
-};
-
-const badge = (ok: boolean): CSSProperties => ({
-  display: 'inline-block',
-  padding: '2px 9px',
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 500,
-  background: ok ? '#dcfce7' : '#f3f4f6',
-  color: ok ? '#166534' : '#6b7280',
-});
+function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className='grid gap-1 border-b border-line py-3 last:border-b-0 sm:grid-cols-4 sm:gap-4'>
+      <dt className='text-body-sm text-ink-muted'>{label}</dt>
+      <dd className='text-body-sm text-ink sm:col-span-3'>{children}</dd>
+    </div>
+  );
+}
 
 const ProductDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
-  const id = router.query.id as string | undefined;
+  const id = typeof router.query.id === 'string' ? router.query.id : undefined;
 
   const [product, setProduct] = useState<Product | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
 
   const [tagName, setTagName] = useState('');
   const [noteContent, setNoteContent] = useState('');
@@ -169,291 +46,289 @@ const ProductDetailPage: NextPageWithLayout = () => {
   const load = useCallback(async () => {
     if (!id) return;
 
-    setLoading(true);
-    setError(null);
-
     try {
-      const [productRes, collectionsRes] = await Promise.all([
+      const [productResponse, collectionsResponse] = await Promise.all([
         productApi.getById(id),
         collectionApi.getAll(),
       ]);
-
-      setProduct(productRes.data);
-      setCollections(collectionsRes.data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+      setProduct(productResponse.data);
+      setCollections(collectionsResponse.data);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
     }
   }, [id]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void load();
-    }, 0);
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
 
-    return () => clearTimeout(timer);
-  }, [id, load]);
+  // Chạy một thao tác (thêm/xoá tag, ghi chú, bộ sưu tập) rồi tải lại sản phẩm.
+  async function run(action: () => Promise<unknown>) {
+    setIsBusy(true);
+    setActionError(null);
 
-  const run = async (fn: () => Promise<unknown>) => {
     try {
-      await fn();
+      await action();
       await load();
-    } catch (err) {
-      alert((err as Error).message);
+    } catch (error) {
+      setActionError((error as Error).message);
+    } finally {
+      setIsBusy(false);
     }
-  };
+  }
 
-  if (loading) return <p style={page}>Đang tải...</p>;
-
-  if (error)
-    return (
-      <div style={page}>
-        <Link href='/vendors/products' style={link}>
-          ← Danh sách
-        </Link>
-        <div style={errorBox}>Lỗi: {error}</div>
-      </div>
-    );
-
-  if (!product) return <p style={page}>Không tìm thấy.</p>;
-
-  const info: Array<[string, React.ReactNode]> = [
-    ['Slug', product.slug],
-    ['Mô tả', product.description ?? '—'],
-    [
-      'Giá bán',
-      `${product.unitPrice.toLocaleString('vi-VN')} ${product.currency}`,
-    ],
-    [
-      'Giá vốn',
-      `${product.unitCost.toLocaleString('vi-VN')} ${product.currency}`,
-    ],
-    ['Đơn vị', product.unit],
-    ['Hạn sử dụng', product.expirationDate?.slice(0, 10) ?? '—'],
-    ['Brand ID', <code key='b'>{product.brandId}</code>],
-    [
-      'Vendor ID',
-      product.vendorId ? <code key='v'>{product.vendorId}</code> : '—',
-    ],
-    ['ID', <code key='i'>{product.id}</code>],
+  const breadcrumb = [
+    { label: 'Sản phẩm', href: '/vendors/products' },
+    { label: product?.title ?? 'Chi tiết' },
   ];
 
-  const alerts = product.stock?.alerts ?? [];
+  if (loadError) {
+    return (
+      <VendorPage title='Sản phẩm' breadcrumb={breadcrumb}>
+        <ErrorState title='Không thể tải sản phẩm' message={loadError} onRetry={() => void load()} />
+      </VendorPage>
+    );
+  }
+
+  if (!product) {
+    return (
+      <VendorPage title='Sản phẩm' breadcrumb={breadcrumb}>
+        <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]'>
+          <PanelSkeleton className='h-96' />
+          <PanelSkeleton className='h-64' />
+        </div>
+      </VendorPage>
+    );
+  }
+
+  const stock = product.stock?.stock ?? 0;
+  const status = getStockStatus(stock, product.stock?.alerts ?? []);
+  const assignedIds = new Set(product.collections.map((collection) => collection.id));
+  const availableCollections = collections.filter((collection) => !assignedIds.has(collection.id));
+
+  function handleAddTag(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!product || !tagName.trim()) return;
+    void run(async () => {
+      await productApi.addTag(product.id, tagName.trim());
+      setTagName('');
+    });
+  }
+
+  function handleAddNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!product || !noteContent.trim()) return;
+    void run(async () => {
+      await productApi.addNote(product.id, noteContent.trim());
+      setNoteContent('');
+    });
+  }
+
+  function handleAssignCollection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!product || !collectionId) return;
+    void run(async () => {
+      await productApi.assignToCollection(product.id, collectionId);
+      setCollectionId('');
+    });
+  }
 
   return (
-    <div style={page}>
-      <Link href='/vendors/products' style={link}>
-        ← Danh sách
-      </Link>
-
-      <h1 style={h1}>{product.title}</h1>
-
-      <div style={toolbar}>
-        <Link
-          href={`/vendors/products/${product.id}/edit`}
-          style={buttonPrimary}
-        >
+    <VendorPage
+      title={product.title}
+      breadcrumb={breadcrumb}
+      description={product.description || undefined}
+      actions={
+        <ButtonLink href={`/vendors/products/${product.id}/edit`} size='sm'>
+          <Icon name='edit' className='size-4' />
           Sửa sản phẩm
-        </Link>
-      </div>
+        </ButtonLink>
+      }
+    >
+      {actionError && <Alert tone='danger'>{actionError}</Alert>}
 
-      {/* ---------- thông tin ---------- */}
-      <h2 style={h2}>Thông tin</h2>
+      <div className='grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]'>
+        {/* Cột chính */}
+        <div className='flex flex-col gap-6'>
+          <Panel title='Thông tin'>
+            <dl>
+              <InfoRow label='Giá bán'>{formatMoney(product.unitPrice, product.currency)}</InfoRow>
+              <InfoRow label='Giá vốn'>{formatMoney(product.unitCost, product.currency)}</InfoRow>
+              <InfoRow label='Đơn vị'>{product.unit}</InfoRow>
+              <InfoRow label='Slug'>{product.slug}</InfoRow>
+              <InfoRow label='Hạn sử dụng'>{formatDate(product.expirationDate) ?? '—'}</InfoRow>
+              <InfoRow label='Ngày tạo'>{formatDate(product.createdAt) ?? '—'}</InfoRow>
+              <InfoRow label='Mã sản phẩm'>
+                <code className='text-caption text-ink-muted'>{product.id}</code>
+              </InfoRow>
+            </dl>
+          </Panel>
 
-      <table style={table}>
-        <tbody>
-          {info.map(([key, value]) => (
-            <tr key={key}>
-              <td style={{ ...td, width: 140, color: '#6b7280' }}>{key}</td>
-              <td style={td}>{value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <Panel title={`Ghi chú (${product.notes.length})`}>
+            {product.notes.length === 0 ? (
+              <p className='text-body-sm text-ink-muted'>Chưa có ghi chú nào.</p>
+            ) : (
+              <ul className='flex flex-col'>
+                {product.notes.map((note) => (
+                  <li
+                    key={note.id}
+                    className='flex items-start justify-between gap-3 border-b border-line py-3 first:pt-0 last:border-b-0'
+                  >
+                    <p className='text-body-sm whitespace-pre-line text-ink'>{note.content}</p>
+                    <IconButton
+                      label='Xoá ghi chú'
+                      variant='ghost'
+                      size='sm'
+                      disabled={isBusy}
+                      onClick={() => void run(() => productApi.removeNote(product.id, note.id))}
+                    >
+                      <Icon name='trash' className='size-4 text-danger' />
+                    </IconButton>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form onSubmit={handleAddNote} className='mt-4 flex flex-wrap gap-2'>
+              <div className='min-w-60 flex-1'>
+                <Input
+                  size='sm'
+                  value={noteContent}
+                  onChange={(event) => setNoteContent(event.target.value)}
+                  placeholder='Thêm ghi chú, ví dụ: bảo quản ngăn mát'
+                  aria-label='Nội dung ghi chú'
+                />
+              </div>
+              <Button type='submit' variant='outline' disabled={isBusy || !noteContent.trim()}>
+                Thêm ghi chú
+              </Button>
+            </form>
+          </Panel>
 
-      {/* ---------- tồn kho ---------- */}
-      <h2 style={h2}>Tồn kho</h2>
-
-      <div style={card}>
-        <div style={row}>
-          <span style={badge((product.stock?.stock ?? 0) > 0)}>
-            {product.stock?.stock ?? 0} {product.unit}
-          </span>
-          <span style={muted}>
-            {STOCK_STATUS_LABELS[getStockStatus(product.stock?.stock ?? 0, alerts)]}
-          </span>
-          <Link href={`/vendors/stocks/${product.id}`} style={link}>
-            Quản lý tồn kho và mốc cảnh báo →
-          </Link>
-        </div>
-      </div>
-
-      {/* ---------- tags ---------- */}
-      <h2 style={h2}>Tags ({product.tags.length})</h2>
-
-      <div style={card}>
-        <div style={{ ...row, marginBottom: 12 }}>
-          {product.tags.map((t) => (
-            <span key={t.id} style={chip}>
-              {t.name}
-              <button
-                style={buttonX}
-                onClick={() =>
-                  run(() => productApi.removeTag(product.id, t.name))
-                }
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          {product.tags.length === 0 && (
-            <span style={muted}>Chưa có tag nào.</span>
-          )}
-        </div>
-
-        <div style={row}>
-          <input
-            placeholder='tên tag'
-            style={{ ...input, width: 200 }}
-            value={tagName}
-            onChange={(e) => setTagName(e.target.value)}
-          />
-          <button
-            style={button}
-            onClick={() =>
-              run(async () => {
-                await productApi.addTag(product.id, tagName);
-                setTagName('');
-              })
-            }
-          >
-            Thêm tag
-          </button>
-        </div>
-      </div>
-
-      {/* ---------- ghi chú ---------- */}
-      <h2 style={h2}>Ghi chú ({product.notes.length})</h2>
-
-      <div style={card}>
-        {product.notes.length === 0 && (
-          <p style={muted}>Chưa có ghi chú nào.</p>
-        )}
-
-        {product.notes.map((n) => (
-          <div
-            key={n.id}
-            style={{
-              ...row,
-              justifyContent: 'space-between',
-              paddingBottom: 8,
-              marginBottom: 8,
-              borderBottom: '1px solid #f1f2f4',
-            }}
-          >
-            <span>{n.content}</span>
-            <button
-              style={buttonDanger}
-              onClick={() => run(() => productApi.removeNote(product.id, n.id))}
-            >
-              Xóa
-            </button>
-          </div>
-        ))}
-
-        <div style={{ ...row, marginTop: 12 }}>
-          <input
-            placeholder='nội dung ghi chú'
-            style={{ ...input, flex: 1, minWidth: 260 }}
-            value={noteContent}
-            onChange={(e) => setNoteContent(e.target.value)}
-          />
-          <button
-            style={button}
-            onClick={() =>
-              run(async () => {
-                await productApi.addNote(product.id, noteContent);
-                setNoteContent('');
-              })
-            }
-          >
-            Thêm
-          </button>
-        </div>
-      </div>
-
-      {/* ---------- bộ sưu tập ---------- */}
-      <h2 style={h2}>Bộ sưu tập ({product.collections.length})</h2>
-
-      <div style={card}>
-        <div style={{ ...row, marginBottom: 12 }}>
-          {product.collections.map((c) => (
-            <span key={c.id} style={chip}>
-              {c.name}
-              <button
-                style={buttonX}
-                onClick={() =>
-                  run(() => productApi.removeFromCollection(product.id, c.id))
-                }
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          {product.collections.length === 0 && (
-            <span style={muted}>Chưa thuộc bộ sưu tập nào.</span>
-          )}
+          <Panel title={`Ảnh (${product.media.length})`}>
+            {product.media.length === 0 ? (
+              <p className='text-body-sm text-ink-muted'>
+                Chưa có ảnh. Tính năng tải ảnh sẽ có khi backend hỗ trợ.
+              </p>
+            ) : (
+              <ul className='flex flex-col gap-1'>
+                {product.media.map((media) => (
+                  <li key={media.id} className='truncate text-caption text-ink-muted'>
+                    {media.url}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
         </div>
 
-        <div style={row}>
-          <select
-            style={input}
-            value={collectionId}
-            onChange={(e) => setCollectionId(e.target.value)}
-          >
-            <option value=''>— chọn bộ sưu tập —</option>
-            {collections.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <button
-            style={button}
-            disabled={!collectionId}
-            onClick={() =>
-              run(async () => {
-                await productApi.assignToCollection(product.id, collectionId);
-                setCollectionId('');
-              })
-            }
-          >
-            Gán vào
-          </button>
-        </div>
-      </div>
-
-      {/* ---------- ảnh ---------- */}
-      <h2 style={h2}>Ảnh ({product.media.length})</h2>
-
-      <div style={card}>
-        {product.media.length === 0 ? (
-          <p style={muted}>Chưa có ảnh — backend chưa có API upload.</p>
-        ) : (
-          product.media.map((m) => (
-            <div key={m.id} style={{ marginBottom: 6 }}>
-              <code style={{ fontSize: 12 }}>{m.url}</code>
+        {/* Cột phụ */}
+        <div className='flex flex-col gap-6'>
+          <Panel title='Tồn kho'>
+            <div className='flex flex-wrap items-center gap-3'>
+              <p>
+                <span className='text-h3 font-semibold text-ink'>{stock}</span>{' '}
+                <span className='text-body-sm text-ink-muted'>{product.unit}</span>
+              </p>
+              <StockStatusBadge status={status} />
             </div>
-          ))
-        )}
+            <ButtonLink
+              href={`/vendors/stocks/${product.id}`}
+              variant='outline'
+              size='sm'
+              className='mt-4'
+            >
+              Quản lý tồn kho
+              <Icon name='chevron-right' className='size-4' />
+            </ButtonLink>
+          </Panel>
+
+          <Panel title={`Tag (${product.tags.length})`}>
+            {product.tags.length === 0 ? (
+              <p className='text-body-sm text-ink-muted'>Chưa có tag nào.</p>
+            ) : (
+              <div className='flex flex-wrap gap-2'>
+                {product.tags.map((tag) => (
+                  <RemovableTag
+                    key={tag.id}
+                    removeLabel={`Xoá tag ${tag.name}`}
+                    disabled={isBusy}
+                    onRemove={() => void run(() => productApi.removeTag(product.id, tag.name))}
+                  >
+                    {tag.name}
+                  </RemovableTag>
+                ))}
+              </div>
+            )}
+            <form onSubmit={handleAddTag} className='mt-4 flex gap-2'>
+              <div className='min-w-0 flex-1'>
+                <Input
+                  size='sm'
+                  value={tagName}
+                  onChange={(event) => setTagName(event.target.value)}
+                  placeholder='Tên tag'
+                  aria-label='Tên tag mới'
+                />
+              </div>
+              <Button type='submit' variant='outline' disabled={isBusy || !tagName.trim()}>
+                Thêm
+              </Button>
+            </form>
+          </Panel>
+
+          <Panel title={`Bộ sưu tập (${product.collections.length})`}>
+            {product.collections.length === 0 ? (
+              <p className='text-body-sm text-ink-muted'>Chưa thuộc bộ sưu tập nào.</p>
+            ) : (
+              <div className='flex flex-wrap gap-2'>
+                {product.collections.map((collection) => (
+                  <RemovableTag
+                    key={collection.id}
+                    removeLabel={`Bỏ khỏi bộ sưu tập ${collection.name}`}
+                    disabled={isBusy}
+                    onRemove={() =>
+                      void run(() => productApi.removeFromCollection(product.id, collection.id))
+                    }
+                  >
+                    {collection.name}
+                  </RemovableTag>
+                ))}
+              </div>
+            )}
+            {availableCollections.length > 0 && (
+              <form onSubmit={handleAssignCollection} className='mt-4 flex flex-col gap-2'>
+                <Select
+                  aria-label='Chọn bộ sưu tập'
+                  value={collectionId}
+                  onChange={(event) => setCollectionId(event.target.value)}
+                  wrapperClassName='w-full'
+                >
+                  <option value=''>Chọn bộ sưu tập</option>
+                  {availableCollections.map((collection) => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </option>
+                  ))}
+                </Select>
+                <Button type='submit' variant='outline' disabled={isBusy || !collectionId}>
+                  Thêm vào bộ sưu tập
+                </Button>
+              </form>
+            )}
+          </Panel>
+        </div>
       </div>
-    </div>
+    </VendorPage>
   );
 };
 
-ProductDetailPage.getLayout = function getLayout(page) {
-  return <VendorLayout>{page}</VendorLayout>;
+ProductDetailPage.getLayout = function getLayout(page: React.ReactElement) {
+  return (
+    <VendorShellLayout>
+      <VendorLayout>{page}</VendorLayout>
+    </VendorShellLayout>
+  );
 };
 
 export default ProductDetailPage;

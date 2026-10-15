@@ -1,243 +1,162 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import Link from "next/link";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-import { collectionApi } from "@/services/collections";
-import { type Collection } from "@/types/collection";
-import VendorLayout from "@/components/layout/VendorLayout";
-import VendorShellLayout from "@/components/layout/VendorShellLayout";
+import VendorLayout from '@/components/layout/VendorLayout';
+import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import Alert from '@/components/ui/Alert';
+import Badge from '@/components/ui/Badge';
+import { ButtonLink } from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
+import EmptyState from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import Icon from '@/components/ui/Icon';
+import IconButton, { IconLink } from '@/components/ui/IconButton';
+import Table, { Td, Th } from '@/components/ui/Table';
+import { PanelSkeleton } from '@/components/vendor/Panel';
+import VendorPage from '@/components/vendor/VendorPage';
+import type { NextPageWithLayout } from '@/pages/_app';
+import { collectionApi } from '@/services/collections';
+import type { Collection } from '@/types/collection';
 
-const page: CSSProperties = {
-  padding: "24px 32px",
-  fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
-  fontSize: 14,
-  lineHeight: 1.6,
-  maxWidth: 900,
-  margin: "0 auto",
-  background: "#fff",
-  color: "#111827",
-  minHeight: "100vh",
-  colorScheme: "light",
-};
-
-const h1: CSSProperties = {
-  fontSize: 22,
-  fontWeight: 600,
-  margin: "12px 0 4px",
-};
-
-const muted: CSSProperties = { color: "#6b7280", fontSize: 13 };
-
-const link: CSSProperties = { color: "#2563eb", textDecoration: "none" };
-
-const toolbar: CSSProperties = {
-  display: "flex",
-  gap: 12,
-  alignItems: "center",
-  flexWrap: "wrap",
-  margin: "12px 0 20px",
-};
-
-const row: CSSProperties = {
-  display: "flex",
-  gap: 6,
-  alignItems: "center",
-  flexWrap: "wrap",
-};
-
-const table: CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: 13,
-  border: "1px solid #d1d5db",
-};
-
-const th: CSSProperties = {
-  textAlign: "left",
-  padding: "9px 12px",
-  background: "#f3f4f6",
-  border: "1px solid #d1d5db",
-  fontWeight: 600,
-  whiteSpace: "nowrap",
-};
-
-const td: CSSProperties = {
-  padding: "9px 12px",
-  border: "1px solid #d1d5db",
-  verticalAlign: "top",
-};
-
-const button: CSSProperties = {
-  display: "inline-block",
-  padding: "5px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: 6,
-  background: "#fff",
-  color: "#111827",
-  cursor: "pointer",
-  fontSize: 13,
-  textDecoration: "none",
-  fontFamily: "inherit",
-  lineHeight: 1.6,
-};
-
-const buttonPrimary: CSSProperties = {
-  ...button,
-  background: "#2563eb",
-  borderColor: "#2563eb",
-  color: "#fff",
-  fontWeight: 500,
-};
-
-const buttonDanger: CSSProperties = {
-  ...button,
-  color: "#dc2626",
-  borderColor: "#fca5a5",
-};
-
-const errorBox: CSSProperties = {
-  marginTop: 16,
-  padding: "10px 14px",
-  background: "#fef2f2",
-  border: "1px solid #fecaca",
-  borderRadius: 6,
-  color: "#b91c1c",
-  fontSize: 13,
-};
-
-const badge = (ok: boolean): CSSProperties => ({
-  display: "inline-block",
-  padding: "2px 9px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 500,
-  background: ok ? "#dcfce7" : "#f3f4f6",
-  color: ok ? "#166534" : "#6b7280",
-});
-
-export default function CollectionListPage() {
+const CollectionListPage: NextPageWithLayout = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [onlyActive, setOnlyActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
 
   useEffect(() => {
-    const load = async (active: boolean) => {
+    let ignore = false;
+
+    async function load() {
       setLoading(true);
-      setError(null);
 
       try {
-        const res = await collectionApi.getAll(active);
-        setCollections(res.data);
-      } catch (err) {
-        setError((err as Error).message);
+        const response = await collectionApi.getAll(onlyActive);
+        if (!ignore) {
+          setCollections(response.data);
+          setError(null);
+        }
+      } catch (requestError) {
+        if (!ignore) setError((requestError as Error).message);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
+    }
+
+    const timer = window.setTimeout(() => void load(), 0);
+
+    return () => {
+      ignore = true;
+      window.clearTimeout(timer);
     };
+  }, [onlyActive, attempt]);
 
-    load(onlyActive);
-  }, [onlyActive]);
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Xóa "${name}"?`)) return;
+  async function handleDelete(collection: Collection) {
+    if (!confirm(`Xoá bộ sưu tập "${collection.name}"?`)) return;
 
     try {
-      await collectionApi.remove(id);
-      setCollections((current) => current.filter((c) => c.id !== id));
-    } catch (err) {
-      alert((err as Error).message);
+      await collectionApi.remove(collection.id);
+      setCollections((current) => current.filter((item) => item.id !== collection.id));
+      setNotice({ tone: 'success', text: `Đã xoá "${collection.name}".` });
+    } catch (deleteError) {
+      setNotice({ tone: 'danger', text: (deleteError as Error).message });
     }
-  };
+  }
 
   return (
-    <div style={page}>
-      <Link href="/" style={link}>
-        ← Trang chủ
-      </Link>
+    <VendorPage
+      title='Bộ sưu tập'
+      description='Nhóm sản phẩm theo chủ đề để khách dễ tìm.'
+      actions={
+        <ButtonLink href='/vendors/collections/new' size='sm'>
+          <Icon name='plus' className='size-4' />
+          Tạo bộ sưu tập
+        </ButtonLink>
+      }
+    >
+      <Checkbox
+        label='Chỉ hiện bộ sưu tập đang hoạt động'
+        checked={onlyActive}
+        onChange={(event) => setOnlyActive(event.target.checked)}
+      />
 
-      <h1 style={h1}>
-        Bộ sưu tập{" "}
-        <span style={{ ...muted, fontWeight: 400 }}>
-          ({collections.length})
-        </span>
-      </h1>
+      {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
 
-      <div style={toolbar}>
-        <Link href="/vendors/collections/new" style={buttonPrimary}>
-          + Tạo bộ sưu tập
-        </Link>
-
-        <label style={{ ...row, fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={onlyActive}
-            onChange={(e) => setOnlyActive(e.target.checked)}
-          />
-          Chỉ hiện đang hoạt động
-        </label>
-      </div>
-
-      {loading && <p style={muted}>Đang tải...</p>}
-      {error && <div style={errorBox}>Lỗi: {error}</div>}
-
-      {!loading && !error && collections.length === 0 && (
-        <p style={muted}>Chưa có bộ sưu tập nào.</p>
-      )}
-
-      {!loading && !error && collections.length > 0 && (
-        <table style={table}>
+      {loading ? (
+        <PanelSkeleton className='h-64' />
+      ) : error ? (
+        <ErrorState
+          title='Không thể tải bộ sưu tập'
+          message={error}
+          onRetry={() => setAttempt((current) => current + 1)}
+        />
+      ) : collections.length === 0 ? (
+        <EmptyState
+          icon='hand-platter'
+          title={onlyActive ? 'Không có bộ sưu tập nào đang hoạt động' : 'Chưa có bộ sưu tập nào'}
+          description='Tạo bộ sưu tập rồi gán sản phẩm vào từ trang chi tiết sản phẩm.'
+          action={<ButtonLink href='/vendors/collections/new'>Tạo bộ sưu tập</ButtonLink>}
+        />
+      ) : (
+        <Table caption='Danh sách bộ sưu tập'>
           <thead>
             <tr>
-              <th style={th}>Tên</th>
-              <th style={th}>Mô tả</th>
-              <th style={th}>Trạng thái</th>
-              <th style={th}></th>
+              <Th>Tên</Th>
+              <Th>Mô tả</Th>
+              <Th>Trạng thái</Th>
+              <Th>
+                <span className='sr-only'>Thao tác</span>
+              </Th>
             </tr>
           </thead>
           <tbody>
-            {collections.map((c) => (
-              <tr key={c.id}>
-                <td style={td}>
-                  <Link href={`/vendors/collections/${c.id}`} style={link}>
-                    {c.name}
+            {collections.map((collection) => (
+              <tr key={collection.id} className='hover:bg-surface-soft/60'>
+                <Td>
+                  <Link
+                    href={`/vendors/collections/${collection.id}`}
+                    className='font-medium text-ink hover:underline'
+                  >
+                    {collection.name}
                   </Link>
-                  <div style={{ ...muted, fontSize: 12 }}>{c.slug}</div>
-                </td>
-
-                <td style={{ ...td, color: "#6b7280" }}>
-                  {c.description ?? "—"}
-                </td>
-
-                <td style={td}>
-                  <span style={badge(c.isActive)}>
-                    {c.isActive ? "Hoạt động" : "Tắt"}
-                  </span>
-                </td>
-
-                <td style={{ ...td, whiteSpace: "nowrap" }}>
-                  <div style={row}>
-                    <Link href={`/vendors/collections/${c.id}`} style={button}>
-                      Xem
-                    </Link>
-                    <Link href={`/vendors/collections/${c.id}/edit`} style={button}>
-                      Sửa
-                    </Link>
-                    <button
-                      style={buttonDanger}
-                      onClick={() => handleDelete(c.id, c.name)}
+                  <p className='text-caption text-ink-muted'>{collection.slug}</p>
+                </Td>
+                <Td className='text-ink-muted'>{collection.description || '—'}</Td>
+                <Td>
+                  <Badge tone={collection.isActive ? 'success' : 'neutral'}>
+                    {collection.isActive ? 'Hoạt động' : 'Tắt'}
+                  </Badge>
+                </Td>
+                <Td align='right'>
+                  <div className='flex justify-end gap-1'>
+                    <IconLink
+                      href={`/vendors/collections/${collection.id}/edit`}
+                      label={`Sửa ${collection.name}`}
+                      variant='ghost'
+                      size='sm'
                     >
-                      Xóa
-                    </button>
+                      <Icon name='edit' className='size-4' />
+                    </IconLink>
+                    <IconButton
+                      label={`Xoá ${collection.name}`}
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => void handleDelete(collection)}
+                    >
+                      <Icon name='trash' className='size-4 text-danger' />
+                    </IconButton>
                   </div>
-                </td>
+                </Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       )}
-    </div>
+    </VendorPage>
   );
-}
+};
 
 CollectionListPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
@@ -246,3 +165,5 @@ CollectionListPage.getLayout = function getLayout(page: React.ReactElement) {
     </VendorShellLayout>
   );
 };
+
+export default CollectionListPage;

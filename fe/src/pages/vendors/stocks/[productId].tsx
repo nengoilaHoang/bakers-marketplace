@@ -1,10 +1,19 @@
-import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import StockLevelBar from '@/components/stock/StockLevelBar';
+import StockStatusBadge from '@/components/stock/StockStatusBadge';
+import Alert from '@/components/ui/Alert';
+import Button, { ButtonLink } from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
+import { ErrorState } from '@/components/ui/ErrorState';
+import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
+import VendorPage from '@/components/vendor/VendorPage';
 import useAuth from '@/hooks/user/useAuthContext';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
@@ -13,29 +22,23 @@ import type { StockAlertType } from '@/types/stock';
 import {
   STOCK_ALERT_LABELS,
   STOCK_ALERT_TYPES,
-  STOCK_STATUS_LABELS,
   getStockStatus,
   getThresholdOrderError,
   planAlertChanges,
 } from '@/utils/stockStatus';
 
-// UI thô (inline style), sẽ làm lại theo design system sau.
-const page: CSSProperties = { padding: '24px 32px', fontSize: 14, maxWidth: 800, margin: '0 auto' };
-const h1: CSSProperties = { fontSize: 22, fontWeight: 600, margin: '12px 0 4px' };
-const h2: CSSProperties = { fontSize: 16, fontWeight: 600, margin: '24px 0 8px' };
-const muted: CSSProperties = { color: '#6b7280', fontSize: 13 };
-const link: CSSProperties = { color: '#2563eb', textDecoration: 'none' };
-const card: CSSProperties = { border: '1px solid #d1d5db', borderRadius: 8, padding: 16 };
-const row: CSSProperties = { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' };
-const input: CSSProperties = { padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 };
-const button: CSSProperties = { padding: '6px 14px', border: '1px solid #111827', borderRadius: 6, background: '#111827', color: '#fff', cursor: 'pointer', fontSize: 13 };
-const errorBox: CSSProperties = { padding: 10, border: '1px solid #fecaca', background: '#fef2f2', color: '#991b1b', borderRadius: 6, marginTop: 10 };
-const successBox: CSSProperties = { padding: 10, border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#166534', borderRadius: 6, marginTop: 10 };
-
 type AdjustMode = 'set' | 'add' | 'subtract';
+
+type Message = { ok: boolean; text: string };
 
 type ThresholdField = { enabled: boolean; value: string };
 type ThresholdForm = Record<StockAlertType, ThresholdField>;
+
+const ADJUST_LABELS: Record<AdjustMode, string> = {
+  add: 'Nhập thêm (+)',
+  subtract: 'Xuất bớt (−)',
+  set: 'Đặt số mới',
+};
 
 function toThresholdForm(product: Product): ThresholdForm {
   const alerts = product.stock?.alerts ?? [];
@@ -50,7 +53,8 @@ function toThresholdForm(product: Product): ThresholdForm {
 
 const StockDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
-  const productId = typeof router.query.productId === 'string' ? router.query.productId : undefined;
+  const productId =
+    typeof router.query.productId === 'string' ? router.query.productId : undefined;
   const { account } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -58,10 +62,10 @@ const StockDetailPage: NextPageWithLayout = () => {
 
   const [mode, setMode] = useState<AdjustMode>('add');
   const [amount, setAmount] = useState('');
-  const [adjustMessage, setAdjustMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [adjustMessage, setAdjustMessage] = useState<Message | null>(null);
 
   const [thresholds, setThresholds] = useState<ThresholdForm | null>(null);
-  const [alertMessage, setAlertMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [alertMessage, setAlertMessage] = useState<Message | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -90,7 +94,10 @@ const StockDetailPage: NextPageWithLayout = () => {
     const isValid = Number.isInteger(value) && (mode === 'set' ? value >= 0 : value > 0);
 
     if (!isValid) {
-      setAdjustMessage({ ok: false, text: mode === 'set' ? 'Nhập số nguyên ≥ 0.' : 'Nhập số nguyên dương.' });
+      setAdjustMessage({
+        ok: false,
+        text: mode === 'set' ? 'Nhập số nguyên ≥ 0.' : 'Nhập số nguyên dương.',
+      });
       return;
     }
 
@@ -127,7 +134,10 @@ const StockDetailPage: NextPageWithLayout = () => {
       const value = Number(field.value);
 
       if (field.value.trim() === '' || !Number.isInteger(value) || value < 0) {
-        setAlertMessage({ ok: false, text: `Mốc "${STOCK_ALERT_LABELS[alertType]}" phải là số nguyên ≥ 0.` });
+        setAlertMessage({
+          ok: false,
+          text: `Mốc "${STOCK_ALERT_LABELS[alertType]}" phải là số nguyên ≥ 0.`,
+        });
         return;
       }
 
@@ -163,109 +173,156 @@ const StockDetailPage: NextPageWithLayout = () => {
   }
 
   function updateThreshold(alertType: StockAlertType, patch: Partial<ThresholdField>) {
-    setThresholds((current) => (current ? { ...current, [alertType]: { ...current[alertType], ...patch } } : current));
-  }
-
-  if (loadError) {
-    return (
-      <div style={page}>
-        <Link href='/vendors/stocks' style={link}>
-          ← Tồn kho
-        </Link>
-        <div style={errorBox}>Lỗi: {loadError}</div>
-      </div>
+    setThresholds((current) =>
+      current ? { ...current, [alertType]: { ...current[alertType], ...patch } } : current,
     );
   }
 
-  if (!product || !thresholds) return <p style={page}>Đang tải...</p>;
+  const breadcrumb = [
+    { label: 'Tồn kho', href: '/vendors/stocks' },
+    { label: product?.title ?? 'Chi tiết' },
+  ];
+
+  if (loadError) {
+    return (
+      <VendorPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
+        <ErrorState title='Không thể tải sản phẩm' message={loadError} onRetry={() => void load()} />
+      </VendorPage>
+    );
+  }
+
+  if (!product || !thresholds) {
+    return (
+      <VendorPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
+        <PanelSkeleton />
+        <PanelSkeleton />
+      </VendorPage>
+    );
+  }
 
   const stock = product.stock?.stock ?? 0;
-  const status = getStockStatus(stock, product.stock?.alerts ?? []);
+  const alerts = product.stock?.alerts ?? [];
+  const status = getStockStatus(stock, alerts);
   const isOwner = account?.id === product.vendorId;
 
   return (
-    <div style={page}>
-      <Head>
-        <title>{`Tồn kho · ${product.title}`}</title>
-      </Head>
-
-      <Link href='/vendors/stocks' style={link}>
-        ← Tồn kho
-      </Link>
-
-      <h1 style={h1}>{product.title}</h1>
-      <p style={muted}>
-        Tồn kho hiện tại: <b style={{ color: '#111827', fontSize: 16 }}>{stock}</b> {product.unit} · Trạng thái:{' '}
-        <b style={{ color: '#111827' }}>{STOCK_STATUS_LABELS[status]}</b> ·{' '}
-        <Link href={`/vendors/products/${product.id}`} style={link}>
+    <VendorPage
+      title={`Tồn kho · ${product.title}`}
+      heading={
+        <span className='flex flex-wrap items-center gap-3'>
+          {product.title}
+          <StockStatusBadge status={status} />
+        </span>
+      }
+      breadcrumb={breadcrumb}
+      size='narrow'
+      actions={
+        <ButtonLink href={`/vendors/products/${product.id}`} variant='outline' size='sm'>
           Xem sản phẩm
-        </Link>
-      </p>
+        </ButtonLink>
+      }
+    >
+      {!isOwner && (
+        <Alert tone='warning'>
+          Sản phẩm này không thuộc cửa hàng của bạn nên không thể điều chỉnh.
+        </Alert>
+      )}
 
-      {!isOwner && <div style={errorBox}>Sản phẩm này không thuộc cửa hàng của bạn, bạn không thể điều chỉnh.</div>}
+      {/* ---------- Track Stock Levels ---------- */}
+      <Panel title='Mức tồn kho'>
+        <p className='mb-4'>
+          <span className='text-display font-semibold text-ink'>{stock}</span>{' '}
+          <span className='text-lead text-ink-muted'>{product.unit}</span>
+        </p>
+        <StockLevelBar stock={stock} unit={product.unit} alerts={alerts} status={status} />
+      </Panel>
 
       {/* ---------- Manage Stocks ---------- */}
-      <h2 style={h2}>Điều chỉnh tồn kho</h2>
-      <form style={card} onSubmit={(event) => void handleAdjust(event)}>
-        <div style={row}>
-          <select style={input} value={mode} onChange={(event) => setMode(event.target.value as AdjustMode)} aria-label='Cách điều chỉnh'>
-            <option value='add'>Nhập thêm (+)</option>
-            <option value='subtract'>Xuất bớt (−)</option>
-            <option value='set'>Đặt số mới</option>
-          </select>
-          <input
-            type='number'
-            min={0}
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            placeholder='Số lượng'
-            aria-label='Số lượng'
-            style={{ ...input, width: 120 }}
-          />
-          <span style={muted}>{product.unit}</span>
-          <button type='submit' style={button} disabled={isSaving || !isOwner}>
+      <Panel
+        onSubmit={(event) => void handleAdjust(event)}
+        title='Điều chỉnh tồn kho'
+        description='Nhập thêm khi có hàng về, xuất bớt khi bán hoặc hỏng, đặt số mới sau khi kiểm kê.'
+      >
+        <div className='flex flex-wrap items-end gap-3'>
+          <Field label='Cách điều chỉnh' htmlFor='adjust-mode' size='sm'>
+            <Select
+              id='adjust-mode'
+              value={mode}
+              onChange={(event) => setMode(event.target.value as AdjustMode)}
+            >
+              {(Object.keys(ADJUST_LABELS) as AdjustMode[]).map((key) => (
+                <option key={key} value={key}>
+                  {ADJUST_LABELS[key]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label={`Số lượng (${product.unit})`} htmlFor='adjust-amount' size='sm'>
+            <div className='w-36'>
+              <Input
+                id='adjust-amount'
+                type='number'
+                min={0}
+                size='sm'
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder='0'
+              />
+            </div>
+          </Field>
+          <Button type='submit' disabled={isSaving || !isOwner}>
             Cập nhật
-          </button>
+          </Button>
         </div>
-        {adjustMessage && <div style={adjustMessage.ok ? successBox : errorBox}>{adjustMessage.text}</div>}
-      </form>
+        {adjustMessage && (
+          <Alert tone={adjustMessage.ok ? 'success' : 'danger'} className='mt-4'>
+            {adjustMessage.text}
+          </Alert>
+        )}
+      </Panel>
 
       {/* ---------- Configure Stock Alerts ---------- */}
-      <h2 style={h2}>Mốc cảnh báo</h2>
-      <form style={card} onSubmit={(event) => void handleSaveThresholds(event)}>
-        <p style={{ ...muted, marginTop: 0 }}>
-          Trạng thái tồn kho được tính theo các mốc này. Các mốc phải tăng dần: Tối thiểu &lt; Cần nhập lại &lt; Tối đa.
-        </p>
+      <Panel
+        onSubmit={(event) => void handleSaveThresholds(event)}
+        title='Mốc cảnh báo'
+        description='Trạng thái tồn kho được tính theo các mốc này. Các mốc phải tăng dần: Tối thiểu < Cần nhập lại < Tối đa.'
+      >
+        <div className='flex flex-col gap-3'>
+          {STOCK_ALERT_TYPES.map((alertType) => (
+            <div key={alertType} className='flex flex-wrap items-center gap-4'>
+              <div className='w-44'>
+                <Checkbox
+                  label={STOCK_ALERT_LABELS[alertType]}
+                  checked={thresholds[alertType].enabled}
+                  onChange={(event) => updateThreshold(alertType, { enabled: event.target.checked })}
+                />
+              </div>
+              <div className='w-36'>
+                <Input
+                  type='number'
+                  min={0}
+                  size='sm'
+                  value={thresholds[alertType].value}
+                  disabled={!thresholds[alertType].enabled}
+                  onChange={(event) => updateThreshold(alertType, { value: event.target.value })}
+                  aria-label={`Giá trị mốc ${STOCK_ALERT_LABELS[alertType]}`}
+                />
+              </div>
+              <span className='text-body-sm text-ink-muted'>{product.unit}</span>
+            </div>
+          ))}
+        </div>
 
-        {STOCK_ALERT_TYPES.map((alertType) => (
-          <div key={alertType} style={{ ...row, marginBottom: 8 }}>
-            <label style={{ ...row, width: 170 }}>
-              <input
-                type='checkbox'
-                checked={thresholds[alertType].enabled}
-                onChange={(event) => updateThreshold(alertType, { enabled: event.target.checked })}
-              />
-              {STOCK_ALERT_LABELS[alertType]}
-            </label>
-            <input
-              type='number'
-              min={0}
-              value={thresholds[alertType].value}
-              disabled={!thresholds[alertType].enabled}
-              onChange={(event) => updateThreshold(alertType, { value: event.target.value })}
-              aria-label={`Giá trị mốc ${STOCK_ALERT_LABELS[alertType]}`}
-              style={{ ...input, width: 120 }}
-            />
-            <span style={muted}>{product.unit}</span>
-          </div>
-        ))}
-
-        <button type='submit' style={button} disabled={isSaving || !isOwner}>
+        <Button type='submit' disabled={isSaving || !isOwner} className='mt-5'>
           Lưu các mốc
-        </button>
-        {alertMessage && <div style={alertMessage.ok ? successBox : errorBox}>{alertMessage.text}</div>}
-      </form>
-    </div>
+        </Button>
+        {alertMessage && (
+          <Alert tone={alertMessage.ok ? 'success' : 'danger'} className='mt-4'>
+            {alertMessage.text}
+          </Alert>
+        )}
+      </Panel>
+    </VendorPage>
   );
 };
 

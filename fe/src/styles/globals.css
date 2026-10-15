@@ -1,11 +1,5 @@
 @import 'tailwindcss';
 
-:root {
-  color-scheme: light;
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme {
   /* ==========================================================================
      BẢNG MÀU — mỗi màu có 11 bậc 50→950, bậc 500 là màu gốc.
@@ -132,6 +126,8 @@
   --color-neutral-800: #292526;
   --color-neutral-900: #191617;
   --color-neutral-950: #0b090a;
+  /* white — nền trang, chữ trên nền đậm */
+  --color-white: #ffffff;
 
   /* --- Vai trò màu (semantic) — component dùng các tên này ---------------- */
   /* primary: nền section đậm, nhấn thương hiệu. Chữ trắng đặt lên được. */
@@ -140,7 +136,7 @@
   --color-primary-deep: var(--color-plum-900);
   --color-primary-soft: var(--color-plum-300);
   --color-primary-tint: var(--color-plum-50);
-  --color-on-primary: #ffffff;
+  --color-on-primary: var(--color-white);
 
   /* accent: nút hành động chính (CTA). Luôn dùng chữ tối (text-on-accent). */
   --color-accent: var(--color-rose-500);
@@ -183,7 +179,7 @@
   --color-info-strong: var(--color-info-700);
 
   /* Chữ, nền, viền trung tính — lấy từ thang neutral. */
-  --color-page: #ffffff;
+  --color-page: var(--color-white);
   --color-field: var(--color-neutral-50);
   --color-ink: var(--color-neutral-900);
   --color-ink-muted: var(--color-neutral-700);
@@ -225,6 +221,7 @@
   --text-micro--line-height: 1.35;
 
   /* --- Bo góc ------------------------------------------------------------- */
+  --radius-tick: 0.1875rem;
   --radius-media: 0.375rem;
   --radius-control: 0.5rem;
   --radius-field: 0.875rem;
@@ -255,45 +252,47 @@
     --clip-triangle-up: polygon(0 100%, 50% 0, 100% 100%);
   }
 
+  /* Khu vendor (trang quản trị): tông trung tính, nhưng mọi màu vẫn lấy từ
+     bảng màu của design system. Màu trạng thái (success/warning/danger/info)
+     và chữ trên nền primary/accent giữ nguyên như trang người dùng. */
   [data-theme='vendor'] {
-    /* Layout canvas & background */
-    --color-page: #f8fafc; /* slate-50 */
-    --color-surface: #ffffff;
-    --color-surface-soft: #f1f5f9; /* slate-100 */
-    --color-field: #ffffff;
+    /* Nền: trang xám ấm rất nhạt, thẻ/ô nhập trắng */
+    --color-page: var(--color-neutral-50);
+    --color-surface: var(--color-white);
+    --color-surface-soft: var(--color-neutral-100);
+    --color-field: var(--color-white);
 
-    /* Typography */
+    /* Tiêu đề dùng font chữ thân (không serif) cho giao diện quản trị */
     --font-heading: var(--font-body);
 
-    /* Text contrast */
-    --color-ink: #0f172a; /* slate-900 */
-    --color-ink-muted: #475569; /* slate-600 */
-    --color-ink-subtle: #94a3b8; /* slate-400 */
-    --color-placeholder: #94a3b8;
+    /* Chữ */
+    --color-ink: var(--color-neutral-900);
+    --color-ink-muted: var(--color-neutral-600);
+    --color-ink-subtle: var(--color-neutral-400);
+    --color-placeholder: var(--color-neutral-400);
 
-    /* Dividers & Borders */
-    --color-line: #e2e8f0; /* slate-200 */
-    --color-border: #cbd5e1; /* slate-300 */
-    --color-border-soft: #e2e8f0;
+    /* Đường kẻ, viền */
+    --color-line: var(--color-neutral-200);
+    --color-border: var(--color-neutral-300);
+    --color-border-soft: var(--color-neutral-200);
 
-    /* Primary actions */
-    --color-primary: #0f172a;
-    --color-primary-strong: #020617;
-    --color-primary-soft: #e2e8f0;
-    --color-on-primary: #ffffff;
+    /* Primary: plum đậm */
+    --color-primary: var(--color-plum-700);
+    --color-primary-strong: var(--color-plum-900);
+    --color-primary-soft: var(--color-plum-100);
 
-    /* Secondary / Accents */
-    --color-accent: #2563eb; /* blue-600 */
-    --color-accent-strong: #1d4ed8; /* blue-700 */
-    --color-accent-soft: #dbeafe; /* blue-100 */
-    --color-on-accent: #ffffff;
+    /* Accent (nút hành động chính): giữ rose như trang người dùng */
+    --color-accent: var(--color-rose-500);
+    --color-accent-strong: var(--color-rose-600);
+    --color-accent-soft: var(--color-rose-100);
 
-    --color-secondary: #0f172a;
-    --color-secondary-soft: #f1f5f9;
-    --color-on-secondary: #0f172a;
+    /* Secondary: mục đang chọn ở sidebar, nhãn */
+    --color-secondary: var(--color-plum-100);
+    --color-secondary-soft: var(--color-plum-50);
+    --color-on-secondary: var(--color-neutral-900);
 
-    --color-highlight: #f1f5f9;
-    --color-highlight-soft: #f8fafc;
+    --color-highlight: var(--color-neutral-100);
+    --color-highlight-soft: var(--color-neutral-50);
   }
 
   body {

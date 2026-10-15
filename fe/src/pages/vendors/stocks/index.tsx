@@ -1,62 +1,58 @@
-import { useMemo, useState, type CSSProperties } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import StockStatusBadge, { STOCK_STATUS_STYLES } from '@/components/stock/StockStatusBadge';
+import Alert from '@/components/ui/Alert';
+import { ButtonLink } from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import Icon from '@/components/ui/Icon';
+import IconButton from '@/components/ui/IconButton';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Table, { Td, Th } from '@/components/ui/Table';
+import { PanelSkeleton } from '@/components/vendor/Panel';
+import StatCard from '@/components/vendor/StatCard';
+import VendorPage from '@/components/vendor/VendorPage';
 import { useVendorStocks } from '@/hooks/useVendorStocks';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
 import type { Product } from '@/types/product';
 import type { StockStatus } from '@/types/stock';
 import {
+  STOCK_ALERT_LABELS,
   STOCK_ALERT_TYPES,
   STOCK_STATUS_LABELS,
   STOCK_STATUS_PRIORITY,
   getStockStatus,
 } from '@/utils/stockStatus';
 
-// UI thô (inline style), sẽ làm lại theo design system sau.
-const page: CSSProperties = { padding: '24px 32px', fontSize: 14, maxWidth: 1200, margin: '0 auto' };
-const h1: CSSProperties = { fontSize: 22, fontWeight: 600, margin: '0 0 16px' };
-const muted: CSSProperties = { color: '#6b7280', fontSize: 13 };
-const link: CSSProperties = { color: '#2563eb', textDecoration: 'none' };
-const row: CSSProperties = { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' };
-const cards: CSSProperties = { display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 };
-const card: CSSProperties = { border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 14px', minWidth: 140, background: '#fff', cursor: 'pointer', textAlign: 'left' };
-const input: CSSProperties = { padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13 };
-const button: CSSProperties = { padding: '5px 10px', border: '1px solid #d1d5db', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 13 };
-const table: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 16 };
-const th: CSSProperties = { textAlign: 'left', padding: '8px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', whiteSpace: 'nowrap' };
-const td: CSSProperties = { padding: '8px 10px', border: '1px solid #d1d5db', verticalAlign: 'middle' };
-const errorBox: CSSProperties = { padding: 12, border: '1px solid #fecaca', background: '#fef2f2', color: '#991b1b', borderRadius: 6, margin: '12px 0' };
-
-const STATUS_COLORS: Record<StockStatus, CSSProperties> = {
-  OUT: { background: '#fee2e2', color: '#991b1b' },
-  MINIMUM: { background: '#fee2e2', color: '#b91c1c' },
-  REORDER: { background: '#fef3c7', color: '#92400e' },
-  MAXIMUM: { background: '#dbeafe', color: '#1e40af' },
-  NORMAL: { background: '#dcfce7', color: '#166534' },
-};
-
 const STATUSES = Object.keys(STOCK_STATUS_LABELS) as StockStatus[];
 
 type SortKey = 'status' | 'stock-asc' | 'stock-desc' | 'title';
+
+type Notice = { tone: 'success' | 'danger'; text: string };
 
 function statusOf(product: Product): StockStatus {
   return getStockStatus(product.stock?.stock ?? 0, product.stock?.alerts ?? []);
 }
 
-function StatusBadge({ status }: { status: StockStatus }) {
-  return (
-    <span style={{ ...STATUS_COLORS[status], padding: '2px 8px', borderRadius: 999, fontSize: 12, whiteSpace: 'nowrap' }}>
-      {STOCK_STATUS_LABELS[status]}
-    </span>
-  );
+function thresholdOf(product: Product, alertType: (typeof STOCK_ALERT_TYPES)[number]) {
+  return product.stock?.alerts.find((alert) => alert.alertType === alertType)?.threshold;
 }
 
-// Điều chỉnh nhanh: nhập số rồi bấm Nhập thêm (+) hoặc Xuất bớt (−).
-function QuickAdjust({ product, onDone }: { product: Product; onDone: () => void }) {
+// Điều chỉnh nhanh trong bảng: nhập số rồi bấm + (nhập thêm) hoặc − (xuất bớt).
+function QuickAdjust({
+  product,
+  onNotice,
+  onDone,
+}: {
+  product: Product;
+  onNotice: (notice: Notice) => void;
+  onDone: () => void;
+}) {
   const [amount, setAmount] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -64,40 +60,58 @@ function QuickAdjust({ product, onDone }: { product: Product; onDone: () => void
     const value = Number(amount);
 
     if (!Number.isInteger(value) || value <= 0) {
-      alert('Nhập số nguyên dương.');
+      onNotice({ tone: 'danger', text: `Nhập số nguyên dương để điều chỉnh "${product.title}".` });
       return;
     }
 
     setIsSaving(true);
 
     try {
-      await productApi.adjustStock(product.id, sign * value);
+      const response = await productApi.adjustStock(product.id, sign * value);
       setAmount('');
+      onNotice({
+        tone: 'success',
+        text: `${product.title}: ${sign > 0 ? 'nhập thêm' : 'xuất bớt'} ${value} ${product.unit}, còn ${response.data.stock} ${product.unit}.`,
+      });
       onDone();
     } catch (error) {
-      alert((error as Error).message);
+      onNotice({ tone: 'danger', text: (error as Error).message });
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <div style={row}>
-      <input
-        type='number'
-        min={1}
-        value={amount}
-        onChange={(event) => setAmount(event.target.value)}
-        placeholder='Số lượng'
-        aria-label={`Số lượng điều chỉnh cho ${product.title}`}
-        style={{ ...input, width: 90 }}
-      />
-      <button type='button' style={button} disabled={isSaving} onClick={() => void adjust(1)}>
-        + Nhập
-      </button>
-      <button type='button' style={button} disabled={isSaving} onClick={() => void adjust(-1)}>
-        − Xuất
-      </button>
+    <div className='flex items-center gap-1.5'>
+      <div className='w-28'>
+        <Input
+          type='number'
+          min={1}
+          size='sm'
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder='Số lượng'
+          aria-label={`Số lượng điều chỉnh cho ${product.title}`}
+        />
+      </div>
+      <IconButton
+        label={`Nhập thêm cho ${product.title}`}
+        variant='muted'
+        size='sm'
+        disabled={isSaving}
+        onClick={() => void adjust(1)}
+      >
+        <Icon name='plus' className='size-4' />
+      </IconButton>
+      <IconButton
+        label={`Xuất bớt cho ${product.title}`}
+        variant='muted'
+        size='sm'
+        disabled={isSaving}
+        onClick={() => void adjust(-1)}
+      >
+        <Icon name='minus' className='size-4' />
+      </IconButton>
     </div>
   );
 }
@@ -107,9 +121,13 @@ const StockListPage: NextPageWithLayout = () => {
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<StockStatus | 'ALL'>('ALL');
   const [sortKey, setSortKey] = useState<SortKey>('status');
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   const counts = useMemo(() => {
-    const result = Object.fromEntries(STATUSES.map((status) => [status, 0])) as Record<StockStatus, number>;
+    const result = Object.fromEntries(STATUSES.map((status) => [status, 0])) as Record<
+      StockStatus,
+      number
+    >;
     for (const product of products) result[statusOf(product)] += 1;
     return result;
   }, [products]);
@@ -119,7 +137,10 @@ const StockListPage: NextPageWithLayout = () => {
 
     return products
       .filter((product) => statusFilter === 'ALL' || statusOf(product) === statusFilter)
-      .filter((product) => !normalizedKeyword || product.title.toLowerCase().includes(normalizedKeyword))
+      .filter(
+        (product) =>
+          !normalizedKeyword || product.title.toLowerCase().includes(normalizedKeyword),
+      )
       .sort((a, b) => {
         const stockA = a.stock?.stock ?? 0;
         const stockB = b.stock?.stock ?? 0;
@@ -132,123 +153,148 @@ const StockListPage: NextPageWithLayout = () => {
   }, [products, keyword, statusFilter, sortKey]);
 
   return (
-    <div style={page}>
-      <Head>
-        <title>Tồn kho</title>
-      </Head>
-
-      <h1 style={h1}>Tồn kho</h1>
-
+    <VendorPage
+      title='Tồn kho'
+      description='Theo dõi số lượng từng sản phẩm, lọc theo trạng thái và điều chỉnh nhanh.'
+    >
       {isLoading ? (
-        <p style={muted}>Đang tải...</p>
+        <>
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            <PanelSkeleton className='h-20' />
+            <PanelSkeleton className='h-20' />
+            <PanelSkeleton className='h-20' />
+          </div>
+          <PanelSkeleton className='h-80' />
+        </>
       ) : error ? (
-        <div style={errorBox}>
-          Lỗi: {error}{' '}
-          <button type='button' style={button} onClick={reload}>
-            Thử lại
-          </button>
-        </div>
+        <ErrorState title='Không thể tải tồn kho' message={error} onRetry={reload} />
+      ) : products.length === 0 ? (
+        <EmptyState
+          icon='cart'
+          title='Chưa có sản phẩm nào'
+          description='Tạo sản phẩm trước, sau đó quay lại đây để quản lý tồn kho.'
+          action={<ButtonLink href='/vendors/products/new'>Tạo sản phẩm</ButtonLink>}
+        />
       ) : (
         <>
           {/* Tổng quan: bấm vào thẻ để lọc theo trạng thái */}
-          <div style={cards}>
-            <button type='button' style={{ ...card, outline: statusFilter === 'ALL' ? '2px solid #111827' : 'none' }} onClick={() => setStatusFilter('ALL')}>
-              <div style={muted}>Tổng sản phẩm</div>
-              <div style={{ fontSize: 20, fontWeight: 600 }}>{products.length}</div>
-            </button>
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            <StatCard
+              label='Tất cả sản phẩm'
+              value={products.length}
+              icon='cart'
+              active={statusFilter === 'ALL'}
+              onClick={() => setStatusFilter('ALL')}
+            />
             {STATUSES.map((status) => (
-              <button
+              <StatCard
                 key={status}
-                type='button'
-                style={{ ...card, outline: statusFilter === status ? '2px solid #111827' : 'none' }}
+                label={STOCK_STATUS_LABELS[status]}
+                value={counts[status]}
+                icon={STOCK_STATUS_STYLES[status].icon}
+                tone={STOCK_STATUS_STYLES[status].tone}
+                active={statusFilter === status}
                 onClick={() => setStatusFilter(status)}
-              >
-                <div style={muted}>{STOCK_STATUS_LABELS[status]}</div>
-                <div style={{ fontSize: 20, fontWeight: 600 }}>{counts[status]}</div>
-              </button>
+              />
             ))}
           </div>
 
-          <div style={row}>
-            <input
-              type='search'
-              value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
-              placeholder='Tìm theo tên sản phẩm'
-              aria-label='Tìm theo tên sản phẩm'
-              style={{ ...input, width: 240 }}
-            />
-            <label style={row}>
-              Trạng thái
-              <select style={input} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StockStatus | 'ALL')}>
-                <option value='ALL'>Tất cả</option>
-                {STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {STOCK_STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label style={row}>
-              Sắp xếp
-              <select style={input} value={sortKey} onChange={(event) => setSortKey(event.target.value as SortKey)}>
-                <option value='status'>Cần xử lý trước</option>
-                <option value='stock-asc'>Tồn kho tăng dần</option>
-                <option value='stock-desc'>Tồn kho giảm dần</option>
-                <option value='title'>Tên A → Z</option>
-              </select>
-            </label>
+          <div className='flex flex-wrap items-center gap-3'>
+            <div className='w-full sm:w-72'>
+              <Input
+                type='search'
+                value={keyword}
+                onChange={(event) => setKeyword(event.target.value)}
+                placeholder='Tìm theo tên sản phẩm'
+                aria-label='Tìm theo tên sản phẩm'
+              />
+            </div>
+            <Select
+              aria-label='Lọc theo trạng thái'
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as StockStatus | 'ALL')}
+            >
+              <option value='ALL'>Mọi trạng thái</option>
+              {STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {STOCK_STATUS_LABELS[status]}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label='Sắp xếp'
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SortKey)}
+            >
+              <option value='status'>Cần xử lý trước</option>
+              <option value='stock-asc'>Tồn kho tăng dần</option>
+              <option value='stock-desc'>Tồn kho giảm dần</option>
+              <option value='title'>Tên A → Z</option>
+            </Select>
           </div>
 
+          {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
+
           {visibleProducts.length === 0 ? (
-            <p style={{ ...muted, marginTop: 16 }}>Không có sản phẩm nào.</p>
+            <p className='text-body-sm text-ink-muted'>Không có sản phẩm nào khớp bộ lọc.</p>
           ) : (
-            <table style={table}>
+            <Table caption='Tồn kho theo sản phẩm'>
               <thead>
                 <tr>
-                  <th style={th}>Sản phẩm</th>
-                  <th style={th}>Tồn kho</th>
-                  <th style={th}>Trạng thái</th>
+                  <Th>Sản phẩm</Th>
+                  <Th align='right'>Tồn kho</Th>
+                  <Th>Trạng thái</Th>
                   {STOCK_ALERT_TYPES.map((alertType) => (
-                    <th key={alertType} style={th}>
-                      {alertType}
-                    </th>
+                    <Th key={alertType} align='right'>
+                      {STOCK_ALERT_LABELS[alertType]}
+                    </Th>
                   ))}
-                  <th style={th}>Điều chỉnh nhanh</th>
-                  <th style={th} />
+                  <Th>Điều chỉnh nhanh</Th>
+                  <Th>
+                    <span className='sr-only'>Chi tiết</span>
+                  </Th>
                 </tr>
               </thead>
               <tbody>
                 {visibleProducts.map((product) => (
-                  <tr key={product.id}>
-                    <td style={td}>{product.title}</td>
-                    <td style={{ ...td, whiteSpace: 'nowrap' }}>
-                      <b>{product.stock?.stock ?? 0}</b> {product.unit}
-                    </td>
-                    <td style={td}>
-                      <StatusBadge status={statusOf(product)} />
-                    </td>
-                    {STOCK_ALERT_TYPES.map((alertType) => (
-                      <td key={alertType} style={td}>
-                        {product.stock?.alerts.find((alert) => alert.alertType === alertType)?.threshold ?? '—'}
-                      </td>
-                    ))}
-                    <td style={td}>
-                      <QuickAdjust product={product} onDone={reload} />
-                    </td>
-                    <td style={td}>
-                      <Link href={`/vendors/stocks/${product.id}`} style={link}>
-                        Chi tiết →
+                  <tr key={product.id} className='hover:bg-surface-soft/60'>
+                    <Td>
+                      <Link
+                        href={`/vendors/stocks/${product.id}`}
+                        className='font-medium text-ink hover:underline'
+                      >
+                        {product.title}
                       </Link>
-                    </td>
+                    </Td>
+                    <Td align='right' className='whitespace-nowrap'>
+                      <span className='font-semibold'>{product.stock?.stock ?? 0}</span>{' '}
+                      <span className='text-ink-muted'>{product.unit}</span>
+                    </Td>
+                    <Td>
+                      <StockStatusBadge status={statusOf(product)} />
+                    </Td>
+                    {STOCK_ALERT_TYPES.map((alertType) => (
+                      <Td key={alertType} align='right' className='text-ink-muted'>
+                        {thresholdOf(product, alertType) ?? '—'}
+                      </Td>
+                    ))}
+                    <Td>
+                      <QuickAdjust product={product} onNotice={setNotice} onDone={reload} />
+                    </Td>
+                    <Td align='right'>
+                      <ButtonLink href={`/vendors/stocks/${product.id}`} variant='ghost' size='sm'>
+                        Chi tiết
+                        <Icon name='chevron-right' className='size-4' />
+                      </ButtonLink>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           )}
         </>
       )}
-    </div>
+    </VendorPage>
   );
 };
 
