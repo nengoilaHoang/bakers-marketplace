@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import collectionService from '#/services/collections.service.js';
+import collectionService from '#/services/products/collections.service.js';
 import asyncHandler from '#/utils/asyncHandler.js';
 
 import {
