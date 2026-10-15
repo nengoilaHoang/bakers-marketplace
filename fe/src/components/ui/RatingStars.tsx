@@ -120,7 +120,7 @@ export function RatingInput({ name, defaultValue = 0, label }: RatingInputProps)
             name='star'
             fill={star <= value ? 'currentColor' : 'none'}
             className={cn(
-              'size-6 rounded-xs transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-accent',
+              'size-6 rounded-tick transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-accent',
               star <= value ? 'text-accent-strong' : 'text-ink',
             )}
           />

@@ -29,3 +29,8 @@ export function formatDateTime(value: string | null | undefined) {
   const date = toValidDate(value);
   return date ? dateTimeFormatter.format(date) : undefined;
 }
+
+// "125.000 VND"
+export function formatMoney(value: number, currency = 'VND') {
+  return `${value.toLocaleString('vi-VN')} ${currency}`;
+}

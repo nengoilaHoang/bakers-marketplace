@@ -60,7 +60,7 @@ export default function SearchBar({
           type='button'
           onClick={onFilterClick}
           aria-label='Bộ lọc'
-          className='grid size-6.5 place-items-center rounded-[3px] bg-highlight text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent'
+          className='grid size-6.5 place-items-center rounded-tick bg-highlight text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent'
         >
           <Icon name='filter' strokeWidth={2} className='size-4.5' />
         </button>
