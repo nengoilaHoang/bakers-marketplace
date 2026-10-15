@@ -2,6 +2,7 @@ import Icon from '@/components/ui/Icon';
 import useDebouncedCallback from '@/hooks/useDebounceCallback';
 import React, {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -73,6 +74,10 @@ const TypeableSelect = <T extends string | number | boolean>({
   );
 
   const [inputValue, setInputValue] = useState(getKey(String(currentValue)));
+
+  useEffect(() => {
+    queueMicrotask(() => setInputValue(getKey(String(currentValue))));
+  }, [currentValue, getKey]);
 
   useLayoutEffect(() => {
     if (inputRef.current) {
