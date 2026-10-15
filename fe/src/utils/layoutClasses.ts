@@ -2,8 +2,11 @@ import {
 	DimensionType,
 	HorizontalAlignType,
 	PaddingType,
+	SurfaceTheme,
+	TextStyle,
 	VerticalAlignType,
 } from '@/types/layout-component';
+import { HeroBannerContentPosition } from '@/types/layout-component/commerce-component';
 import { CSSProperties } from 'react';
 import { FlattenComponent } from './flattenLayout';
 
@@ -12,31 +15,27 @@ const DIMENSION_MAP: Record<'h' | 'w', Record<DimensionType, string>> = {
   h: { full: 'h-full', auto: 'h-auto', sm: 'h-1/4', md: 'h-1/2', lg: 'h-3/4' },
 };
 
-const getDimensionClass = (
-  prefix: 'h' | 'w',
-  value?: DimensionType,
-): string | CSSProperties => {
-  if (!value) return '';
-
-  if (typeof value === 'number') {
-    switch (prefix) {
-      case 'h':
-        return {
-          height: `${value}px`,
-        };
-      case 'w':
-        return {
-          width: `${value}px`,
-        };
-      default:
-        return '';
-    }
-  }
-
-  return DIMENSION_MAP[prefix][value] ?? '';
+export const CONTENT_POSITION_MAP: Record<HeroBannerContentPosition, string> = {
+  'top-left': 'justify-start items-start text-left',
+  'top-center': 'justify-start items-center text-center',
+  'top-right': 'justify-start items-end text-right',
+  'middle-left': 'justify-center items-start text-left',
+  'middle-center': 'justify-center items-center text-center',
+  'middle-right': 'justify-center items-end text-right',
+  'bottom-left': 'justify-end items-start text-left',
+  'bottom-center': 'justify-end items-center text-center',
+  'bottom-right': 'justify-end items-end text-right',
 };
 
-const PADDING_MAP: Record<
+const SURFACE_THEME_MAP: Record<SurfaceTheme, string> = {
+  default: 'bg-page text-ink',
+  surface: 'bg-surface text-ink',
+  primary: 'bg-primary text-on-primary',
+  secondary: 'bg-secondary text-on-secondary',
+  accent: 'bg-accent text-on-accent',
+};
+
+export const PADDING_MAP: Record<
   't' | 'l' | 'r' | 'b',
   Record<'none' | 'sm' | 'md' | 'lg', string>
 > = {
@@ -78,6 +77,35 @@ function getPaddingClass(
   return PADDING_MAP[side][padding] ?? '';
 }
 
+const getDimensionClass = (
+  prefix: 'h' | 'w',
+  value?: DimensionType,
+): string | CSSProperties => {
+  if (!value) return '';
+
+  if (typeof value === 'number') {
+    switch (prefix) {
+      case 'h':
+        return {
+          height: `${value}px`,
+        };
+      case 'w':
+        return {
+          width: `${value}px`,
+        };
+      default:
+        return '';
+    }
+  }
+
+  return DIMENSION_MAP[prefix][value] ?? '';
+};
+
+export function getSurfaceThemeClass(theme?: SurfaceTheme): string {
+  if (!theme) return '';
+  return SURFACE_THEME_MAP[theme] ?? 'bg-page text-ink';
+}
+
 function getAlignXClass(alignX?: HorizontalAlignType): string {
   switch (alignX) {
     case 'left':
@@ -108,27 +136,31 @@ function getAlignYClass(alignY?: VerticalAlignType): string {
   }
 }
 
-type PaletteTypeToken =
-  | 'accent'
-  | 'background'
-  | 'primary'
-  | 'secondary'
-  | 'surface';
+export function getTextStyle(style: TextStyle): CSSProperties {
+  const fontWeight = {
+    'semi-bold': 600,
+    bold: 700,
+    'extra-bold': 800,
+  };
+  let textDecoration = 'none';
 
-function getColorPaletteType(token: PaletteTypeToken) {
-  switch (token) {
-    case 'surface':
-      return 'bg-surface text-ink';
-    case 'primary':
-      return 'bg-primary text-on-primary';
-    case 'accent':
-      return 'bg-accent text-on-accent';
-    default:
-      return 'bg-page text-ink';
+  if (style.decoration === 'strikethrough') {
+    textDecoration = 'line-through';
+  } else if (style.decoration === 'underline') {
+    textDecoration = 'underline';
   }
-}
 
-// TODO: function getColorSchemeClass
+  return {
+    color: style.txtColor,
+    textAlign: style.textAlign,
+    textDecoration,
+    fontStyle: style.fontStyle,
+    fontWeight:
+      typeof style.fontWeight === 'string'
+        ? (fontWeight[style.fontWeight] ?? 400)
+        : style.fontWeight,
+  };
+}
 
 export function getBaseLayoutClassesAndStyle(
   config: FlattenComponent['config'],
@@ -138,32 +170,27 @@ export function getBaseLayoutClassesAndStyle(
   let style: CSSProperties = {};
   const classes: (string | undefined)[] = [];
 
+  const paddingConfig = 'padding' in config ? config.padding : undefined;
+  const surfaceThemeConfig =
+    'surfaceTheme' in config ? config.surfaceTheme : undefined;
+
   const objects = [
     // Dimensions
     getDimensionClass('w', config.w),
     getDimensionClass('h', config.h),
 
     // Alignments
-    getAlignXClass(config.alignX),
-    getAlignYClass(config.alignY),
+    getAlignXClass(config.alignSelfX),
+    getAlignYClass(config.alignSelfY),
 
     // Paddings
-    config.padding && getPaddingClass('t', config.padding.top),
-    config.padding && getPaddingClass('b', config.padding.bottom),
-    config.padding && getPaddingClass('l', config.padding.left),
-    config.padding && getPaddingClass('r', config.padding.right),
+    paddingConfig && getPaddingClass('t', paddingConfig.top),
+    paddingConfig && getPaddingClass('b', paddingConfig.bottom),
+    paddingConfig && getPaddingClass('l', paddingConfig.left),
+    paddingConfig && getPaddingClass('r', paddingConfig.right),
 
-    // Color palette
-    config.colorPalette?.type === 'custom' ? 'bg-page text-ink' : undefined,
-    config.colorPalette?.type === 'custom'
-      ? {
-          '--color-page': config.colorPalette.bgColor,
-          '--color-ink': config.colorPalette.fgColor,
-        }
-      : undefined,
-
-    config.colorPalette?.type === 'palette' &&
-      getColorPaletteType(config.colorPalette.token),
+    // Theme token mapping
+    surfaceThemeConfig && getSurfaceThemeClass(surfaceThemeConfig),
   ];
 
   objects.forEach((element) => {

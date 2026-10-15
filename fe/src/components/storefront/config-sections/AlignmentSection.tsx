@@ -8,8 +8,8 @@ type AlignmentSectionProps = {
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   alignment: {
-    horizontal: BaseLayoutComponentConfig['alignX'];
-    vertical: BaseLayoutComponentConfig['alignY'];
+    horizontal: BaseLayoutComponentConfig['alignSelfX'];
+    vertical: BaseLayoutComponentConfig['alignSelfY'];
   };
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
@@ -46,13 +46,13 @@ const AlignmentSection = ({
   const configs = useMemo(
     () => [
       {
-        key: 'alignX',
+        key: 'alignSelfX',
         label: 'Horizontal',
         options: HORIZONTAL_OPTIONS,
         value: alignment.horizontal ?? 'left',
       },
       {
-        key: 'alignY',
+        key: 'alignSelfY',
         label: 'Vertical',
         options: VERTICAL_OPTIONS,
         value: alignment.vertical ?? 'top',

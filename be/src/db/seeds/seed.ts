@@ -848,11 +848,10 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'auto',
           w: 'full',
-          alignX: 'center',
-          alignY: 'top',
+          alignSelfX: 'center',
+          alignSelfY: 'top',
           padding: { top: 'md', bottom: 'md', left: 'md', right: 'md' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'background' },
+          surfaceTheme: 'default',
           layout: 'UNIFORM',
           rows: { mobile: 2, tablet: 2, desktop: 2 },
           cols: { mobile: 1, tablet: 1, desktop: 1 },
@@ -874,11 +873,10 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'auto',
           w: 'full',
-          alignX: 'center',
-          alignY: 'top',
+          alignSelfX: 'center',
+          alignSelfY: 'top',
           padding: { top: 'md', bottom: 'md', left: 'md', right: 'md' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'surface' },
+          surfaceTheme: 'surface',
           content: {
             body: '<h2>Our Artisanal Collection</h2><p>Every loaf and pastry at Hoa Sen Bakery is made with authentic ingredients and artisanal precision.</p>',
             format: 'html',
@@ -899,11 +897,8 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'auto',
           w: 'full',
-          alignX: 'left',
-          alignY: 'top',
-          padding: { top: 'sm', bottom: 'sm', left: 'sm', right: 'sm' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'surface' },
+          alignSelfX: 'left',
+          alignSelfY: 'top',
           thumbnail: {
             url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff',
             ratio: '1:1',
@@ -978,11 +973,10 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'auto',
           w: 'full',
-          alignX: 'center',
-          alignY: 'top',
+          alignSelfX: 'center',
+          alignSelfY: 'top',
           padding: { top: 'md', bottom: 'md', left: 'none', right: 'none' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'background' },
+          surfaceTheme: 'default',
           layout: 'pagination',
           pageSize: 8,
         }),
@@ -1028,11 +1022,10 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'auto',
           w: 'full',
-          alignX: 'stretch',
-          alignY: 'top',
+          alignSelfX: 'stretch',
+          alignSelfY: 'top',
           padding: { top: 'none', bottom: 'lg', left: 'none', right: 'none' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'background' },
+          surfaceTheme: 'default',
           layout: 'UNIFORM',
           rows: { mobile: 2, tablet: 2, desktop: 2 },
           cols: { mobile: 1, tablet: 1, desktop: 1 },
@@ -1054,14 +1047,11 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'lg',
           w: 'full',
-          alignX: 'stretch',
-          alignY: 'top',
-          padding: { top: 'none', bottom: 'none', left: 'none', right: 'none' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'background' },
+          alignSelfX: 'stretch',
+          alignSelfY: 'top',
           mediaType: 'image',
           desktopMediaUrl:
-            'https://images.unsplash.com/photo-1517433670267-08bbd4be890f',
+            'https://static.vecteezy.com/system/resources/previews/008/660/558/non_2x/organic-food-background-hand-drawn-concept-free-vector.jpg',
           mobileMediaUrl: null,
           altText: 'Artisan bakery bread and oven display',
           eyebrow: {
@@ -1118,11 +1108,10 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'auto',
           w: 'full',
-          alignX: 'center',
-          alignY: 'top',
+          alignSelfX: 'center',
+          alignSelfY: 'top',
           padding: { top: 'md', bottom: 'md', left: 'lg', right: 'lg' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'surface' },
+          surfaceTheme: 'surface',
           layout: 'UNIFORM',
           rows: { mobile: 3, tablet: 1, desktop: 1 },
           cols: { mobile: 1, tablet: 3, desktop: 3 },
@@ -1161,11 +1150,10 @@ export async function seed(knex: Knex): Promise<void> {
           config: JSON.stringify({
             h: 'auto',
             w: 'full',
-            alignX: 'left',
-            alignY: 'top',
+            alignSelfX: 'left',
+            alignSelfY: 'top',
             padding: { top: 'md', bottom: 'md', left: 'md', right: 'md' },
-            colorScheme: 'default',
-            colorPalette: { type: 'palette', token: 'surface' },
+            surfaceTheme: 'surface',
             content: {
               body: card.body,
               format: 'html',
@@ -1178,7 +1166,6 @@ export async function seed(knex: Knex): Promise<void> {
         id: leafCard.id,
         component_type: 'RICH_TEXT',
       });
-
       featureCardIds.push(leafCard.id);
     }
 
@@ -1220,7 +1207,6 @@ export async function seed(knex: Knex): Promise<void> {
     // 7. SEED STOREFRONT & BENTO GRID HOME LAYOUT (vendor.mattroi@example.com)
     // =========================================================================
     const mattroiBrand = brandRows[1]; // Sunrise Patisserie
-
     const [mattroiStorefront] = await trx('storefronts')
       .insert({
         id: MATTROI_STOREFRONT_ID,
@@ -1274,11 +1260,10 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'full',
           w: 'full',
-          alignX: 'stretch',
-          alignY: 'top',
+          alignSelfX: 'stretch',
+          alignSelfY: 'top',
           padding: { top: 'md', bottom: 'lg', left: 'md', right: 'md' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'background' },
+          surfaceTheme: 'default',
           layout: 'BENTO',
           rows: { mobile: 4, tablet: 3, desktop: 2 },
           cols: { mobile: 1, tablet: 2, desktop: 4 },
@@ -1301,13 +1286,12 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'full',
           w: 'full',
-          alignX: 'left',
-          alignY: 'bottom',
-          padding: { top: 'lg', bottom: 'lg', left: 'lg', right: 'lg' },
-          colorScheme: 'accent',
-          colorPalette: { type: 'palette', token: 'primary' },
+          alignSelfX: 'left',
+          alignSelfY: 'bottom',
           colSpan: 2,
           rowSpan: 2,
+          padding: { top: 'lg', bottom: 'lg', left: 'lg', right: 'lg' },
+          surfaceTheme: 'accent',
           content: {
             body: '<h2>Fresh Morning Bakes</h2><p>Crispy French butter croissants baked fresh at dawn every single day.</p>',
             format: 'html',
@@ -1329,13 +1313,12 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'full',
           w: 'full',
-          alignX: 'left',
-          alignY: 'center',
-          padding: { top: 'md', bottom: 'md', left: 'md', right: 'md' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'surface' },
+          alignSelfX: 'left',
+          alignSelfY: 'center',
           colSpan: 2,
           rowSpan: 1,
+          padding: { top: 'md', bottom: 'md', left: 'md', right: 'md' },
+          surfaceTheme: 'surface',
           content: {
             body: '<h3>Weekend Special: 20% Off Pastry Sets</h3><p>Use code <strong>SUNRISE20</strong> at checkout.</p>',
             format: 'html',
@@ -1357,13 +1340,12 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'full',
           w: 'full',
-          alignX: 'center',
-          alignY: 'center',
-          padding: { top: 'sm', bottom: 'sm', left: 'sm', right: 'sm' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'surface' },
+          alignSelfX: 'center',
+          alignSelfY: 'center',
           colSpan: 1,
           rowSpan: 1,
+          padding: { top: 'sm', bottom: 'sm', left: 'sm', right: 'sm' },
+          surfaceTheme: 'surface',
           content: {
             body: '<h4>100% AOP Butter</h4><p>Imported Normandy butter for flaky lamination.</p>',
             format: 'html',
@@ -1385,13 +1367,12 @@ export async function seed(knex: Knex): Promise<void> {
         config: JSON.stringify({
           h: 'full',
           w: 'full',
-          alignX: 'center',
-          alignY: 'center',
-          padding: { top: 'sm', bottom: 'sm', left: 'sm', right: 'sm' },
-          colorScheme: 'default',
-          colorPalette: { type: 'palette', token: 'surface' },
+          alignSelfX: 'center',
+          alignSelfY: 'center',
           colSpan: 1,
           rowSpan: 1,
+          padding: { top: 'sm', bottom: 'sm', left: 'sm', right: 'sm' },
+          surfaceTheme: 'surface',
           content: {
             body: '<h4>Open Daily</h4><p>From 06:30 to 21:00 every single day.</p>',
             format: 'html',

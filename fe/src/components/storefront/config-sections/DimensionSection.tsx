@@ -1,4 +1,4 @@
-import { BaseLayoutComponentConfig } from '@/types/layout-component';
+import { DimensionType } from '@/types/layout-component';
 import { useMemo } from 'react';
 import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
@@ -8,8 +8,8 @@ type DimensionSectionProps = {
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   dimensions: {
-    h: BaseLayoutComponentConfig['h'];
-    w: BaseLayoutComponentConfig['w'];
+    h: DimensionType;
+    w: DimensionType;
   };
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
@@ -18,11 +18,11 @@ type DimensionSectionProps = {
 };
 
 const DIMENSION_OPTIONS = {
+  Auto: 'auto',
+  Full: 'full',
   Large: 'lg',
   Medium: 'md',
   Small: 'sm',
-  Auto: 'auto',
-  Full: 'full',
 } as const;
 
 const DimensionSection = ({
@@ -72,7 +72,11 @@ const DimensionSection = ({
             label={label}
             inputType='select'
             selectOptions={dimensionOptions}
-            currentValue={dimensions[key] ?? 'none'}
+            currentValue={
+              typeof dimensions[key] === 'number'
+                ? dimensions[key].toFixed(2)
+                : dimensions[key]
+            }
             onValueChange={(val) => onUpdate(key, val)}
             onOpenStateChange={onActiveSectionChange}
           />

@@ -82,44 +82,53 @@ export const ComponentTypeSchema = z.enum([
 ]);
 export type ComponentType = z.infer<typeof ComponentTypeSchema>;
 
-const ColorSchemeTypeSchema = z.enum(['default', 'inverted', 'accent']);
-const ColorPaletteSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('palette'),
-    token: z.enum(['background', 'surface', 'primary', 'secondary', 'accent']),
-  }),
-  z.object({
-    type: z.literal('custom'),
-    bgColor: ColorSchema,
-    fgColor: ColorSchema,
-  }),
+export const SurfaceThemeSchema = z.enum([
+  'default',
+  'surface',
+  'primary',
+  'secondary',
+  'accent',
 ]);
+
+export type SurfaceTheme = z.infer<typeof SurfaceThemeSchema>;
 
 export const BentoCellConfig = z.object({
   colSpan: z.uint32().min(1).max(50),
   rowSpan: z.uint32().min(1).max(50),
 });
 
-export const BaseLayoutComponentConfigSchema = z.object({
+export const SlotPlacementConfigSchema = z.object({
   h: DimensionTypeSchema,
   w: DimensionTypeSchema,
-  alignX: HorizontalAlignTypeSchema.default('left'),
-  alignY: VerticalAlignTypeSchema.default('top'),
-  padding: z.object({
-    top: PaddingTypeSchema.default('none'),
-    bottom: PaddingTypeSchema.default('none'),
-    left: PaddingTypeSchema.default('none'),
-    right: PaddingTypeSchema.default('none'),
-  }),
-  colorScheme: ColorSchemeTypeSchema.default('default'),
-  colorPalette: ColorPaletteSchema.default({
-    type: 'palette',
-    token: 'background',
-  }),
+  alignSelfX: HorizontalAlignTypeSchema.default('left'),
+  alignSelfY: VerticalAlignTypeSchema.default('top'),
   ...BentoCellConfig.partial().shape,
 });
 
-type config = z.infer<typeof BaseLayoutComponentConfigSchema>;
+export const BoxStyleConfigSchema = z.object({
+  padding: z
+    .object({
+      top: PaddingTypeSchema.default('none'),
+      bottom: PaddingTypeSchema.default('none'),
+      left: PaddingTypeSchema.default('none'),
+      right: PaddingTypeSchema.default('none'),
+    })
+    .default({
+      top: 'none',
+      bottom: 'none',
+      left: 'none',
+      right: 'none',
+    }),
+  surfaceTheme: SurfaceThemeSchema.default('default'),
+});
+
+export const BaseLayoutComponentConfigSchema = SlotPlacementConfigSchema;
+
+export type SlotPlacementConfig = z.infer<typeof SlotPlacementConfigSchema>;
+export type BoxStyleConfig = z.infer<typeof BoxStyleConfigSchema>;
+export type BaseLayoutComponentConfig = z.infer<
+  typeof BaseLayoutComponentConfigSchema
+>;
 
 export const BaseLayoutComponentSchema = z.object({
   id: z.uuidv4().readonly(),

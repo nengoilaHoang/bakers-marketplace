@@ -1,6 +1,7 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { cn } from '@/lib/cn';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenCompositeComponent } from '@/utils/flattenLayout';
 import { CSSProperties, useMemo } from 'react';
@@ -156,7 +157,7 @@ const GridComponent = ({
 
   return (
     <div
-      className={`grid ${baseClasses}`}
+      className={cn('grid', baseClasses)}
       style={{ ...gridStyles[currentBp === 'fluid' ? 'desktop' : currentBp] }}
       id={id}
       ref={ref}
@@ -167,7 +168,7 @@ const GridComponent = ({
       aria-pressed={isSelected || isDragging}
       aria-controls={sourceParentId}
       aria-busy={isDragging}
-      aria-label={`Hover over this component to see the available actions. Press Escape to deselect this component. Press Delete to remove this component.`}
+      aria-label='Grid Component'
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
       onFocus={handleFocus}

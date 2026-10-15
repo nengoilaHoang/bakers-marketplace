@@ -274,9 +274,9 @@ const CanvasSelectionOverlay = ({
         updateConfig(selectedComponentId, 'rowSpan', activeMode.rowSpan);
       }
       if (finalRect) {
-        setOverlayRect(finalRect);
         updateConfig(selectedComponentId, 'w', finalRect.width);
         updateConfig(selectedComponentId, 'h', finalRect.height);
+        setOverlayRect(finalRect);
       }
 
       setResizeRect(null);

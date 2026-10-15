@@ -1,4 +1,5 @@
 import { FlattenComponent } from '@/utils/flattenLayout';
+import HeroBannerComponent from './commerce-components/HeroBannerComponent';
 import GridComponent from './composite-components/GridComponent';
 import RichTextComponent from './leaf-components/rich-text/RichTextComponent';
 
@@ -29,6 +30,22 @@ const ComponentRenderer = ({
       }
     }
     case 'COMMERCE':
+      if (sourceParentId === undefined || sourceSlot === undefined) {
+        console.error(
+          'Commerce components must have a sourceParentId and sourceSlot.',
+        );
+        return null;
+      }
+      switch (component.componentType) {
+        case 'HERO_BANNER':
+          return (
+            <HeroBannerComponent
+              component={component}
+              sourceParentId={sourceParentId}
+              sourceSlot={sourceSlot}
+            ></HeroBannerComponent>
+          );
+      }
       break;
     case 'LEAF':
       if (sourceParentId === undefined || sourceSlot === undefined) {
