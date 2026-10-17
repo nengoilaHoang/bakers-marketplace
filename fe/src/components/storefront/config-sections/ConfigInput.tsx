@@ -32,7 +32,7 @@ const ConfigInput = <T extends string | number | boolean>({
 
   const handleOpenChange = () => {
     toggle();
-    onOpenStateChange?.(isOpen);
+    onOpenStateChange?.(!isOpen);
   };
 
   return (
@@ -40,7 +40,7 @@ const ConfigInput = <T extends string | number | boolean>({
       ref={ref}
       className={`relative min-w-0 flex ${
         arrangement === 'horizontal'
-          ? 'flex-row-reverse justify-between items-center gap-2 space-x-2'
+          ? 'flex-row justify-between items-center gap-2 space-x-2'
           : 'flex-col items-start space-y-2'
       }`}
       style={{
@@ -49,7 +49,7 @@ const ConfigInput = <T extends string | number | boolean>({
     >
       {label && (
         <label
-          className='min-w-0 text-[11px] font-medium text-zinc-500 capitalize'
+          className='shrink-0 min-w-0 text-[11px] font-medium text-ink capitalize'
           htmlFor={id}
         >
           {label}
