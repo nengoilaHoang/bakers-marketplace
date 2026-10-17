@@ -39,22 +39,35 @@ const GridComponent = ({
   const { components } = state;
 
   const config = component.config;
-  const { rows, cols, gap, layout } = config;
+  const { rows, cols, gap, rowHeight, layout } = config;
 
   const { breakpoint: currentBp } = useStorefrontCanvasContext();
 
   const gridStyles = useMemo<{ [K in DeviceBreakpoint]: CSSProperties }>(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
       (acc, bp) => {
-        const colsValue = cols[bp];
-        const rowsValue = rows[bp];
-        const gapValue = gap[bp];
+        const colsValue = cols[bp] ?? cols['desktop']; // desktop bp is always present
+        const gapValue = gap[bp] ?? gap['desktop'];
+        const rowCfg = rowHeight[bp] ?? rowHeight['desktop'];
+
+        // specified rows override the default rows based on rowHeight mode
+        let gridTemplateRows = 'auto';
+        if (rowCfg.mode === 'fixed') {
+          gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.baseHeightPx}px, auto))`;
+        } else if (rowCfg.mode === 'auto') {
+          gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.minHeightPx}px, auto))`;
+        }
 
         const style: CSSProperties = {
           display: 'grid',
           gap: gapValue + 'px',
           gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsValue}, minmax(0, 1fr))`,
+          gridTemplateRows,
+          gridAutoRows:
+            rowCfg.mode === 'fixed'
+              ? `minmax(${rowCfg.baseHeightPx}px, auto))`
+              : 'auto',
+          gridAutoFlow: config.densePacking ? 'row dense' : 'row',
           ...baseStyle,
         };
 
@@ -65,7 +78,7 @@ const GridComponent = ({
         [K in DeviceBreakpoint]: CSSProperties;
       },
     );
-  }, [gap, rows, cols, baseStyle]);
+  }, [cols, gap, rowHeight, config.densePacking, baseStyle, rows]);
 
   // const gridStyle = useMemo(
   //   () => ({
@@ -86,12 +99,21 @@ const GridComponent = ({
   const gridItems = useMemo(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
       (acc, bp) => {
-        const currentCols = cols[bp];
-        const currentRows = rows[bp];
+        const currentCols = cols[bp] ?? cols['desktop'];
+        const activeSlots = component.children[bp];
+
+        const maxOccupiedSlot = Math.max(
+          0,
+          ...Object.keys(activeSlots).map(Number),
+        );
+        const autoDerivedRows = Math.max(
+          2,
+          Math.ceil(maxOccupiedSlot / currentCols),
+        );
+        const currentRows = rows?.[bp] ?? rows?.['desktop'] ?? autoDerivedRows;
 
         const totalSlots = currentCols * currentRows;
         const coveredSlots = new Set<number>();
-        const activeSlots = component.children[bp];
 
         const cells = [];
         for (let slot = 1; slot <= totalSlots; slot++) {

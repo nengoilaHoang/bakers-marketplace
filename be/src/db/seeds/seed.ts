@@ -855,12 +855,17 @@ export async function seed(knex: Knex): Promise<void> {
           layout: 'UNIFORM',
           rows: { mobile: 2, tablet: 2, desktop: 2 },
           cols: { mobile: 1, tablet: 1, desktop: 1 },
+          rowHeight: {
+            desktop: { mode: 'auto', minHeightPx: 120 },
+            tablet: { mode: 'auto', minHeightPx: 120 },
+            mobile: { mode: 'auto', minHeightPx: 120 },
+          },
+          densePacking: false,
           gap: { mobile: 16, tablet: 24, desktop: 32 },
           borderRadius: 0,
         }),
       })
       .returning(['id']);
-
     await trx('composite_components').insert({
       id: collectionRootGrid.id,
       component_type: 'GRID',
@@ -884,7 +889,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('leaf_components').insert({
       id: collectionIntroText.id,
       component_type: 'RICH_TEXT',
@@ -959,7 +963,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('commerce_components').insert({
       id: productCardBase.id,
       component_type: 'PRODUCT_CARD',
@@ -982,7 +985,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('repeater_components').insert({
       id: repeaterBase.id,
       item_template_id: productCardBase.id,
@@ -1029,12 +1031,17 @@ export async function seed(knex: Knex): Promise<void> {
           layout: 'UNIFORM',
           rows: { mobile: 2, tablet: 2, desktop: 2 },
           cols: { mobile: 1, tablet: 1, desktop: 1 },
+          rowHeight: {
+            desktop: { mode: 'auto', minHeightPx: 120 },
+            tablet: { mode: 'auto', minHeightPx: 120 },
+            mobile: { mode: 'auto', minHeightPx: 120 },
+          },
+          densePacking: false,
           gap: { mobile: 24, tablet: 32, desktop: 40 },
           borderRadius: 0,
         }),
       })
       .returning(['id']);
-
     await trx('composite_components').insert({
       id: homeRootGrid.id,
       component_type: 'GRID',
@@ -1095,7 +1102,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('commerce_components').insert({
       id: homeHeroBanner.id,
       component_type: 'HERO_BANNER',
@@ -1115,12 +1121,17 @@ export async function seed(knex: Knex): Promise<void> {
           layout: 'UNIFORM',
           rows: { mobile: 3, tablet: 1, desktop: 1 },
           cols: { mobile: 1, tablet: 3, desktop: 3 },
+          rowHeight: {
+            desktop: { mode: 'fixed', baseHeightPx: 180 },
+            tablet: { mode: 'fixed', baseHeightPx: 160 },
+            mobile: { mode: 'auto', minHeightPx: 120 },
+          },
+          densePacking: true,
           gap: { mobile: 16, tablet: 20, desktop: 24 },
           borderRadius: 8,
         }),
       })
       .returning(['id']);
-
     await trx('composite_components').insert({
       id: homeFeaturesGrid.id,
       component_type: 'GRID',
@@ -1161,7 +1172,6 @@ export async function seed(knex: Knex): Promise<void> {
           }),
         })
         .returning(['id']);
-
       await trx('leaf_components').insert({
         id: leafCard.id,
         component_type: 'RICH_TEXT',
@@ -1267,12 +1277,17 @@ export async function seed(knex: Knex): Promise<void> {
           layout: 'BENTO',
           rows: { mobile: 4, tablet: 3, desktop: 2 },
           cols: { mobile: 1, tablet: 2, desktop: 4 },
+          rowHeight: {
+            desktop: { mode: 'fixed', baseHeightPx: 180 },
+            tablet: { mode: 'fixed', baseHeightPx: 160 },
+            mobile: { mode: 'auto', minHeightPx: 120 },
+          },
+          densePacking: true,
           gap: { mobile: 16, tablet: 20, desktop: 24 },
           borderRadius: 16,
         }),
       })
       .returning(['id']);
-
     await trx('composite_components').insert({
       id: mattroiHomeBentoGrid.id,
       component_type: 'GRID',
@@ -1299,7 +1314,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('leaf_components').insert({
       id: bentoHeroCard.id,
       component_type: 'RICH_TEXT',
@@ -1326,7 +1340,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('leaf_components').insert({
       id: bentoPromoCard.id,
       component_type: 'RICH_TEXT',
@@ -1353,7 +1366,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('leaf_components').insert({
       id: bentoFeature1.id,
       component_type: 'RICH_TEXT',
@@ -1380,7 +1392,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('leaf_components').insert({
       id: bentoFeature2.id,
       component_type: 'RICH_TEXT',

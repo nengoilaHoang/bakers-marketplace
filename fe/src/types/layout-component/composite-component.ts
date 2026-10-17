@@ -38,12 +38,28 @@ export interface CreateBaseCompositeComponent<
 
 export type CompositeComponentType = 'GRID' | 'COLUMN' | 'ROW' | 'CAROUSEL';
 
+export type RowHeightMode =
+  | {
+      mode: 'fixed';
+      baseHeightPx: number;
+    }
+  | {
+      mode: 'aspect_ratio';
+      ratio: '1:1' | '4:3' | '16:9';
+    }
+  | {
+      mode: 'auto';
+      minHeightPx: number;
+    };
+
 export type GridCompositeComponentConfig = {
   layout: 'BENTO' | 'UNIFORM';
-  rows: ResponsiveValue<number>;
+  rows?: ResponsiveValue<number> | undefined;
   cols: ResponsiveValue<number>;
   gap: ResponsiveValue<number>;
   borderRadius: string | number | undefined;
+  rowHeight: ResponsiveValue<RowHeightMode>;
+  densePacking: boolean;
 };
 
 export interface GridCompositeComponent extends BaseCompositeComponent<GridCompositeComponentConfig> {

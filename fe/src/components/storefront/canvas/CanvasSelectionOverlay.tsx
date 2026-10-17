@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -355,36 +356,24 @@ const CanvasSelectionOverlay = ({
     const gridBounds = parentEl.getBoundingClientRect();
     const computedStyle = window.getComputedStyle(parentEl);
 
+    // take padding and border width into account for cell origin
     const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
-    const paddingBottom = Number.parseFloat(computedStyle.paddingBottom) || 0;
     const paddingLeft = Number.parseFloat(computedStyle.paddingLeft) || 0;
-    const paddingRight = Number.parseFloat(computedStyle.paddingRight) || 0;
     const borderTop = Number.parseFloat(computedStyle.borderTopWidth) || 0;
-    const borderBottom =
-      Number.parseFloat(computedStyle.borderBottomWidth) || 0;
     const borderLeft = Number.parseFloat(computedStyle.borderLeftWidth) || 0;
-    const borderRight = Number.parseFloat(computedStyle.borderRightWidth) || 0;
 
-    const { cols, rows, gap } = parentComponent.config;
-    const currentBp = breakpoint === 'fluid' ? 'desktop' : breakpoint;
-    const currentCols = cols[currentBp];
-    const currentRows = rows[currentBp];
-    const currentGap = gap[currentBp];
+    const rowTracks = computedStyle.gridTemplateRows.split(/\s+/);
+    const colTracks = computedStyle.gridTemplateColumns.split(/\s+/);
+
+    const rowCount = rowTracks.length;
+    const colCount = colTracks.length;
 
     const slotIndex = Number.parseInt(sourceSlot) - 1;
-    const rowStart = Math.floor(slotIndex / currentCols) + 1;
-    const colStart = (slotIndex % currentCols) + 1;
+    const rowStart = Math.floor(slotIndex / colCount) + 1;
+    const colStart = (slotIndex % colCount) + 1;
 
     const artboardBounds = artboard.getBoundingClientRect();
     const currentZoom = zoom || 1;
-
-    // Content box dimensions in unscaled canvas coordinates
-    const contentWidth =
-      gridBounds.width / currentZoom -
-      (paddingLeft + paddingRight + borderLeft + borderRight);
-    const contentHeight =
-      gridBounds.height / currentZoom -
-      (paddingTop + paddingBottom + borderTop + borderBottom);
 
     const gridLeft =
       (gridBounds.left - artboardBounds.left) / currentZoom +
@@ -392,22 +381,24 @@ const CanvasSelectionOverlay = ({
     const gridTop =
       (gridBounds.top - artboardBounds.top) / currentZoom + artboard.scrollTop;
 
-    const cellWidth =
-      (contentWidth - (currentCols - 1) * currentGap) / currentCols;
-    const cellHeight =
-      (contentHeight - (currentRows - 1) * currentGap) / currentRows;
+    const currentColHeightPx = Number.parseFloat(colTracks[colStart - 1]);
+    const currentRowHeightPx = Number.parseFloat(rowTracks[rowStart - 1]);
+
+    const currentGap = Number.parseFloat(computedStyle.gap) || 0;
+    const currentCellHeight = currentRowHeightPx / currentZoom;
+    const currentCellWidth = currentColHeightPx / currentZoom;
 
     // Slot origin relative to artboard
     const slotLeft =
       gridLeft +
       paddingLeft +
       borderLeft +
-      (colStart - 1) * (cellWidth + currentGap);
+      (colStart - 1) * (currentCellWidth + currentGap);
     const slotTop =
       gridTop +
       borderTop +
       paddingTop +
-      (rowStart - 1) * (cellHeight + currentGap);
+      (rowStart - 1) * (currentCellHeight + currentGap);
 
     const calculateSpan = (
       currentSize: number,
@@ -432,23 +423,23 @@ const CanvasSelectionOverlay = ({
     const nextColSpan = Math.max(
       1,
       Math.min(
-        calculateSpan(effectiveWidth, cellWidth, currentGap),
-        currentCols - colStart + 1,
+        calculateSpan(effectiveWidth, currentCellWidth, currentGap),
+        colCount - colStart + 1,
       ),
     );
     const nextRowSpan = Math.max(
       1,
       Math.min(
-        calculateSpan(effectiveHeight, cellHeight, currentGap),
-        currentRows - rowStart + 1,
+        calculateSpan(effectiveHeight, currentCellHeight, currentGap),
+        rowCount - rowStart + 1,
       ),
     );
 
     const snappedWidth =
-      nextColSpan * cellWidth + (nextColSpan - 1) * currentGap;
+      nextColSpan * currentCellWidth + (nextColSpan - 1) * currentGap;
 
     const snappedHeight =
-      nextRowSpan * cellHeight + (nextRowSpan - 1) * currentGap;
+      nextRowSpan * currentCellHeight + (nextRowSpan - 1) * currentGap;
 
     const mode: LayoutMode = {
       type: 'bento_grid',
@@ -471,7 +462,15 @@ const CanvasSelectionOverlay = ({
     zoom,
   ]);
 
-  if (!overlayRect || !selectedComponentId) return null;
+  const isBentoItem = useMemo(() => {
+    if (!selectedComponentId) return null;
+    const component = components[selectedComponentId];
+    const { config } = component;
+    if (config.colSpan && config.rowSpan) return true;
+    else return false;
+  }, [components, selectedComponentId]);
+
+  if (!overlayRect || !selectedComponentId || isBentoItem === null) return null;
   const activeComponent = components[selectedComponentId];
   const disableAnimation = isDragging || isResizing || isWindowResizing;
 
@@ -504,40 +503,44 @@ const CanvasSelectionOverlay = ({
         !isWindowResizing &&
         selectedComponentId !== state.rootId && (
           <>
-            {/* N */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'n')}
-              className='pointer-events-auto absolute -top-1.5 left-2 right-2 h-3 cursor-n-resize'
-            />
+            {!isBentoItem && (
+              <>
+                {/* N */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'n')}
+                  className='pointer-events-auto absolute -top-1.5 left-2 right-2 h-3 cursor-n-resize'
+                />
+                {/* W */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'w')}
+                  className='pointer-events-auto absolute top-2 bottom-2 -left-1.5 w-3 cursor-w-resize'
+                />
+                {/* NW */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'nw')}
+                  className='pointer-events-auto absolute -top-1.5 -left-1.5 size-3.5 cursor-nw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
+                />
+                {/* NE */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'ne')}
+                  className='pointer-events-auto absolute -top-1.5 -right-1.5 size-3.5 cursor-ne-resize bg-white border-2 border-blue-500 rounded-sm z-20'
+                />
+                {/* SW */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'sw')}
+                  className='pointer-events-auto absolute -bottom-1.5 -left-1.5 size-3.5 cursor-sw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
+                />
+              </>
+            )}
             {/* S */}
             <div
               onPointerDown={(e) => handlePointerDown(e, 's')}
               className='pointer-events-auto absolute -bottom-1.5 left-2 right-2 h-3 cursor-s-resize'
             />
-            {/* W */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'w')}
-              className='pointer-events-auto absolute top-2 bottom-2 -left-1.5 w-3 cursor-w-resize'
-            />
             {/* E */}
             <div
               onPointerDown={(e) => handlePointerDown(e, 'e')}
               className='pointer-events-auto absolute top-2 bottom-2 -right-1.5 w-3 cursor-e-resize'
-            />
-            {/* NW */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'nw')}
-              className='pointer-events-auto absolute -top-1.5 -left-1.5 size-3.5 cursor-nw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
-            />
-            {/* NE */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'ne')}
-              className='pointer-events-auto absolute -top-1.5 -right-1.5 size-3.5 cursor-ne-resize bg-white border-2 border-blue-500 rounded-sm z-20'
-            />
-            {/* SW */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'sw')}
-              className='pointer-events-auto absolute -bottom-1.5 -left-1.5 size-3.5 cursor-sw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
             />
             {/* SE */}
             <div
