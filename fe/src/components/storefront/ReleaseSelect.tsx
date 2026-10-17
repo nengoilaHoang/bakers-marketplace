@@ -41,6 +41,7 @@ const ReleaseSelect = () => {
         options={releaseOptions}
         onOpenChange={setIsOpen}
         isTypeable={false}
+        showKeyValue={false}
       ></TypeableSelect>
     </div>
   );
