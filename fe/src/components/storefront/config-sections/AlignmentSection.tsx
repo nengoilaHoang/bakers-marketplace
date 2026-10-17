@@ -70,19 +70,21 @@ const AlignmentSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      {configs.map(({ key, label, options, value }) => (
-        <ConfigInput
-          key={key}
-          id={`alignment-${key}`}
-          name={key}
-          label={label}
-          inputType='select'
-          selectOptions={options}
-          currentValue={value}
-          onValueChange={(val) => onUpdate(key, val)}
-          onOpenStateChange={onActiveSectionChange}
-        />
-      ))}
+      <div className='grid grid-cols-2 gap-2'>
+        {configs.map(({ key, label, options, value }) => (
+          <ConfigInput
+            key={key}
+            id={`alignment-${key}`}
+            name={key}
+            label={label}
+            inputType='select'
+            selectOptions={options}
+            currentValue={value}
+            onValueChange={(val) => onUpdate(key, val)}
+            onOpenStateChange={onActiveSectionChange}
+          />
+        ))}
+      </div>
     </ConfigSectionWrapper>
   );
 };

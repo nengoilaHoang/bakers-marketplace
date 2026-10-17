@@ -50,6 +50,7 @@ const ThemeSection = ({
           inputType='select'
           selectOptions={SURFACE_THEME_TOKENS}
           currentValue={surfaceTheme ?? 'default'}
+          arrangement='horizontal'
           onValueChange={(val) => onUpdate(name, val)}
           onOpenStateChange={onActiveSectionChange}
         />
