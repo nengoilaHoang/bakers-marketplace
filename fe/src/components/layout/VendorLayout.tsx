@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
+import ErrorBoundary from '../error/ErrorBoundary';
 import Icon, { IconName } from '../ui/Icon';
 import SiteLayout from '../ui/SiteLayout';
 import VendorSiteHeader from '../vendor/VendorSiteHeader';
@@ -173,12 +174,10 @@ const VendorLayout = ({
           </nav>
         </aside>
 
-        <div className='flex-1 overflow-y-auto min-h-0'>{children}</div>
+        <div className='flex-1 overflow-y-auto min-h-0'>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </div>
       </div>
-      {/* <div
-        data-theme='vendor'
-        className='flex flex-col w-screen h-dvh overflow-hidden bg-page text-ink antialiased'
-      ></div> */}
     </SiteLayout>
   );
 };

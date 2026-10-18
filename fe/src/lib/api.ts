@@ -2,114 +2,114 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 let refreshAccessTokenPromise: Promise<void> | null = null;
 
 const REFRESHABLE_ACCESS_TOKEN_CODES = new Set([
-	'ACCESS_TOKEN_EXPIRED',
-	'ACCESS_TOKEN_REQUIRED',
+  'ACCESS_TOKEN_EXPIRED',
+  'ACCESS_TOKEN_REQUIRED',
 ]);
 
 type QueryPrimitive = string | number | boolean;
 type QueryValue =
-	| QueryPrimitive
-	| readonly (QueryPrimitive | null | undefined)[]
-	| null
-	| undefined;
+  | QueryPrimitive
+  | readonly (QueryPrimitive | null | undefined)[]
+  | null
+  | undefined;
 
 export class ApiError extends Error {
-	public readonly status: number;
-	public readonly details: unknown;
+  public readonly status: number;
+  public readonly details: unknown;
 
-	constructor(status: number, message: string, details?: unknown) {
-		super(message);
-		this.status = status;
-		this.details = details;
-	}
+  constructor(status: number, message: string, details?: unknown) {
+    super(message);
+    this.status = status;
+    this.details = details;
+  }
 }
 
 export default async function request<T>(
-	path: string,
-	init?: RequestInit,
-	query?: Record<string, QueryValue>,
+  path: string,
+  init?: RequestInit,
+  query?: Record<string, QueryValue>,
 ): Promise<T> {
-	const url = new URL(`${BASE_URL}${path}`);
-	if (query) {
-		for (const [key, value] of Object.entries(query)) {
-			const values = Array.isArray(value) ? value : [value];
+  const url = new URL(`${BASE_URL}${path}`);
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      const values = Array.isArray(value) ? value : [value];
 
-			for (const item of values) {
-				if (item !== undefined && item !== null) {
-					url.searchParams.append(key, String(item));
-				}
-			}
-		}
-	}
+      for (const item of values) {
+        if (item !== undefined && item !== null) {
+          url.searchParams.append(key, String(item));
+        }
+      }
+    }
+  }
 
-	// Get only the part after the domain name, e.g. "/api/products" instead of "http://localhost:4000/api/products"
-	const relativeUrl = url.pathname + url.search;
+  // Get only the part after the domain name, e.g. "/api/products" instead of "http://localhost:4000/api/products"
+  const relativeUrl = url.pathname + url.search;
 
-	const requestInit: RequestInit = {
-		headers: { 'Content-Type': 'application/json' },
-		credentials: init?.credentials ?? 'include',
-		...init,
-	};
+  const requestInit: RequestInit = {
+    headers: { 'Content-Type': 'application/json' },
+    credentials: init?.credentials ?? 'include',
+    ...init,
+  };
 
-	let res = await fetch(relativeUrl, requestInit);
-	let body = res.status === 204 ? null : await res.json().catch(() => null);
+  let res = await fetch(relativeUrl, requestInit);
+  let body = res.status === 204 ? null : await res.json().catch(() => null);
 
-	if (
-		res.status === 401 &&
-		REFRESHABLE_ACCESS_TOKEN_CODES.has(body?.code) &&
-		path !== '/authen/refresh'
-	) {
-		await refreshAccessToken();
-		res = await fetch(relativeUrl, requestInit);
-		body = res.status === 204 ? null : await res.json().catch(() => null);
-	}
+  if (
+    res.status === 401 &&
+    REFRESHABLE_ACCESS_TOKEN_CODES.has(body?.code) &&
+    path !== '/authen/refresh'
+  ) {
+    await refreshAccessToken();
+    res = await fetch(relativeUrl, requestInit);
+    body = res.status === 204 ? null : await res.json().catch(() => null);
+  }
 
-	if (res.status === 204) {
-		return undefined as T;
-	}
+  if (res.status === 204) {
+    return undefined as T;
+  }
 
-	if (!res.ok) {
-		throw new ApiError(
-			res.status,
-			body?.message ?? `Request failed (${res.status})`,
-			body?.errors,
-		);
-	}
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      body?.message ?? `Request failed (${res.status})`,
+      body?.errors,
+    );
+  }
 
-	return {
-		...body,
-		data: normalizeNumbers(body?.data),
-	} as T;
+  return {
+    ...body,
+    data: normalizeNumbers(body?.data),
+  } as T;
 }
 
 async function refreshAccessToken(): Promise<void> {
-	if (!refreshAccessTokenPromise) {
-		const refreshUrl = new URL(`${BASE_URL}/authen/refresh`);
-		const relativeRefreshUrl = refreshUrl.pathname + refreshUrl.search;
+  if (!refreshAccessTokenPromise) {
+    const refreshUrl = new URL(`${BASE_URL}/authen/refresh`);
+    const relativeRefreshUrl = refreshUrl.pathname + refreshUrl.search;
 
-		refreshAccessTokenPromise = fetch(relativeRefreshUrl, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			credentials: 'include',
-		})
-			.then(async (res) => {
-				if (res.ok) {
-					return;
-				}
+    refreshAccessTokenPromise = fetch(relativeRefreshUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          return;
+        }
 
-				const body = await res.json().catch(() => null);
-				throw new ApiError(
-					res.status,
-					body?.message ?? `Request failed (${res.status})`,
-					body?.errors,
-				);
-			})
-			.finally(() => {
-				refreshAccessTokenPromise = null;
-			});
-	}
+        const body = await res.json().catch(() => null);
+        throw new ApiError(
+          res.status,
+          body?.message ?? `Request failed (${res.status})`,
+          body?.errors,
+        );
+      })
+      .finally(() => {
+        refreshAccessTokenPromise = null;
+      });
+  }
 
-	return refreshAccessTokenPromise;
+  return refreshAccessTokenPromise;
 }
 
 /**
@@ -119,20 +119,20 @@ async function refreshAccessToken(): Promise<void> {
 const NUMERIC_FIELDS = new Set(['unitPrice', 'unitCost']);
 
 function normalizeNumbers(value: unknown): unknown {
-	if (Array.isArray(value)) {
-		return value.map(normalizeNumbers);
-	}
+  if (Array.isArray(value)) {
+    return value.map(normalizeNumbers);
+  }
 
-	if (value !== null && typeof value === 'object') {
-		return Object.fromEntries(
-			Object.entries(value as Record<string, unknown>).map(([key, val]) => [
-				key,
-				NUMERIC_FIELDS.has(key) && typeof val === 'string'
-					? Number(val)
-					: normalizeNumbers(val),
-			]),
-		);
-	}
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, val]) => [
+        key,
+        NUMERIC_FIELDS.has(key) && typeof val === 'string'
+          ? Number(val)
+          : normalizeNumbers(val),
+      ]),
+    );
+  }
 
-	return value;
+  return value;
 }
