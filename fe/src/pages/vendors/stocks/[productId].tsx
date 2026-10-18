@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import StockLevelBar from '@/components/stock/StockLevelBar';
 import StockStatusBadge from '@/components/stock/StockStatusBadge';
 import Alert from '@/components/ui/Alert';
@@ -46,7 +46,13 @@ function toThresholdForm(product: Product): ThresholdForm {
   return Object.fromEntries(
     STOCK_ALERT_TYPES.map((alertType) => {
       const alert = alerts.find((item) => item.alertType === alertType);
-      return [alertType, { enabled: Boolean(alert), value: alert ? String(alert.threshold) : '' }];
+      return [
+        alertType,
+        {
+          enabled: Boolean(alert),
+          value: alert ? String(alert.threshold) : '',
+        },
+      ];
     }),
   ) as ThresholdForm;
 }
@@ -54,7 +60,9 @@ function toThresholdForm(product: Product): ThresholdForm {
 const StockDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
   const productId =
-    typeof router.query.productId === 'string' ? router.query.productId : undefined;
+    typeof router.query.productId === 'string'
+      ? router.query.productId
+      : undefined;
   const { account } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -91,7 +99,8 @@ const StockDetailPage: NextPageWithLayout = () => {
     if (!product) return;
 
     const value = Number(amount);
-    const isValid = Number.isInteger(value) && (mode === 'set' ? value >= 0 : value > 0);
+    const isValid =
+      Number.isInteger(value) && (mode === 'set' ? value >= 0 : value > 0);
 
     if (!isValid) {
       setAdjustMessage({
@@ -108,7 +117,10 @@ const StockDetailPage: NextPageWithLayout = () => {
       if (mode === 'set') {
         await productApi.updateStock(product.id, value);
       } else {
-        await productApi.adjustStock(product.id, mode === 'add' ? value : -value);
+        await productApi.adjustStock(
+          product.id,
+          mode === 'add' ? value : -value,
+        );
       }
 
       setAmount('');
@@ -155,11 +167,18 @@ const StockDetailPage: NextPageWithLayout = () => {
     setAlertMessage(null);
 
     try {
-      for (const change of planAlertChanges(product.stock?.alerts ?? [], next)) {
+      for (const change of planAlertChanges(
+        product.stock?.alerts ?? [],
+        next,
+      )) {
         if (change.action === 'remove') {
           await productApi.removeAlert(product.id, change.alertType);
         } else {
-          await productApi.setAlert(product.id, change.alertType, change.threshold);
+          await productApi.setAlert(
+            product.id,
+            change.alertType,
+            change.threshold,
+          );
         }
       }
 
@@ -172,9 +191,14 @@ const StockDetailPage: NextPageWithLayout = () => {
     }
   }
 
-  function updateThreshold(alertType: StockAlertType, patch: Partial<ThresholdField>) {
+  function updateThreshold(
+    alertType: StockAlertType,
+    patch: Partial<ThresholdField>,
+  ) {
     setThresholds((current) =>
-      current ? { ...current, [alertType]: { ...current[alertType], ...patch } } : current,
+      current
+        ? { ...current, [alertType]: { ...current[alertType], ...patch } }
+        : current,
     );
   }
 
@@ -186,7 +210,11 @@ const StockDetailPage: NextPageWithLayout = () => {
   if (loadError) {
     return (
       <VendorPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
-        <ErrorState title='Không thể tải sản phẩm' message={loadError} onRetry={() => void load()} />
+        <ErrorState
+          title='Không thể tải sản phẩm'
+          message={loadError}
+          onRetry={() => void load()}
+        />
       </VendorPage>
     );
   }
@@ -217,7 +245,11 @@ const StockDetailPage: NextPageWithLayout = () => {
       breadcrumb={breadcrumb}
       size='narrow'
       actions={
-        <ButtonLink href={`/vendors/products/${product.id}`} variant='outline' size='sm'>
+        <ButtonLink
+          href={`/vendors/products/${product.id}`}
+          variant='outline'
+          size='sm'
+        >
           Xem sản phẩm
         </ButtonLink>
       }
@@ -234,7 +266,12 @@ const StockDetailPage: NextPageWithLayout = () => {
           <span className='text-display font-semibold text-ink'>{stock}</span>{' '}
           <span className='text-lead text-ink-muted'>{product.unit}</span>
         </p>
-        <StockLevelBar stock={stock} unit={product.unit} alerts={alerts} status={status} />
+        <StockLevelBar
+          stock={stock}
+          unit={product.unit}
+          alerts={alerts}
+          status={status}
+        />
       </Panel>
 
       {/* ---------- Manage Stocks ---------- */}
@@ -257,7 +294,11 @@ const StockDetailPage: NextPageWithLayout = () => {
               ))}
             </Select>
           </Field>
-          <Field label={`Số lượng (${product.unit})`} htmlFor='adjust-amount' size='sm'>
+          <Field
+            label={`Số lượng (${product.unit})`}
+            htmlFor='adjust-amount'
+            size='sm'
+          >
             <div className='w-36'>
               <Input
                 id='adjust-amount'
@@ -275,7 +316,10 @@ const StockDetailPage: NextPageWithLayout = () => {
           </Button>
         </div>
         {adjustMessage && (
-          <Alert tone={adjustMessage.ok ? 'success' : 'danger'} className='mt-4'>
+          <Alert
+            tone={adjustMessage.ok ? 'success' : 'danger'}
+            className='mt-4'
+          >
             {adjustMessage.text}
           </Alert>
         )}
@@ -294,7 +338,11 @@ const StockDetailPage: NextPageWithLayout = () => {
                 <Checkbox
                   label={STOCK_ALERT_LABELS[alertType]}
                   checked={thresholds[alertType].enabled}
-                  onChange={(event) => updateThreshold(alertType, { enabled: event.target.checked })}
+                  onChange={(event) =>
+                    updateThreshold(alertType, {
+                      enabled: event.target.checked,
+                    })
+                  }
                 />
               </div>
               <div className='w-36'>
@@ -304,11 +352,15 @@ const StockDetailPage: NextPageWithLayout = () => {
                   size='sm'
                   value={thresholds[alertType].value}
                   disabled={!thresholds[alertType].enabled}
-                  onChange={(event) => updateThreshold(alertType, { value: event.target.value })}
+                  onChange={(event) =>
+                    updateThreshold(alertType, { value: event.target.value })
+                  }
                   aria-label={`Giá trị mốc ${STOCK_ALERT_LABELS[alertType]}`}
                 />
               </div>
-              <span className='text-body-sm text-ink-muted'>{product.unit}</span>
+              <span className='text-body-sm text-ink-muted'>
+                {product.unit}
+              </span>
             </div>
           ))}
         </div>
@@ -328,9 +380,9 @@ const StockDetailPage: NextPageWithLayout = () => {
 
 StockDetailPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

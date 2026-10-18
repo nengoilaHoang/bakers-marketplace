@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
-import StockStatusBadge, { STOCK_STATUS_STYLES } from '@/components/stock/StockStatusBadge';
+import VendorScope from '@/components/layout/VendorScope';
+import StockStatusBadge, {
+  STOCK_STATUS_STYLES,
+} from '@/components/stock/StockStatusBadge';
 import Alert from '@/components/ui/Alert';
 import { ButtonLink } from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
@@ -39,8 +41,12 @@ function statusOf(product: Product): StockStatus {
   return getStockStatus(product.stock?.stock ?? 0, product.stock?.alerts ?? []);
 }
 
-function thresholdOf(product: Product, alertType: (typeof STOCK_ALERT_TYPES)[number]) {
-  return product.stock?.alerts.find((alert) => alert.alertType === alertType)?.threshold;
+function thresholdOf(
+  product: Product,
+  alertType: (typeof STOCK_ALERT_TYPES)[number],
+) {
+  return product.stock?.alerts.find((alert) => alert.alertType === alertType)
+    ?.threshold;
 }
 
 // Điều chỉnh nhanh trong bảng: nhập số rồi bấm + (nhập thêm) hoặc − (xuất bớt).
@@ -60,7 +66,10 @@ function QuickAdjust({
     const value = Number(amount);
 
     if (!Number.isInteger(value) || value <= 0) {
-      onNotice({ tone: 'danger', text: `Nhập số nguyên dương để điều chỉnh "${product.title}".` });
+      onNotice({
+        tone: 'danger',
+        text: `Nhập số nguyên dương để điều chỉnh "${product.title}".`,
+      });
       return;
     }
 
@@ -124,10 +133,9 @@ const StockListPage: NextPageWithLayout = () => {
   const [notice, setNotice] = useState<Notice | null>(null);
 
   const counts = useMemo(() => {
-    const result = Object.fromEntries(STATUSES.map((status) => [status, 0])) as Record<
-      StockStatus,
-      number
-    >;
+    const result = Object.fromEntries(
+      STATUSES.map((status) => [status, 0]),
+    ) as Record<StockStatus, number>;
     for (const product of products) result[statusOf(product)] += 1;
     return result;
   }, [products]);
@@ -136,10 +144,14 @@ const StockListPage: NextPageWithLayout = () => {
     const normalizedKeyword = keyword.trim().toLowerCase();
 
     return products
-      .filter((product) => statusFilter === 'ALL' || statusOf(product) === statusFilter)
       .filter(
         (product) =>
-          !normalizedKeyword || product.title.toLowerCase().includes(normalizedKeyword),
+          statusFilter === 'ALL' || statusOf(product) === statusFilter,
+      )
+      .filter(
+        (product) =>
+          !normalizedKeyword ||
+          product.title.toLowerCase().includes(normalizedKeyword),
       )
       .sort((a, b) => {
         const stockA = a.stock?.stock ?? 0;
@@ -148,7 +160,10 @@ const StockListPage: NextPageWithLayout = () => {
         if (sortKey === 'stock-asc') return stockA - stockB;
         if (sortKey === 'stock-desc') return stockB - stockA;
         if (sortKey === 'title') return a.title.localeCompare(b.title, 'vi');
-        return STOCK_STATUS_PRIORITY[statusOf(a)] - STOCK_STATUS_PRIORITY[statusOf(b)];
+        return (
+          STOCK_STATUS_PRIORITY[statusOf(a)] -
+          STOCK_STATUS_PRIORITY[statusOf(b)]
+        );
       });
   }, [products, keyword, statusFilter, sortKey]);
 
@@ -167,13 +182,19 @@ const StockListPage: NextPageWithLayout = () => {
           <PanelSkeleton className='h-80' />
         </>
       ) : error ? (
-        <ErrorState title='Không thể tải tồn kho' message={error} onRetry={reload} />
+        <ErrorState
+          title='Không thể tải tồn kho'
+          message={error}
+          onRetry={reload}
+        />
       ) : products.length === 0 ? (
         <EmptyState
           icon='cart'
           title='Chưa có sản phẩm nào'
           description='Tạo sản phẩm trước, sau đó quay lại đây để quản lý tồn kho.'
-          action={<ButtonLink href='/vendors/products/new'>Tạo sản phẩm</ButtonLink>}
+          action={
+            <ButtonLink href='/vendors/products/new'>Tạo sản phẩm</ButtonLink>
+          }
         />
       ) : (
         <>
@@ -212,7 +233,9 @@ const StockListPage: NextPageWithLayout = () => {
             <Select
               aria-label='Lọc theo trạng thái'
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StockStatus | 'ALL')}
+              onChange={(event) =>
+                setStatusFilter(event.target.value as StockStatus | 'ALL')
+              }
             >
               <option value='ALL'>Mọi trạng thái</option>
               {STATUSES.map((status) => (
@@ -236,7 +259,9 @@ const StockListPage: NextPageWithLayout = () => {
           {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
 
           {visibleProducts.length === 0 ? (
-            <p className='text-body-sm text-ink-muted'>Không có sản phẩm nào khớp bộ lọc.</p>
+            <p className='text-body-sm text-ink-muted'>
+              Không có sản phẩm nào khớp bộ lọc.
+            </p>
           ) : (
             <Table caption='Tồn kho theo sản phẩm'>
               <thead>
@@ -267,22 +292,36 @@ const StockListPage: NextPageWithLayout = () => {
                       </Link>
                     </Td>
                     <Td align='right' className='whitespace-nowrap'>
-                      <span className='font-semibold'>{product.stock?.stock ?? 0}</span>{' '}
+                      <span className='font-semibold'>
+                        {product.stock?.stock ?? 0}
+                      </span>{' '}
                       <span className='text-ink-muted'>{product.unit}</span>
                     </Td>
                     <Td>
                       <StockStatusBadge status={statusOf(product)} />
                     </Td>
                     {STOCK_ALERT_TYPES.map((alertType) => (
-                      <Td key={alertType} align='right' className='text-ink-muted'>
+                      <Td
+                        key={alertType}
+                        align='right'
+                        className='text-ink-muted'
+                      >
                         {thresholdOf(product, alertType) ?? '—'}
                       </Td>
                     ))}
                     <Td>
-                      <QuickAdjust product={product} onNotice={setNotice} onDone={reload} />
+                      <QuickAdjust
+                        product={product}
+                        onNotice={setNotice}
+                        onDone={reload}
+                      />
                     </Td>
                     <Td align='right'>
-                      <ButtonLink href={`/vendors/stocks/${product.id}`} variant='ghost' size='sm'>
+                      <ButtonLink
+                        href={`/vendors/stocks/${product.id}`}
+                        variant='ghost'
+                        size='sm'
+                      >
                         Chi tiết
                         <Icon name='chevron-right' className='size-4' />
                       </ButtonLink>
@@ -300,9 +339,9 @@ const StockListPage: NextPageWithLayout = () => {
 
 StockListPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

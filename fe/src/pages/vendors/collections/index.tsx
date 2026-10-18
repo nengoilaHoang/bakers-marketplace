@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import Alert from '@/components/ui/Alert';
 import Badge from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
@@ -24,7 +24,10 @@ const CollectionListPage: NextPageWithLayout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const [notice, setNotice] = useState<{
+    tone: 'success' | 'danger';
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -58,7 +61,9 @@ const CollectionListPage: NextPageWithLayout = () => {
 
     try {
       await collectionApi.remove(collection.id);
-      setCollections((current) => current.filter((item) => item.id !== collection.id));
+      setCollections((current) =>
+        current.filter((item) => item.id !== collection.id),
+      );
       setNotice({ tone: 'success', text: `Đã xoá "${collection.name}".` });
     } catch (deleteError) {
       setNotice({ tone: 'danger', text: (deleteError as Error).message });
@@ -95,9 +100,17 @@ const CollectionListPage: NextPageWithLayout = () => {
       ) : collections.length === 0 ? (
         <EmptyState
           icon='hand-platter'
-          title={onlyActive ? 'Không có bộ sưu tập nào đang hoạt động' : 'Chưa có bộ sưu tập nào'}
+          title={
+            onlyActive
+              ? 'Không có bộ sưu tập nào đang hoạt động'
+              : 'Chưa có bộ sưu tập nào'
+          }
           description='Tạo bộ sưu tập rồi gán sản phẩm vào từ trang chi tiết sản phẩm.'
-          action={<ButtonLink href='/vendors/collections/new'>Tạo bộ sưu tập</ButtonLink>}
+          action={
+            <ButtonLink href='/vendors/collections/new'>
+              Tạo bộ sưu tập
+            </ButtonLink>
+          }
         />
       ) : (
         <Table caption='Danh sách bộ sưu tập'>
@@ -121,9 +134,13 @@ const CollectionListPage: NextPageWithLayout = () => {
                   >
                     {collection.name}
                   </Link>
-                  <p className='text-caption text-ink-muted'>{collection.slug}</p>
+                  <p className='text-caption text-ink-muted'>
+                    {collection.slug}
+                  </p>
                 </Td>
-                <Td className='text-ink-muted'>{collection.description || '—'}</Td>
+                <Td className='text-ink-muted'>
+                  {collection.description || '—'}
+                </Td>
                 <Td>
                   <Badge tone={collection.isActive ? 'success' : 'neutral'}>
                     {collection.isActive ? 'Hoạt động' : 'Tắt'}
@@ -160,9 +177,9 @@ const CollectionListPage: NextPageWithLayout = () => {
 
 CollectionListPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import ProductTable from '@/components/product/ProductTable';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -29,7 +29,9 @@ const SearchPage: NextPageWithLayout = () => {
     try {
       const response = await productApi.search(keyword);
       // API tìm trên mọi cửa hàng; khu vendor chỉ hiện sản phẩm của mình.
-      setResults(response.data.filter((product) => product.vendorId === account?.id));
+      setResults(
+        response.data.filter((product) => product.vendorId === account?.id),
+      );
     } catch (searchError) {
       setError((searchError as Error).message);
       setResults(null);
@@ -41,9 +43,15 @@ const SearchPage: NextPageWithLayout = () => {
   return (
     <VendorPage
       title='Tìm sản phẩm'
-      breadcrumb={[{ label: 'Sản phẩm', href: '/vendors/products' }, { label: 'Tìm kiếm' }]}
+      breadcrumb={[
+        { label: 'Sản phẩm', href: '/vendors/products' },
+        { label: 'Tìm kiếm' },
+      ]}
     >
-      <form onSubmit={(event) => void handleSearch(event)} className='flex flex-wrap gap-3'>
+      <form
+        onSubmit={(event) => void handleSearch(event)}
+        className='flex flex-wrap gap-3'
+      >
         <div className='w-full sm:w-96'>
           <Input
             type='search'
@@ -71,7 +79,9 @@ const SearchPage: NextPageWithLayout = () => {
           />
         ) : (
           <>
-            <p className='text-body-sm text-ink-muted'>Tìm thấy {results.length} sản phẩm.</p>
+            <p className='text-body-sm text-ink-muted'>
+              Tìm thấy {results.length} sản phẩm.
+            </p>
             <ProductTable products={results} />
           </>
         ))}
@@ -81,9 +91,9 @@ const SearchPage: NextPageWithLayout = () => {
 
 SearchPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

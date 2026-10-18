@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import ProductTable from '@/components/product/ProductTable';
 import Badge from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
@@ -86,7 +86,10 @@ const CollectionDetailPage: NextPageWithLayout = () => {
       description={collection.description || undefined}
       breadcrumb={breadcrumb}
       actions={
-        <ButtonLink href={`/vendors/collections/${collection.id}/edit`} size='sm'>
+        <ButtonLink
+          href={`/vendors/collections/${collection.id}/edit`}
+          size='sm'
+        >
           <Icon name='edit' className='size-4' />
           Sửa bộ sưu tập
         </ButtonLink>
@@ -104,13 +107,17 @@ const CollectionDetailPage: NextPageWithLayout = () => {
           </div>
           <div>
             <dt className='text-ink-muted'>Ngày tạo</dt>
-            <dd className='text-ink'>{formatDate(collection.createdAt) ?? '—'}</dd>
+            <dd className='text-ink'>
+              {formatDate(collection.createdAt) ?? '—'}
+            </dd>
           </div>
         </dl>
       </Panel>
 
       <section className='flex flex-col gap-4'>
-        <h2 className='text-h4 font-semibold text-ink'>Sản phẩm ({products.length})</h2>
+        <h2 className='text-h4 font-semibold text-ink'>
+          Sản phẩm ({products.length})
+        </h2>
         {products.length === 0 ? (
           <EmptyState
             icon='cart'
@@ -132,9 +139,9 @@ const CollectionDetailPage: NextPageWithLayout = () => {
 
 CollectionDetailPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 
