@@ -14,6 +14,13 @@ export async function getProducts(): Promise<{ data: Product[] }> {
 	return request<{ data: Product[] }>('/products');
 }
 
+/** Sản phẩm của vendor đang đăng nhập, kèm tồn kho và các mốc cảnh báo. */
+export async function getMyProducts(
+	{ signal }: { signal?: AbortSignal } = {},
+): Promise<{ data: Product[] }> {
+	return request<{ data: Product[] }>('/products/mine', { signal });
+}
+
 export async function searchProducts(
 	keyword: string,
 ): Promise<{ data: Product[] }> {
@@ -105,6 +112,17 @@ export async function updateProductStock(
 	});
 }
 
+/** Cộng (delta > 0) hoặc trừ (delta < 0) tồn kho. */
+export async function adjustProductStock(
+	id: string,
+	delta: number,
+): Promise<{ data: ProductStock }> {
+	return request<{ data: ProductStock }>(`/products/${id}/stock/adjust`, {
+		method: 'POST',
+		body: JSON.stringify({ delta }),
+	});
+}
+
 export async function setProductStockAlert(
 	id: string,
 	alertType: StockAlert['alertType'],
@@ -146,6 +164,7 @@ export async function removeProductFromCollection(
 
 export const productApi = {
 	getAll: getProducts,
+	getMine: getMyProducts,
 	search: searchProducts,
 	getById: getProductById,
 	getBySlug: getProductBySlug,
@@ -157,6 +176,7 @@ export const productApi = {
 	addNote: addProductNote,
 	removeNote: removeProductNote,
 	updateStock: updateProductStock,
+	adjustStock: adjustProductStock,
 	setAlert: setProductStockAlert,
 	removeAlert: removeProductStockAlert,
 	assignToCollection: assignProductToCollection,

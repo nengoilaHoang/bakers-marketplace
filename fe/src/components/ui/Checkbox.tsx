@@ -27,7 +27,7 @@ export default function Checkbox({
         <input
           type='checkbox'
           className={cn(
-            'peer size-5 cursor-pointer appearance-none rounded-xs border border-ink bg-page outline-none transition-colors',
+            'peer size-5 cursor-pointer appearance-none rounded-tick border border-ink bg-page outline-none transition-colors',
             'checked:border-primary checked:bg-primary focus-visible:ring-2 focus-visible:ring-accent',
             className,
           )}

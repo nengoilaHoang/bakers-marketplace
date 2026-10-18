@@ -1,10 +1,10 @@
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import ReleaseSelect from '../storefront/ReleaseSelect';
 import AccountMenu from '../ui/AccountMenu';
 import Icon, { IconName } from '../ui/Icon';
 import Logo from '../ui/Logo';
-import NavLink from '../ui/NavLink';
 
 type SidebarTabProps = Readonly<{
   href: string;
@@ -46,21 +46,22 @@ const SidebarTab = ({
     <li onClick={handleToggle} className='relative block'>
       <div
         id={submenuId}
-        className={`flex flex-row items-center justify-between text-sm transition-colors rounded-control mx-2 ${
+        className={`flex flex-row items-center justify-between text-body-sm transition-colors rounded-control mx-2 ${
           isActive
             ? 'bg-secondary-soft text-ink font-semibold'
             : 'text-ink-muted hover:text-ink hover:bg-surface-soft'
         }`}
       >
-        <NavLink
+        <Link
           href={href}
+          aria-current={isActive ? 'page' : undefined}
           className='flex flex-row items-center gap-3 flex-1 px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control'
         >
           <span className='shrink-0 transition-colors'>
             <Icon name={icon} className='size-5' />
           </span>
           <span>{label}</span>
-        </NavLink>
+        </Link>
 
         {hasInners && (
           <button
@@ -87,16 +88,17 @@ const SidebarTab = ({
           <ul className='overflow-hidden ml-8 mr-2 mt-1 space-y-0.5 border-l-2 border-line'>
             {inners.map((subItem) => (
               <li className='relative block' key={subItem.href}>
-                <NavLink
+                <Link
                   href={subItem.href}
-                  className={`block w-full text-sm pl-4 py-2 transition-colors rounded-r-control ${
+                  aria-current={subItem.isActive ? 'page' : undefined}
+                  className={`block w-full text-body-sm pl-4 py-2 transition-colors rounded-r-control ${
                     subItem.isActive
                       ? 'text-ink font-semibold bg-surface-soft'
                       : 'text-ink-muted hover:text-ink hover:bg-surface-soft'
                   }`}
                 >
                   <span>{subItem.label}</span>
-                </NavLink>
+                </Link>
               </li>
             ))}
           </ul>
@@ -113,6 +115,7 @@ const VENDOR_NAV: Array<{
   inners?: Array<{ label: string; href: string; icon?: IconName }>;
 }> = [
   { label: 'Sản phẩm', href: '/vendors/products', icon: 'cart' },
+  { label: 'Tồn kho', href: '/vendors/stocks', icon: 'summary' },
   { label: 'Bộ sưu tập', href: '/vendors/collections', icon: 'hand-platter' },
   {
     label: 'Storefront',
@@ -140,13 +143,13 @@ const VendorLayout = ({
   return (
     <div
       data-theme='vendor'
-      className='grid grid-cols-[260px_1fr] w-screen h-dvh overflow-hidden bg-page text-ink antialiased'
+      className='flex w-screen h-dvh overflow-hidden bg-page text-ink antialiased'
     >
       {/* Sidebar */}
       <aside
         id='sidebar'
         aria-label='Vendor Sidebar Navigation'
-        className='flex flex-col shrink-0 border-r border-line bg-surface'
+        className='flex w-65 flex-col shrink-0 border-r border-line bg-surface'
       >
         <div className='flex flex-row gap-3 h-16 shrink-0 items-center px-6 border-b border-line'>
           <Logo size='sm' />
@@ -171,7 +174,7 @@ const VendorLayout = ({
       </aside>
 
       {/* Main Content Area */}
-      <div className='flex flex-col h-full min-h-0 overflow-hidden bg-page'>
+      <div className='flex flex-1 min-w-0 flex-col h-full min-h-0 overflow-hidden bg-page'>
         <header
           id='header'
           className='flex flex-row-reverse items-center h-16 border-b border-line bg-surface'

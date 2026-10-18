@@ -4,7 +4,16 @@ import { cn } from '@/lib/cn';
 
 type BadgeProps = Readonly<{
   children: ReactNode;
-  tone?: 'secondary' | 'highlight' | 'light';
+  // success/warning/danger/info/neutral: nhãn trạng thái (tồn kho, đang bán…).
+  tone?:
+    | 'secondary'
+    | 'highlight'
+    | 'light'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'info'
+    | 'neutral';
   className?: string;
 }>;
 
@@ -12,9 +21,14 @@ const TONES = {
   secondary: 'bg-secondary text-on-secondary',
   highlight: 'bg-highlight text-ink',
   light: 'bg-page/80 text-ink',
+  success: 'bg-success-soft text-success-strong',
+  warning: 'bg-warning-soft text-warning-strong',
+  danger: 'bg-danger-soft text-danger-strong',
+  info: 'bg-info-soft text-info-strong',
+  neutral: 'bg-surface-soft text-ink-muted',
 } as const;
 
-// Nhãn nhỏ viết hoa, ví dụ độ khó "NÂNG CAO" trên ảnh công thức.
+// Nhãn nhỏ viết hoa, ví dụ độ khó "NÂNG CAO" trên ảnh công thức hoặc trạng thái tồn kho.
 export default function Badge({
   children,
   tone = 'secondary',
@@ -23,7 +37,7 @@ export default function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-micro font-medium uppercase',
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-micro font-medium whitespace-nowrap uppercase',
         TONES[tone],
         className,
       )}

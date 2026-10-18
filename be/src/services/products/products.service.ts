@@ -1,11 +1,16 @@
-import productDAO from '#/daos/products/products.dao.js';
+import type { Knex } from 'knex';
+
+import db from '#/db/index.js';
+import productDAO, { type LockedStock } from '#/daos/products/products.dao.js';
 import collectionDAO from '#/daos/products/collections.dao.js';
 
 import {
 	BadRequestError,
 	ConflictError,
+	ForbiddenError,
 	NotFoundError,
 } from '#/utils/http-errors.js';
+import { getThresholdOrderError } from '#/utils/stock-alerts.js';
 
 import type {
 	Product,
@@ -205,42 +210,119 @@ class ProductService {
 
 	// ---------- stock ----------
 
+	public async getByVendorId(vendorId: string): Promise<Product[]> {
+		return this.productDAO.getByVendorId(vendorId);
+	}
+
 	public async updateStock(
+		vendorId: string,
 		productId: string,
 		stock: number,
 	): Promise<ProductStock> {
-		if (!Number.isInteger(stock) || stock < 0) {
-			throw new BadRequestError('Stock must be a non-negative integer');
-		}
-
-		const updated = await this.productDAO.updateStock(productId, stock);
-
-		if (!updated) {
-			throw new NotFoundError('Product stock not found');
-		}
-
-		return updated;
+		return this.changeStock(vendorId, productId, () => stock);
 	}
 
+	public async adjustStock(
+		vendorId: string,
+		productId: string,
+		delta: number,
+	): Promise<ProductStock> {
+		return this.changeStock(vendorId, productId, (stock) => stock + delta);
+	}
+
+	/** Sets or changes a threshold, keeping MINIMUM < REORDER < MAXIMUM. */
 	public async setAlert(
+		vendorId: string,
 		productId: string,
 		alertType: StockAlertRow['alertType'],
 		threshold: number,
 	): Promise<StockAlertRow> {
-		await this.assertProductExists(productId);
-
 		if (!Number.isInteger(threshold) || threshold < 0) {
 			throw new BadRequestError('Threshold must be a non-negative integer');
 		}
 
-		return this.productDAO.setAlert(productId, alertType, threshold);
+		return db.instance.transaction(async (trx) => {
+			const current = await this.lockOwnStock(vendorId, productId, trx);
+			const orderError = getThresholdOrderError([
+				...current.alerts.filter((alert) => alert.alertType !== alertType),
+				{ alertType, threshold },
+			]);
+
+			if (orderError) {
+				throw new BadRequestError(orderError);
+			}
+
+			return this.productDAO.setAlert(productId, alertType, threshold, trx);
+		});
 	}
 
 	public async removeAlert(
+		vendorId: string,
 		productId: string,
 		alertType: StockAlertRow['alertType'],
 	): Promise<boolean> {
+		await this.assertProductOwner(vendorId, productId);
+
 		return this.productDAO.removeAlert(productId, alertType);
+	}
+
+	/** Locks the stock so concurrent adjustments are applied one after another. */
+	private async changeStock(
+		vendorId: string,
+		productId: string,
+		getNextStock: (stock: number) => number,
+	): Promise<ProductStock> {
+		await db.instance.transaction(async (trx) => {
+			const current = await this.lockOwnStock(vendorId, productId, trx);
+			const nextStock = getNextStock(current.stock);
+
+			if (!Number.isInteger(nextStock) || nextStock < 0) {
+				throw new BadRequestError('Stock must be a non-negative integer');
+			}
+
+			await this.productDAO.updateStock(productId, nextStock, trx);
+		});
+
+		const stock = await this.productDAO.getStock(productId);
+
+		if (!stock) {
+			throw new NotFoundError('Product stock not found');
+		}
+
+		return stock;
+	}
+
+	private async lockOwnStock(
+		vendorId: string,
+		productId: string,
+		trx: Knex.Transaction,
+	): Promise<LockedStock> {
+		const current = await this.productDAO.lockStock(productId, trx);
+
+		if (!current) {
+			throw new NotFoundError('Product stock not found');
+		}
+
+		if (current.vendorId !== vendorId) {
+			throw new ForbiddenError('You do not have permission to manage this product');
+		}
+
+		return current;
+	}
+
+	private async assertProductOwner(
+		vendorId: string,
+		productId: string,
+	): Promise<void> {
+		const ownerId = await this.productDAO.getVendorId(productId);
+
+		if (ownerId === undefined) {
+			throw new NotFoundError('Product not found');
+		}
+
+		if (ownerId !== vendorId) {
+			throw new ForbiddenError('You do not have permission to manage this product');
+		}
 	}
 
 	// ---------- collections ----------

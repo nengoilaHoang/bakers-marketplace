@@ -5,8 +5,9 @@ import type {
 
 import { z } from 'zod';
 
-import productService from '#/services/products.service.js';
+import productService from '#/services/products/products.service.js';
 import asyncHandler from '#/utils/asyncHandler.js';
+import type { AuthenticatedRequest } from '#/types/request.types.js';
 
 import {
 	ProductCreateSchema,
@@ -46,6 +47,10 @@ const TagBodySchema = z.object({
 
 const StockBodySchema = z.object({
 	stock: z.number().int().nonnegative(),
+});
+
+const StockAdjustBodySchema = z.object({
+	delta: z.number().int().refine((delta) => delta !== 0, 'Delta must not be 0'),
 });
 
 const AlertBodySchema = z.object({
@@ -314,11 +319,21 @@ class ProductController {
 
 	// ---------- stock ----------
 
+	/** Products of the signed-in vendor, with their stock and alerts. */
+	public getMine = asyncHandler(
+		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+			const products = await this.productService.getByVendorId(req.user.id);
+
+			res.status(200).json({ data: products });
+		},
+	);
+
 	public updateStock = asyncHandler(
-		async (req: Request<IdParams>, res: Response): Promise<void> => {
+		async (req: AuthenticatedRequest<IdParams>, res: Response): Promise<void> => {
 			const { stock } = StockBodySchema.parse(req.body);
 
 			const updated = await this.productService.updateStock(
+				req.user.id,
 				req.params.id,
 				stock,
 			);
@@ -327,13 +342,28 @@ class ProductController {
 		},
 	);
 
+	public adjustStock = asyncHandler(
+		async (req: AuthenticatedRequest<IdParams>, res: Response): Promise<void> => {
+			const { delta } = StockAdjustBodySchema.parse(req.body);
+
+			const updated = await this.productService.adjustStock(
+				req.user.id,
+				req.params.id,
+				delta,
+			);
+
+			res.status(200).json({ data: updated });
+		},
+	);
+
 	public setAlert = asyncHandler(
-		async (req: Request<IdParams>, res: Response): Promise<void> => {
+		async (req: AuthenticatedRequest<IdParams>, res: Response): Promise<void> => {
 			const { alertType, threshold } = AlertBodySchema.parse(
 				req.body,
 			);
 
 			const alert = await this.productService.setAlert(
+				req.user.id,
 				req.params.id,
 				alertType,
 				threshold,
@@ -344,10 +374,12 @@ class ProductController {
 	);
 
 	public removeAlert = asyncHandler(
-		async (req: Request<AlertParams>, res: Response): Promise<void> => {
+		async (req: AuthenticatedRequest<AlertParams>, res: Response): Promise<void> => {
+			const alertType = StockAlertEnum.parse(req.params.alertType);
 			const removed = await this.productService.removeAlert(
+				req.user.id,
 				req.params.id,
-				req.params.alertType,
+				alertType,
 			);
 
 			if (!removed) {
