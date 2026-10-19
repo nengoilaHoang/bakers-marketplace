@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -27,14 +28,26 @@ type ResizeState = {
 };
 
 type CanvasSelectionOverlayProps = {
-  artboardRef: React.RefObject<HTMLElement | null>;
+  artboardRef: React.RefObject<HTMLElement | null>; // Ref to the board
 };
+
+type LayoutMode =
+  | {
+      type: 'bento_grid';
+      colSpan: number;
+      rowSpan: number;
+      snappedWidth: number;
+      snappedHeight: number;
+      slotOffsetX: number;
+      slotOffsetY: number;
+    }
+  | { type: 'freeform' };
 
 const CanvasSelectionOverlay = ({
   artboardRef,
 }: CanvasSelectionOverlayProps) => {
   const { state, updateConfig } = useStorefrontLayoutContext();
-  const { selectComponent } = useStorefrontCanvasContext();
+  const { selectComponent, breakpoint } = useStorefrontCanvasContext();
   const { zoom, selectedComponentId, isDragging, isResizing, setIsResizing } =
     useStorefrontCanvasContext();
   const { components } = state;
@@ -47,8 +60,13 @@ const CanvasSelectionOverlay = ({
     null,
   );
 
-  const resizeStateRef = useRef<ResizeState | null>(null);
-  const [resizeRect, setResizeRect] = useState<OverlayRect | null>(null);
+  const resizeStateRef = useRef<ResizeState | null>(null); // Track the resize state during resizing for the final update after releasing
+  const [resizeRect, setResizeRect] = useState<OverlayRect | null>(null); // Show the future size while holding
+
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>({
+    type: 'freeform',
+  });
+  const layoutModeRef = useRef<LayoutMode>({ type: 'freeform' });
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -86,15 +104,15 @@ const CanvasSelectionOverlay = ({
       return;
     }
 
-    const artboardBounds = artboard.getBoundingClientRect();
-    const elementBounds = target.getBoundingClientRect();
-    const currentZoom = zoom || 1;
-
     setArtboardHeight((previousHeight) =>
       previousHeight === artboard.clientHeight
         ? previousHeight
         : artboard.clientHeight,
     );
+
+    const artboardBounds = artboard.getBoundingClientRect();
+    const elementBounds = target.getBoundingClientRect();
+    const currentZoom = zoom || 1;
 
     const next: OverlayRect = {
       top:
@@ -173,34 +191,6 @@ const CanvasSelectionOverlay = ({
     }
   }, [overlayRect, isResizing]);
 
-  // const getHandle = useCallback(
-  //   (e: React.PointerEvent<HTMLDivElement>): ResizeHandle => {
-  //     const border = e.currentTarget;
-  //     const rect = border.getBoundingClientRect();
-  //     const x = e.clientX - rect.left;
-  //     const y = e.clientY - rect.top;
-
-  //     const THICKNESS_THRESHOLD = 12;
-  //     const threshold = THICKNESS_THRESHOLD * (zoom || 1);
-
-  //     const nearLeft = x <= threshold;
-  //     const nearRight = x >= rect.width - threshold;
-  //     const nearTop = y <= threshold;
-  //     const nearBottom = y >= rect.height - threshold;
-
-  //     if (nearTop && nearLeft) return 'nw';
-  //     if (nearTop && nearRight) return 'ne';
-  //     if (nearBottom && nearLeft) return 'sw';
-  //     if (nearBottom && nearRight) return 'se';
-  //     if (nearLeft) return 'w';
-  //     if (nearRight) return 'e';
-  //     if (nearTop) return 'n';
-  //     if (nearBottom) return 's';
-  //     return null;
-  //   },
-  //   [zoom],
-  // );
-
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>, handle: ResizeHandle) => {
       if (!handle || !overlayRect) return;
@@ -276,13 +266,23 @@ const CanvasSelectionOverlay = ({
 
     const handleWindowPointerUp = () => {
       const finalRect = resizeStateRef.current?.currentRect;
+      const activeMode = layoutModeRef.current;
+
       setIsResizing(false);
+
+      if (activeMode.type === 'bento_grid') {
+        updateConfig(selectedComponentId, 'colSpan', activeMode.colSpan);
+        updateConfig(selectedComponentId, 'rowSpan', activeMode.rowSpan);
+      }
       if (finalRect) {
-        setOverlayRect(finalRect);
         updateConfig(selectedComponentId, 'w', finalRect.width);
         updateConfig(selectedComponentId, 'h', finalRect.height);
+        setOverlayRect(finalRect);
       }
+
       setResizeRect(null);
+      layoutModeRef.current = { type: 'freeform' };
+      setLayoutMode({ type: 'freeform' });
       resizeStateRef.current = null;
     };
 
@@ -293,9 +293,184 @@ const CanvasSelectionOverlay = ({
       window.removeEventListener('pointermove', handleWindowPointerMove);
       window.removeEventListener('pointerup', handleWindowPointerUp);
     };
-  }, [isResizing, selectedComponentId, setIsResizing, updateConfig, zoom]);
+  }, [
+    components,
+    isResizing,
+    selectedComponentId,
+    setIsResizing,
+    updateConfig,
+    zoom,
+  ]);
 
-  if (!overlayRect || !selectedComponentId) return null;
+  useEffect(() => {
+    const resetToFreeForm = () => {
+      const mode: LayoutMode = { type: 'freeform' };
+      layoutModeRef.current = mode;
+      setLayoutMode(mode);
+    };
+
+    const artboard = artboardRef.current;
+    const resizeState = resizeStateRef.current;
+    if (!artboard || !resizeState || !selectedComponentId || !overlayRect) {
+      resetToFreeForm();
+      return;
+    }
+
+    const componentEl = artboard.querySelector<HTMLElement>(
+      `#${CSS.escape(selectedComponentId)}`,
+    );
+    if (!componentEl) {
+      resetToFreeForm();
+      return;
+    }
+
+    const parentId = componentEl.dataset.sourceParentId;
+    const sourceSlot = componentEl.dataset.sourceSlot;
+    if (!parentId || !sourceSlot) {
+      resetToFreeForm();
+      return;
+    }
+
+    const parentEl = artboard.querySelector<HTMLElement>(
+      `#${CSS.escape(parentId)}`,
+    );
+    if (!parentEl) {
+      resetToFreeForm();
+      return;
+    }
+
+    const parentComponent = components[parentId];
+    if (!parentComponent) {
+      resetToFreeForm();
+      return;
+    }
+
+    if (
+      parentComponent.componentType !== 'GRID' ||
+      parentComponent.config.layout !== 'BENTO'
+    ) {
+      resetToFreeForm();
+      return;
+    }
+
+    const gridBounds = parentEl.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(parentEl);
+
+    // take padding and border width into account for cell origin
+    const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
+    const paddingLeft = Number.parseFloat(computedStyle.paddingLeft) || 0;
+    const borderTop = Number.parseFloat(computedStyle.borderTopWidth) || 0;
+    const borderLeft = Number.parseFloat(computedStyle.borderLeftWidth) || 0;
+
+    const rowTracks = computedStyle.gridTemplateRows.split(/\s+/);
+    const colTracks = computedStyle.gridTemplateColumns.split(/\s+/);
+
+    const rowCount = rowTracks.length;
+    const colCount = colTracks.length;
+
+    const slotIndex = Number.parseInt(sourceSlot) - 1;
+    const rowStart = Math.floor(slotIndex / colCount) + 1;
+    const colStart = (slotIndex % colCount) + 1;
+
+    const artboardBounds = artboard.getBoundingClientRect();
+    const currentZoom = zoom || 1;
+
+    const gridLeft =
+      (gridBounds.left - artboardBounds.left) / currentZoom +
+      artboard.scrollLeft;
+    const gridTop =
+      (gridBounds.top - artboardBounds.top) / currentZoom + artboard.scrollTop;
+
+    const currentColHeightPx = Number.parseFloat(colTracks[colStart - 1]);
+    const currentRowHeightPx = Number.parseFloat(rowTracks[rowStart - 1]);
+
+    const currentGap = Number.parseFloat(computedStyle.gap) || 0;
+    const currentCellHeight = currentRowHeightPx / currentZoom;
+    const currentCellWidth = currentColHeightPx / currentZoom;
+
+    // Slot origin relative to artboard
+    const slotLeft =
+      gridLeft +
+      paddingLeft +
+      borderLeft +
+      (colStart - 1) * (currentCellWidth + currentGap);
+    const slotTop =
+      gridTop +
+      borderTop +
+      paddingTop +
+      (rowStart - 1) * (currentCellHeight + currentGap);
+
+    const calculateSpan = (
+      currentSize: number,
+      cellSize: number,
+      gap: number,
+    ): number => {
+      if (currentSize <= cellSize) return 1;
+      return Math.max(2, Math.ceil(currentSize / (cellSize + gap)));
+    };
+
+    // Calculate effective span from the slot start to the resized edge
+    const effectiveWidth = Math.max(
+      resizeState.currentRect.width,
+      resizeState.currentRect.left + resizeState.currentRect.width - slotLeft,
+    );
+
+    const effectiveHeight = Math.max(
+      resizeState.currentRect.height,
+      resizeState.currentRect.top + resizeState.currentRect.height - slotTop,
+    );
+
+    const nextColSpan = Math.max(
+      1,
+      Math.min(
+        calculateSpan(effectiveWidth, currentCellWidth, currentGap),
+        colCount - colStart + 1,
+      ),
+    );
+    const nextRowSpan = Math.max(
+      1,
+      Math.min(
+        calculateSpan(effectiveHeight, currentCellHeight, currentGap),
+        rowCount - rowStart + 1,
+      ),
+    );
+
+    const snappedWidth =
+      nextColSpan * currentCellWidth + (nextColSpan - 1) * currentGap;
+
+    const snappedHeight =
+      nextRowSpan * currentCellHeight + (nextRowSpan - 1) * currentGap;
+
+    const mode: LayoutMode = {
+      type: 'bento_grid',
+      colSpan: nextColSpan,
+      rowSpan: nextRowSpan,
+      snappedWidth,
+      snappedHeight,
+      slotOffsetX: slotLeft - overlayRect.left,
+      slotOffsetY: slotTop - overlayRect.top,
+    };
+    layoutModeRef.current = mode;
+    setLayoutMode(mode);
+  }, [
+    artboardRef,
+    breakpoint,
+    components,
+    overlayRect,
+    resizeRect,
+    selectedComponentId,
+    zoom,
+  ]);
+
+  const isBentoItem = useMemo(() => {
+    if (!selectedComponentId) return null;
+    const component = components[selectedComponentId];
+    const { config } = component;
+    if (config.colSpan && config.rowSpan) return true;
+    else return false;
+  }, [components, selectedComponentId]);
+
+  if (!overlayRect || !selectedComponentId || isBentoItem === null) return null;
   const activeComponent = components[selectedComponentId];
   const disableAnimation = isDragging || isResizing || isWindowResizing;
 
@@ -328,40 +503,44 @@ const CanvasSelectionOverlay = ({
         !isWindowResizing &&
         selectedComponentId !== state.rootId && (
           <>
-            {/* N */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'n')}
-              className='pointer-events-auto absolute -top-1.5 left-2 right-2 h-3 cursor-n-resize'
-            />
+            {!isBentoItem && (
+              <>
+                {/* N */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'n')}
+                  className='pointer-events-auto absolute -top-1.5 left-2 right-2 h-3 cursor-n-resize'
+                />
+                {/* W */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'w')}
+                  className='pointer-events-auto absolute top-2 bottom-2 -left-1.5 w-3 cursor-w-resize'
+                />
+                {/* NW */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'nw')}
+                  className='pointer-events-auto absolute -top-1.5 -left-1.5 size-3.5 cursor-nw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
+                />
+                {/* NE */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'ne')}
+                  className='pointer-events-auto absolute -top-1.5 -right-1.5 size-3.5 cursor-ne-resize bg-white border-2 border-blue-500 rounded-sm z-20'
+                />
+                {/* SW */}
+                <div
+                  onPointerDown={(e) => handlePointerDown(e, 'sw')}
+                  className='pointer-events-auto absolute -bottom-1.5 -left-1.5 size-3.5 cursor-sw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
+                />
+              </>
+            )}
             {/* S */}
             <div
               onPointerDown={(e) => handlePointerDown(e, 's')}
               className='pointer-events-auto absolute -bottom-1.5 left-2 right-2 h-3 cursor-s-resize'
             />
-            {/* W */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'w')}
-              className='pointer-events-auto absolute top-2 bottom-2 -left-1.5 w-3 cursor-w-resize'
-            />
             {/* E */}
             <div
               onPointerDown={(e) => handlePointerDown(e, 'e')}
               className='pointer-events-auto absolute top-2 bottom-2 -right-1.5 w-3 cursor-e-resize'
-            />
-            {/* NW */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'nw')}
-              className='pointer-events-auto absolute -top-1.5 -left-1.5 size-3.5 cursor-nw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
-            />
-            {/* NE */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'ne')}
-              className='pointer-events-auto absolute -top-1.5 -right-1.5 size-3.5 cursor-ne-resize bg-white border-2 border-blue-500 rounded-sm z-20'
-            />
-            {/* SW */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'sw')}
-              className='pointer-events-auto absolute -bottom-1.5 -left-1.5 size-3.5 cursor-sw-resize bg-white border-2 border-blue-500 rounded-sm z-20'
             />
             {/* SE */}
             <div
@@ -375,12 +554,23 @@ const CanvasSelectionOverlay = ({
       {resizeRect && (
         <div
           className={`${
-            isResizing ? 'animate-pulse z-10' : 'hidden z-0'
+            isResizing ? 'z-20' : 'hidden z-0'
           } pointer-events-none absolute top-0 left-0 border-2 border-blue-500 bg-blue-500/50 ring-1 ring-blue-500/20 box-decoration-clone`}
           style={{
             width: `${resizeRect.width}px`,
             height: `${resizeRect.height}px`,
             transform: `translate3d(${resizeRect.left - overlayRect.left}px, ${resizeRect.top - overlayRect.top}px, 0)`,
+          }}
+        ></div>
+      )}
+
+      {layoutMode.type === 'bento_grid' && isResizing && resizeRect && (
+        <div
+          className='z-10 pointer-events-none absolute top-0 left-0  border-orange-500 bg-orange-500/50 ring-1 ring-orange-500/20 box-decoration-clone transition-all'
+          style={{
+            width: `${layoutMode.snappedWidth}px`,
+            height: `${layoutMode.snappedHeight}px`,
+            transform: `translate3d(${layoutMode.slotOffsetX}px, ${layoutMode.slotOffsetY}px, 0)`,
           }}
         ></div>
       )}

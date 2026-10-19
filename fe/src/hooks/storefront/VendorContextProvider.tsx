@@ -99,12 +99,14 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    const release = activeStorefront.releases.find((r) => {
-      return r.id === currentReleaseId;
-    });
+    const release = activeStorefront.releases.find(
+      (r) => r.id === currentReleaseId,
+    );
     if (!release) {
       queueMicrotask(() => setCurrentRelease(null));
-      return;
+      throw new Error(
+        `Release with ID ${currentReleaseId} not found in storefront ${activeStorefront.id}`,
+      );
     }
 
     // CACHE HIT: layouts already present in state, exit early to prevent refetching
@@ -138,9 +140,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
         });
       })
       .catch((err) => {
-        if (!controller.signal.aborted) {
-          console.error('Failed to load layouts:', err);
-        }
+        throw err;
       });
 
     return () => {

@@ -1,52 +1,64 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import { SectionId } from '../ConfigSidebar';
 import { useMemo } from 'react';
-import ConfigSectionWrapper from './ConfigSectionWrapper';
+import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type AlignmentSectionProps = {
-  id: SectionId;
-  title: string;
-  description: string;
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   alignment: {
-    horizontal: BaseLayoutComponentConfig['alignX'];
-    vertical: BaseLayoutComponentConfig['alignY'];
+    horizontal: BaseLayoutComponentConfig['alignSelfX'];
+    vertical: BaseLayoutComponentConfig['alignSelfY'];
   };
   onUpdate: (pathname: string, value: unknown) => void;
-	onActiveSectionChange: (isActive: boolean) => void;
+  onActiveSectionChange: (isActive: boolean) => void;
   zIndex: number;
 };
 
-const ALIGNMENT_OPTIONS = {
+const HORIZONTAL_OPTIONS = {
   Left: 'left',
   Center: 'center',
   Right: 'right',
+  Stretch: 'stretch',
+} as const;
+
+const VERTICAL_OPTIONS = {
   Top: 'top',
-  Middle: 'middle',
+  Center: 'center',
   Bottom: 'bottom',
+  Stretch: 'stretch',
 } as const;
 
 const AlignmentSection = ({
-  id,
-  title,
-  description,
   isOpen,
   toggleSection,
   alignment,
   onUpdate,
-	onActiveSectionChange,
+  onActiveSectionChange,
   zIndex,
 }: AlignmentSectionProps) => {
-  const sides: ReadonlyArray<
-    Readonly<{ key: keyof typeof alignment; label: string }>
-  > = useMemo(
+  const id: SectionId = 'alignment';
+  const title = 'Alignment';
+  const description =
+    'Set the horizontal and vertical alignment of the component.';
+
+  const configs = useMemo(
     () => [
-      { key: 'horizontal', label: 'Horizontal' },
-      { key: 'vertical', label: 'Vertical' },
+      {
+        key: 'alignSelfX',
+        label: 'Horizontal',
+        options: HORIZONTAL_OPTIONS,
+        value: alignment.horizontal ?? 'left',
+      },
+      {
+        key: 'alignSelfY',
+        label: 'Vertical',
+        options: VERTICAL_OPTIONS,
+        value: alignment.vertical ?? 'top',
+      },
     ],
-    [],
+    [alignment],
   );
 
   return (
@@ -58,19 +70,21 @@ const AlignmentSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      {sides.map(({ key, label }) => (
-        <ConfigInput
-          key={key}
-          id={`alignment-${key}`}
-          name={`alignment.${key}`}
-          label={label}
-          inputType='select'
-          selectOptions={ALIGNMENT_OPTIONS}
-          currentValue={alignment[key] ?? 'left'}
-          onValueChange={(val) => onUpdate(`alignment.${key}`, val)}
-          onOpenStateChange={onActiveSectionChange}
-        />
-      ))}
+      <div className='grid grid-cols-2 gap-2'>
+        {configs.map(({ key, label, options, value }) => (
+          <ConfigInput
+            key={key}
+            id={`alignment-${key}`}
+            name={key}
+            label={label}
+            inputType='select'
+            selectOptions={options}
+            currentValue={value}
+            onValueChange={(val) => onUpdate(key, val)}
+            onOpenStateChange={onActiveSectionChange}
+          />
+        ))}
+      </div>
     </ConfigSectionWrapper>
   );
 };

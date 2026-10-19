@@ -6,7 +6,7 @@ import CollectionForm, {
   type CollectionFormValues,
 } from '@/components/collection/CollectionForm';
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PanelSkeleton } from '@/components/vendor/Panel';
 import VendorPage from '@/components/vendor/VendorPage';
@@ -17,7 +17,8 @@ const EditCollectionPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = typeof router.query.id === 'string' ? router.query.id : undefined;
 
-  const [initialValues, setInitialValues] = useState<CollectionFormValues | null>(null);
+  const [initialValues, setInitialValues] =
+    useState<CollectionFormValues | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -100,9 +101,9 @@ const EditCollectionPage: NextPageWithLayout = () => {
 
 EditCollectionPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

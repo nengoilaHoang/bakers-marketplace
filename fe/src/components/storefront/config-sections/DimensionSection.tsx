@@ -1,43 +1,42 @@
-import { BaseLayoutComponentConfig } from '@/types/layout-component';
+import { DimensionType } from '@/types/layout-component';
+import { useMemo } from 'react';
+import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
-import { SectionId } from '../ConfigSidebar';
-import { useMemo } from 'react';
 
 type DimensionSectionProps = {
-  id: SectionId;
-  title: string;
-  description: string;
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
   dimensions: {
-    h: BaseLayoutComponentConfig['h'];
-    w: BaseLayoutComponentConfig['w'];
+    h: DimensionType;
+    w: DimensionType;
   };
   onUpdate: (pathname: string, value: unknown) => void;
-	onActiveSectionChange: (isActive: boolean) => void;
+  onActiveSectionChange: (isActive: boolean) => void;
   zIndex: number;
+  isBento?: boolean;
 };
 
 const DIMENSION_OPTIONS = {
+  Auto: 'auto',
+  Full: 'full',
   Large: 'lg',
   Medium: 'md',
   Small: 'sm',
-  Auto: 'auto',
-  Full: 'full',
 } as const;
 
 const DimensionSection = ({
-  id,
-  title,
-  description,
   isOpen,
   toggleSection,
   dimensions,
   onUpdate,
-	onActiveSectionChange,
+  onActiveSectionChange,
   zIndex,
+  isBento = false,
 }: DimensionSectionProps) => {
+  const id: SectionId = 'dimensions';
+  const title = 'Dimensions';
+  const description = 'Adjust the width and height of the component.';
   const sides: ReadonlyArray<
     Readonly<{ key: keyof typeof dimensions; label: string }>
   > = useMemo(
@@ -47,6 +46,13 @@ const DimensionSection = ({
     ],
     [],
   );
+
+  const dimensionOptions = useMemo(() => {
+    if (!isBento) return DIMENSION_OPTIONS;
+    return Object.fromEntries(
+      Object.entries(DIMENSION_OPTIONS).filter(([, value]) => value !== 'auto'),
+    );
+  }, [isBento]);
 
   return (
     <ConfigSectionWrapper
@@ -65,8 +71,12 @@ const DimensionSection = ({
             name={`padding.${key}`}
             label={label}
             inputType='select'
-            selectOptions={DIMENSION_OPTIONS}
-            currentValue={dimensions[key] ?? 'none'}
+            selectOptions={dimensionOptions}
+            currentValue={
+              typeof dimensions[key] === 'number'
+                ? dimensions[key].toFixed(2)
+                : dimensions[key]
+            }
             onValueChange={(val) => onUpdate(key, val)}
             onOpenStateChange={onActiveSectionChange}
           />

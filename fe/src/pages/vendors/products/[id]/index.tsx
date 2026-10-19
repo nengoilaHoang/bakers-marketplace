@@ -1,8 +1,14 @@
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import StockStatusBadge from '@/components/stock/StockStatusBadge';
 import Alert from '@/components/ui/Alert';
 import Button, { ButtonLink } from '@/components/ui/Button';
@@ -87,7 +93,11 @@ const ProductDetailPage: NextPageWithLayout = () => {
   if (loadError) {
     return (
       <VendorPage title='Sản phẩm' breadcrumb={breadcrumb}>
-        <ErrorState title='Không thể tải sản phẩm' message={loadError} onRetry={() => void load()} />
+        <ErrorState
+          title='Không thể tải sản phẩm'
+          message={loadError}
+          onRetry={() => void load()}
+        />
       </VendorPage>
     );
   }
@@ -105,8 +115,12 @@ const ProductDetailPage: NextPageWithLayout = () => {
 
   const stock = product.stock?.stock ?? 0;
   const status = getStockStatus(stock, product.stock?.alerts ?? []);
-  const assignedIds = new Set(product.collections.map((collection) => collection.id));
-  const availableCollections = collections.filter((collection) => !assignedIds.has(collection.id));
+  const assignedIds = new Set(
+    product.collections.map((collection) => collection.id),
+  );
+  const availableCollections = collections.filter(
+    (collection) => !assignedIds.has(collection.id),
+  );
 
   function handleAddTag(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -154,21 +168,33 @@ const ProductDetailPage: NextPageWithLayout = () => {
         <div className='flex flex-col gap-6'>
           <Panel title='Thông tin'>
             <dl>
-              <InfoRow label='Giá bán'>{formatMoney(product.unitPrice, product.currency)}</InfoRow>
-              <InfoRow label='Giá vốn'>{formatMoney(product.unitCost, product.currency)}</InfoRow>
+              <InfoRow label='Giá bán'>
+                {formatMoney(product.unitPrice, product.currency)}
+              </InfoRow>
+              <InfoRow label='Giá vốn'>
+                {formatMoney(product.unitCost, product.currency)}
+              </InfoRow>
               <InfoRow label='Đơn vị'>{product.unit}</InfoRow>
               <InfoRow label='Slug'>{product.slug}</InfoRow>
-              <InfoRow label='Hạn sử dụng'>{formatDate(product.expirationDate) ?? '—'}</InfoRow>
-              <InfoRow label='Ngày tạo'>{formatDate(product.createdAt) ?? '—'}</InfoRow>
+              <InfoRow label='Hạn sử dụng'>
+                {formatDate(product.expirationDate) ?? '—'}
+              </InfoRow>
+              <InfoRow label='Ngày tạo'>
+                {formatDate(product.createdAt) ?? '—'}
+              </InfoRow>
               <InfoRow label='Mã sản phẩm'>
-                <code className='text-caption text-ink-muted'>{product.id}</code>
+                <code className='text-caption text-ink-muted'>
+                  {product.id}
+                </code>
               </InfoRow>
             </dl>
           </Panel>
 
           <Panel title={`Ghi chú (${product.notes.length})`}>
             {product.notes.length === 0 ? (
-              <p className='text-body-sm text-ink-muted'>Chưa có ghi chú nào.</p>
+              <p className='text-body-sm text-ink-muted'>
+                Chưa có ghi chú nào.
+              </p>
             ) : (
               <ul className='flex flex-col'>
                 {product.notes.map((note) => (
@@ -176,13 +202,19 @@ const ProductDetailPage: NextPageWithLayout = () => {
                     key={note.id}
                     className='flex items-start justify-between gap-3 border-b border-line py-3 first:pt-0 last:border-b-0'
                   >
-                    <p className='text-body-sm whitespace-pre-line text-ink'>{note.content}</p>
+                    <p className='text-body-sm whitespace-pre-line text-ink'>
+                      {note.content}
+                    </p>
                     <IconButton
                       label='Xoá ghi chú'
                       variant='ghost'
                       size='sm'
                       disabled={isBusy}
-                      onClick={() => void run(() => productApi.removeNote(product.id, note.id))}
+                      onClick={() =>
+                        void run(() =>
+                          productApi.removeNote(product.id, note.id),
+                        )
+                      }
                     >
                       <Icon name='trash' className='size-4 text-danger' />
                     </IconButton>
@@ -190,7 +222,10 @@ const ProductDetailPage: NextPageWithLayout = () => {
                 ))}
               </ul>
             )}
-            <form onSubmit={handleAddNote} className='mt-4 flex flex-wrap gap-2'>
+            <form
+              onSubmit={handleAddNote}
+              className='mt-4 flex flex-wrap gap-2'
+            >
               <div className='min-w-60 flex-1'>
                 <Input
                   size='sm'
@@ -200,7 +235,11 @@ const ProductDetailPage: NextPageWithLayout = () => {
                   aria-label='Nội dung ghi chú'
                 />
               </div>
-              <Button type='submit' variant='outline' disabled={isBusy || !noteContent.trim()}>
+              <Button
+                type='submit'
+                variant='outline'
+                disabled={isBusy || !noteContent.trim()}
+              >
                 Thêm ghi chú
               </Button>
             </form>
@@ -214,7 +253,10 @@ const ProductDetailPage: NextPageWithLayout = () => {
             ) : (
               <ul className='flex flex-col gap-1'>
                 {product.media.map((media) => (
-                  <li key={media.id} className='truncate text-caption text-ink-muted'>
+                  <li
+                    key={media.id}
+                    className='truncate text-caption text-ink-muted'
+                  >
                     {media.url}
                   </li>
                 ))}
@@ -229,7 +271,9 @@ const ProductDetailPage: NextPageWithLayout = () => {
             <div className='flex flex-wrap items-center gap-3'>
               <p>
                 <span className='text-h3 font-semibold text-ink'>{stock}</span>{' '}
-                <span className='text-body-sm text-ink-muted'>{product.unit}</span>
+                <span className='text-body-sm text-ink-muted'>
+                  {product.unit}
+                </span>
               </p>
               <StockStatusBadge status={status} />
             </div>
@@ -254,7 +298,9 @@ const ProductDetailPage: NextPageWithLayout = () => {
                     key={tag.id}
                     removeLabel={`Xoá tag ${tag.name}`}
                     disabled={isBusy}
-                    onRemove={() => void run(() => productApi.removeTag(product.id, tag.name))}
+                    onRemove={() =>
+                      void run(() => productApi.removeTag(product.id, tag.name))
+                    }
                   >
                     {tag.name}
                   </RemovableTag>
@@ -271,7 +317,11 @@ const ProductDetailPage: NextPageWithLayout = () => {
                   aria-label='Tên tag mới'
                 />
               </div>
-              <Button type='submit' variant='outline' disabled={isBusy || !tagName.trim()}>
+              <Button
+                type='submit'
+                variant='outline'
+                disabled={isBusy || !tagName.trim()}
+              >
                 Thêm
               </Button>
             </form>
@@ -279,7 +329,9 @@ const ProductDetailPage: NextPageWithLayout = () => {
 
           <Panel title={`Bộ sưu tập (${product.collections.length})`}>
             {product.collections.length === 0 ? (
-              <p className='text-body-sm text-ink-muted'>Chưa thuộc bộ sưu tập nào.</p>
+              <p className='text-body-sm text-ink-muted'>
+                Chưa thuộc bộ sưu tập nào.
+              </p>
             ) : (
               <div className='flex flex-wrap gap-2'>
                 {product.collections.map((collection) => (
@@ -288,7 +340,12 @@ const ProductDetailPage: NextPageWithLayout = () => {
                     removeLabel={`Bỏ khỏi bộ sưu tập ${collection.name}`}
                     disabled={isBusy}
                     onRemove={() =>
-                      void run(() => productApi.removeFromCollection(product.id, collection.id))
+                      void run(() =>
+                        productApi.removeFromCollection(
+                          product.id,
+                          collection.id,
+                        ),
+                      )
                     }
                   >
                     {collection.name}
@@ -297,7 +354,10 @@ const ProductDetailPage: NextPageWithLayout = () => {
               </div>
             )}
             {availableCollections.length > 0 && (
-              <form onSubmit={handleAssignCollection} className='mt-4 flex flex-col gap-2'>
+              <form
+                onSubmit={handleAssignCollection}
+                className='mt-4 flex flex-col gap-2'
+              >
                 <Select
                   aria-label='Chọn bộ sưu tập'
                   value={collectionId}
@@ -311,7 +371,11 @@ const ProductDetailPage: NextPageWithLayout = () => {
                     </option>
                   ))}
                 </Select>
-                <Button type='submit' variant='outline' disabled={isBusy || !collectionId}>
+                <Button
+                  type='submit'
+                  variant='outline'
+                  disabled={isBusy || !collectionId}
+                >
                   Thêm vào bộ sưu tập
                 </Button>
               </form>
@@ -325,9 +389,9 @@ const ProductDetailPage: NextPageWithLayout = () => {
 
 ProductDetailPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

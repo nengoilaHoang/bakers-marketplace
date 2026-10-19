@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import ProductTable from '@/components/product/ProductTable';
 import Alert from '@/components/ui/Alert';
 import { ButtonLink } from '@/components/ui/Button';
@@ -21,7 +21,10 @@ const ProductListPage: NextPageWithLayout = () => {
   const { products, isLoading, error, reload } = useVendorStocks();
   const [keyword, setKeyword] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const [notice, setNotice] = useState<{
+    tone: 'success' | 'danger';
+    text: string;
+  } | null>(null);
 
   const visibleProducts = useMemo(() => {
     const normalized = keyword.trim().toLowerCase();
@@ -55,7 +58,11 @@ const ProductListPage: NextPageWithLayout = () => {
   return (
     <VendorPage
       title='Sản phẩm'
-      description={isLoading || error ? undefined : `${products.length} sản phẩm trong cửa hàng của bạn.`}
+      description={
+        isLoading || error
+          ? undefined
+          : `${products.length} sản phẩm trong cửa hàng của bạn.`
+      }
       actions={
         <ButtonLink href='/vendors/products/new' size='sm'>
           <Icon name='plus' className='size-4' />
@@ -66,13 +73,19 @@ const ProductListPage: NextPageWithLayout = () => {
       {isLoading ? (
         <PanelSkeleton className='h-96' />
       ) : error ? (
-        <ErrorState title='Không thể tải sản phẩm' message={error} onRetry={reload} />
+        <ErrorState
+          title='Không thể tải sản phẩm'
+          message={error}
+          onRetry={reload}
+        />
       ) : products.length === 0 ? (
         <EmptyState
           icon='cart'
           title='Chưa có sản phẩm nào'
           description='Tạo sản phẩm đầu tiên để bắt đầu bán và quản lý tồn kho.'
-          action={<ButtonLink href='/vendors/products/new'>Tạo sản phẩm</ButtonLink>}
+          action={
+            <ButtonLink href='/vendors/products/new'>Tạo sản phẩm</ButtonLink>
+          }
         />
       ) : (
         <>
@@ -89,7 +102,9 @@ const ProductListPage: NextPageWithLayout = () => {
           {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
 
           {visibleProducts.length === 0 ? (
-            <p className='text-body-sm text-ink-muted'>Không có sản phẩm nào khớp “{keyword}”.</p>
+            <p className='text-body-sm text-ink-muted'>
+              Không có sản phẩm nào khớp “{keyword}”.
+            </p>
           ) : (
             <ProductTable
               products={visibleProducts}
@@ -105,9 +120,9 @@ const ProductListPage: NextPageWithLayout = () => {
 
 ProductListPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

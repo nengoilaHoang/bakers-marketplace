@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import StockStatusBadge from '@/components/stock/StockStatusBadge';
 import { ButtonLink } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -25,15 +25,23 @@ const VendorHomePage: NextPageWithLayout = () => {
   const summary = useMemo(() => {
     const withStatus = products.map((product) => ({
       product,
-      status: getStockStatus(product.stock?.stock ?? 0, product.stock?.alerts ?? []),
+      status: getStockStatus(
+        product.stock?.stock ?? 0,
+        product.stock?.alerts ?? [],
+      ),
     }));
     const needAttention = withStatus
       .filter(({ status }) => status !== 'NORMAL')
-      .sort((a, b) => STOCK_STATUS_PRIORITY[a.status] - STOCK_STATUS_PRIORITY[b.status]);
+      .sort(
+        (a, b) =>
+          STOCK_STATUS_PRIORITY[a.status] - STOCK_STATUS_PRIORITY[b.status],
+      );
 
     return {
       out: withStatus.filter(({ status }) => status === 'OUT').length,
-      low: withStatus.filter(({ status }) => status === 'MINIMUM' || status === 'REORDER').length,
+      low: withStatus.filter(
+        ({ status }) => status === 'MINIMUM' || status === 'REORDER',
+      ).length,
       over: withStatus.filter(({ status }) => status === 'MAXIMUM').length,
       needAttention,
     };
@@ -61,11 +69,20 @@ const VendorHomePage: NextPageWithLayout = () => {
           <PanelSkeleton />
         </>
       ) : error ? (
-        <ErrorState title='Không thể tải dữ liệu cửa hàng' message={error} onRetry={reload} />
+        <ErrorState
+          title='Không thể tải dữ liệu cửa hàng'
+          message={error}
+          onRetry={reload}
+        />
       ) : (
         <>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-            <StatCard label='Sản phẩm' value={products.length} icon='cart' href='/vendors/products' />
+            <StatCard
+              label='Sản phẩm'
+              value={products.length}
+              icon='cart'
+              href='/vendors/products'
+            />
             <StatCard
               label='Hết hàng'
               value={summary.out}
@@ -106,23 +123,25 @@ const VendorHomePage: NextPageWithLayout = () => {
               </p>
             ) : (
               <ul className='flex flex-col'>
-                {summary.needAttention.slice(0, ATTENTION_LIMIT).map(({ product, status }) => (
-                  <li
-                    key={product.id}
-                    className='flex flex-wrap items-center justify-between gap-3 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0'
-                  >
-                    <Link
-                      href={`/vendors/stocks/${product.id}`}
-                      className='font-medium text-ink hover:underline'
+                {summary.needAttention
+                  .slice(0, ATTENTION_LIMIT)
+                  .map(({ product, status }) => (
+                    <li
+                      key={product.id}
+                      className='flex flex-wrap items-center justify-between gap-3 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0'
                     >
-                      {product.title}
-                    </Link>
-                    <span className='flex items-center gap-3 text-body-sm text-ink-muted'>
-                      {product.stock?.stock ?? 0} {product.unit}
-                      <StockStatusBadge status={status} />
-                    </span>
-                  </li>
-                ))}
+                      <Link
+                        href={`/vendors/stocks/${product.id}`}
+                        className='font-medium text-ink hover:underline'
+                      >
+                        {product.title}
+                      </Link>
+                      <span className='flex items-center gap-3 text-body-sm text-ink-muted'>
+                        {product.stock?.stock ?? 0} {product.unit}
+                        <StockStatusBadge status={status} />
+                      </span>
+                    </li>
+                  ))}
               </ul>
             )}
           </Panel>
@@ -134,9 +153,9 @@ const VendorHomePage: NextPageWithLayout = () => {
 
 VendorHomePage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

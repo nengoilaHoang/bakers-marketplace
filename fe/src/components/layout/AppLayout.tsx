@@ -18,8 +18,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { pathname } = useRouter();
 
   return (
-    <SiteLayout headerVariant='session' activeHref={getActiveHref(pathname)}>
-      {children}
-    </SiteLayout>
+    <SiteLayout activeHref={getActiveHref(pathname)}>{children}</SiteLayout>
   );
 }

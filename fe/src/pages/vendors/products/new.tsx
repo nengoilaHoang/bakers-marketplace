@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useMemo, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import ProductForm, {
   EMPTY_PRODUCT_FORM,
   type ProductFormValues,
@@ -26,7 +26,11 @@ const NewProductPage: NextPageWithLayout = () => {
   // API storefront hiện chỉ trả brandId (chưa có tên), nên tạm hiện "Thương hiệu 1, 2…".
   const brands = useMemo(() => {
     const ids = storefronts
-      .map((storefront) => (storefront as Storefront & { brandId?: string }).brandId ?? storefront.brand?.id)
+      .map(
+        (storefront) =>
+          (storefront as Storefront & { brandId?: string }).brandId ??
+          storefront.brand?.id,
+      )
       .filter((brandId): brandId is string => Boolean(brandId));
 
     return [...new Set(ids)].map((brandId, index) => ({
@@ -62,7 +66,10 @@ const NewProductPage: NextPageWithLayout = () => {
   return (
     <VendorPage
       title='Tạo sản phẩm'
-      breadcrumb={[{ label: 'Sản phẩm', href: '/vendors/products' }, { label: 'Tạo mới' }]}
+      breadcrumb={[
+        { label: 'Sản phẩm', href: '/vendors/products' },
+        { label: 'Tạo mới' },
+      ]}
       size='narrow'
     >
       <ProductForm
@@ -86,9 +93,9 @@ const NewProductPage: NextPageWithLayout = () => {
 
 NewProductPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

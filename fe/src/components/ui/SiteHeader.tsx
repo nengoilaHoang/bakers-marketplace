@@ -29,15 +29,20 @@ export default function SiteHeader({ activeHref }: SiteHeaderProps) {
   return (
     <header className='relative z-20 bg-page shadow-header'>
       {/* Hàng 1: logo · điều hướng chính · tài khoản */}
-      <div className='flex h-15 items-center justify-between gap-4 border-b border-line px-3 lg:px-4'>
-        <div className='hidden sm:block'>
-          <Logo size='md' />
-        </div>
-        <div className='sm:hidden'>
-          <Logo size='sm' showWordmark={false} />
+      <div className='grid grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] h-15 items-center justify-between gap-4 border-b border-line px-3 lg:px-4'>
+        <div className='col-start-1 justify-self-start'>
+          <div className='hidden sm:block'>
+            <Logo size='md' />
+          </div>
+          <div className='sm:hidden'>
+            <Logo size='sm' showWordmark={false} />
+          </div>
         </div>
 
-        <nav aria-label='Điều hướng chính' className='hidden lg:block'>
+        <nav
+          aria-label='Điều hướng chính'
+          className='hidden lg:col-start-2 lg:block'
+        >
           <ul className='flex items-center gap-2'>
             {MAIN_NAV.map((item) => (
               <li key={item.label}>
@@ -53,7 +58,7 @@ export default function SiteHeader({ activeHref }: SiteHeaderProps) {
           </ul>
         </nav>
 
-        <div className='flex items-center gap-1.5 sm:gap-2.5'>
+        <div className='flex col-start-2 md:col-start-3 justify-self-end items-center gap-1.5 sm:gap-2.5'>
           <IconLink
             href='/me?tab=saved'
             label='Bài viết đã lưu'

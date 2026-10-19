@@ -1,6 +1,7 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { cn } from '@/lib/cn';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenCompositeComponent } from '@/utils/flattenLayout';
 import { CSSProperties, useMemo } from 'react';
@@ -20,6 +21,7 @@ const GridComponent = ({
 }: CompositeComponentProps) => {
   const {
     id,
+    tabIndex,
     baseClasses,
     baseStyle,
     ref,
@@ -27,6 +29,7 @@ const GridComponent = ({
     isSelected,
     handleKeyDown,
     handleMouseDown,
+    handleFocus,
   } = useLayoutComponent({
     component,
     sourceParentId,
@@ -36,31 +39,35 @@ const GridComponent = ({
   const { components } = state;
 
   const config = component.config;
-  const { rows, cols, gap, layout } = config;
+  const { rows, cols, gap, rowHeight, layout } = config;
 
-  const className = useMemo(() => {
-    switch (layout) {
-      case 'UNIFORM': {
-        return `grid ${baseClasses}`;
-      }
-      default:
-        return;
-    }
-  }, [baseClasses, layout]);
-
-  const { breakpoint } = useStorefrontCanvasContext();
+  const { breakpoint: currentBp } = useStorefrontCanvasContext();
 
   const gridStyles = useMemo<{ [K in DeviceBreakpoint]: CSSProperties }>(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
       (acc, bp) => {
-        const colsValue = cols[bp];
-        const rowsValue = rows[bp];
-        const gapValue = gap[bp];
+        const colsValue = cols[bp] ?? cols['desktop']; // desktop bp is always present
+        const gapValue = gap[bp] ?? gap['desktop'];
+        const rowCfg = rowHeight[bp] ?? rowHeight['desktop'];
+
+        // specified rows override the default rows based on rowHeight mode
+        let gridTemplateRows = 'auto';
+        if (rowCfg.mode === 'fixed') {
+          gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.baseHeightPx}px, auto))`;
+        } else if (rowCfg.mode === 'auto') {
+          gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.minHeightPx}px, auto))`;
+        }
 
         const style: CSSProperties = {
+          display: 'grid',
           gap: gapValue + 'px',
           gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsValue}, minmax(0, 1fr))`,
+          gridTemplateRows,
+          gridAutoRows:
+            rowCfg.mode === 'fixed'
+              ? `minmax(${rowCfg.baseHeightPx}px, auto))`
+              : 'auto',
+          gridAutoFlow: config.densePacking ? 'row dense' : 'row',
           ...baseStyle,
         };
 
@@ -71,7 +78,7 @@ const GridComponent = ({
         [K in DeviceBreakpoint]: CSSProperties;
       },
     );
-  }, [gap, rows, cols, baseStyle]);
+  }, [cols, gap, rowHeight, config.densePacking, baseStyle, rows]);
 
   // const gridStyle = useMemo(
   //   () => ({
@@ -88,17 +95,72 @@ const GridComponent = ({
   //   [cols, rows, gap],
   // );
 
-  const cellsStyles = useMemo(() => {
+  // Generate cell style for each breakpoint
+  const gridItems = useMemo(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
       (acc, bp) => {
-        const totalCells = cols[bp] * rows[bp];
+        const currentCols = cols[bp] ?? cols['desktop'];
+        const activeSlots = component.children[bp];
+
+        const maxOccupiedSlot = Math.max(
+          0,
+          ...Object.keys(activeSlots).map(Number),
+        );
+        const autoDerivedRows = Math.max(
+          2,
+          Math.ceil(maxOccupiedSlot / currentCols),
+        );
+        const currentRows = rows?.[bp] ?? rows?.['desktop'] ?? autoDerivedRows;
+
+        const totalSlots = currentCols * currentRows;
+        const coveredSlots = new Set<number>();
+
         const cells = [];
-        for (let i = 0; i < totalCells; i++) {
-          const rowStart = Math.floor(i / cols[bp]) + 1;
-          const colStart = (i % cols[bp]) + 1;
+        for (let slot = 1; slot <= totalSlots; slot++) {
+          if (coveredSlots.has(slot)) continue;
+
+          const rowStart = Math.floor((slot - 1) / currentCols) + 1;
+          const colStart = ((slot - 1) % currentCols) + 1;
+
+          const childId = activeSlots[slot];
+          const child = childId ? components[childId] : undefined;
+
+          const isBento = layout === 'BENTO';
+          const colSpan =
+            isBento && child?.config.colSpan
+              ? Math.max(
+                  1,
+                  Math.min(child.config.colSpan, currentCols - colStart + 1),
+                )
+              : 1;
+          const rowSpan =
+            isBento && child?.config.rowSpan
+              ? Math.max(
+                  1,
+                  Math.min(child.config.rowSpan, currentRows - rowStart + 1),
+                )
+              : 1;
+
+          if (colSpan > 1 || rowSpan > 1) {
+            for (let r = 0; r < rowSpan; r++) {
+              for (let c = 0; c < colSpan; c++) {
+                const targetSlot =
+                  (rowStart - 1 + r) * currentCols + (colStart + c);
+                if (targetSlot !== slot) {
+                  coveredSlots.add(targetSlot);
+                }
+              }
+            }
+          }
+
+          const style = {
+            gridColumn: `${colStart} / span ${colSpan}`,
+            gridRow: `${rowStart} / span ${rowSpan}`,
+          };
           cells.push({
-            gridRowStart: rowStart,
-            gridColumnStart: colStart,
+            slot,
+            childId,
+            style,
           });
         }
 
@@ -106,35 +168,36 @@ const GridComponent = ({
         return acc;
       },
       {} as {
-        [K in DeviceBreakpoint]: CSSProperties[];
+        [K in DeviceBreakpoint]: {
+          slot: number;
+          childId: string | undefined;
+          style: CSSProperties;
+        }[];
       },
     );
-  }, [cols, rows]);
+  }, [cols, component.children, components, layout, rows]);
 
   return (
     <div
-      className={className}
-      style={{ ...gridStyles[breakpoint === 'fluid' ? 'desktop' : breakpoint] }}
+      className={cn('grid', baseClasses)}
+      style={{ ...gridStyles[currentBp === 'fluid' ? 'desktop' : currentBp] }}
       id={id}
       ref={ref}
-      tabIndex={0}
+      tabIndex={tabIndex}
+      data-layout-node='true'
       data-source-parent-id={sourceParentId}
       data-source-slot={sourceSlot}
       aria-pressed={isSelected || isDragging}
       aria-controls={sourceParentId}
       aria-busy={isDragging}
-      aria-label={`Hover over this component to see the available actions. Press Escape to deselect this component. Press Delete to remove this component.`}
+      aria-label='Grid Component'
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
+      onFocus={handleFocus}
     >
-      {cellsStyles[breakpoint === 'fluid' ? 'desktop' : breakpoint].map(
-        (style, idx) => {
-          const slot = idx + 1;
-          const childId =
-            component.children[breakpoint === 'fluid' ? 'desktop' : breakpoint][
-              slot
-            ];
-          const child = components[childId];
+      {gridItems[currentBp === 'fluid' ? 'desktop' : currentBp].map(
+        ({ slot, childId, style }) => {
+          const child = childId ? components[childId] : undefined;
           return (
             <DropZone
               key={`slot-${slot}`}

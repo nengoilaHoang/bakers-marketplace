@@ -248,8 +248,6 @@
 @layer base {
   :root {
     color-scheme: light;
-
-    --clip-triangle-up: polygon(0 100%, 50% 0, 100% 100%);
   }
 
   /* Khu vendor (trang quản trị): tông trung tính, nhưng mọi màu vẫn lấy từ
@@ -302,6 +300,21 @@
   }
 }
 
+@utility animate-scrolling-text {
+  animation: scrolling-text 20s linear infinite;
+}
+
+@keyframes scrolling-text {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}
+
 @utility clip-triangle-up {
+  --clip-triangle-up: polygon(0 100%, 50% 0, 100% 100%);
   clip-path: var(--clip-triangle-up);
 }
