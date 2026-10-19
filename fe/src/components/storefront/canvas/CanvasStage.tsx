@@ -1,7 +1,7 @@
+import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
 import React, { useRef } from 'react';
 import CanvasSelectionOverlay from './CanvasSelectionOverlay';
-import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 
 type CanvasStageProps = {
   children: React.ReactNode;
@@ -63,7 +63,7 @@ const CanvasStage = ({
           id='cms-board'
           ref={artboardRef}
           onClickCapture={handleCaptureClick}
-          className={`relative w-full rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-all duration-150 overflow-hidden ${isPreview ? 'pointer-events-none select-none' : ''}`}
+          className={`relative w-full rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-all duration-150 ${isPreview ? 'pointer-events-none select-none' : ''}`}
         >
           {children}
           {!isPreview && (

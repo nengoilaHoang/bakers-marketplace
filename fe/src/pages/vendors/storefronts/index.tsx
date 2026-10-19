@@ -1,5 +1,5 @@
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import { NextPageWithLayout } from '@/pages/_app';
 
 const StorefrontPage: NextPageWithLayout = () => {
@@ -16,9 +16,9 @@ const StorefrontPage: NextPageWithLayout = () => {
 
 StorefrontPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

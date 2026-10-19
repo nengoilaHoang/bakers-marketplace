@@ -7,7 +7,7 @@ import CollectionForm, {
   type CollectionFormValues,
 } from '@/components/collection/CollectionForm';
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import VendorPage from '@/components/vendor/VendorPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { collectionApi } from '@/services/collections';
@@ -33,7 +33,10 @@ const NewCollectionPage: NextPageWithLayout = () => {
   return (
     <VendorPage
       title='Tạo bộ sưu tập'
-      breadcrumb={[{ label: 'Bộ sưu tập', href: '/vendors/collections' }, { label: 'Tạo mới' }]}
+      breadcrumb={[
+        { label: 'Bộ sưu tập', href: '/vendors/collections' },
+        { label: 'Tạo mới' },
+      ]}
       size='narrow'
     >
       <CollectionForm
@@ -50,9 +53,9 @@ const NewCollectionPage: NextPageWithLayout = () => {
 
 NewCollectionPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

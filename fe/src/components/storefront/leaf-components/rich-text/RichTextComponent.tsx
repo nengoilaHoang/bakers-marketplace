@@ -1,27 +1,32 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { cn } from '@/lib/cn';
 import { RichTextLeafComponent } from '@/types/layout-component/leaf-component';
 import { useRef, useState } from 'react';
 import RichTextEditor from './RichTextEditor';
+
+type CompositeComponentProps = {
+  component: RichTextLeafComponent;
+  sourceParentId: string;
+  sourceSlot: number;
+};
 
 const RichTextComponent = ({
   component,
   sourceParentId,
   sourceSlot,
-}: {
-  component: RichTextLeafComponent;
-  sourceParentId: string;
-  sourceSlot: number;
-}) => {
+}: CompositeComponentProps) => {
   const {
     id,
-    baseClasses: className,
+    tabIndex,
+    baseClasses,
     baseStyle,
     ref,
     isDragging,
     isSelected,
     handleKeyDown,
     handleMouseDown,
+    handleFocus,
   } = useLayoutComponent({ component, sourceParentId, sourceSlot });
 
   const [openEditor, setOpenEditor] = useState(false);
@@ -56,20 +61,22 @@ const RichTextComponent = ({
 
   return (
     <div
-      className={`wrap-break-word ${className} `}
+      className={cn(baseClasses, 'wrap-break-word')}
       id={id}
       ref={ref}
       role='button'
-      tabIndex={0}
+      tabIndex={tabIndex}
+      data-layout-node='true'
       data-source-parent-id={sourceParentId}
       data-source-slot={sourceSlot}
       aria-controls={sourceParentId}
       aria-expanded={openEditor}
-      aria-label={`Hover over this component to see the available actions. Press Escape to deselect this component. Press Delete to remove this component.`}
+      aria-label='Rich Text Component. Double click to edit the content.'
       aria-busy={isDragging}
       aria-pressed={isSelected || isDragging}
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
+      onFocus={handleFocus}
       onClick={handleClick}
       style={baseStyle}
     >

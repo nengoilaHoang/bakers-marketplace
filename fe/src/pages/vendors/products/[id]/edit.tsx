@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import VendorLayout from '@/components/layout/VendorLayout';
-import VendorShellLayout from '@/components/layout/VendorShellLayout';
+import VendorScope from '@/components/layout/VendorScope';
 import ProductForm, {
   EMPTY_PRODUCT_FORM,
   type ProductFormValues,
@@ -17,7 +17,9 @@ const EditProductPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = typeof router.query.id === 'string' ? router.query.id : undefined;
 
-  const [initialValues, setInitialValues] = useState<ProductFormValues | null>(null);
+  const [initialValues, setInitialValues] = useState<ProductFormValues | null>(
+    null,
+  );
   const [title, setTitle] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -83,7 +85,10 @@ const EditProductPage: NextPageWithLayout = () => {
       title='Sửa sản phẩm'
       breadcrumb={[
         { label: 'Sản phẩm', href: '/vendors/products' },
-        { label: title || 'Chi tiết', href: id ? `/vendors/products/${id}` : undefined },
+        {
+          label: title || 'Chi tiết',
+          href: id ? `/vendors/products/${id}` : undefined,
+        },
         { label: 'Sửa' },
       ]}
       size='narrow'
@@ -113,9 +118,9 @@ const EditProductPage: NextPageWithLayout = () => {
 
 EditProductPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
-    <VendorShellLayout>
+    <VendorScope>
       <VendorLayout>{page}</VendorLayout>
-    </VendorShellLayout>
+    </VendorScope>
   );
 };
 

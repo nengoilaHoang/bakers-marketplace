@@ -1,16 +1,13 @@
-import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import ConfigInput from './ConfigInput';
-import { SectionId } from '../ConfigSidebar';
-import ConfigSectionWrapper from './ConfigSectionWrapper';
+import { PaddingType } from '@/types/layout-component';
 import { useMemo } from 'react';
+import { SectionId } from '../ConfigSidebar';
+import ConfigInput from './ConfigInput';
+import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type PaddingSectionProps = {
-  id: SectionId;
-  title: string;
-  description: string;
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
-  padding: BaseLayoutComponentConfig['padding'];
+  padding: PaddingType;
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
   zIndex: number;
@@ -24,9 +21,6 @@ const PADDING_OPTIONS = {
 } as const;
 
 const PaddingSection = ({
-  id,
-  title,
-  description,
   isOpen,
   toggleSection,
   padding,
@@ -34,17 +28,19 @@ const PaddingSection = ({
   onActiveSectionChange,
   zIndex,
 }: PaddingSectionProps) => {
-  const sides: ReadonlyArray<
-    Readonly<{ key: keyof typeof padding; label: string }>
-  > = useMemo(
-    () => [
-      { key: 'top', label: 'Top' },
-      { key: 'right', label: 'Right' },
-      { key: 'bottom', label: 'Bottom' },
-      { key: 'left', label: 'Left' },
-    ],
-    [],
-  );
+  const id = 'padding';
+  const title = 'Padding';
+  const description = 'Adjust the padding of the component.';
+  const sides: ReadonlyArray<Readonly<{ key: string; label: string }>> =
+    useMemo(
+      () => [
+        { key: 'top', label: 'Top' },
+        { key: 'bottom', label: 'Bottom' },
+        { key: 'left', label: 'Left' },
+        { key: 'right', label: 'Right' },
+      ],
+      [],
+    );
 
   return (
     <ConfigSectionWrapper
@@ -55,7 +51,7 @@ const PaddingSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      <div className='grid grid-cols gap-2'>
+      <div className='grid grid-cols-2 gap-2'>
         {sides.map(({ key, label }) => (
           <ConfigInput
             key={key}
@@ -64,7 +60,7 @@ const PaddingSection = ({
             label={label}
             inputType='select'
             selectOptions={PADDING_OPTIONS}
-            currentValue={padding[key] ?? 'none'}
+            currentValue={String(padding[key as keyof typeof padding])}
             onValueChange={(val) => onUpdate(`padding.${key}`, val)}
             onOpenStateChange={onActiveSectionChange}
           />

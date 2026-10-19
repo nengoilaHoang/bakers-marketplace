@@ -17,85 +17,85 @@ export type DimensionType = number | 'auto' | 'full' | 'lg' | 'md' | 'sm';
 export type PaddingType = number | 'lg' | 'md' | 'none' | 'sm';
 export type HorizontalAlignType = 'center' | 'left' | 'right' | 'stretch';
 export type VerticalAlignType = 'bottom' | 'center' | 'stretch' | 'top';
+export type SurfaceTheme =
+  | 'default'
+  | 'surface'
+  | 'primary'
+  | 'secondary'
+  | 'accent';
 export type TextStyle = {
-	textAlign: TextAlignmentType;
-	decoration: 'strikethrough' | 'underline';
-	txtColor: string;
-	fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
-	fontStyle: 'italic' | 'normal' | 'oblique';
+  textAlign: TextAlignmentType;
+  decoration: 'strikethrough' | 'underline';
+  txtColor: string;
+  fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
+  fontStyle: 'italic' | 'normal' | 'oblique';
 };
 
-type BaseProps = {
-	[key: string]:
-		| string
-		| number
-		| boolean
-		| undefined
-		| Record<string, unknown>;
-	h: DimensionType;
-	w: DimensionType;
-	alignX: HorizontalAlignType;
-	alignY: VerticalAlignType;
-	padding: {
-		top: PaddingType;
-		bottom: PaddingType;
-		left: PaddingType;
-		right: PaddingType;
-	};
-	colorScheme: 'accent' | 'default' | 'inverted';
-	colorPalette:
-		| {
-				type: 'palette';
-				token: 'accent' | 'background' | 'primary' | 'secondary' | 'surface';
-		  }
-		| {
-				type: 'custom';
-				bgColor: string;
-				fgColor: string;
-		  };
-	wSpan: number | undefined;
-	hSpan: number | undefined;
+export type BentoItemConfig = {
+  colSpan: number;
+  rowSpan: number;
 };
 
-export type BaseLayoutComponentConfig<TConfig = unknown> = BaseProps & {
-	[K in keyof TConfig]: TConfig[K];
+type SlotPlacementConfig = {
+  h: DimensionType;
+  w: DimensionType;
+  alignSelfX: HorizontalAlignType;
+  alignSelfY: VerticalAlignType;
 };
 
-export type UpdateBaseLayoutComponentConfig<TConfig> = Partial<BaseProps> & {
-	[K in keyof TConfig]?: TConfig[K];
+type BoxStyleConfig = {
+  padding: {
+    top: PaddingType;
+    bottom: PaddingType;
+    left: PaddingType;
+    right: PaddingType;
+  };
+  surfaceTheme: SurfaceTheme;
 };
+
+export type BaseLayoutComponentConfig<TConfig = unknown> = (
+  | SlotPlacementConfig
+  | (SlotPlacementConfig & BoxStyleConfig)
+) &
+  Partial<BentoItemConfig> & {
+    [K in keyof TConfig]: TConfig[K];
+  };
+
+export type UpdateBaseLayoutComponentConfig<TConfig = unknown> = Partial<
+  BaseLayoutComponentConfig<TConfig>
+>;
 
 export type BaseLayoutComponent<TConfig> = {
-	id: string;
-	name: string;
-	type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
-	componentType: string;
-	config: BaseLayoutComponentConfig<TConfig>;
+  id: string;
+  name: string;
+  type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
+  componentType: string;
+  config: BaseLayoutComponentConfig<TConfig>;
 };
 
 export type UpdateBaseLayoutComponent<TConfig> = {
-	id: string;
-	name?: string;
-	type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
-	componentType: string;
-	config: UpdateBaseLayoutComponentConfig<TConfig>;
+  id: string;
+  name?: string;
+  type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
+  componentType: string;
+  config: UpdateBaseLayoutComponentConfig<TConfig>;
 };
 
 export type CreateBaseLayoutComponent<TConfig> = {
-	name: string;
-	type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
-	componentType: string;
-	config: BaseLayoutComponentConfig<TConfig>;
+  name: string;
+  type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
+  componentType: string;
+  config: BaseLayoutComponentConfig<TConfig>;
 };
 
 export type LayoutComponent =
-	| CompositeComponent
-	| LeafComponent
-	| RepeaterComponent
-	| CommerceComponent;
+  | CompositeComponent
+  | LeafComponent
+  | RepeaterComponent
+  | CommerceComponent;
 
 export type UpdateLayoutComponent =
-	| UpdateCompositeComponent
-	| UpdateLeafComponent
-	| UpdateRepeaterComponent
-	| UpdateCommerceComponent;
+  | UpdateCompositeComponent
+  | UpdateLeafComponent
+  | UpdateRepeaterComponent
+  | UpdateCommerceComponent;

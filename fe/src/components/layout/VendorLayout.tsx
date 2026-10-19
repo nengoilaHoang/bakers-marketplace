@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
-import ReleaseSelect from '../storefront/ReleaseSelect';
-import AccountMenu from '../ui/AccountMenu';
+import ErrorBoundary from '../error/ErrorBoundary';
 import Icon, { IconName } from '../ui/Icon';
-import Logo from '../ui/Logo';
+import SiteLayout from '../ui/SiteLayout';
+import VendorSiteHeader from '../vendor/VendorSiteHeader';
 
 type SidebarTabProps = Readonly<{
   href: string;
@@ -133,66 +133,52 @@ const VENDOR_NAV: Array<{
 
 const VendorLayout = ({
   children,
+  title,
 }: Readonly<{
   children: React.ReactNode;
+  title?: string;
 }>) => {
   const router = useRouter();
   const { pathname } = router;
-  const isStorefront = pathname.startsWith('/vendors/storefronts');
 
   return (
-    <div
-      data-theme='vendor'
-      className='flex w-screen h-dvh overflow-hidden bg-page text-ink antialiased'
+    <SiteLayout
+      theme='vendor'
+      title={title}
+      header={<VendorSiteHeader />}
+      hideFooter={true}
     >
-      {/* Sidebar */}
-      <aside
-        id='sidebar'
-        aria-label='Vendor Sidebar Navigation'
-        className='flex w-65 flex-col shrink-0 border-r border-line bg-surface'
-      >
-        <div className='flex flex-row gap-3 h-16 shrink-0 items-center px-6 border-b border-line'>
-          <Logo size='sm' />
-        </div>
-        <nav className='flex-1 overflow-y-auto py-4'>
-          <ul className='flex flex-col gap-1'>
-            {VENDOR_NAV.map((tab) => (
-              <SidebarTab
-                key={tab.label}
-                href={tab.href}
-                icon={tab.icon}
-                label={tab.label}
-                isActive={pathname.startsWith(tab.href)}
-                inners={tab.inners?.map((sub) => ({
-                  ...sub,
-                  isActive: pathname === sub.href,
-                }))}
-              />
-            ))}
-          </ul>
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className='flex flex-1 min-w-0 flex-col h-full min-h-0 overflow-hidden bg-page'>
-        <header
-          id='header'
-          className='flex flex-row-reverse items-center h-16 border-b border-line bg-surface'
+      <div className='flex flex-1 flex-row min-h-0 w-full'>
+        {/* Sidebar */}
+        <aside
+          id='sidebar'
+          aria-label='Vendor Sidebar Navigation'
+          className='flex w-65 min-h-0 max-h-full flex-col shrink-0 border-r border-line bg-surface'
         >
-          <div className='flex items-center h-full px-6 border-l border-line'>
-            <AccountMenu />
-          </div>
+          <nav className='flex-1 overflow-y-auto py-4'>
+            <ul className='flex flex-col gap-1'>
+              {VENDOR_NAV.map((tab) => (
+                <SidebarTab
+                  key={tab.label}
+                  href={tab.href}
+                  icon={tab.icon}
+                  label={tab.label}
+                  isActive={pathname.startsWith(tab.href)}
+                  inners={tab.inners?.map((sub) => ({
+                    ...sub,
+                    isActive: pathname === sub.href,
+                  }))}
+                />
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-          <div className='flex items-center me-3.5'>
-            {isStorefront && <ReleaseSelect />}
-          </div>
-        </header>
-
-        <main id='main' className='flex-1 overflow-y-auto min-h-0 bg-page'>
-          {children}
-        </main>
+        <div className='flex-1 overflow-y-auto min-h-0'>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </div>
       </div>
-    </div>
+    </SiteLayout>
   );
 };
 

@@ -2,6 +2,7 @@ import Icon from '@/components/ui/Icon';
 import useDebouncedCallback from '@/hooks/useDebounceCallback';
 import React, {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -17,6 +18,7 @@ type TypeableSelectProps<T extends string | number | boolean> = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   isTypeable?: boolean;
+  showKeyValue?: boolean;
 };
 
 /**
@@ -40,14 +42,19 @@ const TypeableSelect = <T extends string | number | boolean>({
   isOpen,
   onOpenChange,
   isTypeable = true,
+  showKeyValue = true,
 }: TypeableSelectProps<T>) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const optionTextRefs = useRef<Record<number, HTMLSpanElement | null>>({});
 
   const [inputHeight, setInputHeight] = useState(0);
   const [isNearBottom, setIsNearBottom] = useState(false);
+  const [overflowingOptions, setOverflowingOptions] = useState<Set<number>>(
+    new Set(),
+  );
 
   const enumKeys = useMemo(
     () => (options ? (Object.keys(options) as string[]) : []),
@@ -61,6 +68,38 @@ const TypeableSelect = <T extends string | number | boolean>({
     ? enumValues.map((v) => +v)
     : enumValues;
 
+  useLayoutEffect(() => {
+    const updateOverflowingOptions = () => {
+      const nextOverflowingOptions = new Set<number>();
+
+      Object.entries(optionTextRefs.current).forEach(([index, element]) => {
+        if (element && element.scrollWidth > element.clientWidth) {
+          nextOverflowingOptions.add(Number(index));
+        }
+      });
+
+      setOverflowingOptions((current) => {
+        if (
+          current.size === nextOverflowingOptions.size &&
+          [...current].every((index) => nextOverflowingOptions.has(index))
+        ) {
+          return current;
+        }
+        return nextOverflowingOptions;
+      });
+    };
+
+    updateOverflowingOptions();
+    const resizeObserver = new ResizeObserver(updateOverflowingOptions);
+    if (contentRef.current) resizeObserver.observe(contentRef.current);
+    window.addEventListener('resize', updateOverflowingOptions);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateOverflowingOptions);
+    };
+  }, [convertedValues.length, showKeyValue]);
+
   const getKey = useCallback(
     (value: string) => {
       if (value === undefined || value === null) return '';
@@ -73,6 +112,10 @@ const TypeableSelect = <T extends string | number | boolean>({
   );
 
   const [inputValue, setInputValue] = useState(getKey(String(currentValue)));
+
+  useEffect(() => {
+    queueMicrotask(() => setInputValue(getKey(String(currentValue))));
+  }, [currentValue, getKey]);
 
   useLayoutEffect(() => {
     if (inputRef.current) {
@@ -204,7 +247,7 @@ const TypeableSelect = <T extends string | number | boolean>({
         </div>
       </button>
       <div
-        className={`grid transition-all duration-200 ease-out absolute ${isNearBottom ? 'bottom-0' : 'top-0'} left-0 w-full min-w-0 max-h-[150px] rounded-md border text-xs text-zinc-800 z-10 overflow-hidden scrollbar-none ${
+        className={`grid transition-all duration-200 ease-out absolute ${isNearBottom ? 'bottom-0' : 'top-0'} left-0 w-full min-w-0 max-h-37.5 rounded-md border text-xs text-zinc-800 z-10 overflow-hidden scrollbar-none ${
           isOpen
             ? 'grid-rows-[1fr] bg-zinc-50 border-zinc-200 shadow-lg'
             : 'grid-rows-[0fr] bg-transparent border-transparent shadow-none pointer-events-none'
@@ -230,10 +273,23 @@ const TypeableSelect = <T extends string | number | boolean>({
                 }}
                 className='appearance-none flex min-h-0 w-full items-center justify-between px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
               >
-                <span>{enumKeys[idx]}</span>
-                <span className='font-mono text-[10px] text-zinc-400'>
-                  {val}
+                <span
+                  ref={(element) => {
+                    optionTextRefs.current[idx] = element;
+                  }}
+                  className={`min-w-0 truncate ${
+                    overflowingOptions.has(idx)
+                      ? 'hover:animate-scrolling-text'
+                      : ''
+                  }`}
+                >
+                  {enumKeys[idx]}
                 </span>
+                {showKeyValue && (
+                  <span className='ml-auto font-mono text-[10px] text-zinc-400'>
+                    {val}
+                  </span>
+                )}
               </button>
             );
           })}
