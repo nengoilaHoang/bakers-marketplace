@@ -20,7 +20,7 @@ const PUBLIC_ROUTE_PREFIXES = ['/authen/verify/', '/authen/reset-password/'];
 
 // Chỉ khớp trang chi tiết /posts/<uuid> và /recipes/<uuid>,
 // không khớp /posts/new, /recipes/new, /<...>/<uuid>/edit
-const PUBLIC_DETAIL_PATTERN = /^\/(posts|recipes)\/[0-9a-f-]{36}$/i;
+const PUBLIC_DETAIL_PATTERN = /^\/(posts|recipes|users)\/[0-9a-f-]{36}$/i;
 
 function isPublicRoute(pathname: string): boolean {
   return (

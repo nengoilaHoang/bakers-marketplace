@@ -1,4 +1,5 @@
 import Avatar from '@/components/ui/Avatar';
+import Link from 'next/link';
 import Container from '@/components/ui/Container';
 import PillTabs from '@/components/ui/PillTabs';
 import { User } from '@/types/user';
@@ -40,6 +41,9 @@ export default function MeHeader({ title, active, account }: MeHeaderProps) {
                 <p className='truncate text-body-sm font-light text-ink-muted'>
                   {account.email}
                 </p>
+                <Link href={`/users/${account.id}`} className='text-body-sm text-ink underline'>
+                  Xem hồ sơ công khai
+                </Link>
               </>
             ) : (
               <div

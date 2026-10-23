@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 import Badge from '@/components/ui/Badge';
 import Callout from '@/components/ui/Callout';
@@ -61,6 +62,11 @@ export default function RecipeDetailView({ recipe, actions }: RecipeDetailViewPr
       <h1 className='mt-4 text-h1 font-semibold wrap-break-word text-ink italic'>{recipe.title}</h1>
       <p className='mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-caption font-light text-ink'>
         {postedAt && <time dateTime={recipe.createdAt}>Đăng ngày {postedAt}</time>}
+        {recipe.userId && (
+          <Link href={`/users/${recipe.userId}`} className='underline underline-offset-4'>
+            Xem hồ sơ tác giả
+          </Link>
+        )}
         {recipe.isPublic === false && <Badge tone='highlight'>Riêng tư</Badge>}
       </p>
 

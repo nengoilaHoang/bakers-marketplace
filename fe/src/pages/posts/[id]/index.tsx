@@ -248,7 +248,9 @@ export default function PostDetailPage() {
                 <Avatar size='sm' label={`Ảnh đại diện ${authorName}`} />
                 <div className='flex min-w-0 flex-1 flex-col gap-2 pt-1'>
                   <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-                    <p className='text-lead font-semibold text-ink'>{authorName}</p>
+                    <p className='text-lead font-semibold text-ink'>
+                      {comment.author ? <Link href={`/users/${comment.author.id}`} className='hover:underline'>{authorName}</Link> : authorName}
+                    </p>
                     <time
                       dateTime={comment.createdAt}
                       className='ml-auto text-meta font-medium text-ink-muted'
@@ -351,7 +353,7 @@ export default function PostDetailPage() {
                 <span>
                   Bởi{' '}
                   <span className='text-body-sm font-normal text-ink-muted uppercase'>
-                    {post.author?.displayName ?? 'Người dùng đã xoá'}
+                    {post.author ? <Link href={`/users/${post.author.id}`} className='hover:underline'>{post.author.displayName}</Link> : 'Người dùng đã xoá'}
                   </span>
                 </span>
                 <time dateTime={post.createdAt}>{formatDateTime(post.createdAt)}</time>

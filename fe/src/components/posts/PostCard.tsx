@@ -26,7 +26,11 @@ export default function PostCard({ post, onToggleLike, onToggleSave, className }
   return (
     <article className={cn('flex flex-col gap-3 border border-ink bg-page px-5 py-6 sm:px-8', className)}>
       <p className='text-meta font-medium text-ink-muted uppercase'>
-        {post.author?.displayName ?? 'Người dùng đã xoá'}
+        {post.author ? (
+          <Link href={`/users/${post.author.id}`} className='hover:underline'>
+            {post.author.displayName}
+          </Link>
+        ) : 'Người dùng đã xoá'}
         {postedAt && (
           <>
             <span aria-hidden> · </span>
