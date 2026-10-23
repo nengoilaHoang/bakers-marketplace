@@ -2,8 +2,10 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import Alert from '@/components/ui/Alert';
 
 import useAuth from '@/hooks/user/useAuthContext';
+import { useDropdown } from '@/hooks/useDropdown';
 import request, { ApiError } from '@/lib/api';
 
 type PublicProfile = {
@@ -38,8 +40,10 @@ export default function UserProfilePage() {
   const [action, setAction] = useState({ key: '', busy: '', error: '', success: '' });
   const [reason, setReason] = useState('SPAM');
   const [description, setDescription] = useState('');
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
-  const reportButton = useRef<HTMLButtonElement>(null);
+  const reportMenuButton = useRef<HTMLButtonElement>(null);
+  const { ref: reportMenuRef, isOpen: isReportMenuOpen, toggle: toggleReportMenu, close: closeReportMenu } = useDropdown();
   const mutation = useRef<AbortController | null>(null);
   const profile = loaded?.key === profileKey && loaded.attempt === attempt ? loaded.profile : null;
   const loadError = loaded?.key === profileKey && loaded.attempt === attempt ? loaded.error : '';
@@ -71,11 +75,12 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     dialog.current?.close();
+    closeReportMenu();
     return () => {
       mutation.current?.abort();
       mutation.current = null;
     };
-  }, [profileKey]);
+  }, [profileKey, closeReportMenu]);
 
   function requireLogin() {
     void router.push({ pathname: '/authen/login', query: { next: `/users/${id}` } });
@@ -109,11 +114,13 @@ export default function UserProfilePage() {
   }
 
   function openReport() {
+    closeReportMenu();
     if (!account) { requireLogin(); return; }
     if (mutation.current) return;
     setAction({ key: profileKey, busy: '', error: '', success: '' });
     setReason('SPAM');
     setDescription('');
+    setIsReportOpen(true);
     dialog.current?.showModal();
   }
 
@@ -151,11 +158,11 @@ export default function UserProfilePage() {
         {account && <Link href='/me' className='underline underline-offset-4'>Tài khoản của tôi</Link>}
       </nav>
       <main className='mx-auto max-w-2xl px-6 py-12' aria-busy={!profile && !loadError}>
-        {!profile && !loadError && <p role='status'>Đang tải hồ sơ…</p>}
+        {!profile && !loadError && <Alert appearance='neutral'>Đang tải hồ sơ…</Alert>}
         {loadError && (
           <div>
             <h1 className='text-2xl font-semibold'>Hồ sơ người dùng</h1>
-            <p role='alert' className='mt-4'>{loadError}</p>
+            <Alert tone='danger' appearance='neutral' className='mt-4'>{loadError}</Alert>
             <button type='button' onClick={() => setAttempt((value) => value + 1)} className='mt-4 border border-black px-4 py-2'>Thử lại</button>
           </div>
         )}
@@ -172,6 +179,8 @@ export default function UserProfilePage() {
                 </p>
               </div>
             </div>
+            {currentAction?.success && <Alert tone='success' appearance='neutral' className='mt-6'>{currentAction.success}</Alert>}
+            {currentAction?.error && !isReportOpen && <Alert tone='danger' appearance='neutral' className='mt-6'>{currentAction.error}</Alert>}
             <div className='mt-8 flex flex-wrap items-start gap-3'>
               {isSelf ? (
                 <Link href='/me' className='border border-black px-5 py-2'>Quản lý tài khoản</Link>
@@ -181,31 +190,33 @@ export default function UserProfilePage() {
                     className={`border border-black px-5 py-2 disabled:opacity-50 ${profile.following ? 'bg-white text-black' : 'bg-black text-white'}`}>
                     {currentAction?.busy === 'follow' ? 'Đang cập nhật…' : profile.following ? 'Following' : 'Follow'}
                   </button>
-                  <details className='relative'>
-                    <summary aria-label='Thao tác với người dùng' className='cursor-pointer list-none border border-black px-4 py-2'>…</summary>
-                    <button ref={reportButton} type='button' disabled={busy} onClick={openReport}
-                      className='absolute right-0 z-10 mt-2 w-60 border border-black bg-white px-4 py-3 text-left disabled:opacity-50'>
-                      Báo cáo người dùng
-                    </button>
-                  </details>
+                  <div ref={reportMenuRef} className='relative'
+                    onKeyDown={(event) => { if (event.key === 'Escape') reportMenuButton.current?.focus(); }}>
+                    <button ref={reportMenuButton} type='button' disabled={busy} onClick={toggleReportMenu}
+                      aria-label='Thao tác với người dùng' aria-expanded={isReportMenuOpen} aria-controls='profile-report-menu'
+                      className='border border-black px-4 py-2 disabled:opacity-50'>…</button>
+                    {isReportMenuOpen && (
+                      <button id='profile-report-menu' type='button' disabled={busy} onClick={openReport}
+                        className='absolute top-full right-0 z-10 mt-2 w-60 border border-black bg-white px-4 py-3 text-left disabled:opacity-50'>
+                        Báo cáo người dùng
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
             </div>
             {!account && <p className='mt-6 text-sm text-neutral-600'>Đăng nhập để theo dõi hoặc báo cáo người dùng.</p>}
-            <div aria-live='polite' className='mt-6'>
-              {currentAction?.success && <p role='status'>{currentAction.success}</p>}
-              {currentAction?.error && <p role='alert'>{currentAction.error}</p>}
-            </div>
           </>
         )}
       </main>
       <dialog ref={dialog} aria-labelledby='report-title' aria-describedby='report-help'
         onCancel={(event) => { if (mutation.current) event.preventDefault(); }}
-        onClose={() => reportButton.current?.focus()}
+        onClose={() => { setIsReportOpen(false); reportMenuButton.current?.focus(); }}
         className='fixed inset-0 m-auto w-[calc(100%-3rem)] max-w-lg border border-black bg-white p-6 text-black backdrop:bg-black/40'>
         <form onSubmit={submitReport}>
           <h2 id='report-title' className='text-xl font-semibold'>Báo cáo người dùng</h2>
           <p id='report-help' className='mt-2 text-sm text-neutral-600'>Chọn lý do báo cáo {profile?.displayName}.</p>
+          {currentAction?.error && <Alert tone='danger' appearance='neutral' className='mt-4'>{currentAction.error}</Alert>}
           <label htmlFor='report-reason' className='mt-6 block text-sm font-medium'>Lý do</label>
           <select id='report-reason' required autoFocus disabled={busy} value={reason} onChange={(event) => setReason(event.target.value)}
             className='mt-2 w-full border border-black bg-white p-3'>
@@ -215,7 +226,6 @@ export default function UserProfilePage() {
           <textarea id='report-description' rows={4} maxLength={2000} disabled={busy} value={description}
             onChange={(event) => setDescription(event.target.value)} className='mt-2 w-full border border-black p-3' />
           <p className='mt-1 text-right text-xs text-neutral-600'>{description.length}/2000</p>
-          {currentAction?.error && <p role='alert' className='mt-4'>{currentAction.error}</p>}
           <div className='mt-6 flex justify-end gap-3'>
             <button type='button' disabled={busy} onClick={() => dialog.current?.close()} className='border border-black px-4 py-2 disabled:opacity-50'>Hủy</button>
             <button type='submit' disabled={busy} className='border border-black bg-black px-4 py-2 text-white disabled:opacity-50'>

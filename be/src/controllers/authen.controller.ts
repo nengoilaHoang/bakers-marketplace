@@ -296,17 +296,17 @@ class AuthenController {
 		): Promise<void> => {
 			const code = req.params.code?.trim();
 			const { password } = ChangePasswordSchema.parse(req.body);
-			const email = code
-				? await authenRedisService.getPasswordResetEmail(code)
+			const pendingReset = code
+				? await authenRedisService.getPasswordResetAccount(code)
 				: null;
 
-			if (!email) {
+			if (!pendingReset) {
 				throw new NotFoundError('Reset password code is invalid or expired');
 			}
 
-			const credentials = await userDAO.getCredentialsByEmail(email);
+			const credentials = await userDAO.getCredentialsByEmail(pendingReset.email);
 
-			if (!credentials?.id || credentials.hashedPassword == null) {
+			if (!credentials?.id || credentials.id !== pendingReset.userId || credentials.hashedPassword == null) {
 				await authenRedisService.deletePasswordReset(code);
 				throw new NotFoundError(
 					'Account was not found or cannot reset its password',

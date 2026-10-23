@@ -38,6 +38,12 @@ class RedisService {
 		return (await redisClient.del(key)) > 0;
 	}
 
+	/** Atomically consume a single-use value; concurrent callers cannot both read it. */
+	public async take<T>(key: string): Promise<T | null> {
+		const value = await redisClient.getDel(key);
+		return value === null ? null : JSON.parse(value) as T;
+	}
+
 	public async exist(key: string): Promise<boolean> {
 		return (await redisClient.exists(key)) > 0;
 	}

@@ -25,7 +25,6 @@ const AuthenticationProvider = ({
         return null;
       }
       console.error('Failed to load session:', error);
-      setAccount(null);
       return null;
     }
   }, []);
@@ -48,6 +47,22 @@ const AuthenticationProvider = ({
 
     return () => {
       isActive = false;
+    };
+  }, [fetchSession]);
+
+  useEffect(() => {
+    let refreshing = false;
+    const refreshOnReturn = () => {
+      if (document.visibilityState !== 'visible' || refreshing) return;
+      refreshing = true;
+      void fetchSession().finally(() => { refreshing = false; });
+    };
+    // Email confirmation commonly happens in a different tab.
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
     };
   }, [fetchSession]);
 

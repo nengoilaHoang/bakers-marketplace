@@ -16,7 +16,7 @@ const PUBLIC_ROUTES = new Set([
   '/authen/google/callbackRegister',
 ]);
 
-const PUBLIC_ROUTE_PREFIXES = ['/authen/verify/', '/authen/reset-password/'];
+const PUBLIC_ROUTE_PREFIXES = ['/authen/verify/', '/authen/reset-password/', '/authen/change-email/'];
 
 // Chỉ khớp trang chi tiết /posts/<uuid> và /recipes/<uuid>,
 // không khớp /posts/new, /recipes/new, /<...>/<uuid>/edit

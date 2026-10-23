@@ -1,8 +1,25 @@
 import mailService from '#/services/mail.service.js';
 import { createResetPasswordEmailTemplate } from '#/templates/auth/reset-password-email.template.js';
 import { createVerificationEmailTemplate } from '#/templates/auth/verification-email.template.js';
+import { createChangeEmailTemplate } from '#/templates/auth/change-email.template.js';
 
 class AuthenMailService {
+	public async sendEmailChange(
+		to: string,
+		actionUrl: string,
+		step: 'current' | 'new',
+		newEmail: string,
+		displayName?: string,
+	): Promise<boolean> {
+		this.assertMailBaseUrlMatchesSender();
+		this.assertActionUrlMatchesFrontendUrl(actionUrl);
+		return mailService.send({
+			to,
+			subject: step === 'current' ? 'Xác nhận yêu cầu đổi email' : 'Xác minh email mới',
+			...createChangeEmailTemplate({ displayName, actionUrl, step, newEmail }),
+		});
+	}
+
 	public async sendVerificationEmail(
 		to: string,
 		verificationUrl = '',

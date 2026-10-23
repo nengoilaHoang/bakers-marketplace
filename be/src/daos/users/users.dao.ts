@@ -1,4 +1,5 @@
 import db from '#/db/index.js';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '#/utils/http-errors.js';
 import type {
 	UserCreate,
 	UserCredentials,
@@ -52,6 +53,44 @@ class UserDAO {
 			.first();
 
 		return credentials ?? null;
+	}
+
+	public async getByEmailInsensitive(email: string): Promise<UserInfo | null> {
+		return await this.db.instance(this.tableName)
+			.select(this.infoColumns)
+			.whereRaw('LOWER(BTRIM(email)) = ?', [email.trim().toLowerCase()])
+			.first() ?? null;
+	}
+
+	public async changeEmail(id: string, currentEmail: string, newEmail: string): Promise<void> {
+		const normalizedEmail = newEmail.trim().toLowerCase();
+		try {
+			await this.db.instance.transaction(async (trx) => {
+				const user = await trx(this.tableName).select('email').where('id', id).forUpdate().first();
+				if (!user) throw new NotFoundError('Tài khoản không còn tồn tại.');
+				const googleAccount = await trx('auth_accounts').select('id')
+					.where({ userId: id, provider: 'GOOGLE' }).first();
+				if (googleAccount) {
+					throw new ForbiddenError('Tài khoản đăng nhập bằng Google không được đổi email.');
+				}
+				if (user.email !== currentEmail) {
+					throw new ConflictError('Email tài khoản đã thay đổi. Vui lòng bắt đầu lại trong Cài đặt.');
+				}
+				if (user.email.trim().toLowerCase() === normalizedEmail) {
+					throw new BadRequestError('Email mới phải khác email hiện tại.');
+				}
+				const existing = await trx(this.tableName).select('id')
+					.whereRaw('LOWER(BTRIM(email)) = ?', [normalizedEmail]).whereNot('id', id).first();
+				if (existing) throw new ConflictError('Email mới đã tồn tại trong hệ thống. Vui lòng chọn email khác.');
+				await trx(this.tableName).where('id', id)
+					.update({ email: normalizedEmail, updatedAt: trx.fn.now() });
+			});
+		} catch (error) {
+			if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
+				throw new ConflictError('Email mới đã tồn tại trong hệ thống. Vui lòng chọn email khác.');
+			}
+			throw error;
+		}
 	}
 
 	public async create(user: UserCreate): Promise<UserInfo> {

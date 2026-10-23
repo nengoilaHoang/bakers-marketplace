@@ -4,6 +4,9 @@ import { authenMiddleware, optionalAuthenMiddleware } from '#/middlewares/authen
 import { UserReportCreateSchema, UserSocialParamsSchema } from '#/models/users/user-social.model.js';
 import userSocialService from '#/services/users/user-social.service.js';
 import type { OptionalAuthenticatedRequest } from '#/types/request.types.js';
+import { sameOriginJsonMiddleware } from '#/middlewares/same-origin-json.middleware.js';
+import { UserProfileUpdateSchema } from '#/models/users/user-profile.model.js';
+import userProfileService from '#/services/users/user-profile.service.js';
 
 const router = Router();
 const reportLimit = rateLimit({
@@ -15,26 +18,23 @@ const reportLimit = rateLimit({
   message: { message: 'Bạn gửi báo cáo quá nhanh. Vui lòng thử lại sau.' },
 });
 
+router.get('/me/settings', authenMiddleware, async (req: OptionalAuthenticatedRequest, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ data: await userProfileService.getSettings(req.user!.id) });
+});
+
 router.get('/:userId', optionalAuthenMiddleware, async (req: OptionalAuthenticatedRequest, res) => {
   const { userId } = UserSocialParamsSchema.parse(req.params);
   res.json({ data: await userSocialService.getProfile(userId, req.user?.id) });
 });
 
 router.use(authenMiddleware);
-router.use((req, res, next) => {
-  // JSON-only mutations plus Fetch Metadata reject cross-site cookie requests,
-  // including same-site sibling origins which SameSite cookies alone would allow.
-  const fetchSite = req.get('Sec-Fetch-Site');
-  if (fetchSite && fetchSite !== 'same-origin' && fetchSite !== 'none') {
-    res.status(403).json({ message: 'Yêu cầu phải được gửi từ cùng website.' });
-    return;
-  }
-  // req.is() returns null for bodyless DELETE even when the header is present.
-  if (req.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
-    res.status(415).json({ message: 'Yêu cầu phải dùng application/json.' });
-    return;
-  }
-  next();
+router.use(sameOriginJsonMiddleware);
+
+router.patch('/me', async (req: OptionalAuthenticatedRequest, res) => {
+  const payload = UserProfileUpdateSchema.parse(req.body);
+  res.set('Cache-Control', 'no-store');
+  res.json({ data: await userProfileService.update(req.user!.id, payload) });
 });
 
 router.post('/:userId/follow', async (req: OptionalAuthenticatedRequest, res) => {

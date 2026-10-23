@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Trạng thái mở/đóng cho menu thả xuống: tự đóng khi bấm ra ngoài hoặc nhấn Escape.
 export function useDropdown<T extends HTMLElement = HTMLDivElement>() {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<T>(null);
+  const toggle = useCallback(() => setIsOpen((open) => !open), []);
+  const close = useCallback(() => setIsOpen(false), []);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    function closeWhenClickingOutside(event: MouseEvent) {
+    function closeWhenClickingOutside(event: PointerEvent) {
       if (!ref.current?.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -20,11 +22,11 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>() {
       }
     }
 
-    document.addEventListener('mousedown', closeWhenClickingOutside);
+    document.addEventListener('pointerdown', closeWhenClickingOutside);
     document.addEventListener('keydown', closeOnEscape);
 
     return () => {
-      document.removeEventListener('mousedown', closeWhenClickingOutside);
+      document.removeEventListener('pointerdown', closeWhenClickingOutside);
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [isOpen]);
@@ -32,7 +34,7 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>() {
   return {
     ref,
     isOpen,
-    toggle: () => setIsOpen((open) => !open),
-    close: () => setIsOpen(false),
+    toggle,
+    close,
   };
 }

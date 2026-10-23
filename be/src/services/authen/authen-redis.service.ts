@@ -9,6 +9,7 @@ import redisService from '#/services/redis.service.js';
 import {
 	ConflictError,
 	InternalServerError,
+	NotFoundError,
 } from '#/utils/http-errors.js';
 
 const VERIFY_EMAIL_PREFIX = 'verify-email:';
@@ -95,26 +96,39 @@ class AuthenRedisService {
 	}
 
 	public async savePasswordReset(email: string): Promise<string> {
+		const user = await userDAO.getByEmail(email);
+		if (!user?.id) throw new NotFoundError('Account is no longer available');
 		const code = randomBytes(32).toString('hex');
 		const key = `${RESET_PASSWORD_PREFIX}${code}`;
 
-		await redisService.set(key, email, RESET_PASSWORD_TTL_SECONDS);
+		await redisService.set(key, { userId: user.id, email: user.email }, RESET_PASSWORD_TTL_SECONDS);
 
 		return code;
 	}
 
-	public async getPasswordResetEmail(code: string): Promise<string | null> {
+	public async getPasswordResetAccount(code: string): Promise<{ userId: string; email: string } | null> {
 		const normalizedCode = code.trim();
 
 		if (!normalizedCode) {
 			return null;
 		}
 
-		const email = await redisService.get<unknown>(
+		const data = await redisService.get<unknown>(
 			`${RESET_PASSWORD_PREFIX}${normalizedCode}`,
 		);
 
-		return typeof email === 'string' && email.length > 0 ? email : null;
+		// Bind reset links to an identity so reusing an old email address cannot
+		// transfer a previous owner's password-reset link to its new owner.
+		if (typeof data !== 'object' || data === null || !('userId' in data) || !('email' in data)
+			|| typeof data.userId !== 'string' || typeof data.email !== 'string') {
+			return null;
+		}
+		const user = await userDAO.getById(data.userId);
+		if (!user || user.email !== data.email) {
+			await this.deletePasswordReset(normalizedCode);
+			return null;
+		}
+		return { userId: data.userId, email: data.email };
 	}
 
 	public async deletePasswordReset(code: string): Promise<boolean> {

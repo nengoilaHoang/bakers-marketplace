@@ -31,6 +31,7 @@ const TONES: Record<AlertTone, { box: string; icon: IconName; iconColor: string 
 
 type AlertProps = Readonly<{
   tone?: AlertTone;
+  appearance?: 'default' | 'neutral';
   title?: ReactNode;
   children?: ReactNode;
   // Nút/link hành động đặt cuối hộp (ví dụ "Thử lại").
@@ -41,6 +42,7 @@ type AlertProps = Readonly<{
 // Hộp thông báo theo trạng thái: thành công, cảnh báo, lỗi, thông tin.
 export default function Alert({
   tone = 'info',
+  appearance = 'default',
   title,
   children,
   action,
@@ -50,9 +52,13 @@ export default function Alert({
   return (
     <div
       role={tone === 'danger' || tone === 'warning' ? 'alert' : 'status'}
-      className={cn('flex gap-3 rounded-box border px-4 py-3', style.box, className)}
+      className={cn(
+        'flex gap-3 rounded-box border px-4 py-3',
+        appearance === 'neutral' ? 'border-neutral-300 bg-white text-black' : style.box,
+        className,
+      )}
     >
-      <Icon name={style.icon} className={cn('mt-0.5 size-5', style.iconColor)} />
+      <Icon name={style.icon} className={cn('mt-0.5 size-5 shrink-0', appearance === 'neutral' ? 'text-black' : style.iconColor)} />
       <div className='flex min-w-0 flex-1 flex-col gap-1'>
         {title && <p className='text-body-sm font-semibold'>{title}</p>}
         {children && <div className='text-body-sm'>{children}</div>}

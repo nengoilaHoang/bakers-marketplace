@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import authenController from '#/controllers/authen.controller.js';
 import { authenMiddleware } from '#/middlewares/authen.middleware.js';
+import emailChangeRouter from '#/routes/email-change.route.js';
 
 const router = Router();
+
+router.use('/change-email', emailChangeRouter);
 
 router.post('/register', authenController.register);
 router.post('/login', authenController.login);

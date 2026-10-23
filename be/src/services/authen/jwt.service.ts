@@ -6,6 +6,7 @@ import jwt, {
 } from 'jsonwebtoken';
 import bcryptService from '#/services/authen/bcrypt.service.js';
 import cookieService from '#/services/authen/cookie.service.js';
+import userDAO from '#/daos/users/users.dao.js';
 import {
 	UserInfoSchema,
 	type UserInfo,
@@ -91,7 +92,12 @@ class JwtService {
 			throw new UnauthorizedError('Refresh token is not associated with an active session');
 		}
 
-		const accessToken = this.signToken(payload, 'access');
+		// Existing sessions remain valid after profile/email changes, but new JWTs
+		// must use the current database values instead of stale refresh claims.
+		const currentUser = await userDAO.getById(userId);
+		if (!currentUser) throw new UnauthorizedError('Account is no longer available');
+		const currentPayload = this.toTokenPayload(currentUser);
+		const accessToken = this.signToken(currentPayload, 'access');
 
 		if (!isExpired) {
 			cookieService.setTokenCookie(res, accessToken, 'access');
@@ -102,7 +108,7 @@ class JwtService {
 			throw new UnauthorizedError('Session id is missing');
 		}
 
-		const newRefreshToken = this.signToken(payload, 'refresh');
+		const newRefreshToken = this.signToken(currentPayload, 'refresh');
 		const changed = await bcryptService.changeRefreshToken(
 			session.id,
 			newRefreshToken,
