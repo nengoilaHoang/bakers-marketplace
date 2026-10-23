@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+export const RecipeIdParamsSchema = z.object({
+  id: z.uuidv4().transform((value) => value.toLowerCase()),
+});
+
+export const RecipeUserParamsSchema = z.object({
+  userId: z.uuidv4().transform((value) => value.toLowerCase()),
+});
+
 export const RecipeSchema = z.object({
   id: z.uuidv4().optional(),
   coverImgId: z.uuidv4().nullable().optional(),

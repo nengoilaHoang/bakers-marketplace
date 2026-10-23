@@ -10,6 +10,7 @@ import type { RecipeDetail } from '@/types/recipe';
 import { formatDate } from '@/utils/format';
 
 import ChecklistCard from './ChecklistCard';
+import RecipeRatings from './RecipeRatings';
 
 function formatAmount(amount: number | string | null | undefined) {
   if (amount == null || amount === '') return '';
@@ -138,6 +139,7 @@ export default function RecipeDetailView({ recipe, actions }: RecipeDetailViewPr
           </ul>
         </Callout>
       )}
+      {recipe.isPublic === true && <RecipeRatings key={recipe.id} recipeId={recipe.id} ownerId={recipe.userId} />}
     </article>
   );
 }

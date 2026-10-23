@@ -6,13 +6,14 @@ import { ApiError } from '@/lib/api';
 
 type DetailResult = {
 	id: string;
+	viewerId: string | undefined;
 	attempt: number;
 	recipe: RecipeDetail | null;
 	error: string | null;
 	isNotFound: boolean;
 };
 
-export function useRecipeDetail(id: string | undefined, enabled: boolean) {
+export function useRecipeDetail(id: string | undefined, enabled: boolean, viewerId?: string) {
 	const [attempt, setAttempt] = useState(0);
 	const [result, setResult] = useState<DetailResult | null>(null);
 
@@ -30,6 +31,7 @@ export function useRecipeDetail(id: string | undefined, enabled: boolean) {
 				if (!controller.signal.aborted) {
 					setResult({
 						id: recipeId,
+						viewerId,
 						attempt,
 						recipe,
 						error: null,
@@ -41,6 +43,7 @@ export function useRecipeDetail(id: string | undefined, enabled: boolean) {
 
 				setResult({
 					id: recipeId,
+					viewerId,
 					attempt,
 					recipe: null,
 					error:
@@ -58,11 +61,11 @@ export function useRecipeDetail(id: string | undefined, enabled: boolean) {
 			window.clearTimeout(requestTimer);
 			controller.abort();
 		};
-	}, [id, enabled, attempt]);
+	}, [id, enabled, attempt, viewerId]);
 
 	// Hide a previous recipe immediately when navigating to another ID or retrying.
 	const current =
-		result?.id === id && result?.attempt === attempt ? result : null;
+		enabled && result && result.id === id && result.viewerId === viewerId && result.attempt === attempt ? result : null;
 
 	return {
 		recipe: current?.recipe ?? null,

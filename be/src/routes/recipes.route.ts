@@ -2,7 +2,8 @@ import { Router } from 'express';
 
 import recipeController from '#/controllers/recipes.controller.js';
 import recipeSearchEngineController from '#/controllers/recipe-search-engine.controller.js';
-import { authenMiddleware } from '#/middlewares/authen.middleware.js';
+import { authenMiddleware, optionalAuthenMiddleware } from '#/middlewares/authen.middleware.js';
+import recipeRatingsRouter from '#/routes/recipe-ratings.route.js';
 const router = Router();
 
 // router.get(
@@ -29,6 +30,7 @@ router.get(
 
 router.get(
   '/user/:userId',
+  optionalAuthenMiddleware,
   recipeController.getByUserId,
 );
 
@@ -37,8 +39,11 @@ router.get(
   recipeSearchEngineController.search,
 );
 
+router.use('/:id/ratings', recipeRatingsRouter);
+
 router.get(
   '/:id',
+  optionalAuthenMiddleware,
   recipeController.getById,
 );
 

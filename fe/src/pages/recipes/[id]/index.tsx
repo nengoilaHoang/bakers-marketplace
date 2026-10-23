@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
 import RecipeDetailSkeleton from '@/components/recipe/detail/RecipeDetailSkeleton';
@@ -13,33 +13,18 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
 import PageTitle from '@/components/ui/PageTitle';
 import { useRecipeDetail } from '@/hooks/useRecipeDetail';
-import { getCurrentUser } from '@/services/posts';
+import useAuth from '@/hooks/user/useAuthContext';
 import { deleteRecipe } from '@/services/recipes';
-import type { SessionUser } from '@/types/post';
 
 export default function RecipeDetailPage() {
   const router = useRouter();
   const id = typeof router.query.id === 'string' ? router.query.id : undefined;
-  const { recipe, error, isLoading, isNotFound, retry } = useRecipeDetail(id, router.isReady);
-  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
+  const { account, isAuthenticating } = useAuth();
+  const { recipe, error, isLoading, isNotFound, retry } = useRecipeDetail(id, router.isReady && !isAuthenticating, account?.id);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isActive = true;
-
-    void getCurrentUser()
-      .catch(() => null)
-      .then((user) => {
-        if (isActive) setCurrentUser(user);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
-  const isOwner = Boolean(recipe?.userId && recipe.userId === currentUser?.id);
+  const isOwner = Boolean(recipe?.userId && recipe.userId === account?.id);
 
   async function handleDelete() {
     if (!recipe || !window.confirm(`Xóa công thức “${recipe.title}”?`)) {

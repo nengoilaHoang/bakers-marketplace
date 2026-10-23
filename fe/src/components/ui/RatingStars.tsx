@@ -96,32 +96,41 @@ export default function RatingStars({
 type RatingInputProps = Readonly<{
   name: string;
   defaultValue?: number;
+  value?: number;
+  onChange?: (value: number) => void;
+  disabled?: boolean;
+  required?: boolean;
   label: string;
 }>;
 
 // Chọn số sao (form bình luận).
-export function RatingInput({ name, defaultValue = 0, label }: RatingInputProps) {
-  const [value, setValue] = useState(defaultValue);
+export function RatingInput({ name, defaultValue = 0, value, onChange, disabled = false, required = false, label }: RatingInputProps) {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const selected = value ?? internalValue;
   return (
-    <fieldset className='inline-flex items-center gap-2.5'>
+    <fieldset disabled={disabled} className='inline-flex items-center gap-2.5 disabled:opacity-50'>
       <legend className='sr-only'>{label}</legend>
       {[1, 2, 3, 4, 5].map((star) => (
-        <label key={star} className='flex cursor-pointer'>
+        <label key={star} className={cn('flex', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
           <input
             type='radio'
             name={name}
             value={star}
-            checked={value === star}
-            onChange={() => setValue(star)}
+            checked={selected === star}
+            required={required}
+            onChange={() => {
+              if (value === undefined) setInternalValue(star);
+              onChange?.(star);
+            }}
             className='peer sr-only'
           />
           <span className='sr-only'>{star} sao</span>
           <Icon
             name='star'
-            fill={star <= value ? 'currentColor' : 'none'}
+            fill={star <= selected ? 'currentColor' : 'none'}
             className={cn(
               'size-6 rounded-xs transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-accent',
-              star <= value ? 'text-accent-strong' : 'text-ink',
+              star <= selected ? 'text-accent-strong' : 'text-ink',
             )}
           />
         </label>

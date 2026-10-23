@@ -12,9 +12,11 @@ import type {
 import {
 	RecipeCreateSchema,
 	RecipeUpdateSchema,
+	RecipeIdParamsSchema,
+	RecipeUserParamsSchema,
 	type RecipeCursor,
 } from '#/models/recipes/recipes.model.js';
-import { AuthenticatedRequest } from '#/types/request.types.js';
+import { AuthenticatedRequest, OptionalAuthenticatedRequest } from '#/types/request.types.js';
 
 type RecipeIdParams = {
 	id: string;
@@ -57,12 +59,13 @@ class RecipeController {
 
 	public getById = asyncHandler(
 		async (
-			req: Request<RecipeIdParams>,
+			req: OptionalAuthenticatedRequest<RecipeIdParams>,
 			res: Response,
 		): Promise<void> => {
-			const { id } = req.params;
+			res.set('Cache-Control', 'private, no-store');
+			const { id } = RecipeIdParamsSchema.parse(req.params);
 
-			const recipe = await recipeService.getById(id);
+			const recipe = await recipeService.getVisibleById(id, req.user?.id);
 
 			if (!recipe) {
 				res.status(404).json({
@@ -80,13 +83,14 @@ class RecipeController {
 
 	public getByUserId = asyncHandler(
 		async (
-			req: Request<RecipeUserIdParams>,
+			req: OptionalAuthenticatedRequest<RecipeUserIdParams>,
 			res: Response,
 		): Promise<void> => {
-			const { userId } = req.params;
+			const { userId } = RecipeUserParamsSchema.parse(req.params);
 
-			const recipes = await recipeService.getByUserId(userId);
+			const recipes = await recipeService.getByUserId(userId, req.user?.id);
 
+			res.set('Cache-Control', 'private, no-store');
 			res.status(200).json({
 				data: recipes,
 			});
@@ -95,8 +99,9 @@ class RecipeController {
 
 	public getMine = asyncHandler(
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-			const recipes = await recipeService.getByUserId(req.user.id);
+			const recipes = await recipeService.getByUserId(req.user.id, req.user.id);
 
+			res.set('Cache-Control', 'private, no-store');
 			res.status(200).json({
 				data: recipes,
 			});

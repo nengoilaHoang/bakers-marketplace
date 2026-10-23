@@ -75,10 +75,17 @@ class RecipeService {
         };
     }
 
+    public async getVisibleById(id: string, viewerId?: string): Promise<RecipeWithDetails | null> {
+        const recipe = await this.getById(id);
+        if (!recipe || (!recipe.isPublic && (!viewerId || recipe.userId !== viewerId))) return null;
+        return recipe;
+    }
+
     public async getByUserId(
         userId: string,
+        viewerId?: string,
     ): Promise<Recipe[]> {
-        return this.recipeDAO.getByUserId(userId);
+        return this.recipeDAO.getByUserId(userId, viewerId);
     }
 
     public async set(

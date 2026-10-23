@@ -11,6 +11,33 @@ export type Recipe = {
   updatedAt?: string;
 };
 
+export type RecipeRating = {
+  id: string;
+  recipeId: string;
+  userId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: { id: string; displayName: string };
+};
+
+export type RecipeRatingSummary = {
+  average: number;
+  count: number;
+  distribution: Record<'1' | '2' | '3' | '4' | '5', number>;
+};
+
+export type RecipeRatingsPage = {
+  summary: RecipeRatingSummary;
+  myRating: RecipeRating | null;
+  reviews: RecipeRating[];
+  nextCursor: string | null;
+};
+
+export type RecipeRatingPayload = { rating: number; comment: string | null };
+export type RecipeRatingReceipt = Pick<RecipeRatingsPage, 'summary' | 'myRating'>;
+
 export type RecipeCursor = {
   createdAt: string;
   id: string;

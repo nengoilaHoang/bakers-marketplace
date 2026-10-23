@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 
 import AppLayout from '@/components/layout/AppLayout';
+import Alert from '@/components/ui/Alert';
 import RecipeForm from '@/components/recipe/RecipeForm';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { ButtonLink } from '@/components/ui/Button';
@@ -9,14 +10,17 @@ import EmptyState from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import PageTitle from '@/components/ui/PageTitle';
 import { useRecipeDetail } from '@/hooks/useRecipeDetail';
+import useAuth from '@/hooks/user/useAuthContext';
 import { updateRecipe } from '@/services/recipes';
 
 export default function EditRecipePage() {
   const router = useRouter();
   const id = typeof router.query.id === 'string' ? router.query.id : undefined;
+  const { account, isAuthenticating } = useAuth();
   const { recipe, error, isLoading, isNotFound, retry } = useRecipeDetail(
     id,
-    router.isReady,
+    router.isReady && !isAuthenticating,
+    account?.id,
   );
   const detailHref = id ? `/recipes/${encodeURIComponent(id)}` : '/recipes';
 
@@ -55,6 +59,8 @@ export default function EditRecipePage() {
             />
           ) : error ? (
             <ErrorState title='Không thể tải công thức' message={error} onRetry={retry} />
+          ) : recipe && recipe.userId !== account?.id ? (
+            <Alert tone='warning'>Chỉ tác giả mới được chỉnh sửa công thức này.</Alert>
           ) : recipe ? (
             <RecipeForm
               key={recipe.id}

@@ -8,8 +8,42 @@ import type {
 	RecipeSearchParams,
 	RecipeSearchResult,
 	RecipesPage,
+	RecipeRatingsPage,
+	RecipeRatingPayload,
+	RecipeRatingReceipt,
 } from '@/types/recipe';
 import request from '@/lib/api';
+
+export async function getRecipeRatings(
+	id: string,
+	{ cursor, signal }: { cursor?: string; signal?: AbortSignal } = {},
+): Promise<RecipeRatingsPage> {
+	const response = await request<{ data: RecipeRatingsPage }>(
+		`/recipes/${encodeURIComponent(id)}/ratings`, { signal }, { limit: 10, cursor },
+	);
+	return response.data;
+}
+
+export async function createRecipeRating(id: string, payload: RecipeRatingPayload, signal?: AbortSignal): Promise<RecipeRatingReceipt> {
+	const response = await request<{ data: RecipeRatingReceipt }>(`/recipes/${encodeURIComponent(id)}/ratings`, {
+		method: 'POST', body: JSON.stringify(payload), signal,
+	});
+	return response.data;
+}
+
+export async function updateRecipeRating(id: string, payload: RecipeRatingPayload, signal?: AbortSignal): Promise<RecipeRatingReceipt> {
+	const response = await request<{ data: RecipeRatingReceipt }>(`/recipes/${encodeURIComponent(id)}/ratings/me`, {
+		method: 'PATCH', body: JSON.stringify(payload), signal,
+	});
+	return response.data;
+}
+
+export async function deleteRecipeRating(id: string, signal?: AbortSignal): Promise<RecipeRatingReceipt> {
+	const response = await request<{ data: RecipeRatingReceipt }>(`/recipes/${encodeURIComponent(id)}/ratings/me`, {
+		method: 'DELETE', signal,
+	});
+	return response.data;
+}
 
 type RecipesApiResponse = {
 	data: {

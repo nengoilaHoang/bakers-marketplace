@@ -82,11 +82,13 @@ class RecipeDAO {
 
   public async getByUserId(
     userId: string,
+    viewerId?: string,
   ): Promise<Recipe[]> {
-    const data = await this.db.instance<Recipe>(this.tableName)
+    const query = this.db.instance<Recipe>(this.tableName)
       .select('*')
-      .where({userId: userId, isSnapshot: false})
-      .orderBy('createdAt', 'desc');
+      .where({userId: userId, isSnapshot: false});
+    if (viewerId !== userId) query.andWhere({ isPublic: true });
+    const data = await query.orderBy('createdAt', 'desc');
 
     return data.map(
       (recipe) => new Recipe(recipe),
