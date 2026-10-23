@@ -14,6 +14,8 @@ import type {
 	Post,
 	PostCreate,
 	PostCursor,
+	PostFeedQuery,
+	PostFeedResult,
 	PostFilters,
 	PostUpdate,
 	PostView,
@@ -21,6 +23,8 @@ import type {
 } from '#/models/posts/posts.model.js';
 import type { PostTag } from '#/models/posts/post-tags.model.js';
 import { appendRecipeToken, extractRecipeIds } from '#/utils/post-content.js';
+
+const FEED_PAGE_SIZE = 10;
 
 class PostService {
 	private postDAO = postDAO;
@@ -33,24 +37,90 @@ class PostService {
 		return this.getPage({}, cursor, viewerId);
 	}
 
+	public async getFeed(
+		query: PostFeedQuery,
+		viewerId?: string,
+	): Promise<PostFeedResult> {
+		const filters = this.buildSearchFilters(query.q, query.tag);
+
+		if (query.direction === 'initial') {
+			const rows = await this.postDAO.getInitialFeed(
+				filters,
+				viewerId,
+				FEED_PAGE_SIZE + 1,
+			);
+
+			return this.buildFeedResult(
+				[],
+				rows.slice(0, FEED_PAGE_SIZE),
+				false,
+				rows.length > FEED_PAGE_SIZE,
+			);
+		}
+
+		if (query.direction === 'older') {
+			const [rows, hasMoreNewer] = await Promise.all([
+				this.postDAO.getPostsOlderThan(
+					filters,
+					viewerId,
+					query.oldest,
+					FEED_PAGE_SIZE + 1,
+				),
+				this.postDAO.hasPostsNewerThan(filters, query.newest),
+			]);
+
+			return this.buildFeedResult(
+				[],
+				rows.slice(0, FEED_PAGE_SIZE),
+				hasMoreNewer,
+				rows.length > FEED_PAGE_SIZE,
+			);
+		}
+
+		const newerRowsAscending = await this.postDAO.getPostsNewerThan(
+			filters,
+			viewerId,
+			query.newest,
+			FEED_PAGE_SIZE + 1,
+		);
+		const hasMoreNewer = newerRowsAscending.length > FEED_PAGE_SIZE;
+		const newerPosts = newerRowsAscending
+			.slice(0, FEED_PAGE_SIZE)
+			.reverse();
+		const remaining = FEED_PAGE_SIZE - newerPosts.length;
+
+		if (remaining === 0) {
+			return this.buildFeedResult(
+				newerPosts,
+				[],
+				hasMoreNewer,
+				await this.postDAO.hasPostsOlderThan(filters, query.oldest),
+			);
+		}
+
+		const olderRows = await this.postDAO.getPostsOlderThan(
+			filters,
+			viewerId,
+			query.oldest,
+			remaining + 1,
+		);
+
+		return this.buildFeedResult(
+			newerPosts,
+			olderRows.slice(0, remaining),
+			hasMoreNewer,
+			olderRows.length > remaining,
+		);
+	}
+
 	public async search(
 		keyword: string,
 		tag: string,
 		cursor?: PostCursor,
 		viewerId?: string,
 	): Promise<GetPostsResult> {
-		const trimmedKeyword = keyword.trim();
-		const normalizedTag = tag.trim().toLowerCase();
-
-		if (!trimmedKeyword && !normalizedTag) {
-			throw new BadRequestError('Search keyword or tag is required');
-		}
-
 		return this.getPage(
-			{
-				keyword: trimmedKeyword || undefined,
-				tag: normalizedTag || undefined,
-			},
+			this.buildSearchFilters(keyword, tag, true),
 			cursor,
 			viewerId,
 		);
@@ -288,6 +358,45 @@ class PostService {
 		return {
 			data: await this.attachTags(page.data),
 			cursor: page.cursor,
+		};
+	}
+
+	private async buildFeedResult(
+		newerPosts: PostView[],
+		olderPosts: PostView[],
+		hasMoreNewer: boolean,
+		hasMoreOlder: boolean,
+	): Promise<PostFeedResult> {
+		const combinedPosts = [...newerPosts, ...olderPosts];
+		const postsWithDetails = combinedPosts.length > 0
+			? await this.attachTags(combinedPosts)
+			: [];
+		const newerCount = newerPosts.length;
+
+		return {
+			newerPosts: postsWithDetails.slice(0, newerCount),
+			olderPosts: postsWithDetails.slice(newerCount),
+			pageSize: FEED_PAGE_SIZE,
+			hasMoreNewer,
+			hasMoreOlder,
+		};
+	}
+
+	private buildSearchFilters(
+		keyword?: string,
+		tag?: string,
+		requireFilter = false,
+	): PostFilters {
+		const trimmedKeyword = keyword?.trim() ?? '';
+		const normalizedTag = tag?.trim().toLowerCase() ?? '';
+
+		if (requireFilter && !trimmedKeyword && !normalizedTag) {
+			throw new BadRequestError('Search keyword or tag is required');
+		}
+
+		return {
+			keyword: trimmedKeyword || undefined,
+			tag: normalizedTag || undefined,
 		};
 	}
 

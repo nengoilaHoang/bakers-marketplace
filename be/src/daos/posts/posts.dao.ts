@@ -32,43 +32,10 @@ class PostDAO {
 		viewerId?: string,
 		cursor?: PostCursor,
 	): Promise<{ data: PostView[]; cursor: PostCursor | null }> {
-		const query = this.selectPostViews(viewerId);
-
-		if (filters.authorId) {
-			query.where('p.authorId', filters.authorId);
-		}
-
-		if (filters.savedByUserId) {
-			query.whereRaw(
-				'EXISTS (SELECT 1 FROM post_saves ps WHERE ps.post_id = p.id AND ps.user_id = ?)',
-				[filters.savedByUserId],
-			);
-		}
-
-		if (filters.keyword) {
-			const pattern = `%${filters.keyword}%`;
-
-			query.where((builder) => {
-				builder
-					.whereRaw('unaccent(p.title) ILIKE unaccent(?)', [pattern])
-					// Recipe tokens are not part of the text the author wrote
-					.orWhereRaw(
-						`unaccent(regexp_replace(p.content, ?, '', 'g')) ILIKE unaccent(?)`,
-						[RECIPE_TOKEN_SQL_PATTERN, pattern],
-					)
-					.orWhereRaw(
-						'EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND unaccent(pt.name) ILIKE unaccent(?))',
-						[pattern],
-					);
-			});
-		}
-
-		if (filters.tag) {
-			query.whereRaw(
-				'EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.name = ?)',
-				[filters.tag],
-			);
-		}
+		const query = this.applyFilters(
+			this.selectPostViews(viewerId),
+			filters,
+		);
 
 		if (cursor) {
 			query.andWhere((builder) => {
@@ -98,6 +65,88 @@ class PostDAO {
 					}
 				: null,
 		};
+	}
+
+	public async getInitialFeed(
+		filters: PostFilters,
+		viewerId: string | undefined,
+		limit: number,
+	): Promise<PostView[]> {
+		const rows: PostViewRow[] = await this.applyFilters(
+			this.selectPostViews(viewerId),
+			filters,
+		)
+			.orderBy('p.createdAt', 'desc')
+			.orderBy('p.id', 'desc')
+			.limit(limit);
+
+		return rows.map((row) => this.toPostView(row));
+	}
+
+	public async getPostsOlderThan(
+		filters: PostFilters,
+		viewerId: string | undefined,
+		cursor: PostCursor,
+		limit: number,
+	): Promise<PostView[]> {
+		const rows: PostViewRow[] = await this.applyOlderCursor(
+			this.applyFilters(this.selectPostViews(viewerId), filters),
+			cursor,
+		)
+			.orderBy('p.createdAt', 'desc')
+			.orderBy('p.id', 'desc')
+			.limit(limit);
+
+		return rows.map((row) => this.toPostView(row));
+	}
+
+	public async getPostsNewerThan(
+		filters: PostFilters,
+		viewerId: string | undefined,
+		cursor: PostCursor,
+		limit: number,
+	): Promise<PostView[]> {
+		const rows: PostViewRow[] = await this.applyNewerCursor(
+			this.applyFilters(this.selectPostViews(viewerId), filters),
+			cursor,
+		)
+			// Fetch the oldest unseen newer posts first so a large backlog cannot
+			// create a gap between the current window and the returned batch.
+			.orderBy('p.createdAt', 'asc')
+			.orderBy('p.id', 'asc')
+			.limit(limit);
+
+		return rows.map((row) => this.toPostView(row));
+	}
+
+	public async hasPostsOlderThan(
+		filters: PostFilters,
+		cursor: PostCursor,
+	): Promise<boolean> {
+		const row = await this.applyOlderCursor(
+			this.applyFilters(
+				this.db.instance(`${this.tableName} as p`).select('p.id'),
+				filters,
+			),
+			cursor,
+		).first();
+
+		return Boolean(row);
+	}
+
+	public async hasPostsNewerThan(
+		filters: PostFilters,
+		cursor: PostCursor,
+	): Promise<boolean> {
+		const row = await this.applyNewerCursor(
+			this.applyFilters(
+				this.db.instance(`${this.tableName} as p`).select('p.id'),
+				filters,
+			),
+			cursor,
+		).first();
+
+		return Boolean(row);
 	}
 
 	public async getById(
@@ -222,6 +271,69 @@ class PostDAO {
 				RECIPE_TOKEN_SQL_PATTERN,
 			])
 			.leftJoin('images as i', 'i.id', 'r.coverImgId');
+	}
+
+	private applyFilters(
+		query: Knex.QueryBuilder,
+		filters: PostFilters,
+	): Knex.QueryBuilder {
+		if (filters.authorId) {
+			query.where('p.authorId', filters.authorId);
+		}
+
+		if (filters.savedByUserId) {
+			query.whereRaw(
+				'EXISTS (SELECT 1 FROM post_saves ps WHERE ps.post_id = p.id AND ps.user_id = ?)',
+				[filters.savedByUserId],
+			);
+		}
+
+		if (filters.keyword) {
+			const pattern = `%${filters.keyword}%`;
+
+			query.where((builder) => {
+				builder
+					.whereRaw('unaccent(p.title) ILIKE unaccent(?)', [pattern])
+					// Recipe tokens are not part of the text the author wrote.
+					.orWhereRaw(
+						`unaccent(regexp_replace(p.content, ?, '', 'g')) ILIKE unaccent(?)`,
+						[RECIPE_TOKEN_SQL_PATTERN, pattern],
+					)
+					.orWhereRaw(
+						'EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND unaccent(pt.name) ILIKE unaccent(?))',
+						[pattern],
+					);
+			});
+		}
+
+		if (filters.tag) {
+			query.whereRaw(
+				'EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.name = ?)',
+				[filters.tag],
+			);
+		}
+
+		return query;
+	}
+
+	private applyOlderCursor(
+		query: Knex.QueryBuilder,
+		cursor: PostCursor,
+	): Knex.QueryBuilder {
+		return query.whereRaw(
+			'(p.created_at, p.id) < (?, ?::uuid)',
+			[cursor.createdAt, cursor.id],
+		);
+	}
+
+	private applyNewerCursor(
+		query: Knex.QueryBuilder,
+		cursor: PostCursor,
+	): Knex.QueryBuilder {
+		return query.whereRaw(
+			'(p.created_at, p.id) > (?, ?::uuid)',
+			[cursor.createdAt, cursor.id],
+		);
 	}
 
 	private toPostView(row: PostViewRow): PostView {

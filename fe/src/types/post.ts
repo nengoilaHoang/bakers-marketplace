@@ -43,6 +43,16 @@ export type PostsPage = {
   cursor: PostCursor | null;
 };
 
+export type PostFeedDirection = 'initial' | 'newer' | 'older';
+
+export type PostFeedPage = {
+  newerPosts: Post[];
+  olderPosts: Post[];
+  pageSize: 10;
+  hasMoreNewer: boolean;
+  hasMoreOlder: boolean;
+};
+
 export type PostSearchParams = {
   q?: string;
   tag?: string;

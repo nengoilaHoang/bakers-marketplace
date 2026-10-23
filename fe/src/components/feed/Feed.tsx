@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
 
 import PostCard, { PostCardSkeleton } from '@/components/posts/PostCard';
 import Button, { ButtonLink } from '@/components/ui/Button';
@@ -9,22 +8,16 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import PageTitle from '@/components/ui/PageTitle';
 import SearchBar from '@/components/ui/SearchBar';
 import {
-  getCurrentUser,
-  getPosts,
+  getFeedPostElementId,
+  useBidirectionalPosts,
+} from '@/hooks/useBidirectionalPosts';
+import {
   likePost,
   savePost,
-  searchPosts,
   unlikePost,
   unsavePost,
 } from '@/services/posts';
-import type { Post, PostCursor, PostSearchParams } from '@/types/post';
-
-type FeedResult = {
-  searchKey: string;
-  posts: Post[];
-  cursor: PostCursor | null;
-  error: string | null;
-};
+import type { Post, PostSearchParams } from '@/types/post';
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error && error.message
@@ -34,12 +27,6 @@ function getErrorMessage(error: unknown): string {
 
 function readQueryValue(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
-}
-
-function loadPostsPage(search: PostSearchParams, cursor?: PostCursor | null) {
-  return search.q || search.tag
-    ? searchPosts(search, { cursor })
-    : getPosts({ cursor });
 }
 
 // "#tag" → lọc theo tag, còn lại → tìm theo từ khoá.
@@ -54,43 +41,24 @@ export default function Feed() {
   const q = readQueryValue(router.query.q);
   const tag = readQueryValue(router.query.tag);
   const searchKey = `${q}\n${tag}`;
-  const [result, setResult] = useState<FeedResult | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadFirstPage() {
-      try {
-        // Làm mới token (nếu cần) trước, để isLiked/isSaved trả về đúng
-        await getCurrentUser().catch(() => null);
-        const page = await loadPostsPage({ q, tag });
-
-        if (!ignore) {
-          setResult({ searchKey, posts: page.posts, cursor: page.cursor, error: null });
-        }
-      } catch (requestError) {
-        if (!ignore) {
-          setResult({ searchKey, posts: [], cursor: null, error: getErrorMessage(requestError) });
-        }
-      }
-    }
-
-    void loadFirstPage();
-
-    return () => {
-      ignore = true;
-    };
-  }, [q, tag, searchKey, attempt]);
-
-  // Ẩn kết quả của bộ lọc cũ ngay khi URL đổi
-  const current = result?.searchKey === searchKey ? result : null;
+  const {
+    posts,
+    isInitialLoading,
+    isLoadingNewer,
+    isLoadingOlder,
+    initialError,
+    newerError,
+    olderError,
+    hasMoreNewer,
+    hasMoreOlder,
+    topSentinelRef,
+    bottomSentinelRef,
+    loadNewer,
+    loadOlder,
+    retryInitial,
+    updatePost,
+  } = useBidirectionalPosts({ q, tag, enabled: router.isReady });
   const isSearching = Boolean(q || tag);
-
-  function updatePosts(update: (posts: Post[]) => Post[]) {
-    setResult((previous) => previous && { ...previous, posts: update(previous.posts) });
-  }
 
   function applySearch(nextSearch: PostSearchParams) {
     const query: Record<string, string> = {};
@@ -100,42 +68,19 @@ export default function Feed() {
     void router.push({ pathname: '/', query }, undefined, { shallow: true });
   }
 
-  function retry() {
-    setResult(null);
-    setAttempt((value) => value + 1);
-  }
-
-  async function handleLoadMore() {
-    if (!current?.cursor) return;
-
-    setIsLoadingMore(true);
-
-    try {
-      const page = await loadPostsPage({ q, tag }, current.cursor);
-      setResult((previous) =>
-        previous?.searchKey === searchKey
-          ? { ...previous, posts: [...previous.posts, ...page.posts], cursor: page.cursor }
-          : previous,
-      );
-    } catch (requestError) {
-      window.alert(getErrorMessage(requestError));
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }
-
   async function handleToggleLike(post: Post) {
     try {
       const status = post.isLiked
         ? await unlikePost(post.id)
         : await likePost(post.id);
 
-      updatePosts((posts) =>
-        posts.map((item) =>
-          item.id === post.id
-            ? { ...item, isLiked: status.liked, likeCount: status.likeCount }
-            : item,
-        ),
+      updatePost(
+        post.id,
+        (item) => ({
+          ...item,
+          isLiked: status.liked,
+          likeCount: status.likeCount,
+        }),
       );
     } catch (requestError) {
       window.alert(getErrorMessage(requestError));
@@ -148,10 +93,9 @@ export default function Feed() {
         ? await unsavePost(post.id)
         : await savePost(post.id);
 
-      updatePosts((posts) =>
-        posts.map((item) =>
-          item.id === post.id ? { ...item, isSaved: status.saved } : item,
-        ),
+      updatePost(
+        post.id,
+        (item) => ({ ...item, isSaved: status.saved }),
       );
     } catch (requestError) {
       window.alert(getErrorMessage(requestError));
@@ -204,15 +148,15 @@ export default function Feed() {
       </section>
 
       <Container size='content' className='py-12 lg:py-16'>
-        {!current ? (
+        {isInitialLoading ? (
           <div role='status' aria-label='Đang tải bài viết' className='flex flex-col gap-7.5'>
             <PostCardSkeleton />
             <PostCardSkeleton />
             <PostCardSkeleton />
           </div>
-        ) : current.error ? (
-          <ErrorState title='Không thể tải bài viết' message={current.error} onRetry={retry} />
-        ) : current.posts.length === 0 ? (
+        ) : initialError ? (
+          <ErrorState title='Không thể tải bài viết' message={initialError} onRetry={retryInitial} />
+        ) : posts.length === 0 ? (
           <EmptyState
             icon='message'
             title={isSearching ? 'Không có bài viết phù hợp' : 'Chưa có bài viết nào'}
@@ -225,9 +169,36 @@ export default function Feed() {
           />
         ) : (
           <>
+            <div
+              ref={topSentinelRef}
+              className='mb-6 flex min-h-12 flex-col items-center justify-center gap-3 text-center'
+              aria-live='polite'
+            >
+              {isLoadingNewer ? (
+                <p className='flex items-center gap-3 text-body-sm text-ink-muted'>
+                  <span
+                    aria-hidden
+                    className='size-5 animate-spin rounded-full border-2 border-line border-t-primary'
+                  />
+                  Đang kiểm tra bài viết mới...
+                </p>
+              ) : newerError ? (
+                <ErrorState
+                  title='Không thể tải bài viết mới'
+                  message={newerError}
+                  onRetry={() => void loadNewer()}
+                  compact
+                />
+              ) : (
+                <Button variant='outline' onClick={() => void loadNewer()}>
+                  {hasMoreNewer ? 'Tải tiếp bài viết mới' : 'Kiểm tra bài viết mới'}
+                </Button>
+              )}
+            </div>
+
             <ul className='flex flex-col gap-7.5'>
-              {current.posts.map((post) => (
-                <li key={post.id}>
+              {posts.map((post) => (
+                <li key={post.id} id={getFeedPostElementId(post.id)}>
                   <PostCard
                     post={post}
                     onToggleLike={(item) => void handleToggleLike(item)}
@@ -237,10 +208,29 @@ export default function Feed() {
               ))}
             </ul>
 
-            <div className='mt-10 flex justify-center'>
-              {current.cursor ? (
-                <Button variant='outline' onClick={() => void handleLoadMore()} disabled={isLoadingMore}>
-                  {isLoadingMore ? 'Đang tải...' : 'Tải thêm bài viết'}
+            <div
+              ref={bottomSentinelRef}
+              className='mt-10 flex min-h-24 flex-col items-center justify-center gap-3 text-center'
+              aria-live='polite'
+            >
+              {isLoadingOlder ? (
+                <p className='flex items-center gap-3 text-body-sm text-ink-muted'>
+                  <span
+                    aria-hidden
+                    className='size-5 animate-spin rounded-full border-2 border-line border-t-primary'
+                  />
+                  Đang tải thêm bài viết...
+                </p>
+              ) : olderError ? (
+                <ErrorState
+                  title='Không thể tải thêm bài viết'
+                  message={olderError}
+                  onRetry={() => void loadOlder()}
+                  compact
+                />
+              ) : hasMoreOlder ? (
+                <Button variant='outline' onClick={() => void loadOlder()}>
+                  Tải thêm bài viết
                 </Button>
               ) : (
                 <p className='text-body-sm font-light text-ink-muted'>Bạn đã xem hết bài viết.</p>

@@ -58,10 +58,34 @@ export const PostCursorSchema = z.object({
 	id: z.uuidv4(),
 });
 
+export const PostFeedDirectionSchema = z.enum([
+	'initial',
+	'newer',
+	'older',
+]);
+
+const PostFeedBaseQuerySchema = z.object({
+	q: z.string().optional(),
+	tag: z.string().optional(),
+});
+
+export const PostFeedQuerySchema = z.discriminatedUnion('direction', [
+	PostFeedBaseQuerySchema.extend({
+		direction: z.literal('initial'),
+	}),
+	PostFeedBaseQuerySchema.extend({
+		direction: z.enum(['newer', 'older']),
+		newest: PostCursorSchema,
+		oldest: PostCursorSchema,
+	}),
+]);
+
 export type PostData = z.infer<typeof PostSchema>;
 export type PostCreate = z.infer<typeof PostCreateSchema>;
 export type PostUpdate = z.infer<typeof PostUpdateSchema>;
 export type PostCursor = z.infer<typeof PostCursorSchema>;
+export type PostFeedDirection = z.infer<typeof PostFeedDirectionSchema>;
+export type PostFeedQuery = z.infer<typeof PostFeedQuerySchema>;
 
 export type PostFilters = {
 	authorId?: string;
@@ -97,6 +121,14 @@ export type PostWithDetails = PostView & {
 export type GetPostsResult = {
 	data: PostWithDetails[];
 	cursor: PostCursor | null;
+};
+
+export type PostFeedResult = {
+	newerPosts: PostWithDetails[];
+	olderPosts: PostWithDetails[];
+	pageSize: 10;
+	hasMoreNewer: boolean;
+	hasMoreOlder: boolean;
 };
 
 export class Post implements PostData {

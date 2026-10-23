@@ -13,8 +13,10 @@ import postReportService from '#/services/posts/post-reports.service.js';
 import {
 	PostCreateSchema,
 	PostCursorSchema,
+	PostFeedQuerySchema,
 	PostUpdateSchema,
 	type PostCursor,
+	type PostFeedQuery,
 } from '#/models/posts/posts.model.js';
 import { PostCommentCreateSchema } from '#/models/posts/post-comments.model.js';
 import { PostReportCreateSchema } from '#/models/posts/post-reports.model.js';
@@ -49,12 +51,49 @@ function readCursor(query: Request['query']): PostCursor | undefined {
 	return PostCursorSchema.parse({ createdAt, id });
 }
 
+function readFeedQuery(query: Request['query']): PostFeedQuery {
+	const directionValue = readQueryString(query.direction);
+	const direction = directionValue || 'initial';
+	const baseQuery = {
+		direction,
+		q: readQueryString(query.q),
+		tag: readQueryString(query.tag),
+	};
+
+	if (direction === 'initial') {
+		return PostFeedQuerySchema.parse(baseQuery);
+	}
+
+	return PostFeedQuerySchema.parse({
+		...baseQuery,
+		newest: {
+			createdAt: query.newestCreatedAt,
+			id: query.newestId,
+		},
+		oldest: {
+			createdAt: query.oldestCreatedAt,
+			id: query.oldestId,
+		},
+	});
+}
+
 class PostController {
 	private postService = postService;
 	private postCommentService = postCommentService;
 	private postLikeService = postLikeService;
 	private postSaveService = postSaveService;
 	private postReportService = postReportService;
+
+	public getFeed = asyncHandler(
+		async (req: OptionalAuthenticatedRequest, res: Response): Promise<void> => {
+			const result = await this.postService.getFeed(
+				readFeedQuery(req.query),
+				req.user?.id,
+			);
+
+			res.status(200).json({ data: result });
+		},
+	);
 
 	public getPosts = asyncHandler(
 		async (req: OptionalAuthenticatedRequest, res: Response): Promise<void> => {

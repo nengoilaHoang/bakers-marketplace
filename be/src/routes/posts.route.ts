@@ -8,7 +8,8 @@ import {
 
 const router = Router();
 
-// Đặt trước '/:id' để 'search', 'mine', 'saved', 'user' không bị hiểu là id.
+// Đặt trước '/:id' để các static route không bị hiểu là id.
+router.get('/feed', optionalAuthenMiddleware, postController.getFeed);
 router.get('/search', optionalAuthenMiddleware, postController.search);
 router.get('/mine', authenMiddleware, postController.getMine);
 router.get('/saved', authenMiddleware, postController.getSaved);

@@ -2,6 +2,8 @@ import type {
 	Post,
 	PostComment,
 	PostCursor,
+	PostFeedDirection,
+	PostFeedPage,
 	PostLikeStatus,
 	PostCreatePayload,
 	PostReport,
@@ -25,6 +27,20 @@ type PageOptions = {
 	signal?: AbortSignal;
 };
 
+type PostFeedBaseOptions = {
+	direction: PostFeedDirection;
+	search?: PostSearchParams;
+	signal?: AbortSignal;
+};
+
+export type PostFeedOptions =
+	| (PostFeedBaseOptions & { direction: 'initial' })
+	| (PostFeedBaseOptions & {
+			direction: 'newer' | 'older';
+			newest: PostCursor;
+			oldest: PostCursor;
+	  });
+
 function toCursorQuery(cursor?: PostCursor | null) {
 	return cursor ? { createdAt: cursor.createdAt, id: cursor.id } : {};
 }
@@ -40,6 +56,72 @@ function toPostsPage(response: PostsApiResponse): PostsPage {
 		posts: payload.data,
 		cursor: payload.cursor,
 	};
+}
+
+function isPostSummary(value: unknown): value is Post {
+	if (typeof value !== 'object' || value === null) {
+		return false;
+	}
+
+	const post = value as Partial<Post>;
+	return (
+		typeof post.id === 'string' &&
+		typeof post.createdAt === 'string' &&
+		typeof post.title === 'string'
+	);
+}
+
+function toPostFeedPage(response: { data: unknown }): PostFeedPage {
+	if (typeof response.data !== 'object' || response.data === null) {
+		throw new Error('Dữ liệu bảng tin trả về không đúng định dạng.');
+	}
+
+	const page = response.data as Partial<PostFeedPage>;
+	if (
+		!Array.isArray(page.newerPosts) ||
+		!page.newerPosts.every(isPostSummary) ||
+		!Array.isArray(page.olderPosts) ||
+		!page.olderPosts.every(isPostSummary) ||
+		page.pageSize !== 10 ||
+		typeof page.hasMoreNewer !== 'boolean' ||
+		typeof page.hasMoreOlder !== 'boolean' ||
+		page.newerPosts.length + page.olderPosts.length > page.pageSize
+	) {
+		throw new Error('Dữ liệu bảng tin trả về không đúng định dạng.');
+	}
+
+	return {
+		newerPosts: page.newerPosts,
+		olderPosts: page.olderPosts,
+		pageSize: page.pageSize,
+		hasMoreNewer: page.hasMoreNewer,
+		hasMoreOlder: page.hasMoreOlder,
+	};
+}
+
+export async function getPostFeedPage(
+	options: PostFeedOptions,
+): Promise<PostFeedPage> {
+	const cursorQuery = options.direction === 'initial'
+		? {}
+		: {
+				newestCreatedAt: options.newest.createdAt,
+				newestId: options.newest.id,
+				oldestCreatedAt: options.oldest.createdAt,
+				oldestId: options.oldest.id,
+			};
+	const response = await request<{ data: unknown }>(
+		'/posts/feed',
+		{ method: 'GET', signal: options.signal },
+		{
+			direction: options.direction,
+			q: options.search?.q || undefined,
+			tag: options.search?.tag || undefined,
+			...cursorQuery,
+		},
+	);
+
+	return toPostFeedPage(response);
 }
 
 export async function getPosts({
