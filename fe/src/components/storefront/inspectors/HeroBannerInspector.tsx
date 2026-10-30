@@ -35,6 +35,7 @@ const HeroBannerInspector = ({
           subtitle: config.subtitle,
           eyebrow: config.eyebrow,
           contentPosition: config.contentPosition,
+          contentSize: config.contentSize,
         }}
         onUpdate={onUpdate}
         onActiveSectionChange={(active) =>

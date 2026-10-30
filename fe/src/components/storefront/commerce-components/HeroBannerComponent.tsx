@@ -2,7 +2,11 @@ import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { cn } from '@/lib/cn';
 import { HeroBannerCommerceComponent } from '@/types/layout-component/commerce-component';
-import { CONTENT_POSITION_MAP, getTextStyle } from '@/utils/layoutClasses';
+import {
+  CONTENT_POSITION_MAP,
+  getTextStyle,
+  HERO_TYPOGRAPHY_PRESETS,
+} from '@/utils/layoutClasses';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
@@ -55,6 +59,11 @@ const HeroBannerComponent = ({
     [contentPosition],
   );
 
+  const contentSizeClasses = useMemo(
+    () => HERO_TYPOGRAPHY_PRESETS[config.contentSize] || '',
+    [config.contentSize],
+  );
+
   return (
     <div
       id={id}
@@ -79,7 +88,7 @@ const HeroBannerComponent = ({
     >
       {/* Background Media */}
       {mediaType === 'image' && (
-        <div className='relative size-full min-h-[300px] flex-1'>
+        <div className='relative size-full min-h-75 flex-1'>
           <Image
             src={
               breakpoint === 'mobile' && mobileMediaUrl
@@ -112,14 +121,14 @@ const HeroBannerComponent = ({
       {/* Content Layer */}
       <div
         className={cn(
-          'pointer-events-none absolute inset-0 z-20 flex flex-col p-6 sm:p-10 md:p-14',
+          'pointer-events-none absolute inset-0 z-20 flex flex-col',
           positionClasses,
         )}
       >
-        <div className='space-y-2 pointer-events-auto'>
+        <div className='w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl pointer-events-auto space-y-2'>
           {eyebrow?.value && (
             <p
-              className='text-sm uppercase tracking-wider'
+              className={cn(contentSizeClasses['eyebrow'])}
               style={getTextStyle(eyebrow)}
             >
               {eyebrow.value}
@@ -128,7 +137,7 @@ const HeroBannerComponent = ({
 
           {title?.value && (
             <h1
-              className='text-3xl font-bold sm:text-4xl md:text-5xl leading-tight'
+              className={cn(contentSizeClasses['title'])}
               style={getTextStyle(title)}
             >
               {title.value}
@@ -137,7 +146,7 @@ const HeroBannerComponent = ({
 
           {subtitle?.value && (
             <p
-              className='text-base sm:text-lg md:text-xl text-ink-muted'
+              className={cn(contentSizeClasses['subtitle'])}
               style={getTextStyle(subtitle)}
             >
               {subtitle.value}

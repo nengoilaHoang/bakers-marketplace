@@ -48,6 +48,8 @@ const DimensionSection = ({
     [],
   );
 
+  // Filter out the "auto" option for Bento components
+  // This is because Bento components have a fixed width and height, so "auto" is not a valid option.
   const dimensionOptions = useMemo(() => {
     if (!isBento) return DIMENSION_OPTIONS;
     return Object.fromEntries(

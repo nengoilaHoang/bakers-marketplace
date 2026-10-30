@@ -23,10 +23,10 @@ export type SurfaceTheme =
   | 'primary'
   | 'secondary'
   | 'accent';
-export type TextStyle = {
+export type TextConfig = {
   textAlign: TextAlignmentType;
   decoration: 'strikethrough' | 'underline';
-  txtColor: string;
+  textColor: string;
   fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
   fontStyle: 'italic' | 'normal' | 'oblique';
 };

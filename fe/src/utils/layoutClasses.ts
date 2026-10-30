@@ -1,14 +1,43 @@
 import {
-	DimensionType,
-	HorizontalAlignType,
-	PaddingType,
-	SurfaceTheme,
-	TextStyle,
-	VerticalAlignType,
+  DimensionType,
+  HorizontalAlignType,
+  PaddingType,
+  SurfaceTheme,
+  TextConfig,
+  VerticalAlignType,
 } from '@/types/layout-component';
-import { HeroBannerContentPosition } from '@/types/layout-component/commerce-component';
+import {
+  HeroBannerContentPosition,
+  HeroBannerContentSize,
+} from '@/types/layout-component/commerce-component';
 import { CSSProperties } from 'react';
 import { FlattenComponent } from './flattenLayout';
+
+export const HERO_TYPOGRAPHY_PRESETS: Record<
+  HeroBannerContentSize,
+  { eyebrow: string; title: string; subtitle: string }
+> = {
+  compact: {
+    eyebrow: 'text-xs tracking-wider uppercase',
+    title: 'text-2xl sm:text-3xl md:text-4xl leading-tight',
+    subtitle: 'text-sm sm:text-base text-ink-muted',
+  },
+  medium: {
+    eyebrow: 'text-xs sm:text-sm tracking-wider uppercase',
+    title: 'text-3xl sm:text-4xl md:text-5xl leading-tight',
+    subtitle: 'text-base sm:text-lg text-ink-muted',
+  },
+  large: {
+    eyebrow: 'text-sm tracking-widest uppercase',
+    title: 'text-4xl sm:text-5xl md:text-6xl leading-tight',
+    subtitle: 'text-lg sm:text-xl text-ink-muted',
+  },
+  impact: {
+    eyebrow: 'text-sm sm:text-base tracking-widest uppercase',
+    title: 'text-5xl sm:text-6xl md:text-7xl leading-none tracking-tight',
+    subtitle: 'text-xl sm:text-2xl text-ink-muted',
+  },
+};
 
 const DIMENSION_MAP: Record<'h' | 'w', Record<DimensionType, string>> = {
   w: { full: 'w-full', auto: 'w-auto', sm: 'w-1/4', md: 'w-1/2', lg: 'w-3/4' },
@@ -136,7 +165,7 @@ function getAlignYClass(alignY?: VerticalAlignType): string {
   }
 }
 
-export function getTextStyle(style: TextStyle): CSSProperties {
+export function getTextStyle(style: TextConfig): CSSProperties {
   const fontWeight = {
     'semi-bold': 600,
     bold: 700,
@@ -151,7 +180,7 @@ export function getTextStyle(style: TextStyle): CSSProperties {
   }
 
   return {
-    color: style.txtColor,
+    color: style.textColor,
     textAlign: style.textAlign,
     textDecoration,
     fontStyle: style.fontStyle,

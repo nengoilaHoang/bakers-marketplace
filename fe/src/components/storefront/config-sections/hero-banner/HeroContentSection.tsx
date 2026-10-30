@@ -1,8 +1,9 @@
-import { TextStyle } from '@/types/layout-component';
+import { TextConfig } from '@/types/layout-component';
 import {
   HeroBannerContent,
   HeroBannerContentPosition,
 } from '@/types/layout-component/commerce-component';
+import { useMemo } from 'react';
 import { SectionId } from '../../ConfigSidebar';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
@@ -12,7 +13,7 @@ type TextAlignmentType = 'left' | 'center' | 'right' | 'justify';
 
 type HeroTextItem = {
   value?: string;
-} & Partial<TextStyle>;
+} & Partial<TextConfig>;
 
 type HeroContentSectionProps = {
   isOpen: boolean;
@@ -107,7 +108,7 @@ const TextConfigGroup = ({
           name={`${fieldPrefix}.txtColor`}
           inputType='color'
           presets={QUICK_PALETTE}
-          currentValue={item?.txtColor ?? defaultColor}
+          currentValue={item?.textColor ?? defaultColor}
           onValueChange={(val) => onUpdate(`${fieldPrefix}.txtColor`, val)}
           onOpenStateChange={onActiveSectionChange}
         />
@@ -174,20 +175,6 @@ const TextConfigGroup = ({
           onOpenStateChange={onActiveSectionChange}
         />
       </div>
-
-      {/* 6. Font Size */}
-      {/* <div className='flex flex-col gap-1.5'>
-        <ConfigLabel label='Size' forId={`${fieldPrefix}-size`} />
-        <ConfigInput
-          id={`${fieldPrefix}-size`}
-          name={`${fieldPrefix}.fontSize`}
-          inputType='select'
-          selectOptions={FONT_SIZE_OPTIONS}
-          currentValue={String(item?.fontSize ?? 'normal')}
-          onValueChange={(val) => onUpdate(`${fieldPrefix}.fontSize`, val)}
-          onOpenStateChange={onActiveSectionChange}
-        />
-      </div> */}
     </div>
   );
 };
@@ -204,6 +191,19 @@ const HeroContentSection = ({
   const title = 'Content';
   const description =
     'Configure the content and typography of the hero banner.';
+
+  const contentSizeOptions = useMemo(
+    () =>
+      ({
+        Compact: 'compact',
+        Medium: 'medium',
+        Large: 'large',
+        Impact: 'impact',
+      }) as const,
+    [],
+  );
+
+  console.log('content', content);
 
   return (
     <ConfigSectionWrapper
@@ -241,6 +241,19 @@ const HeroContentSection = ({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Content Sizing */}
+        <div className='flex flex-col gap-1.5'>
+          <ConfigLabel label='Content Sizing' forId={`content-size`} />
+          <ConfigInput
+            id='banner-content-size'
+            name='contentSize'
+            inputType='select'
+            selectOptions={contentSizeOptions}
+            currentValue={content.contentSize}
+            onValueChange={(val) => onUpdate('contentSize', val)}
+          />
         </div>
 
         {/* Eyebrow Controls */}

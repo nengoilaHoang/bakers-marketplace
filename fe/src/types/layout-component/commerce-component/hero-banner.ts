@@ -1,8 +1,8 @@
-import { TextStyle } from '..';
+import { TextConfig } from '..';
 import {
-	BaseCommerceComponent,
-	CreateBaseCommerceComponent,
-	UpdateBaseCommerceComponent,
+  BaseCommerceComponent,
+  CreateBaseCommerceComponent,
+  UpdateBaseCommerceComponent,
 } from './commerce-component';
 
 export type HeroBannerContentPosition =
@@ -39,10 +39,13 @@ export type HeroBannerCta = {
   target: '_self' | '_blank';
 };
 
+export type HeroBannerContentSize = 'compact' | 'medium' | 'large' | 'impact';
+
 export type HeroBannerContent = {
-  eyebrow?: ({ value: string } & TextStyle) | undefined;
-  title: { value: string } & TextStyle;
-  subtitle: { value: string } & TextStyle;
+  contentSize: HeroBannerContentSize;
+  eyebrow?: ({ value: string } & TextConfig) | undefined;
+  title: { value: string } & TextConfig;
+  subtitle: { value: string } & TextConfig;
   contentPosition: HeroBannerContentPosition;
 };
 

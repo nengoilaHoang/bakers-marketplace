@@ -39,13 +39,12 @@ const HARD_CODED_RECIPE_ID_1 = '22222222-2222-4222-8222-222222222222';
 const HARD_CODED_RECIPE_ID_2 = '33333333-3333-4333-8333-333333333333';
 const HARD_CODED_STOREFRONT_ID = '44444444-4444-4444-8444-444444444444';
 const HARD_CODED_STOREFRONT_RELEASE_ID = '55555555-5555-4555-8555-555555555555';
-
 const MATTROI_STOREFRONT_ID = '66666666-6666-4666-8666-666666666666';
 const MATTROI_STOREFRONT_RELEASE_ID = '77777777-7777-4777-8777-777777777777';
 
 const BREAKPOINTS = ['mobile', 'tablet', 'desktop'] as const;
 
-// Mọi tài khoản mẫu dùng chung mật khẩu "Bakers@123" (bcrypt, 12 vòng như bcrypt.service).
+// Mỗi tài khoản dùng chung một mật khẩu "Bakers@123" (bcrypt, 12 vòng như bcrypt.service).
 const SEED_PASSWORD_HASH =
   '$2b$12$ZN9SBrqZPM3zIS2/JOUkX.8ffdiJ7LDy0O69ZMo.0HOlERB8pDc0K';
 
@@ -87,17 +86,17 @@ const baseRecipes: RecipeSeed[] = [
   {
     title: 'Bánh Chocolate Fudge',
     description:
-      'Bánh chocolate fudge đậm đà phủ sốt cacao thơm lừng. Chocolate sánh mịn béo ngậy, ngọt ngào vừa phải. Công thức phù hợp làm quà sinh nhật hoặc tráng miệng.',
+      'Bánh chocolate fudge đậm vị cacao truyền thống. Chocolate sánh mịn béo ngậy, ngọt vừa phải. Công thức phù hợp làm quà sinh nhật hoặc tráng miệng.',
     portion: 8,
     tags: ['chocolate', 'cake', 'dessert', 'birthday'],
     ingredients: [
-      ['Bột mì đa dụng', 180, 'g'],
+      ['Bơ lạt', 180, 'g'],
       ['Bột cacao', 55, 'g'],
       ['Đường tinh luyện', 160, 'g'],
       ['Trứng gà', 3, 'quả'],
       ['Sữa tươi không đường', 180, 'ml'],
-      ['Bơ lạt', 100, 'g'],
-      ['Chocolate đen', 120, 'g'],
+      ['Bột mì đa dụng', 100, 'g'],
+      ['Chocolate đen 65%', 120, 'g'],
     ],
     tools: [
       ['Lò nướng', 1],
@@ -105,16 +104,16 @@ const baseRecipes: RecipeSeed[] = [
       ['Khuôn tròn 20cm', 1],
     ],
     steps: [
-      'Làm nóng lò nướng 175°C trong ít nhất 15 phút. Lót giấy nến vào khuôn tròn 20cm.',
-      'Rây bột mì và bột cacao, trộn đều hỗn hợp bột khô với đường.',
-      'Đun cách thủy bơ và chocolate đen cho tan chảy hoàn toàn.',
-      'Đánh tan trứng với sữa tươi, rót từ từ chocolate vào trộn đều.',
+      'Làm nóng lò 175°C trong ít nhất 15 phút. Lót giấy nến vào khuôn tròn 20cm.',
+      'Rây bột mì và bột cacao, trộn đều với đường tinh luyện.',
+      'Đun cách thủy chocolate đen cho tan chảy hoàn toàn.',
+      'Đánh tan trứng với sữa tươi, rót chocolate vào trộn đều.',
       'Cho bột vào fold nhẹ tay đến khi vừa quyện.',
-      'Đổ hỗn hợp vào khuôn, nướng 32-38 phút đến khi tăm rút ra còn ẩm.',
+      'Đổ vào khuôn, nướng 32-38 phút đến khi tăm rút ra còn ẩm.',
       'Để nguội trong khuôn 15 phút trước khi lấy ra rack.',
     ],
     notes: [
-      'Không nướng quá khô để giữ độ ẩm mềm.',
+      'Không nướng quá khô để giữ lòng bánh mềm ẩm.',
       'Ngon hơn sau khi bảo quản lạnh 2 giờ trong tủ mát.',
     ],
   },
@@ -122,9 +121,9 @@ const baseRecipes: RecipeSeed[] = [
 
 const flavors: Flavor[] = [
   {
-    name: 'Dâu Tây',
+    name: 'Dâu',
     tag: 'strawberry',
-    ingredient: 'Dâu tây tươi xay nhuyễn',
+    ingredient: 'Dâu tây xay nhuyễn',
     amount: 120,
     unit: 'g',
     profile: 'Vị chua ngọt thanh mát tự nhiên.',
@@ -136,8 +135,8 @@ const flavors: Flavor[] = [
     ingredient: 'Bột matcha Uji',
     amount: 10,
     unit: 'g',
-    profile: 'Hương trà xanh thơm ngát, hậu vị ngọt thanh.',
-    tip: 'Rây bột matcha thật mịn để không bị vón cục.',
+    profile: 'Hương trà xanh thơm ngát, hậu vị chát thanh.',
+    tip: 'Rây kỹ bột matcha để không bị vón cục.',
   },
   {
     name: 'Caramel',
@@ -145,7 +144,7 @@ const flavors: Flavor[] = [
     ingredient: 'Sốt caramel',
     amount: 90,
     unit: 'g',
-    profile: 'Ngọt béo đậm đà, thơm mùi bơ cháy nhẹ.',
+    profile: 'Ngọt béo đậm đà, thơm dậy mùi bơ.',
     tip: 'Để sốt nguội hoàn toàn trước khi fold vào kem tươi.',
   },
 ];
@@ -169,7 +168,7 @@ const families: Family[] = [
   },
   {
     name: 'Chiffon Cake',
-    description: 'Chiffon cake bông xốp mềm mượt như mây.',
+    description: 'Chiffon cake bông xốp nhẹ tênh như mây.',
     tags: ['chiffon', 'cake'],
     ingredients: [
       ['Bột mì số 8', 120, 'g'],
@@ -192,9 +191,9 @@ function buildDescription(family: Family, flavor: Flavor): string {
 
 function buildFamilySteps(familyName: string, flavor: Flavor): string[] {
   return [
-    `Chuẩn bị đầy đủ nguyên liệu bao gồm ${flavor.amount}${flavor.unit} ${flavor.ingredient.toLowerCase()}.`,
-    `Thực hiện các thao tác theo từng bước tiêu chuẩn của món bánh ${familyName}.`,
-    'Bảo quản hoặc nướng ở dải nhiệt thích hợp trước khi thưởng thức.',
+    `Chuẩn bị nguyên liệu bao gồm ${flavor.amount}${flavor.unit} ${flavor.ingredient.toLowerCase()}.`,
+    `Thực hiện các thao tác theo từng bước tiêu chuẩn của bánh ${familyName}.`,
+    'Bảo quản ở nhiệt độ thích hợp trước khi thưởng thức.',
   ];
 }
 
@@ -287,7 +286,7 @@ const products: SeedProduct[] = [
   {
     title: 'Croissant Bơ Pháp',
     slug: 'croissant-bo-phap',
-    description: 'Croissant ngàn lớp, thơm mùi bơ Pháp AOP.',
+    description: 'Croissant ngàn lớp, thơm bơ AOP.',
     unitPrice: 35000,
     unitCost: 19000,
     unit: 'cái',
@@ -315,72 +314,71 @@ const posts: PostSeed[] = [
   {
     title: 'Mousse dâu cho buổi chiều cuối tuần',
     content:
-      'Trời nắng nóng nên mình làm liền mẻ mousse dâu tây. Lớp mousse mềm, chua ngọt vừa phải, cắt ra thấy rõ từng tầng. Mọi người thử nha.',
+      'Trời nắng nóng nên mình làm liền ổ mousse dâu tây. Lớp mousse mềm mịn, chua ngọt vừa phải, cắt ra thơm ngát từng miếng. Mọi người thử nha.',
     tags: ['mousse', 'strawberry'],
-    recipeTitle: 'Mousse Dâu Tây',
+    recipeTitle: 'Mousse Dâu',
   },
   {
-    title: 'Chiffon dẹp lép, mọi người giúp mình với',
+    title: 'Chiffon dẹp, mọi người giải cứu mình với',
     content:
-      'Mình làm theo công thức nhưng lấy ra khỏi lò được 5 phút thì bánh xẹp hẳn. Có phải do mình đánh lòng trắng chưa đủ chóp không ạ?',
+      'Mình làm theo đúng công thức nhưng lấy ra khỏi lò được 5 phút thì bánh xẹp lép. Có phải do mình đánh lòng trắng chưa đủ chóp không ạ?',
     tags: ['chiffon', 'hoi-dap'],
-    recipeTitle: 'Chiffon Cake Dâu Tây',
+    recipeTitle: 'Chiffon Cake Dâu',
   },
   {
-    title: 'Mẹo pha matcha không bị vón cục',
+    title: 'Mẹo pha matcha không bị vón',
     content:
-      'Nên rây matcha vào bát trước rồi mới rót nước ấm 70-80 độ vào khuấy nhanh tay. Đừng dùng nước sôi sùng sục sẽ làm biến màu và đắng chát.',
+      'Nên rây matcha vào bát trước, thêm nước ấm 70-80 độ rồi khuấy nhanh tay. Đừng dùng nước sôi kẻo biến chất vị đắng chát.',
     tags: ['matcha', 'tips'],
   },
   {
     title: 'Mousse matcha thanh mát vừa miệng',
     content:
-      'Hôm nay thử làm mousse matcha Uji. Vị đắng nhẹ, hậu ngọt, màu xanh mướt mắt.',
+      'Hôm nay thèm mousse matcha Uji. Vị đắng nhẹ quyện kem tươi béo ngậy, màu xanh mướt mắt.',
     tags: ['matcha', 'mousse'],
     recipeTitle: 'Mousse Matcha',
   },
   {
     title: 'Khoe mẻ croissant đầu tiên ra lò',
     content:
-      'Cán bơ mất cả ngày nhưng thành quả giòn rụm từng lớp. Thơm nức cả gian bếp.',
+      'Cán tay nhọc nhằn nhưng thành quả ngàn lớp xốp giòn. Thơm nức gian bếp.',
     tags: ['croissant', 'khoe-banh'],
   },
   {
     title: 'Chiffon matcha cao 12cm nở đẹp',
     content:
-      'Cuối cùng cũng làm được ổ chiffon nở phồng chuẩn chỉnh không bị lõm đáy.',
+      'Cuối cùng cũng làm được chiffon nở chuẩn chỉnh không bị thắt đáy.',
     tags: ['chiffon', 'matcha'],
     recipeTitle: 'Chiffon Cake Matcha',
   },
   {
-    title: 'Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?',
+    title: 'Nên dùng bơ thực vật hay bơ động vật khi nướng bánh?',
     content:
-      'Nhiều bạn hỏi dùng bơ mặn thay bơ nhạt được không. Lời khuyên là dùng bơ nhạt để kiểm soát muối tốt hơn.',
+      'Nhiều bạn hỏi thay bơ lạt bằng bơ phe được không. Lời khuyên là bánh âu luôn ưu tiên bơ động vật.',
     tags: ['hoi-dap', 'nguyen-lieu'],
   },
   {
     title: 'Mousse caramel cho tiệc sinh nhật',
     content:
-      'Lớp caramel béo ngậy kết hợp mousse bồng bềnh ai ăn cũng thích mê.',
+      'Lớp caramel béo ngậy phủ trên mousse bồng bềnh, ai ăn cũng thích mê.',
     tags: ['caramel', 'mousse', 'birthday'],
     recipeTitle: 'Mousse Caramel',
   },
   {
-    title: 'Nhiệt lò thực tế khác xa số hiển thị',
+    title: 'Nhiệt lò thực tế khác xa số trên núm vặn',
     content:
-      'Mọi người nên sắm nhiệt kế lò rời nhé. Lò mình bị chênh tận 15 độ C so với núm xoay.',
+      'Mới mua nhiệt kế lò mới thấy lò nhà mình lệch tận 15 độ C so với núm xoay.',
     tags: ['tips', 'lo-nuong'],
   },
   {
-    title: 'Chiffon caramel thơm ngọt dịu',
-    content:
-      'Một chút sốt caramel tự nấu giúp chiffon thơm lừng mà không bị ngọt gắt.',
+    title: 'Chiffon caramel thơm ngát gian bếp',
+    content: 'Một chút caramel tự nấu giúp chiffon thơm ngon vượt bậc.',
     tags: ['chiffon', 'caramel'],
     recipeTitle: 'Chiffon Cake Caramel',
   },
   {
-    title: 'Bánh mì hoa cúc làm lần 3 thành công',
-    content: 'Thớ bánh xé sợi dai mềm, thơm phức mùi bơ và tinh dầu hoa cam.',
+    title: 'Bánh mì hoa cúc lần 3 thành công',
+    content: 'Thớ bánh xé sợi dai mềm, thơm phức tinh dầu hoa cam.',
     tags: ['banh-mi', 'khoe-banh'],
   },
   {
@@ -390,63 +388,62 @@ const posts: PostSeed[] = [
     tags: ['dung-cu', 'hoi-dap'],
   },
   {
-    title: 'Bánh trung thu nhân thập cẩm xá xíu',
+    title: 'Bánh trung thu nhân thập cẩm tự làm',
     content:
-      'Tự làm nhân thập cẩm tuy lích kích nhưng vị tươi ngon sạch sẽ hơn mua sẵn.',
+      'Tự làm nhân thập cẩm tuy lách cách nhưng vừa miệng và sạch sẽ hơn mua sẵn.',
     tags: ['trung-thu', 'banh-nuong'],
   },
   {
-    title: 'Cách bảo quản kem tươi đánh bông',
+    title: 'Cách bảo quản kem tươi tránh bị tách nước',
     content:
-      'Bọc màng bọc sát mặt kem và bảo quản ngăn mát dùng trong 24-48 giờ.',
+      'Đừng để hộp kem sát vách tủ lạnh, nên quấn màng bọc dùng trong 24-48 giờ.',
     tags: ['tips', 'whipping-cream'],
   },
   {
     title: 'Tiramisu không dùng trứng sống',
-    content:
-      'Công thức tiệt trùng trứng cách thủy giúp cả nhà an tâm thưởng thức.',
+    content: 'Công thức tiệt trùng lòng đỏ cách thủy giúp an tâm thưởng thức.',
     tags: ['tiramisu', 'dessert'],
   },
   {
     title: 'Làm bánh quy bơ cùng con nhỏ',
-    content:
-      'Bánh quy bơ tạo hình đơn giản, cả hai mẹ con vừa làm vừa chơi rất vui.',
+    content: 'Bánh quy bơ đơn giản, cả hai mẹ con vừa chơi vừa nướng rất vui.',
     tags: ['cookie', 'gia-dinh'],
   },
   {
-    title: 'Bột số 8 và số 11 khác nhau thế nào?',
+    title: 'Bột mì số 8 và số 11 khác nhau thế nào?',
     content:
-      'Bột số 8 hàm lượng protein thấp hợp làm bánh mềm bông, số 11 hợp làm bánh mì và vỏ bánh giòn.',
+      'Bột số 8 hàm lượng protein thấp cho bánh mềm ẩm, số 11 tạo thớ bánh dai giòn.',
     tags: ['hoi-dap', 'nguyen-lieu'],
   },
   {
     title: 'Tart trứng Bồ Đào Nha vỏ ngàn lớp',
-    content: 'Vỏ giòn rụm nhiều tầng, nhân trứng sữa béo ngậy xém vàng mặt.',
+    content: 'Vỏ giòn rụm nhiều tầng, nhân trứng sữa béo ngậy ngọt ngào.',
     tags: ['tart', 'khoe-banh'],
   },
   {
     title: 'Thanh lý lò nướng giá rẻ, inbox ngay',
-    content: 'Thanh lý lò 50L mới 99%, liên hệ qua zalo ngay để chốt đơn.',
+    content:
+      'Thanh lý lò nướng 50L mới 99%, liên hệ qua zalo ngay để nhận giá tốt.',
     tags: ['thanh-ly'],
     reportReasons: ['Spam quảng cáo', 'Nội dung không liên quan làm bánh'],
   },
   {
     title: 'Bánh chocolate không cần lò nướng',
-    content: 'Công thức nướng cách thủy trên chảo chống dính siêu tiện lợi.',
+    content: 'Công thức đun cách thủy trên chảo chống dính siêu tiện lợi.',
     tags: ['chocolate', 'khong-lo'],
     reportReasons: ['Thông tin không chính xác'],
   },
 ];
 
 const postComments = [
-  'Nhìn ngon quá, cuối tuần mình sẽ thử làm!',
-  'Bánh nở đẹp và thớ bánh mịn màng quá bạn ơi.',
-  'Cảm ơn bạn đã chia sẻ mẹo làm bánh bổ ích.',
-  'Công thức chuẩn chỉnh, làm lần đầu ăn là mê luôn.',
+  'Nhìn ngon quá, cuối tuần mình sẽ làm thử!',
+  'Bánh nở đẹp và màu mướt mắt quá bạn ơi.',
+  'Cảm ơn bạn đã chia sẻ bí quyết bổ ích.',
+  'Công thức chuẩn chỉnh, làm lần đầu ăn ngon luôn.',
 ];
 
 const POST_AUTHOR_REPLY =
-  'Cảm ơn bạn nha, làm xong nhớ chia sẻ thành quả với mình nhé!';
+  'Cảm ơn bạn nha, làm xong nhớ chia sẻ kết quả cùng nhóm nhé!';
 
 function pickOtherUsers<T extends { id: string }>(
   userRows: T[],
@@ -466,51 +463,51 @@ async function createRecipeSnapshot(
   recipeId: string,
 ): Promise<string> {
   const result = await trx.raw(
-    `INSERT INTO recipes (cover_img_id, user_id, title, description, portion, is_public, is_snapshot, created_at, updated_at)
-     SELECT cover_img_id, user_id, title, description, portion, TRUE, TRUE, created_at, updated_at
-     FROM recipes
-     WHERE id = ?
+    `INSERT INTO recipes (cover_img_id, user_id, title, description, portion, is_public, is_snapshot, created_at, updated_at) 
+     SELECT cover_img_id, user_id, title, description, portion, TRUE, TRUE, created_at, updated_at 
+     FROM recipes 
+     WHERE id = ? 
      RETURNING id`,
     [recipeId],
   );
   const snapshotId: string = result.rows[0].id;
 
   await trx.raw(
-    `INSERT INTO recipe_ingredients (recipe_id, cover_img_id, name, amount, unit)
-     SELECT ?, cover_img_id, name, amount, unit
-     FROM recipe_ingredients
+    `INSERT INTO recipe_ingredients (recipe_id, cover_img_id, name, amount, unit) 
+     SELECT ?, cover_img_id, name, amount, unit 
+     FROM recipe_ingredients 
      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
-    `INSERT INTO recipe_tools (recipe_id, cover_img_id, name, amount)
-     SELECT ?, cover_img_id, name, amount
-     FROM recipe_tools
+    `INSERT INTO recipe_tools (recipe_id, cover_img_id, name, amount) 
+     SELECT ?, cover_img_id, name, amount 
+     FROM recipe_tools 
      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
-    `INSERT INTO recipe_steps (recipe_id, step_order, description)
-     SELECT ?, step_order, description
-     FROM recipe_steps
+    `INSERT INTO recipe_steps (recipe_id, step_order, description) 
+     SELECT ?, step_order, description 
+     FROM recipe_steps 
      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
-    `INSERT INTO recipe_notes (recipe_id, note_order, content)
-     SELECT ?, note_order, content
-     FROM recipe_notes
+    `INSERT INTO recipe_notes (recipe_id, note_order, content) 
+     SELECT ?, note_order, content 
+     FROM recipe_notes 
      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
-    `INSERT INTO recipe_tags (recipe_id, name)
-     SELECT ?, name
-     FROM recipe_tags
+    `INSERT INTO recipe_tags (recipe_id, name) 
+     SELECT ?, name 
+     FROM recipe_tags 
      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
@@ -523,6 +520,7 @@ export async function seed(knex: Knex): Promise<void> {
     // =========================================================================
     // 1. CLEANUP ALL EXISTING RECORDS (DELETES ON TOP IN DEPENDENCY ORDER)
     // =========================================================================
+
     // Storefront Layout Hierarchy
     await trx('composite_component_children').del();
     await trx('component_templates').del();
@@ -725,7 +723,6 @@ export async function seed(knex: Knex): Promise<void> {
 
     for (let index = 0; index < products.length; index += 1) {
       const product = products[index];
-
       const [createdProduct] = await trx('products')
         .insert({
           brand_id: brandRows[product.brandIndex].id,
@@ -866,6 +863,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: collectionRootGrid.id,
       component_type: 'GRID',
@@ -889,6 +887,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: collectionIntroText.id,
       component_type: 'RICH_TEXT',
@@ -916,7 +915,7 @@ export async function seed(knex: Knex): Promise<void> {
                 style: {
                   textAlign: 'left',
                   decoration: 'underline',
-                  txtColor: '#0f172a',
+                  textColor: '#0f172a',
                   fontWeight: 'bold',
                   fontStyle: 'normal',
                 },
@@ -927,7 +926,7 @@ export async function seed(knex: Knex): Promise<void> {
                 style: {
                   textAlign: 'left',
                   decoration: 'underline',
-                  txtColor: '#64748b',
+                  textColor: '#64748b',
                   fontWeight: 400,
                   fontStyle: 'normal',
                 },
@@ -941,7 +940,7 @@ export async function seed(knex: Knex): Promise<void> {
                 style: {
                   textAlign: 'left',
                   decoration: 'underline',
-                  txtColor: '#334155',
+                  textColor: '#334155',
                   fontWeight: 400,
                   fontStyle: 'normal',
                 },
@@ -963,6 +962,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('commerce_components').insert({
       id: productCardBase.id,
       component_type: 'PRODUCT_CARD',
@@ -985,6 +985,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('repeater_components').insert({
       id: repeaterBase.id,
       item_template_id: productCardBase.id,
@@ -1042,6 +1043,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: homeRootGrid.id,
       component_type: 'GRID',
@@ -1065,7 +1067,7 @@ export async function seed(knex: Knex): Promise<void> {
             value: 'FRESHLY BAKED DAILY',
             textAlign: 'center',
             decoration: 'underline',
-            txtColor: '#d97706',
+            textColor: '#d97706',
             fontWeight: 'bold',
             fontStyle: 'normal',
           },
@@ -1073,7 +1075,7 @@ export async function seed(knex: Knex): Promise<void> {
             value: 'Warm Loaves, Sweet Moments',
             textAlign: 'center',
             decoration: 'underline',
-            txtColor: '#0f172a',
+            textColor: '#0f172a',
             fontWeight: 'bold',
             fontStyle: 'normal',
           },
@@ -1082,11 +1084,12 @@ export async function seed(knex: Knex): Promise<void> {
               'Handcrafted pastries, natural levain breads, and heartfelt bakes made fresh every morning.',
             textAlign: 'center',
             decoration: 'underline',
-            txtColor: '#475569',
+            textColor: '#475569',
             fontWeight: 400,
             fontStyle: 'normal',
           },
           contentPosition: 'middle-center',
+          contentSize: 'large',
           overlay: {
             type: 'solid',
             color: '#ffffff',
@@ -1102,6 +1105,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('commerce_components').insert({
       id: homeHeroBanner.id,
       component_type: 'HERO_BANNER',
@@ -1132,6 +1136,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: homeFeaturesGrid.id,
       component_type: 'GRID',
@@ -1172,10 +1177,12 @@ export async function seed(knex: Knex): Promise<void> {
           }),
         })
         .returning(['id']);
+
       await trx('leaf_components').insert({
         id: leafCard.id,
         component_type: 'RICH_TEXT',
       });
+
       featureCardIds.push(leafCard.id);
     }
 
@@ -1217,6 +1224,7 @@ export async function seed(knex: Knex): Promise<void> {
     // 7. SEED STOREFRONT & BENTO GRID HOME LAYOUT (vendor.mattroi@example.com)
     // =========================================================================
     const mattroiBrand = brandRows[1]; // Sunrise Patisserie
+
     const [mattroiStorefront] = await trx('storefronts')
       .insert({
         id: MATTROI_STOREFRONT_ID,
@@ -1288,6 +1296,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: mattroiHomeBentoGrid.id,
       component_type: 'GRID',
@@ -1314,6 +1323,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoHeroCard.id,
       component_type: 'RICH_TEXT',
@@ -1340,6 +1350,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoPromoCard.id,
       component_type: 'RICH_TEXT',
@@ -1366,6 +1377,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoFeature1.id,
       component_type: 'RICH_TEXT',
@@ -1392,6 +1404,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoFeature2.id,
       component_type: 'RICH_TEXT',
@@ -1448,6 +1461,7 @@ export async function seed(knex: Knex): Promise<void> {
       const snapshotId = recipe
         ? await createRecipeSnapshot(trx, recipe.id)
         : null;
+
       const hoursAgo = (index + 1) * 6;
 
       const [createdPost] = await trx('posts')
@@ -1477,6 +1491,7 @@ export async function seed(knex: Knex): Promise<void> {
         index + 1,
         index % 4,
       );
+
       if (commenters.length > 0) {
         const commentRows = await trx('post_comments')
           .insert(

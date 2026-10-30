@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
 	BaseLayoutComponentConfigSchema,
 	InterpolatedStringSchema,
-	TextStyle,
+	TextConfigSchema,
 } from '../base-layout-components.model.js';
 import {
 	BaseCommerceComponentSchema,
@@ -25,7 +25,7 @@ export const ProductCardBodyItemSchema = z.discriminatedUnion('type', [
     type: z.literal('description'),
     display: z.boolean(),
     value: InterpolatedStringSchema,
-    style: TextStyle,
+    style: TextConfigSchema,
   }),
   z.object({
     type: z.literal('ratings'),
@@ -49,8 +49,8 @@ export const ProductCardBodyItemSchema = z.discriminatedUnion('type', [
 
     style: z
       .object({
-        color: TextStyle,
-        unitColor: TextStyle,
+        color: TextConfigSchema,
+        unitColor: TextConfigSchema,
       })
       .optional(),
   }),
@@ -62,12 +62,12 @@ export const ProductCardBodySchema = z.discriminatedUnion('layout', [
     header: z.object({
       title: z.object({
         value: InterpolatedStringSchema,
-        style: TextStyle,
+        style: TextConfigSchema,
       }),
       subtitle: z.object({
         display: z.boolean(),
         value: InterpolatedStringSchema,
-        style: TextStyle,
+        style: TextConfigSchema,
       }),
     }),
     body: z.array(ProductCardBodyItemSchema).superRefine((items, ctx) => {

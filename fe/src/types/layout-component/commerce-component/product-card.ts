@@ -1,4 +1,4 @@
-import { TextAlignmentType, TextStyle } from '..';
+import { TextAlignmentType, TextConfig } from '..';
 import {
 	BaseCommerceComponent,
 	CreateBaseCommerceComponent,
@@ -13,13 +13,13 @@ type ProductCardBodyItem =
       type: 'description';
       display: boolean;
       value: string;
-      style: TextStyle;
+      style: TextConfig;
     }
   | {
       type: 'ratings';
       display: boolean;
       value: string;
-      style: TextStyle;
+      style: TextConfig;
       ratingType?: 'numeral' | 'stars' | undefined;
     }
   | {
@@ -58,12 +58,12 @@ export type ProductCardBody = {
   header: {
     title: {
       value: string;
-      style: TextStyle;
+      style: TextConfig;
     };
     subtitle: {
       display: boolean;
       value: string;
-      style: TextStyle;
+      style: TextConfig;
     };
   };
   body: Array<ProductCardBodyItem>;
