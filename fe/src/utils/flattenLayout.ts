@@ -2,13 +2,13 @@ import { LayoutComponent } from '@/types/layout-component';
 import { CommerceComponent } from '@/types/layout-component/commerce-component/commerce-component';
 import {
     CompositeComponent,
-    ResponsiveValue,
+    ResponsiveProp,
 } from '@/types/layout-component/composite-component';
 import { LeafComponent } from '@/types/layout-component/leaf-component';
 import { RepeaterComponent } from '@/types/layout-component/repeater-component';
 
 export type FlattenCompositeComponent = Omit<CompositeComponent, 'children'> & {
-  children: ResponsiveValue<Record<number, string>>;
+  children: ResponsiveProp<Record<number, string>>;
 };
 
 export type FlattenRepeaterComponent = Omit<
@@ -38,7 +38,7 @@ const flattenLayout = (component: LayoutComponent): FlattenComponent[] => {
             ]),
           ),
         ]),
-      ) as ResponsiveValue<Record<number, string>>;
+      ) as ResponsiveProp<Record<number, string>>;
 
       const visitedChildIds = new Set<string>();
 

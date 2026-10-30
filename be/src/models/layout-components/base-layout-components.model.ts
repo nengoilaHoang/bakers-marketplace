@@ -98,6 +98,37 @@ export const BentoCellConfig = z.object({
   rowSpan: z.uint32().min(1).max(50),
 });
 
+export const ResponsiveProp = <T extends z.ZodType>(valueSchema: T) =>
+  z.union([
+    valueSchema.transform((val) => ({
+      desktop: val,
+      tablet: val,
+      mobile: val,
+    })),
+    z
+      .object({
+        desktop: valueSchema,
+        tablet: valueSchema.optional(),
+        mobile: valueSchema.optional(),
+      })
+      .transform((val) => {
+        const responsiveValue = val as {
+          desktop: z.output<T>;
+          tablet?: z.output<T>;
+          mobile?: z.output<T>;
+        };
+
+        return {
+          desktop: responsiveValue.desktop,
+          tablet: responsiveValue.tablet ?? responsiveValue.desktop,
+          mobile:
+            responsiveValue.mobile ??
+            responsiveValue.tablet ??
+            responsiveValue.desktop,
+        };
+      }),
+  ]);
+
 export const SlotPlacementConfigSchema = z.object({
   h: DimensionTypeSchema,
   w: DimensionTypeSchema,
