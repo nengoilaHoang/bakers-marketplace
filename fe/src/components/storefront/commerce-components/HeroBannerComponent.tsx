@@ -6,8 +6,6 @@ import { CONTENT_POSITION_MAP, getTextStyle } from '@/utils/layoutClasses';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
-//TODO: Fix the overlay covering the image
-
 type HeroBannerProps = {
   component: HeroBannerCommerceComponent;
   sourceParentId: string;
@@ -88,6 +86,7 @@ const HeroBannerComponent = ({
                 ? mobileMediaUrl
                 : desktopMediaUrl
             }
+            draggable={false}
             alt={altText}
             fill
             className='object-cover'
@@ -110,7 +109,6 @@ const HeroBannerComponent = ({
           }}
         ></div>
       )}
-
       {/* Content Layer */}
       <div
         className={cn(
@@ -118,7 +116,7 @@ const HeroBannerComponent = ({
           positionClasses,
         )}
       >
-        <div className='max-w-2xl space-y-2 pointer-events-auto'>
+        <div className='space-y-2 pointer-events-auto'>
           {eyebrow?.value && (
             <p
               className='text-sm uppercase tracking-wider'

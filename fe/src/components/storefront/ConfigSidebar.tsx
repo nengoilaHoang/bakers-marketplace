@@ -1,41 +1,45 @@
-import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import { useState } from 'react';
-import AlignmentSection from './config-sections/AlignmentSection';
-import BentoSection from './config-sections/BentoSection';
-import DimensionSection from './config-sections/DimensionSection';
-import PaddingSection from './config-sections/PaddingSection';
-import ThemeSection from './config-sections/ThemeSection';
+// components/storefront/ConfigSidebar.tsx
+import { FlattenComponent } from '@/utils/flattenLayout';
+import { useMemo, useState } from 'react';
+import BaseLayoutSections from './config-sections/BaseLayoutSections';
+import { COMPONENT_INSPECTORS } from './inspectors/registry';
 
 export type SectionId =
   | 'dimensions'
   | 'alignment'
   | 'padding'
-  | 'surfaceTheme'
-  | 'bento';
+  | 'surface-theme'
+  | 'bento'
+  | 'hero-overlay'
+  | 'hero-content';
 
-type ConfigSidebarProps<T extends BaseLayoutComponentConfig<unknown>> = {
+type ConfigSidebarProps = {
   isOpen: boolean;
   toggleConfig: () => void;
-  config: T;
+  component: FlattenComponent;
   onUpdate: (pathname: string, value: unknown) => void;
 };
 
-const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
+const ConfigSidebar = ({
   isOpen,
   toggleConfig,
-  config,
+  component,
   onUpdate,
-}: ConfigSidebarProps<T>) => {
-  const hadPadding = 'padding' in config;
-  const hasSurfaceTheme = 'surfaceTheme' in config;
-  const hasBentoConfig = !!config.colSpan && !!config.rowSpan;
+}: ConfigSidebarProps) => {
+  const isBentoItem =
+    component.config.colSpan !== undefined ||
+    component.config.rowSpan !== undefined;
 
-  const [openSections, setOpenSections] = useState({
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     dimensions: true,
-    alignment: true,
-    surfaceTheme: hasSurfaceTheme ? true : undefined,
-    padding: hadPadding ? true : undefined,
-    bento: hasBentoConfig ? true : undefined,
+    alignment: false,
+    padding: false,
+    'surface-theme': false,
+    ...(isBentoItem && { bento: false }),
+    ...(component.componentType === 'HERO_BANNER' && {
+      'hero-overlay': false,
+      'hero-content': false,
+    }),
   });
 
   const [activeSectionId, setActiveSectionId] = useState<SectionId | null>(
@@ -43,26 +47,45 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
   );
 
   const toggleSection = (id: SectionId) => {
-    setOpenSections((prev) => {
-      if (prev[id] === undefined) return prev;
-      return { ...prev, [id]: !prev[id] };
-    });
+    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const sectionOrder: SectionId[] = useMemo(
+    () =>
+      [
+        'dimensions',
+        'alignment',
+        'padding',
+        'surface-theme',
+        'bento',
+        'hero-overlay',
+        'hero-content',
+      ].filter((id) => id in openSections) as SectionId[],
+    [openSections],
+  );
 
   const getSectionZIndex = (id: SectionId) => {
     if (activeSectionId === id) return 100;
-    const sectionIds = Object.keys(openSections).filter(
-      (key) => openSections[key as SectionId] !== undefined,
-    );
-    return (sectionIds.length - sectionIds.indexOf(id)) * 10;
+    const index = sectionOrder.indexOf(id);
+    return index !== -1 ? (sectionOrder.length - index) * 10 : 10;
   };
+
+  // Lookup custom inspector for componentType
+  const SpecificInspector = COMPONENT_INSPECTORS[component.componentType];
 
   return (
     <aside
       aria-label='Configuration Panel'
-      className={`absolute top-0 bottom-0 right-0 z-50 min-w-0 w-90 ${isOpen ? 'translate-x-0' : 'translate-x-full'} bg-white border-l border-zinc-200 transition-transform duration-200 ease-out`}
+      className={`absolute top-0 bottom-0 right-0 z-50 min-w-0 w-90 ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      } bg-white border-l border-zinc-200 transition-transform duration-200 ease-out`}
     >
       <button
+        aria-label={
+          isOpen
+            ? 'Collapse configuration sidebar'
+            : 'Expand configuration sidebar'
+        }
         className='absolute left-0 top-6 p-1 -translate-x-full flex items-center justify-center rounded-l-md border-l border-y border-zinc-200 bg-white shadow-md text-zinc-600 hover:text-zinc-950'
         onClick={toggleConfig}
       >
@@ -78,70 +101,37 @@ const ConfigSidebar = <T extends BaseLayoutComponentConfig<unknown>>({
         </svg>
       </button>
 
-      <div className='flex flex-col h-full min-h-0 gap-3 p-6 flex-1 divide-y divide-zinc-100 overflow-y-auto scroll-smooth scroll-m-0 scroll-p-0 scrollbar-thin scrollbar-gutter-both'>
-        <DimensionSection
-          isOpen={openSections.dimensions}
+      <div className='flex flex-col h-full min-h-0 gap-3 p-6 flex-1 divide-y divide-zinc-100 overflow-y-auto scroll-smooth scrollbar-thin scrollbar-gutter-both'>
+        <div className='pb-2'>
+          <p className='text-[11px] font-bold tracking-wider uppercase text-zinc-400'>
+            {component.type} &bull; {component.componentType}
+          </p>
+          <h2 className='text-sm font-semibold text-zinc-900'>
+            {component.name}
+          </h2>
+        </div>
+
+        {/* 1. Component-Specific Inspector */}
+        {SpecificInspector && (
+          <SpecificInspector
+            component={component}
+            openSections={openSections}
+            toggleSection={toggleSection}
+            onUpdate={onUpdate}
+            onActiveSectionChange={setActiveSectionId}
+            getSectionZIndex={getSectionZIndex}
+          />
+        )}
+
+        {/* 2. Shared Base Layout Inspector */}
+        <BaseLayoutSections
+          config={component.config}
+          openSections={openSections}
           toggleSection={toggleSection}
-          dimensions={{ w: config.w, h: config.h }}
           onUpdate={onUpdate}
-          onActiveSectionChange={(isActive) =>
-            setActiveSectionId(isActive ? 'dimensions' : null)
-          }
-          zIndex={getSectionZIndex('dimensions')}
-          isBento={hasBentoConfig}
+          onActiveSectionChange={setActiveSectionId}
+          getSectionZIndex={getSectionZIndex}
         />
-        {hadPadding && openSections.padding && (
-          <PaddingSection
-            isOpen={openSections.padding}
-            toggleSection={toggleSection}
-            padding={config.padding}
-            onUpdate={onUpdate}
-            onActiveSectionChange={(isActive) =>
-              setActiveSectionId(isActive ? 'padding' : null)
-            }
-            zIndex={getSectionZIndex('padding')}
-          />
-        )}
-        <AlignmentSection
-          isOpen={openSections.alignment}
-          toggleSection={toggleSection}
-          alignment={{
-            horizontal: config.alignSelfX,
-            vertical: config.alignSelfY,
-          }}
-          onUpdate={onUpdate}
-          onActiveSectionChange={(isActive) =>
-            setActiveSectionId(isActive ? 'alignment' : null)
-          }
-          zIndex={getSectionZIndex('alignment')}
-        />
-        {hasSurfaceTheme && openSections.surfaceTheme && (
-          <ThemeSection
-            isOpen={openSections.surfaceTheme}
-            toggleSection={toggleSection}
-            surfaceTheme={config.surfaceTheme}
-            onUpdate={onUpdate}
-            onActiveSectionChange={(isActive) =>
-              setActiveSectionId(isActive ? 'surfaceTheme' : null)
-            }
-            zIndex={getSectionZIndex('surfaceTheme')}
-          />
-        )}
-        {hasBentoConfig && openSections.bento && (
-          <BentoSection
-            isOpen={openSections.bento}
-            toggleSection={toggleSection}
-            span={{
-              col: config.colSpan!,
-              row: config.rowSpan!,
-            }}
-            onUpdate={onUpdate}
-            onActiveSectionChange={(isActive) =>
-              setActiveSectionId(isActive ? 'bento' : null)
-            }
-            zIndex={getSectionZIndex('bento')}
-          />
-        )}
       </div>
     </aside>
   );

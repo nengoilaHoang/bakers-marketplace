@@ -2,6 +2,7 @@ import { DimensionType } from '@/types/layout-component';
 import { useMemo } from 'react';
 import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type DimensionSectionProps = {
@@ -38,11 +39,11 @@ const DimensionSection = ({
   const title = 'Dimensions';
   const description = 'Adjust the width and height of the component.';
   const sides: ReadonlyArray<
-    Readonly<{ key: keyof typeof dimensions; label: string }>
+    Readonly<{ name: keyof typeof dimensions; label: string }>
   > = useMemo(
     () => [
-      { key: 'w', label: 'Width' },
-      { key: 'h', label: 'Height' },
+      { name: 'w', label: 'Width' },
+      { name: 'h', label: 'Height' },
     ],
     [],
   );
@@ -63,24 +64,30 @@ const DimensionSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      <div className='flex flex-row w-full gap-2'>
-        {sides.map(({ key, label }) => (
-          <ConfigInput
-            key={key}
-            id={`padding-${key}`}
-            name={`padding.${key}`}
-            label={label}
-            inputType='select'
-            selectOptions={dimensionOptions}
-            currentValue={
-              typeof dimensions[key] === 'number'
-                ? dimensions[key].toFixed(2)
-                : dimensions[key]
-            }
-            onValueChange={(val) => onUpdate(key, val)}
-            onOpenStateChange={onActiveSectionChange}
-          />
-        ))}
+      <div className='grid grid-cols-2 w-full gap-2'>
+        {sides.map(({ name, label }) => {
+          return (
+            <div
+              className='flex flex-col gap-2 justify-start items-start'
+              key={name}
+            >
+              <ConfigLabel label={label} forId={name}></ConfigLabel>
+              <ConfigInput
+                id={name}
+                name={name}
+                inputType='select'
+                selectOptions={dimensionOptions}
+                currentValue={
+                  typeof dimensions[name] === 'number'
+                    ? dimensions[name].toFixed(2)
+                    : dimensions[name]
+                }
+                onValueChange={(val) => onUpdate(name, val)}
+                onOpenStateChange={onActiveSectionChange}
+              />
+            </div>
+          );
+        })}
       </div>
     </ConfigSectionWrapper>
   );

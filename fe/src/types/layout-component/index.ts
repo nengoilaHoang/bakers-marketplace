@@ -1,15 +1,15 @@
 import {
-	CommerceComponent,
-	UpdateCommerceComponent,
-} from './commerce-component';
+    CommerceComponent,
+    UpdateCommerceComponent,
+} from './commerce-component/commerce-component';
 import {
-	CompositeComponent,
-	UpdateCompositeComponent,
+    CompositeComponent,
+    UpdateCompositeComponent,
 } from './composite-component';
 import { LeafComponent, UpdateLeafComponent } from './leaf-component';
 import {
-	RepeaterComponent,
-	UpdateRepeaterComponent,
+    RepeaterComponent,
+    UpdateRepeaterComponent,
 } from './repeater-component';
 
 export type TextAlignmentType = 'center' | 'justify' | 'left' | 'right';
