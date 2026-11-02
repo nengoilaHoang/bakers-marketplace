@@ -1,108 +1,85 @@
+// components/storefront/StorefrontEditor.tsx
 import StorefrontLayoutProvider from '@/hooks/storefront/StorefrontLayoutProvider';
 import { LayoutState } from '@/hooks/storefront/useLayoutReducer';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { StorefrontReleaseWithLayout } from '@/types/storefront';
-import flattenLayout, { FlattenComponent } from '@/utils/flattenLayout';
-import { PointerActivationConstraints, PointerSensor } from '@dnd-kit/dom';
-import { DragDropProvider } from '@dnd-kit/react';
+import flattenLayout from '@/utils/flattenLayout';
+import { PointerActivationConstraints } from '@dnd-kit/dom';
+import { DragDropProvider, PointerSensor } from '@dnd-kit/react';
 import { useMemo } from 'react';
 import CanvasStage from './canvas/CanvasStage';
 import ComponentRenderer from './ComponentRenderer';
 import StorefrontConfigSidebar from './StorefrontConfigSidebar';
-
 type StorefrontEditorProps = {
   release: StorefrontReleaseWithLayout;
 };
 
-const StorefrontDndContainer = ({ root }: { root: FlattenComponent }) => {
+const DndContainer = ({ children }: { children: React.ReactNode }) => {
   const { moveComponent } = useStorefrontLayoutContext();
-  const {
-    breakpoint,
-    zoom,
-    isPreview,
-    setIsDragging,
-    selectComponent,
-    selectedComponentId,
-  } = useStorefrontCanvasContext();
+  const { breakpoint, setIsDragging, selectComponent, selectedComponentId } =
+    useStorefrontCanvasContext();
 
   return (
-    <DragDropProvider
-      onDragStart={({ operation }) => {
-        setIsDragging(true);
-        const { source } = operation;
-        if (operation.canceled || !source) return;
-
-        const { componentId } = source.data as {
-          componentId: string;
-          sourceParentId: string;
-          sourceSlot: number;
-        };
-
-        if (selectedComponentId !== componentId) {
-          selectComponent(componentId);
-        }
-      }}
-      onDragEnd={({ operation }) => {
-        setIsDragging(false);
-        const { source, target } = operation;
-        if (operation.canceled || !source || !target) return;
-
-        const { sourceParentId, sourceSlot } = source.data as {
-          componentId: string;
-          sourceParentId: string;
-          sourceSlot: number;
-        };
-        const { parentId: targetParentId, slot: targetSlot } = target.data as {
-          parentId: string;
-          slot: number;
-        };
-
-        moveComponent(
-          breakpoint === 'fluid' ? 'desktop' : breakpoint,
-          sourceParentId,
-          sourceSlot,
-          targetParentId,
-          targetSlot,
-        );
-      }}
-      sensors={(defaults) => [
-        ...defaults.filter((sensor) => sensor !== PointerSensor),
-        PointerSensor.configure({
-          activationConstraints: [
-            new PointerActivationConstraints.Distance({ value: 8 }),
-            new PointerActivationConstraints.Delay({
-              value: 200,
-              tolerance: 10,
-            }),
-          ],
-        }),
-      ]}
-    >
-      <div className='relative flex flex-1 size-full overflow-hidden'>
-        <CanvasStage
-          currentBreakpoint={breakpoint}
-          zoom={zoom}
-          isPreview={isPreview}
-        >
-          <ComponentRenderer component={root}></ComponentRenderer>
-        </CanvasStage>
-
-        {selectedComponentId !== null ? <StorefrontConfigSidebar /> : null}
-      </div>
-    </DragDropProvider>
+    <div className='relative flex flex-1 w-full min-h-full'>
+      <DragDropProvider
+        onDragStart={({ operation }) => {
+          setIsDragging(true);
+          const { source } = operation;
+          if (operation.canceled || !source) return;
+          const { componentId } = source.data as {
+            componentId: string;
+            sourceParentId: string;
+            sourceSlot: number;
+          };
+          if (selectedComponentId !== componentId) {
+            selectComponent(componentId);
+          }
+        }}
+        onDragEnd={({ operation }) => {
+          setIsDragging(false);
+          const { source, target } = operation;
+          if (operation.canceled || !source || !target) return;
+          const { sourceParentId, sourceSlot } = source.data as {
+            componentId: string;
+            sourceParentId: string;
+            sourceSlot: number;
+          };
+          const { parentId: targetParentId, slot: targetSlot } =
+            target.data as { parentId: string; slot: number };
+          moveComponent(
+            breakpoint === 'fluid' ? 'desktop' : breakpoint,
+            sourceParentId,
+            sourceSlot,
+            targetParentId,
+            targetSlot,
+          );
+        }}
+        sensors={(defaults) => [
+          ...defaults.filter((sensor) => sensor !== PointerSensor),
+          PointerSensor.configure({
+            activationConstraints: [
+              new PointerActivationConstraints.Distance({ value: 8 }),
+              new PointerActivationConstraints.Delay({
+                value: 200,
+                tolerance: 10,
+              }),
+            ],
+          }),
+        ]}
+      >
+        {children}
+      </DragDropProvider>
+    </div>
   );
 };
 
 const StorefrontEditor = ({ release }: StorefrontEditorProps) => {
   const layout = useMemo<LayoutState | undefined>(() => {
-    if (!release?.layouts || release.layouts.length === 0) {
-      return undefined;
-    }
+    if (!release?.layouts || release.layouts.length === 0) return undefined;
 
     const flattenedLayouts = release.layouts.map((item) => {
       const flattenedRoot = flattenLayout(item.root);
-
       return {
         id: item.id,
         type: item.type,
@@ -122,13 +99,20 @@ const StorefrontEditor = ({ release }: StorefrontEditorProps) => {
     return layoutStates.find((item) => item.type === 'HOME') ?? layoutStates[0];
   }, [release.layouts]);
 
-  if (!layout) {
-    return null;
-  }
+  if (!layout) return null;
 
   return (
     <StorefrontLayoutProvider initialState={layout}>
-      {({ root }) => <StorefrontDndContainer root={root} />}
+      {({ root }) => (
+        <div className='relative flex flex-1 size-full overflow-hidden'>
+          <CanvasStage>
+            <DndContainer>
+              <ComponentRenderer component={root} />
+            </DndContainer>
+          </CanvasStage>
+          <StorefrontConfigSidebar />
+        </div>
+      )}
     </StorefrontLayoutProvider>
   );
 };

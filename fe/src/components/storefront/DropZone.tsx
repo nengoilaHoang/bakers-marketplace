@@ -27,7 +27,7 @@ const DropZone = ({
 
   const styleClasses = useMemo(() => {
     let style =
-      'relative grid h-full w-full min-w-0 min-h-0 overflow-hidden transition-all';
+      'relative grid h-full w-full min-w-0 min-h-0 overflow-hidden transition-[background-color,border-color,box-shadow] duration-150';
     if (isOccupied) {
       style += isDropTarget
         ? " after:content-[''] after:absolute after:inset-0 after:z-10 after:pointer-events-none after:ring-2 after:ring-blue-500 after:rounded-md after:bg-blue-200/50 after:transition-all after:duration-300 after:ease-in-out"

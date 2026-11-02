@@ -1,4 +1,5 @@
 // components/storefront/ConfigSidebar.tsx
+import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { FlattenComponent } from '@/utils/flattenLayout';
 import { useMemo, useState } from 'react';
 import BaseLayoutSections from './config-sections/BaseLayoutSections';
@@ -26,9 +27,10 @@ const ConfigSidebar = ({
   component,
   onUpdate,
 }: ConfigSidebarProps) => {
+  const { breakpoint } = useStorefrontCanvasContext();
+
   const isBentoItem =
-    component.config.colSpan !== undefined ||
-    component.config.rowSpan !== undefined;
+    'colSpan' in component.config && 'rowSpan' in component.config;
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     dimensions: true,
@@ -120,6 +122,7 @@ const ConfigSidebar = ({
             onUpdate={onUpdate}
             onActiveSectionChange={setActiveSectionId}
             getSectionZIndex={getSectionZIndex}
+            currentBp={breakpoint === 'fluid' ? 'desktop' : breakpoint}
           />
         )}
 

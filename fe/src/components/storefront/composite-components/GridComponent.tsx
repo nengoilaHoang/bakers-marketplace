@@ -65,7 +65,7 @@ const GridComponent = ({
           gridTemplateRows,
           gridAutoRows:
             rowCfg.mode === 'fixed'
-              ? `minmax(${rowCfg.baseHeightPx}px, auto))`
+              ? `minmax(${rowCfg.baseHeightPx}px, auto)`
               : 'auto',
           gridAutoFlow: config.densePacking ? 'row dense' : 'row',
           ...baseStyle,

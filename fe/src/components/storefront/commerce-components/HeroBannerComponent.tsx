@@ -1,14 +1,67 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { cn } from '@/lib/cn';
-import { HeroBannerCommerceComponent } from '@/types/layout-component/commerce-component';
+import { ResponsiveProp } from '@/types/layout-component';
 import {
-  CONTENT_POSITION_MAP,
+  ASPECT_RATIO_REGEX,
+  AspectRatioValue,
+  MediaFit,
+  STANDARD_ASPECT_RATIOS,
+} from '@/types/layout-component/aspect-ratio';
+import {
+  HeroBannerCommerceComponent,
+  HeroBannerContentPosition,
+} from '@/types/layout-component/commerce-component';
+import {
   getTextStyle,
+  HERO_POSITION_CLASSES,
   HERO_TYPOGRAPHY_PRESETS,
 } from '@/utils/layoutClasses';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { CSSProperties, useMemo } from 'react';
+
+const getAspectRatio = (aspect: AspectRatioValue): string => {
+  let aspectRatio = '';
+  if (typeof aspect === 'number') {
+    aspectRatio = `${aspect}`;
+  }
+
+  if (typeof aspect === 'string') {
+    if (
+      STANDARD_ASPECT_RATIOS.some(
+        (standardAspect) => standardAspect === aspect,
+      ) ||
+      ASPECT_RATIO_REGEX.test(aspect)
+    ) {
+      // Convert "16:9" -> "16 / 9" for valid CSS syntax
+      aspectRatio = aspect.replace(':', ' / ');
+    }
+  }
+
+  return aspectRatio;
+};
+
+const FIT_CLASSES: Record<MediaFit, string> = {
+  cover: 'object-cover',
+  contain: 'object-contain',
+  fill: 'object-fill',
+  none: 'object-none',
+  'scale-down': 'object-scale-down',
+};
+
+const getFitClass = (fit: MediaFit): string => {
+  return FIT_CLASSES[fit] || '';
+};
+
+const getFocalPointStyle = (focalPoint: {
+  x: number;
+  y: number;
+}): CSSProperties => {
+  const { x, y } = focalPoint;
+  return {
+    objectPosition: `${x * 100}% ${y * 100}%`,
+  };
+};
 
 type HeroBannerProps = {
   component: HeroBannerCommerceComponent;
@@ -38,6 +91,9 @@ const HeroBannerComponent = ({
 
   const { config } = component;
   const {
+    aspect,
+    fit,
+    focalPoint,
     mediaType,
     mobileMediaUrl,
     desktopMediaUrl,
@@ -46,33 +102,78 @@ const HeroBannerComponent = ({
     title,
     subtitle,
     contentPosition,
+    contentSize,
     overlay,
     primaryCta,
     secondaryCta,
     ctaPosition,
   } = config;
 
-  const positionClasses = useMemo(
-    () =>
-      CONTENT_POSITION_MAP[contentPosition] ??
-      'justify-center items-center text-center',
-    [contentPosition],
-  );
+  const positionClasses = useMemo(() => {
+    const getHeroBannerPositionClasses = (
+      contentPosition?: ResponsiveProp<HeroBannerContentPosition>,
+    ): string => {
+      const desktopPos = contentPosition?.desktop ?? 'middle-center';
+      const tabletPos = contentPosition?.tablet ?? desktopPos;
+      const mobilePos = contentPosition?.mobile ?? tabletPos;
+
+      return [
+        HERO_POSITION_CLASSES.desktop[desktopPos],
+        HERO_POSITION_CLASSES.tablet[tabletPos],
+        HERO_POSITION_CLASSES.mobile[mobilePos],
+      ].join(' ');
+    };
+
+    return getHeroBannerPositionClasses(contentPosition);
+  }, [contentPosition]);
 
   const contentSizeClasses = useMemo(
-    () => HERO_TYPOGRAPHY_PRESETS[config.contentSize] || '',
-    [config.contentSize],
+    () => HERO_TYPOGRAPHY_PRESETS[contentSize ?? 'large'],
+    [contentSize],
   );
+
+  const focalPointStyle = useMemo(() => {
+    if (focalPoint) {
+      return getFocalPointStyle(focalPoint);
+    }
+    return {};
+  }, [focalPoint]);
+
+  const aspectStyles = useMemo(() => {
+    if (!aspect) return {};
+
+    const desktopRatio = getAspectRatio(aspect.desktop);
+    const tabletRatio = aspect.tablet
+      ? getAspectRatio(aspect.tablet)
+      : desktopRatio;
+    const mobileRatio = aspect.mobile
+      ? getAspectRatio(aspect.mobile)
+      : tabletRatio;
+
+    return {
+      '--aspect-ratio-mobile': `${mobileRatio}`,
+      '--aspect-ratio-tablet': `${tabletRatio}`,
+      '--aspect-ratio-desktop': `${desktopRatio}`,
+    } as CSSProperties;
+  }, [aspect]);
+
+  const fitClass = useMemo(() => {
+    if (fit) {
+      return getFitClass(fit);
+    }
+    return '';
+  }, [fit]);
 
   return (
     <div
       id={id}
       tabIndex={tabIndex}
       className={cn(
-        'relative flex overflow-hidden w-full min-h-[300px]',
+        'relative flex overflow-hidden',
+        'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
         baseClasses,
       )}
-      style={baseStyle}
+      style={{ ...baseStyle, ...aspectStyles, ...focalPointStyle }}
       ref={ref}
       role='button'
       data-layout-node='true'
@@ -88,7 +189,7 @@ const HeroBannerComponent = ({
     >
       {/* Background Media */}
       {mediaType === 'image' && (
-        <div className='relative size-full min-h-75 flex-1'>
+        <div className='absolute inset-0 min-h-0 min-w-0'>
           <Image
             src={
               breakpoint === 'mobile' && mobileMediaUrl
