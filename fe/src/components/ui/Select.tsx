@@ -3,10 +3,12 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/lib/cn';
 
 import Icon from './Icon';
+import { fieldClasses } from './Input';
 
 type SelectProps = Omit<ComponentProps<'select'>, 'size'> & {
   // filter: viền accent (bộ lọc tìm kiếm). plain: không viền (sắp xếp).
-  tone?: 'filter' | 'plain';
+  // field: giống Input, dùng trong form (bọc bằng Field).
+  tone?: 'filter' | 'plain' | 'field';
   wrapperClassName?: string;
 };
 
@@ -22,9 +24,13 @@ export default function Select({
     <div className={cn('relative inline-flex', wrapperClassName)}>
       <select
         className={cn(
-          'h-11 w-full cursor-pointer appearance-none rounded-control bg-field pr-9 pl-3 text-lead font-medium text-ink outline-none',
-          'focus-visible:ring-2 focus-visible:ring-accent/50',
-          tone === 'filter' ? 'border border-accent' : 'border border-transparent',
+          tone === 'field'
+            ? cn(fieldClasses(), 'h-12 cursor-pointer appearance-none pr-10')
+            : cn(
+                'h-11 w-full cursor-pointer appearance-none rounded-control bg-field pr-9 pl-3 text-lead font-medium text-ink outline-none',
+                'focus-visible:ring-2 focus-visible:ring-accent/50',
+                tone === 'filter' ? 'border border-accent' : 'border border-transparent',
+              ),
           className,
         )}
         {...props}

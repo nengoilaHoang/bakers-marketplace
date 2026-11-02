@@ -4,7 +4,7 @@ import Breadcrumb, { type BreadcrumbItem } from '@/components/ui/Breadcrumb';
 import PageTitle from '@/components/ui/PageTitle';
 import { cn } from '@/lib/cn';
 
-type VendorPageProps = Readonly<{
+type DashboardPageProps = Readonly<{
   // Tiêu đề trang (h1) và <title> của tab.
   title: string;
   // Nội dung h1 khi cần khác title, ví dụ kèm nhãn trạng thái.
@@ -18,8 +18,8 @@ type VendorPageProps = Readonly<{
   children: ReactNode;
 }>;
 
-// Khung nội dung cho mọi trang trong khu vendor (đặt bên trong VendorLayout).
-export default function VendorPage({
+// Khung nội dung cho mọi trang trong khu quản lý (vendor, admin), đặt bên trong DashboardLayout.
+export default function DashboardPage({
   title,
   heading,
   description,
@@ -27,7 +27,7 @@ export default function VendorPage({
   actions,
   size = 'page',
   children,
-}: VendorPageProps) {
+}: DashboardPageProps) {
   return (
     <div
       className={cn(

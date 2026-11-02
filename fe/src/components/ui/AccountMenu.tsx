@@ -16,6 +16,7 @@ export default function AccountMenu() {
   const { ref, isOpen, toggle, close } = useDropdown();
 
   const isVendor = account?.role === 'VENDOR';
+  const isAdmin = account?.role === 'ADMIN';
 
   if (!isAuthenticated || !account) {
     return (
@@ -57,7 +58,11 @@ export default function AccountMenu() {
           <p className='truncate border-b border-line px-4 py-2 text-meta text-ink-muted uppercase'>
             {account.displayName}
           </p>
-          {isVendor ? (
+          {isAdmin ? (
+            <Link href='/admin' className={MENU_ITEM_CLASSES}>
+              Trang quản trị
+            </Link>
+          ) : isVendor ? (
             <Link href='/vendors' className={MENU_ITEM_CLASSES}>
               Quản lý cửa hàng
             </Link>

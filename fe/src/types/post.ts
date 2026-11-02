@@ -1,4 +1,3 @@
-import type { RecipeMutationPayload } from '@/types/recipe';
 
 export type PostAuthor = {
   id: string;
@@ -62,8 +61,9 @@ export type PostCreatePayload = {
   title: string;
   content: string;
   tags: string[];
-  // Có recipe thì BE tạo 2 công thức giống nhau và thêm token [[recipe:<id bản snapshot>]] vào cuối content
-  recipe?: RecipeMutationPayload;
+  // Id một công thức của chính người viết (không phải snapshot). BE sao chép thành bản snapshot
+  // gắn vào bài và thêm token [[recipe:<id bản snapshot>]] vào cuối content.
+  recipeId?: string;
 };
 
 export type PostUpdatePayload = {

@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
 import type { PostTag } from '#/models/posts/post-tags.model.js';
-import { RecipeCreateSchema } from '#/models/recipes/recipes.model.js';
+
+export const PostStatusSchema = z.enum(['VISIBLE', 'REMOVED']);
 
 export const PostSchema = z.object({
 	id: z.uuidv4().optional(),
 	authorId: z.uuidv4().nullable().optional(),
 	title: z.string().trim().min(1).max(255),
 	content: z.string().trim().min(1).max(10000),
+	status: PostStatusSchema.optional(),
 	createdAt: z.date().optional(),
 	updatedAt: z.date().optional(),
 });
@@ -15,31 +17,16 @@ export const PostSchema = z.object({
 const PostTagsSchema = z.array(z.string().trim().min(1).max(50)).max(10);
 
 /**
- * Same shape as the body of POST /recipes. The server sets userId, isPublic and
- * isSnapshot itself, and the relation sets are handled by the recipe services.
- */
-const PostRecipeSchema = RecipeCreateSchema.omit({
-	userId: true,
-	isPublic: true,
-	isSnapshot: true,
-}).extend({
-	steps: z.unknown().optional(),
-	recipeNotes: z.unknown().optional(),
-	recipeTags: z.unknown().optional(),
-	recipeTools: z.unknown().optional(),
-	recipeIngredients: z.unknown().optional(),
-});
-
-/**
- * With `recipe`, the post is created together with a recipe and its snapshot,
- * and a [[recipe:<snapshot id>]] token is appended to the content.
+ * `recipeId` picks one of the author's own recipes (not a snapshot). The server
+ * copies it into a snapshot and appends a [[recipe:<snapshot id>]] token to the
+ * content, so later edits to the original recipe do not change the post.
  */
 export const PostCreateSchema = PostSchema.pick({
 	title: true,
 	content: true,
 }).extend({
 	tags: PostTagsSchema.optional(),
-	recipe: PostRecipeSchema.optional(),
+	recipeId: z.uuidv4().optional(),
 });
 
 /**
@@ -58,6 +45,7 @@ export const PostCursorSchema = z.object({
 	id: z.uuidv4(),
 });
 
+export type PostStatus = z.infer<typeof PostStatusSchema>;
 export type PostData = z.infer<typeof PostSchema>;
 export type PostCreate = z.infer<typeof PostCreateSchema>;
 export type PostUpdate = z.infer<typeof PostUpdateSchema>;
@@ -104,6 +92,7 @@ export class Post implements PostData {
 	authorId?: string | null;
 	title!: string;
 	content!: string;
+	status?: PostStatus;
 	createdAt?: Date;
 	updatedAt?: Date;
 

@@ -1,17 +1,19 @@
+import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
 import PostFields from '@/components/posts/PostFields';
-import RecipeForm from '@/components/recipe/RecipeForm';
 import Alert from '@/components/ui/Alert';
 import Button, { ButtonLink } from '@/components/ui/Button';
-import Checkbox from '@/components/ui/Checkbox';
 import Container from '@/components/ui/Container';
+import Field from '@/components/ui/Field';
 import PageTitle from '@/components/ui/PageTitle';
+import Select from '@/components/ui/Select';
 import { ApiError } from '@/lib/api';
 import { createPost } from '@/services/posts';
-import type { RecipeMutationPayload } from '@/types/recipe';
+import { getMyRecipes } from '@/services/recipes';
+import type { Recipe } from '@/types/recipe';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError && Array.isArray(error.details)) {
@@ -33,15 +35,39 @@ export default function NewPostPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tagsInput, setTagsInput] = useState('');
-  const [withRecipe, setWithRecipe] = useState(false);
+  const [recipeId, setRecipeId] = useState('');
+  const [myRecipes, setMyRecipes] = useState<Recipe[] | null>(null);
+  const [recipesError, setRecipesError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ném lỗi ra ngoài để nơi gọi hiển thị (RecipeForm tự hiện lỗi trong ô công thức)
-  async function submitPost(recipe?: RecipeMutationPayload) {
+  // Danh sách công thức để chọn đính kèm: chỉ các công thức trong kho của người viết.
+  useEffect(() => {
+    const controller = new AbortController();
+    const requestTimer = window.setTimeout(() => {
+      getMyRecipes({ signal: controller.signal })
+        .then((recipes) => {
+          if (!controller.signal.aborted) setMyRecipes(recipes);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setRecipesError(true);
+        });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(requestTimer);
+      controller.abort();
+    };
+  }, []);
+
+  async function handleSubmit() {
     if (!title.trim() || !content.trim()) {
-      throw new Error('Vui lòng nhập tiêu đề và nội dung bài viết.');
+      setError('Vui lòng nhập tiêu đề và nội dung bài viết.');
+      return;
     }
+
+    setIsSubmitting(true);
+    setError(null);
 
     try {
       const post = await createPost({
@@ -51,21 +77,10 @@ export default function NewPostPage() {
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        recipe,
+        recipeId: recipeId || undefined,
       });
 
       await router.push(`/posts/${post.id}`);
-    } catch (requestError) {
-      throw new Error(getErrorMessage(requestError));
-    }
-  }
-
-  async function handleSubmitWithoutRecipe() {
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      await submitPost();
     } catch (submitError) {
       setError(getErrorMessage(submitError));
       setIsSubmitting(false);
@@ -95,51 +110,59 @@ export default function NewPostPage() {
             disabled={isSubmitting}
           />
 
-          <div className='rounded-box bg-surface px-5 py-4'>
-            <Checkbox
-              label='Đăng kèm công thức'
-              labelClassName='text-lead text-ink'
-              checked={withRecipe}
-              onChange={(event) => setWithRecipe(event.target.checked)}
-            />
+          <Field
+            label='Đính kèm công thức'
+            htmlFor='post-recipe'
+            hint='Chọn một công thức của bạn. Bài viết giữ bản lưu lúc đăng, sửa công thức sau này không ảnh hưởng tới bài. Bản đính kèm luôn công khai.'
+          >
+            {recipesError ? (
+              <p className='text-body-sm text-danger'>
+                Không tải được danh sách công thức của bạn. Bạn vẫn có thể đăng bài không kèm công thức.
+              </p>
+            ) : myRecipes !== null && myRecipes.length === 0 ? (
+              <p className='text-body-sm text-ink-muted'>
+                Bạn chưa có công thức nào.{' '}
+                <Link href='/recipes/new' className='font-medium text-ink underline'>
+                  Tạo công thức
+                </Link>{' '}
+                trước rồi quay lại đính kèm.
+              </p>
+            ) : (
+              <Select
+                id='post-recipe'
+                tone='field'
+                wrapperClassName='w-full'
+                value={recipeId}
+                onChange={(event) => setRecipeId(event.target.value)}
+                disabled={isSubmitting || myRecipes === null}
+              >
+                <option value=''>
+                  {myRecipes === null ? 'Đang tải công thức...' : 'Không đính kèm công thức'}
+                </option>
+                {myRecipes?.map((recipe) => (
+                  <option key={recipe.id} value={recipe.id}>
+                    {recipe.title}
+                    {recipe.isPublic ? '' : ' (riêng tư)'}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+
+          {error && <Alert tone='danger'>{error}</Alert>}
+          <div className='flex flex-wrap gap-4'>
+            <Button
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting}
+              className='min-w-38'
+            >
+              {isSubmitting ? 'Đang đăng...' : 'Đăng bài'}
+            </Button>
+            <ButtonLink href='/' variant='outline'>
+              Hủy
+            </ButtonLink>
           </div>
-
-          {!withRecipe && (
-            <>
-              {error && <Alert tone='danger'>{error}</Alert>}
-              <div className='flex flex-wrap gap-4'>
-                <Button
-                  onClick={() => void handleSubmitWithoutRecipe()}
-                  disabled={isSubmitting}
-                  className='min-w-38'
-                >
-                  {isSubmitting ? 'Đang đăng...' : 'Đăng bài'}
-                </Button>
-                <ButtonLink href='/' variant='outline'>
-                  Hủy
-                </ButtonLink>
-              </div>
-            </>
-          )}
         </div>
-
-        {withRecipe && (
-          <section className='mt-12'>
-            <h2 className='font-heading text-h3 font-semibold text-ink'>Công thức đính kèm</h2>
-            <Alert tone='info' className='mt-3'>
-              Khi đăng, hệ thống tạo 2 bản công thức giống nhau: 1 bản nằm trong &quot;Công thức của
-              tôi&quot;, 1 bản gắn cố định vào bài viết này. Cả hai luôn công khai (bỏ qua ô
-              &quot;Công khai công thức này&quot; bên dưới).
-            </Alert>
-            <div className='mt-5'>
-              <RecipeForm
-                submitLabel='Đăng bài kèm công thức'
-                cancelHref='/'
-                onSubmit={(recipe) => submitPost({ ...recipe, isPublic: true })}
-              />
-            </div>
-          </section>
-        )}
       </Container>
     </>
   );

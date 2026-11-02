@@ -12,8 +12,8 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
 import IconButton, { IconLink } from '@/components/ui/IconButton';
 import Table, { Td, Th } from '@/components/ui/Table';
-import { PanelSkeleton } from '@/components/vendor/Panel';
-import VendorPage from '@/components/vendor/VendorPage';
+import { PanelSkeleton } from '@/components/dashboard/Panel';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { collectionApi } from '@/services/collections';
 import type { Collection } from '@/types/collection';
@@ -71,7 +71,7 @@ const CollectionListPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Bộ sưu tập'
       description='Nhóm sản phẩm theo chủ đề để khách dễ tìm.'
       actions={
@@ -171,7 +171,7 @@ const CollectionListPage: NextPageWithLayout = () => {
           </tbody>
         </Table>
       )}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

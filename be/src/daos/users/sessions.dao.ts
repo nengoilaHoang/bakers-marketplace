@@ -1,4 +1,5 @@
 import db from '#/db/index.js';
+import type { Knex } from 'knex';
 import {
 	Session,
 	type SessionCreate,
@@ -71,6 +72,16 @@ class SessionDAO {
 			.returning('*');
 
 		return deleted ? new Session(deleted) : null;
+	}
+
+	/** Ends every session of a user, e.g. when the account is banned. */
+	public async deleteByUserId(
+		userId: string,
+		trx?: Knex.Transaction,
+	): Promise<number> {
+		return (trx ?? this.db.instance)(this.tableName)
+			.where('userId', userId)
+			.del();
 	}
 
 	private removeUndefined(session: SessionUpdate): Partial<SessionUpdate> {

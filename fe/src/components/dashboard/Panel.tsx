@@ -13,7 +13,7 @@ type PanelProps = Readonly<{
   className?: string;
 }>;
 
-// Khối nội dung có viền trong khu vendor: thông tin, form, danh sách nhỏ.
+// Khối nội dung có viền trong khu quản lý (vendor, admin): thông tin, form, danh sách nhỏ.
 export default function Panel({
   title,
   description,

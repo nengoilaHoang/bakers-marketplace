@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Icon from '@/components/ui/Icon';
 import Input from '@/components/ui/Input';
-import VendorPage from '@/components/vendor/VendorPage';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import useAuth from '@/hooks/user/useAuthContext';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
@@ -41,7 +41,7 @@ const SearchPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Tìm sản phẩm'
       breadcrumb={[
         { label: 'Sản phẩm', href: '/vendors/products' },
@@ -85,7 +85,7 @@ const SearchPage: NextPageWithLayout = () => {
             <ProductTable products={results} />
           </>
         ))}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

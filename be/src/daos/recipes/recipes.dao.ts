@@ -159,6 +159,53 @@ class RecipeDAO {
     return new Recipe(deletedRecipe);
   }
 
+  /**
+   * Copies a recipe with its ingredients, tools, steps, notes and tags into a
+   * new public snapshot, the one a post is attached to. Returns the snapshot id.
+   */
+  public async createSnapshot(
+    recipeId: string,
+    trx: Knex.Transaction,
+  ): Promise<string> {
+    const result = await trx.raw(
+      `INSERT INTO recipes (cover_img_id, user_id, title, description, portion, is_public, is_snapshot)
+       SELECT cover_img_id, user_id, title, description, portion, TRUE, TRUE
+       FROM recipes
+       WHERE id = ?
+       RETURNING id`,
+      [recipeId],
+    );
+    const snapshotId: string = result.rows[0].id;
+
+    await trx.raw(
+      `INSERT INTO recipe_ingredients (recipe_id, cover_img_id, name, amount, unit)
+       SELECT ?, cover_img_id, name, amount, unit FROM recipe_ingredients WHERE recipe_id = ?`,
+      [snapshotId, recipeId],
+    );
+    await trx.raw(
+      `INSERT INTO recipe_tools (recipe_id, cover_img_id, name, amount)
+       SELECT ?, cover_img_id, name, amount FROM recipe_tools WHERE recipe_id = ?`,
+      [snapshotId, recipeId],
+    );
+    await trx.raw(
+      `INSERT INTO recipe_steps (recipe_id, step_order, description)
+       SELECT ?, step_order, description FROM recipe_steps WHERE recipe_id = ?`,
+      [snapshotId, recipeId],
+    );
+    await trx.raw(
+      `INSERT INTO recipe_notes (recipe_id, note_order, content)
+       SELECT ?, note_order, content FROM recipe_notes WHERE recipe_id = ?`,
+      [snapshotId, recipeId],
+    );
+    await trx.raw(
+      `INSERT INTO recipe_tags (recipe_id, name)
+       SELECT ?, name FROM recipe_tags WHERE recipe_id = ?`,
+      [snapshotId, recipeId],
+    );
+
+    return snapshotId;
+  }
+
   public async checkRecipeOwner(
     userId:string,
     recipeId: string,

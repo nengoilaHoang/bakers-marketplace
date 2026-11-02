@@ -4,8 +4,8 @@ import Button, { ButtonLink } from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Input, { Textarea } from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import ApiErrorAlert from '@/components/vendor/ApiErrorAlert';
-import Panel from '@/components/vendor/Panel';
+import ApiErrorAlert from '@/components/dashboard/ApiErrorAlert';
+import Panel from '@/components/dashboard/Panel';
 
 export type ProductFormValues = {
   brandId: string;

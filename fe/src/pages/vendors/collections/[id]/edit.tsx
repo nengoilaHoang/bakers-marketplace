@@ -8,8 +8,8 @@ import CollectionForm, {
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorScope from '@/components/layout/VendorScope';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { PanelSkeleton } from '@/components/vendor/Panel';
-import VendorPage from '@/components/vendor/VendorPage';
+import { PanelSkeleton } from '@/components/dashboard/Panel';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { collectionApi } from '@/services/collections';
 
@@ -65,7 +65,7 @@ const EditCollectionPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Sửa bộ sưu tập'
       breadcrumb={[
         { label: 'Bộ sưu tập', href: '/vendors/collections' },
@@ -95,7 +95,7 @@ const EditCollectionPage: NextPageWithLayout = () => {
           onSubmit={(values) => void handleSubmit(values)}
         />
       )}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

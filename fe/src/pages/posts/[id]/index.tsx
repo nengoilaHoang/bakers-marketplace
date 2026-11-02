@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
+import AuthorProfileButton from '@/components/posts/AuthorProfileButton';
 import Alert from '@/components/ui/Alert';
 import Avatar from '@/components/ui/Avatar';
 import Breadcrumb from '@/components/ui/Breadcrumb';
@@ -248,7 +249,14 @@ export default function PostDetailPage() {
                 <Avatar size='sm' label={`Ảnh đại diện ${authorName}`} />
                 <div className='flex min-w-0 flex-1 flex-col gap-2 pt-1'>
                   <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-                    <p className='text-lead font-semibold text-ink'>{authorName}</p>
+                    <p className='text-lead font-semibold text-ink'>
+                      <AuthorProfileButton
+                        author={comment.author}
+                        currentUserId={currentUser?.id ?? null}
+                      >
+                        {authorName}
+                      </AuthorProfileButton>
+                    </p>
                     <time
                       dateTime={comment.createdAt}
                       className='ml-auto text-meta font-medium text-ink-muted'
@@ -350,9 +358,14 @@ export default function PostDetailPage() {
               <p className='mt-1 flex flex-wrap items-center gap-x-2.5 text-caption font-light text-ink'>
                 <span>
                   Bởi{' '}
-                  <span className='text-body-sm font-normal text-ink-muted uppercase'>
-                    {post.author?.displayName ?? 'Người dùng đã xoá'}
-                  </span>
+                  <AuthorProfileButton
+                    author={post.author}
+                    currentUserId={currentUser?.id ?? null}
+                  >
+                    <span className='text-body-sm font-normal text-ink-muted uppercase'>
+                      {post.author?.displayName ?? 'Người dùng đã xoá'}
+                    </span>
+                  </AuthorProfileButton>
                 </span>
                 <time dateTime={post.createdAt}>{formatDateTime(post.createdAt)}</time>
                 {post.updatedAt !== post.createdAt && <span>· đã chỉnh sửa</span>}

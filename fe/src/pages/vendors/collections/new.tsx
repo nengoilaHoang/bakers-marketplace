@@ -8,7 +8,7 @@ import CollectionForm, {
 } from '@/components/collection/CollectionForm';
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorScope from '@/components/layout/VendorScope';
-import VendorPage from '@/components/vendor/VendorPage';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { collectionApi } from '@/services/collections';
 
@@ -31,7 +31,7 @@ const NewCollectionPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Tạo bộ sưu tập'
       breadcrumb={[
         { label: 'Bộ sưu tập', href: '/vendors/collections' },
@@ -47,7 +47,7 @@ const NewCollectionPage: NextPageWithLayout = () => {
         error={error}
         onSubmit={(values) => void handleSubmit(values)}
       />
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

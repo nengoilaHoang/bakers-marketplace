@@ -12,8 +12,8 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
-import VendorPage from '@/components/vendor/VendorPage';
+import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import useAuth from '@/hooks/user/useAuthContext';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
@@ -209,22 +209,22 @@ const StockDetailPage: NextPageWithLayout = () => {
 
   if (loadError) {
     return (
-      <VendorPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
+      <DashboardPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
         <ErrorState
           title='Không thể tải sản phẩm'
           message={loadError}
           onRetry={() => void load()}
         />
-      </VendorPage>
+      </DashboardPage>
     );
   }
 
   if (!product || !thresholds) {
     return (
-      <VendorPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
+      <DashboardPage title='Tồn kho' breadcrumb={breadcrumb} size='narrow'>
         <PanelSkeleton />
         <PanelSkeleton />
-      </VendorPage>
+      </DashboardPage>
     );
   }
 
@@ -234,7 +234,7 @@ const StockDetailPage: NextPageWithLayout = () => {
   const isOwner = account?.id === product.vendorId;
 
   return (
-    <VendorPage
+    <DashboardPage
       title={`Tồn kho · ${product.title}`}
       heading={
         <span className='flex flex-wrap items-center gap-3'>
@@ -374,7 +374,7 @@ const StockDetailPage: NextPageWithLayout = () => {
           </Alert>
         )}
       </Panel>
-    </VendorPage>
+    </DashboardPage>
   );
 };
 
