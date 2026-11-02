@@ -1,4 +1,5 @@
 // components/storefront/canvas/CanvasStage.tsx
+// components/storefront/canvas/CanvasStage.tsx
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { BREAKPOINT_PRESETS } from '@/types/canvas';
 import React, { useCallback, useRef, useState } from 'react';
@@ -68,7 +69,9 @@ const CanvasStage = ({ children }: CanvasStageProps) => {
           onArtboardMount={handleArtboardMount}
           onClickCapture={handleCaptureClick}
           className={`w-full min-h-200 border-0 rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-all duration-150 ${
-            isPreview || isResizing ? 'pointer-events-none select-none' : ''
+            isPreview || isResizing || isDragging
+              ? 'pointer-events-none select-none'
+              : ''
           }`}
           freezeHeight={isDragging}
         >

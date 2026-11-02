@@ -164,15 +164,22 @@ const HeroBannerComponent = ({
     return '';
   }, [fit]);
 
+  const className = useMemo(
+    () =>
+      cn(
+        baseClasses,
+        'relative flex overflow-hidden',
+        'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
+        fitClass,
+      ),
+    [baseClasses, fitClass],
+  );
+
   return (
     <div
       id={id}
       tabIndex={tabIndex}
-      className={cn(
-        'relative flex overflow-hidden',
-        'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
-        baseClasses,
-      )}
+      className={className}
       style={{ ...baseStyle, ...aspectStyles, ...focalPointStyle }}
       ref={ref}
       role='button'

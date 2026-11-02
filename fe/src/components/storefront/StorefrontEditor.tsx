@@ -5,7 +5,7 @@ import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasCo
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { StorefrontReleaseWithLayout } from '@/types/storefront';
 import flattenLayout from '@/utils/flattenLayout';
-import { PointerActivationConstraints } from '@dnd-kit/dom';
+import { Feedback, PointerActivationConstraints } from '@dnd-kit/dom';
 import { DragDropProvider, PointerSensor } from '@dnd-kit/react';
 import { useMemo } from 'react';
 import CanvasStage from './canvas/CanvasStage';
@@ -23,6 +23,15 @@ const DndContainer = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className='relative flex flex-1 w-full min-h-full'>
       <DragDropProvider
+        plugins={(defaults) => [
+          ...defaults.filter((plugin) => plugin !== Feedback),
+          Feedback.configure({
+            feedback: 'move',
+          }),
+          Feedback.configure({
+            feedback: 'clone',
+          }),
+        ]}
         onDragStart={({ operation }) => {
           setIsDragging(true);
           const { source } = operation;
@@ -104,7 +113,7 @@ const StorefrontEditor = ({ release }: StorefrontEditorProps) => {
   return (
     <StorefrontLayoutProvider initialState={layout}>
       {({ root }) => (
-        <div className='relative flex flex-1 size-full overflow-hidden'>
+        <div className='relative flex flex-1 size-full'>
           <CanvasStage>
             <DndContainer>
               <ComponentRenderer component={root} />
