@@ -5,6 +5,7 @@ import jwt, {
 	type SignOptions,
 } from 'jsonwebtoken';
 import bcryptService from '#/services/authen/bcrypt.service.js';
+import userDAO from '#/daos/users/users.dao.js';
 import cookieService from '#/services/authen/cookie.service.js';
 import {
 	UserInfoSchema,
@@ -22,6 +23,8 @@ const TOKEN_CONFIG = {
 		expiresIn: '7d',
 	},
 } as const;
+
+type TokenPayload = Omit<UserInfo, 'createdAt' | 'updatedAt' | 'status'>;
 
 class JwtService {
 	public async generateToken(
@@ -91,7 +94,19 @@ class JwtService {
 			throw new UnauthorizedError('Refresh token is not associated with an active session');
 		}
 
-		const accessToken = this.signToken(payload, 'access');
+		// Sign from the current account, so a role granted by an admin applies without a new login
+		const user = await userDAO.getById(userId);
+
+		if (!user) {
+			throw new UnauthorizedError('Account is no longer available', 'SESSION_INVALID');
+		}
+
+		if (user.status === 'BANNED') {
+			throw new UnauthorizedError('Account has been banned', 'ACCOUNT_BANNED');
+		}
+
+		const currentPayload = this.toTokenPayload(user);
+		const accessToken = this.signToken(currentPayload, 'access');
 
 		if (!isExpired) {
 			cookieService.setTokenCookie(res, accessToken, 'access');
@@ -102,7 +117,7 @@ class JwtService {
 			throw new UnauthorizedError('Session id is missing');
 		}
 
-		const newRefreshToken = this.signToken(payload, 'refresh');
+		const newRefreshToken = this.signToken(currentPayload, 'refresh');
 		const changed = await bcryptService.changeRefreshToken(
 			session.id,
 			newRefreshToken,
@@ -185,7 +200,7 @@ class JwtService {
 	}
 
 	private signToken(
-		userInfo: UserInfo,
+		userInfo: TokenPayload,
 		type: 'access' | 'refresh',
 	): string {
 		const config = TOKEN_CONFIG[type];
@@ -207,16 +222,18 @@ class JwtService {
 		return parsed.data;
 	}
 
-	private toTokenPayload(userInfo: UserInfo): UserInfo {
+	private toTokenPayload(userInfo: UserInfo): TokenPayload {
 		const parsed = UserInfoSchema.safeParse(userInfo);
 
 		if (!parsed.success || !parsed.data.id) {
 			throw new Error('A valid user id is required to generate a token');
 		}
 
+		// Status can change at any time, so it is read from the database instead
 		const {
 			createdAt: _createdAt,
 			updatedAt: _updatedAt,
+			status: _status,
 			...payload
 		} = parsed.data;
 

@@ -13,7 +13,7 @@ export type SiteLayoutProps = Readonly<{
   header?: ReactNode;
   hideFooter?: boolean;
   mainClassName?: string;
-  theme?: 'vendor' | 'default';
+  theme?: 'dashboard' | 'default';
 }>;
 
 export default function SiteLayout({

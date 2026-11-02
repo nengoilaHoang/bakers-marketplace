@@ -7,9 +7,9 @@ import StockStatusBadge from '@/components/stock/StockStatusBadge';
 import { ButtonLink } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
-import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
-import StatCard from '@/components/vendor/StatCard';
-import VendorPage from '@/components/vendor/VendorPage';
+import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
+import StatCard from '@/components/dashboard/StatCard';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import { useVendorStocks } from '@/hooks/useVendorStocks';
 import useAuth from '@/hooks/user/useAuthContext';
 import type { NextPageWithLayout } from '@/pages/_app';
@@ -48,7 +48,7 @@ const VendorHomePage: NextPageWithLayout = () => {
   }, [products]);
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Tổng quan'
       description={account ? `Xin chào, ${account.displayName}.` : undefined}
       actions={
@@ -147,7 +147,7 @@ const VendorHomePage: NextPageWithLayout = () => {
           </Panel>
         </>
       )}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

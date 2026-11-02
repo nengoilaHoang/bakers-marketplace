@@ -2,11 +2,9 @@ import db from '#/db/index.js';
 import postDAO from '#/daos/posts/posts.dao.js';
 import postTagDAO from '#/daos/posts/post-tags.dao.js';
 import recipeService from '#/services/recipes/recipes.service.js';
-import type { RecipeCreatePayload } from '#/services/recipes/recipes.service.js';
 import {
 	BadRequestError,
 	ForbiddenError,
-	InternalServerError,
 	NotFoundError,
 } from '#/utils/http-errors.js';
 import type {
@@ -90,51 +88,40 @@ class PostService {
 		authorId: string,
 		payload: PostCreate,
 	): Promise<PostWithDetails> {
-		const { tags, recipe, ...post } = payload;
+		const { tags, recipeId, ...post } = payload;
 
 		// The only recipe a post can link to is the snapshot created below
 		if (extractRecipeIds(post.content).length > 0) {
 			throw new BadRequestError('Post content must not contain recipe tokens');
 		}
 
-		const recipes = recipe
-			? await this.createRecipeWithSnapshot(authorId, recipe)
-			: null;
-
-		let postId: string;
-
-		try {
-			postId = await db.instance.transaction(async (trx) => {
-				const createdPost = await this.postDAO.create(
-					authorId,
-					{
-						...post,
-						content: recipes
-							? appendRecipeToken(post.content, recipes.snapshotId)
-							: post.content,
-					},
-					trx,
-				);
-
-				await this.postTagDAO.replaceByPostId(
-					createdPost.id,
-					this.normalizeTags(tags),
-					trx,
-				);
-
-				return createdPost.id;
-			});
-		} catch (error) {
-			// Do not leave orphan recipes behind when the post cannot be created
-			if (recipes) {
-				await Promise.all([
-					recipeService.delete(recipes.recipeId),
-					recipeService.delete(recipes.snapshotId),
-				]);
-			}
-
-			throw error;
+		if (recipeId) {
+			await this.assertAttachableRecipe(authorId, recipeId);
 		}
+
+		const postId = await db.instance.transaction(async (trx) => {
+			const snapshotId = recipeId
+				? await recipeService.createSnapshot(recipeId, trx)
+				: null;
+			const createdPost = await this.postDAO.create(
+				authorId,
+				{
+					...post,
+					content: snapshotId
+						? appendRecipeToken(post.content, snapshotId)
+						: post.content,
+				},
+				trx,
+			);
+
+			await this.postTagDAO.replaceByPostId(
+				createdPost.id,
+				this.normalizeTags(tags),
+				trx,
+			);
+
+			return createdPost.id;
+		});
 
 		return this.getExistingPost(postId, authorId);
 	}
@@ -208,40 +195,23 @@ class PostService {
 		}
 	}
 
-	/**
-	 * Creates two identical public recipes: the original one, which shows up in
-	 * the author's recipes, and a snapshot that is attached to the post.
-	 */
-	private async createRecipeWithSnapshot(
+	/** A post can only take one of its author's own recipes, never a snapshot. */
+	private async assertAttachableRecipe(
 		authorId: string,
-		recipe: NonNullable<PostCreate['recipe']>,
-	): Promise<{ recipeId: string; snapshotId: string }> {
-		const original = await recipeService.set(authorId, {
-			...recipe,
-			isPublic: true,
-			isSnapshot: false,
-		} as RecipeCreatePayload);
+		recipeId: string,
+	): Promise<void> {
+		const recipe = await recipeService.getById(recipeId);
 
-		if (!original?.id) {
-			throw new InternalServerError('Recipe could not be created');
+		if (!recipe) {
+			throw new NotFoundError('Recipe not found');
 		}
 
-		try {
-			const snapshot = await recipeService.set(authorId, {
-				...recipe,
-				isPublic: true,
-				isSnapshot: true,
-			} as RecipeCreatePayload);
+		if (recipe.userId !== authorId) {
+			throw new ForbiddenError('You can only attach your own recipes');
+		}
 
-			if (!snapshot?.id) {
-				throw new InternalServerError('Recipe snapshot could not be created');
-			}
-
-			return { recipeId: original.id, snapshotId: snapshot.id };
-		} catch (error) {
-			await recipeService.delete(original.id);
-
-			throw error;
+		if (recipe.isSnapshot) {
+			throw new BadRequestError('Choose a recipe from your recipes, not one attached to a post');
 		}
 	}
 

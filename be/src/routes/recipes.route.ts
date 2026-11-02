@@ -15,12 +15,6 @@ router.get(
   recipeController.getRecipes,
 );
 
-router.post(
-  '/snapshot',
-  authenMiddleware,
-  recipeController.createSnapshot,
-);
-
 router.get(
   '/mine',
   authenMiddleware,

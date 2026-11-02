@@ -8,8 +8,8 @@ import ProductForm, {
   type ProductFormValues,
 } from '@/components/product/ProductForm';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { PanelSkeleton } from '@/components/vendor/Panel';
-import VendorPage from '@/components/vendor/VendorPage';
+import { PanelSkeleton } from '@/components/dashboard/Panel';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
 
@@ -81,7 +81,7 @@ const EditProductPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Sửa sản phẩm'
       breadcrumb={[
         { label: 'Sản phẩm', href: '/vendors/products' },
@@ -112,7 +112,7 @@ const EditProductPage: NextPageWithLayout = () => {
           onSubmit={(values) => void handleSubmit(values)}
         />
       )}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

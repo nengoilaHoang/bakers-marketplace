@@ -7,6 +7,8 @@ import productsRouter from '#/routes/products.route.js';
 import collectionsRouter from '#/routes/collections.route.js';
 import authenRouter from '#/routes/authen.route.js';
 import postsRouter from '#/routes/posts.route.js';
+import usersRouter from '#/routes/users.route.js';
+import adminRouter from '#/routes/admin.route.js';
 
 const router = Router();
 
@@ -17,5 +19,7 @@ router.use('/storefronts', storefrontsRouter);
 router.use('/pages', pageLayoutsRouter);
 router.use('/products', productsRouter);
 router.use('/collections', collectionsRouter);
+router.use('/users', usersRouter);
+router.use('/admin', adminRouter);
 
 export default router;

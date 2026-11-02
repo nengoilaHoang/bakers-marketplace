@@ -15,9 +15,9 @@ import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Table, { Td, Th } from '@/components/ui/Table';
-import { PanelSkeleton } from '@/components/vendor/Panel';
-import StatCard from '@/components/vendor/StatCard';
-import VendorPage from '@/components/vendor/VendorPage';
+import { PanelSkeleton } from '@/components/dashboard/Panel';
+import StatCard from '@/components/dashboard/StatCard';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import { useVendorStocks } from '@/hooks/useVendorStocks';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
@@ -168,7 +168,7 @@ const StockListPage: NextPageWithLayout = () => {
   }, [products, keyword, statusFilter, sortKey]);
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Tồn kho'
       description='Theo dõi số lượng từng sản phẩm, lọc theo trạng thái và điều chỉnh nhanh.'
     >
@@ -333,7 +333,7 @@ const StockListPage: NextPageWithLayout = () => {
           )}
         </>
       )}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

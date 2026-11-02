@@ -9,7 +9,7 @@ import ThemeRoot from '../ui/ThemeRoot';
 type ErrorShellProps = Readonly<{
   title: string;
   children: ReactNode;
-  theme?: 'vendor' | 'default';
+  theme?: 'dashboard' | 'default';
 }>;
 
 export default function ErrorShell({

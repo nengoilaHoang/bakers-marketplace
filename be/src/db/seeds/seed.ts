@@ -82,6 +82,14 @@ const users = [
   },
 ];
 
+// Inserted apart from `users` so the admin does not author seeded recipes or posts.
+const adminUser = {
+  email: 'admin@example.com',
+  displayname: 'Quản trị viên',
+  hashed_password: SEED_PASSWORD_HASH,
+  role: 'ADMIN',
+};
+
 const baseRecipes: RecipeSeed[] = [
   {
     title: 'Bánh Chocolate Fudge',
@@ -445,6 +453,53 @@ const postComments = [
 const POST_AUTHOR_REPLY =
   'Cảm ơn bạn nha, làm xong nhớ chia sẻ kết quả cùng nhóm nhé!';
 
+// ==========================================================
+// MODERATION CONFIG (reports, warnings, takedowns)
+// ==========================================================
+// Spam account, banned right now: signing in is refused with the ban reason.
+// Inserted apart from `users` so it does not shift who authors the seeded posts.
+const bannedUser = {
+  email: 'giasi.shop@example.com',
+  displayname: 'Shop Bánh Giá Sỉ',
+  hashed_password: SEED_PASSWORD_HASH,
+  role: 'CUSTOMER',
+  status: 'BANNED',
+};
+
+const spamPost = {
+  title: 'Nhận order bánh sỉ giá gốc, inbox Zalo',
+  content:
+    'Nhận làm bánh sinh nhật, bánh kem giá sỉ chỉ từ 50k. Đặt cọc trước 50%, inbox Zalo 09xx để chốt đơn liền tay!',
+  tags: ['quang-cao'],
+};
+
+const restoredPost = {
+  title: 'Bánh bông lan trứng muối sốt phô mai',
+  content:
+    'Mẻ bông lan trứng muối đầu tiên của mình, sốt phô mai tự nấu nên hơi đặc. Lần sau mình sẽ giảm bớt bột năng.',
+  tags: ['bong-lan', 'trung-muoi'],
+};
+
+const warnedPost = {
+  title: 'Đừng mua bánh ở tiệm đầu hẻm, dở tệ',
+  content:
+    'Bánh vừa khô vừa ngọt gắt, chủ tiệm thì thái độ. Ai mua ở đó là phí tiền, mọi người tẩy chay giùm mình.',
+  tags: ['review'],
+};
+
+type ReportTargetSeed = { postId: string } | { targetUserId: string };
+
+type HandledSeed = {
+  status: 'DISMISSED' | 'RESOLVED';
+  handledBy: string;
+  hoursAgo: number;
+  note: string;
+};
+
+function hoursAgo(trx: Knex.Transaction, hours: number) {
+  return trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hours]);
+}
+
 function pickOtherUsers<T extends { id: string }>(
   userRows: T[],
   excludedUserId: string,
@@ -515,6 +570,75 @@ async function createRecipeSnapshot(
   return snapshotId;
 }
 
+/** Inserts a report and its post_reports / user_reports row; without `handled` it stays PENDING. */
+async function seedReport(
+  trx: Knex.Transaction,
+  report: {
+    reporterId: string;
+    reason: string;
+    hoursAgo: number;
+    target: ReportTargetSeed;
+    handled?: HandledSeed;
+  },
+): Promise<string> {
+  const { handled } = report;
+  const [created] = await trx('reports')
+    .insert({
+      reporter_id: report.reporterId,
+      reason: report.reason,
+      created_at: hoursAgo(trx, report.hoursAgo),
+      ...(handled && {
+        status: handled.status,
+        handled_by: handled.handledBy,
+        handled_at: hoursAgo(trx, handled.hoursAgo),
+        note: handled.note,
+      }),
+    })
+    .returning(['id']);
+
+  if ('postId' in report.target) {
+    await trx('post_reports').insert({ id: created.id, post_id: report.target.postId });
+  } else {
+    await trx('user_reports').insert({
+      id: created.id,
+      target_user_id: report.target.targetUserId,
+    });
+  }
+
+  return created.id;
+}
+
+/** Inserts a takedown and its post_removals / user_bans row; without `revoked` it is still in force. */
+async function seedTakedown(
+  trx: Knex.Transaction,
+  takedown: {
+    target: { postId: string } | { userId: string };
+    issuedBy: string;
+    reason: string;
+    hoursAgo: number;
+    revoked?: { by: string; hoursAgo: number };
+  },
+): Promise<void> {
+  const { revoked } = takedown;
+  const [created] = await trx('takedowns')
+    .insert({
+      issued_by: takedown.issuedBy,
+      reason: takedown.reason,
+      issued_at: hoursAgo(trx, takedown.hoursAgo),
+      ...(revoked && {
+        revoked_by: revoked.by,
+        revoked_at: hoursAgo(trx, revoked.hoursAgo),
+      }),
+    })
+    .returning(['id']);
+
+  if ('postId' in takedown.target) {
+    await trx('post_removals').insert({ id: created.id, post_id: takedown.target.postId });
+  } else {
+    await trx('user_bans').insert({ id: created.id, user_id: takedown.target.userId });
+  }
+}
+
 export async function seed(knex: Knex): Promise<void> {
   await knex.transaction(async (trx) => {
     // =========================================================================
@@ -551,6 +675,14 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('brands').del();
     await trx('vendors').del();
 
+    // Admin Module
+    await trx('user_bans').del();
+    await trx('post_removals').del();
+    await trx('takedowns').del();
+    await trx('warning_reports').del();
+    await trx('warnings').del();
+    await trx('user_reports').del();
+
     // Posts Module
     await trx('post_reports').del();
     await trx('reports').del();
@@ -579,6 +711,8 @@ export async function seed(knex: Knex): Promise<void> {
     const userRows = await trx('users')
       .insert(users)
       .returning(['id', 'email', 'displayname', 'role']);
+
+    const [adminRow] = await trx('users').insert(adminUser).returning(['id']);
 
     const generatedRecipes: RecipeSeed[] = [...baseRecipes];
     for (const flavor of flavors) {
@@ -1572,5 +1706,197 @@ export async function seed(knex: Knex): Promise<void> {
         });
       }
     }
+
+    // =========================================================================
+    // 9. SEED MODERATION: REPORTS, WARNINGS & TAKEDOWNS
+    // =========================================================================
+    // The pending post reports above stay pending; these cover every other state.
+    const adminId: string = adminRow.id;
+    const userIdByEmail = new Map<string, string>(
+      userRows.map((row: { id: string; email: string }) => [row.email, row.id]),
+    );
+    const userId = (email: string): string => {
+      const id = userIdByEmail.get(email);
+      if (!id) throw new Error(`Seed user ${email} not found`);
+      return id;
+    };
+    const postIdByTitle = async (title: string): Promise<string> => {
+      const row = await trx('posts').first('id').where({ title });
+      if (!row) throw new Error(`Seed post "${title}" not found`);
+      return row.id;
+    };
+    const insertPost = async (
+      authorId: string,
+      post: { title: string; content: string; tags: string[] },
+      createdHoursAgo: number,
+      status: 'VISIBLE' | 'REMOVED' = 'VISIBLE',
+    ): Promise<string> => {
+      const [created] = await trx('posts')
+        .insert({
+          author_id: authorId,
+          title: post.title,
+          content: post.content,
+          status,
+          created_at: hoursAgo(trx, createdHoursAgo),
+          updated_at: hoursAgo(trx, createdHoursAgo),
+        })
+        .returning(['id']);
+      await trx('post_tags').insert(
+        post.tags.map((name) => ({ post_id: created.id, name })),
+      );
+      return created.id;
+    };
+
+    const minhAnhId = userId('minhanh@example.com');
+    const baoNgocId = userId('baongoc@example.com');
+    const hoangNamId = userId('hoangnam@example.com');
+    const thaoVyId = userId('thaovy@example.com');
+    const quocHuyId = userId('quochuy@example.com');
+
+    // (a) Spam account: banned 12 days ago, unbanned after 2 days, banned again 2 days ago.
+    const [bannedRow] = await trx('users').insert(bannedUser).returning(['id']);
+    const bannedId: string = bannedRow.id;
+
+    await seedReport(trx, {
+      reporterId: minhAnhId,
+      reason: 'Nhắn tin mời mua hàng liên tục',
+      hoursAgo: 13 * 24,
+      target: { targetUserId: bannedId },
+      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 12 * 24, note: 'Đăng quảng cáo bán hàng hàng loạt' },
+    });
+    await seedTakedown(trx, {
+      target: { userId: bannedId },
+      issuedBy: adminId,
+      reason: 'Đăng quảng cáo bán hàng hàng loạt',
+      hoursAgo: 12 * 24,
+      revoked: { by: adminId, hoursAgo: 10 * 24 },
+    });
+
+    // Its spam post: removed 3 days ago, which settled both reports about it
+    const spamPostId = await insertPost(bannedId, spamPost, 4 * 24, 'REMOVED');
+    const spamRemoval = 'Quảng cáo bán hàng, vi phạm quy định diễn đàn';
+    for (const [reporterId, reason] of [
+      [minhAnhId, 'Spam quảng cáo'],
+      [hoangNamId, 'Bán hàng trong diễn đàn làm bánh'],
+    ] as const) {
+      await seedReport(trx, {
+        reporterId,
+        reason,
+        hoursAgo: 3.5 * 24,
+        target: { postId: spamPostId },
+        handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 3 * 24, note: spamRemoval },
+      });
+    }
+    await seedTakedown(trx, {
+      target: { postId: spamPostId },
+      issuedBy: adminId,
+      reason: spamRemoval,
+      hoursAgo: 3 * 24,
+    });
+
+    const rebanReason = 'Tái phạm: tiếp tục spam quảng cáo và lừa đặt cọc';
+    for (const [reporterId, reason] of [
+      [baoNgocId, 'Nhắn tin mời mua hàng dù đã từ chối'],
+      [thaoVyId, 'Nhận tiền cọc rồi chặn liên lạc'],
+    ] as const) {
+      await seedReport(trx, {
+        reporterId,
+        reason,
+        hoursAgo: 2.5 * 24,
+        target: { targetUserId: bannedId },
+        handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 2 * 24, note: rebanReason },
+      });
+    }
+    await seedTakedown(trx, {
+      target: { userId: bannedId },
+      issuedBy: adminId,
+      reason: rebanReason,
+      hoursAgo: 2 * 24,
+    });
+
+    // (b) A post removed by mistake, then restored the next day
+    const restoredPostId = await insertPost(thaoVyId, restoredPost, 6 * 24);
+    const wrongRemoval = 'Nghi dùng ảnh trên mạng, không phải tự làm';
+    await seedReport(trx, {
+      reporterId: quocHuyId,
+      reason: 'Ảnh lấy trên mạng, không phải tự làm',
+      hoursAgo: 5.5 * 24,
+      target: { postId: restoredPostId },
+      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 5 * 24, note: wrongRemoval },
+    });
+    await seedTakedown(trx, {
+      target: { postId: restoredPostId },
+      issuedBy: adminId,
+      reason: wrongRemoval,
+      hoursAgo: 5 * 24,
+      revoked: { by: adminId, hoursAgo: 4 * 24 },
+    });
+
+    // (c) Lê Hoàng Nam: banned once for insulting comments, unbanned two days later (now ACTIVE)
+    const insultBan = 'Bình luận xúc phạm thành viên khác';
+    await seedReport(trx, {
+      reporterId: baoNgocId,
+      reason: 'Bình luận chửi bới dưới bài của tôi',
+      hoursAgo: 9 * 24,
+      target: { targetUserId: hoangNamId },
+      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 8 * 24, note: insultBan },
+    });
+    await seedTakedown(trx, {
+      target: { userId: hoangNamId },
+      issuedBy: adminId,
+      reason: insultBan,
+      hoursAgo: 8 * 24,
+      revoked: { by: adminId, hoursAgo: 6 * 24 },
+    });
+
+    // (d) Đặng Quốc Huy: warned from a post page (the report is linked to the warning),
+    // and still has two pending reports about the account
+    const warnedPostId = await insertPost(quocHuyId, warnedPost, 3 * 24);
+    const warnReason = 'Bài viết công kích cửa hàng khác; tái phạm sẽ bị gỡ bài';
+    const warnedReportId = await seedReport(trx, {
+      reporterId: minhAnhId,
+      reason: 'Nói xấu, kêu gọi tẩy chay cửa hàng khác',
+      hoursAgo: 2.5 * 24,
+      target: { postId: warnedPostId },
+      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 2 * 24, note: warnReason },
+    });
+    const [warning] = await trx('warnings')
+      .insert({
+        user_id: quocHuyId,
+        issued_by: adminId,
+        reason: warnReason,
+        created_at: hoursAgo(trx, 2 * 24),
+      })
+      .returning(['id']);
+    await trx('warning_reports').insert({ warning_id: warning.id, report_id: warnedReportId });
+
+    await seedReport(trx, {
+      reporterId: thaoVyId,
+      reason: 'Nhắn tin làm phiền dù đã bị chặn',
+      hoursAgo: 24,
+      target: { targetUserId: quocHuyId },
+    });
+    await seedReport(trx, {
+      reporterId: hoangNamId,
+      reason: 'Bình luận khiếm nhã dưới bài của tôi',
+      hoursAgo: 10,
+      target: { targetUserId: quocHuyId },
+    });
+
+    // (e) Dismissed reports: one about a post, one about an account
+    await seedReport(trx, {
+      reporterId: quocHuyId,
+      reason: 'Câu hỏi trùng lặp',
+      hoursAgo: 4 * 24,
+      target: { postId: await postIdByTitle('Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?') },
+      handled: { status: 'DISMISSED', handledBy: adminId, hoursAgo: 3.5 * 24, note: 'Không vi phạm quy định' },
+    });
+    await seedReport(trx, {
+      reporterId: quocHuyId,
+      reason: 'Tài khoản giả mạo',
+      hoursAgo: 7 * 24,
+      target: { targetUserId: minhAnhId },
+      handled: { status: 'DISMISSED', handledBy: adminId, hoursAgo: 6.5 * 24, note: 'Đã kiểm tra, tài khoản thật' },
+    });
   });
 }

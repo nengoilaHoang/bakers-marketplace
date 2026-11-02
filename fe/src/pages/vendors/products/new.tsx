@@ -7,7 +7,7 @@ import ProductForm, {
   EMPTY_PRODUCT_FORM,
   type ProductFormValues,
 } from '@/components/product/ProductForm';
-import VendorPage from '@/components/vendor/VendorPage';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import useAuth from '@/hooks/user/useAuthContext';
 import type { NextPageWithLayout } from '@/pages/_app';
@@ -64,7 +64,7 @@ const NewProductPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Tạo sản phẩm'
       breadcrumb={[
         { label: 'Sản phẩm', href: '/vendors/products' },
@@ -87,7 +87,7 @@ const NewProductPage: NextPageWithLayout = () => {
         error={error}
         onSubmit={(values) => void handleSubmit(values)}
       />
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

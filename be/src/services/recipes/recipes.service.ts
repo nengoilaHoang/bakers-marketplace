@@ -1,5 +1,6 @@
 import recipeDAO from '#/daos/recipes/recipes.dao.js';
 import db from '#/db/index.js';
+import type { Knex } from 'knex';
 import {
     Recipe,
     type RecipeCreate,
@@ -115,6 +116,21 @@ class RecipeService {
         return recipeId ? this.getById(recipeId) : null;
     }
     
+    /** A snapshot belongs to a post: it is created and deleted with the post only. */
+    public async isSnapshot(id: string): Promise<boolean> {
+        const recipe = await this.recipeDAO.getById(id);
+
+        return Boolean(recipe?.isSnapshot);
+    }
+
+    /** Copies the recipe into the snapshot a post is attached to; returns the snapshot id. */
+    public async createSnapshot(
+        recipeId: string,
+        trx: Knex.Transaction,
+    ): Promise<string> {
+        return this.recipeDAO.createSnapshot(recipeId, trx);
+    }
+
     public async checkRecipeOwner(
         userId: string,
         recipeId: string,
