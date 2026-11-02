@@ -2,7 +2,7 @@ import {
 	BaseLayoutComponent,
 	BaseLayoutComponentConfig,
 	CreateBaseLayoutComponent,
-	UpdateBaseLayoutComponent
+	UpdateBaseLayoutComponent,
 } from '..';
 import {
 	CreateHeroBannerCommerceComponent,
@@ -25,7 +25,7 @@ export type CommerceComponentType =
   | 'FAQ';
 
 export interface BaseCommerceComponent<
-  TConfig,
+  TConfig = BaseLayoutComponentConfig<unknown>,
 > extends BaseLayoutComponent<TConfig> {
   type: 'COMMERCE';
   componentType: CommerceComponentType;

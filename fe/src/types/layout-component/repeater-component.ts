@@ -7,8 +7,8 @@ import {
 export type RepeaterComponentType = 'COLLECTION_GRID' | 'COLLECTION_CAROUSEL';
 
 export interface BaseRepeaterComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends BaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'REPEATER';
   componentType: RepeaterComponentType;
   itemTemplate: LayoutComponent | null;

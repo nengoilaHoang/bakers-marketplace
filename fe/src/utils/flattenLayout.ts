@@ -1,9 +1,6 @@
-import { LayoutComponent } from '@/types/layout-component';
+import { LayoutComponent, ResponsiveProp } from '@/types/layout-component';
 import { CommerceComponent } from '@/types/layout-component/commerce-component/commerce-component';
-import {
-    CompositeComponent,
-    ResponsiveProp,
-} from '@/types/layout-component/composite-component';
+import { CompositeComponent } from '@/types/layout-component/composite-component';
 import { LeafComponent } from '@/types/layout-component/leaf-component';
 import { RepeaterComponent } from '@/types/layout-component/repeater-component';
 

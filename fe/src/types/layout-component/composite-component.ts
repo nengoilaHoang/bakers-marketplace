@@ -3,18 +3,13 @@ import {
 	BaseLayoutComponentConfig,
 	CreateBaseLayoutComponent,
 	LayoutComponent,
+	ResponsiveProp,
 	UpdateBaseLayoutComponent,
 } from '.';
 
-export type ResponsiveProp<T> = {
-  mobile: T;
-  tablet: T;
-  desktop: T;
-};
-
 export interface BaseCompositeComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends BaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
   children: ResponsiveProp<Map<number, LayoutComponent>>;

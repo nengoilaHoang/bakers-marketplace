@@ -1,15 +1,16 @@
+import { WithBase } from '@/utils/tsHelper';
 import {
-    CommerceComponent,
-    UpdateCommerceComponent,
+	CommerceComponent,
+	UpdateCommerceComponent,
 } from './commerce-component/commerce-component';
 import {
-    CompositeComponent,
-    UpdateCompositeComponent,
+	CompositeComponent,
+	UpdateCompositeComponent,
 } from './composite-component';
 import { LeafComponent, UpdateLeafComponent } from './leaf-component';
 import {
-    RepeaterComponent,
-    UpdateRepeaterComponent,
+	RepeaterComponent,
+	UpdateRepeaterComponent,
 } from './repeater-component';
 
 export type TextAlignmentType = 'center' | 'justify' | 'left' | 'right';
@@ -36,12 +37,13 @@ export type BentoItemConfig = {
   rowSpan: number;
 };
 
-type SlotPlacementConfig = {
-  h: DimensionType;
+export type BasePlacementConfig = {
   w: DimensionType;
   alignSelfX: HorizontalAlignType;
   alignSelfY: VerticalAlignType;
 };
+
+export type SlotPlacementConfig = BasePlacementConfig & { h: DimensionType };
 
 type BoxStyleConfig = {
   padding: {
@@ -53,10 +55,10 @@ type BoxStyleConfig = {
   surfaceTheme: SurfaceTheme;
 };
 
-export type BaseLayoutComponentConfig<TConfig = unknown> = (
-  | SlotPlacementConfig
-  | (SlotPlacementConfig & BoxStyleConfig)
-) &
+export type BaseLayoutComponentConfig<TConfig = unknown> = WithBase<
+  BasePlacementConfig | SlotPlacementConfig,
+  BoxStyleConfig
+> &
   Partial<BentoItemConfig> & {
     [K in keyof TConfig]: TConfig[K];
   };
@@ -65,27 +67,32 @@ export type UpdateBaseLayoutComponentConfig<TConfig = unknown> = Partial<
   BaseLayoutComponentConfig<TConfig>
 >;
 
-export type BaseLayoutComponent<TConfig> = {
-  id: string;
-  name: string;
-  type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
-  componentType: string;
-  config: BaseLayoutComponentConfig<TConfig>;
-};
+export type BaseLayoutComponent<TConfig = BaseLayoutComponentConfig<unknown>> =
+  {
+    id: string;
+    name: string;
+    type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
+    componentType: string;
+    config: TConfig;
+  };
 
-export type UpdateBaseLayoutComponent<TConfig> = {
+export type UpdateBaseLayoutComponent<
+  TConfig = BaseLayoutComponentConfig<unknown>,
+> = {
   id: string;
   name?: string;
   type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
   componentType: string;
-  config: UpdateBaseLayoutComponentConfig<TConfig>;
+  config?: Partial<TConfig>;
 };
 
-export type CreateBaseLayoutComponent<TConfig> = {
+export type CreateBaseLayoutComponent<
+  TConfig = BaseLayoutComponentConfig<unknown>,
+> = {
   name: string;
   type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
   componentType: string;
-  config: BaseLayoutComponentConfig<TConfig>;
+  config: TConfig;
 };
 
 export type LayoutComponent =
@@ -99,3 +106,8 @@ export type UpdateLayoutComponent =
   | UpdateLeafComponent
   | UpdateRepeaterComponent
   | UpdateCommerceComponent;
+export type ResponsiveProp<T> = {
+  mobile: T;
+  tablet: T;
+  desktop: T;
+};

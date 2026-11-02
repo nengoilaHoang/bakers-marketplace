@@ -1,8 +1,14 @@
-import { TextConfig } from '..';
 import {
-  BaseCommerceComponent,
-  CreateBaseCommerceComponent,
-  UpdateBaseCommerceComponent,
+	BasePlacementConfig,
+	BentoItemConfig,
+	ResponsiveProp,
+	TextConfig,
+} from '..';
+import { AspectRatioValue, MediaFit, MediaFocalPoint } from '../aspect-ratio';
+import {
+	BaseCommerceComponent,
+	CreateBaseCommerceComponent,
+	UpdateBaseCommerceComponent,
 } from './commerce-component';
 
 export type HeroBannerContentPosition =
@@ -42,22 +48,27 @@ export type HeroBannerCta = {
 export type HeroBannerContentSize = 'compact' | 'medium' | 'large' | 'impact';
 
 export type HeroBannerContent = {
-  contentSize: HeroBannerContentSize;
   eyebrow?: ({ value: string } & TextConfig) | undefined;
   title: { value: string } & TextConfig;
   subtitle: { value: string } & TextConfig;
-  contentPosition: HeroBannerContentPosition;
+  contentPosition: ResponsiveProp<HeroBannerContentPosition>;
+  contentSize: HeroBannerContentSize;
 };
 
-export type BaseHeroBannerConfig = HeroBannerContent & {
-  desktopMediaUrl: string;
-  mobileMediaUrl: string | null;
-  altText: string;
-  overlay: HeroBannerOverlay;
-  primaryCta?: HeroBannerCta | undefined;
-  secondaryCta?: HeroBannerCta | undefined;
-  ctaPosition?: HeroBannerContentPosition | undefined;
-};
+export type BaseHeroBannerConfig = BasePlacementConfig &
+  Partial<BentoItemConfig> &
+  HeroBannerContent & {
+    aspect: ResponsiveProp<AspectRatioValue>;
+    fit: MediaFit;
+    focalPoint?: MediaFocalPoint | undefined;
+    desktopMediaUrl: string;
+    mobileMediaUrl: string | null;
+    altText: string;
+    overlay: HeroBannerOverlay;
+    primaryCta?: HeroBannerCta | undefined;
+    secondaryCta?: HeroBannerCta | undefined;
+    ctaPosition?: ResponsiveProp<HeroBannerContentPosition> | undefined;
+  };
 
 export interface ImageHeroBannerConfig extends BaseHeroBannerConfig {
   mediaType: 'image';

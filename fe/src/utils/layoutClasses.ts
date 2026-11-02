@@ -1,14 +1,14 @@
 import {
-  DimensionType,
-  HorizontalAlignType,
-  PaddingType,
-  SurfaceTheme,
-  TextConfig,
-  VerticalAlignType,
+	DimensionType,
+	HorizontalAlignType,
+	PaddingType,
+	SurfaceTheme,
+	TextConfig,
+	VerticalAlignType
 } from '@/types/layout-component';
 import {
-  HeroBannerContentPosition,
-  HeroBannerContentSize,
+	HeroBannerContentPosition,
+	HeroBannerContentSize,
 } from '@/types/layout-component/commerce-component';
 import { CSSProperties } from 'react';
 import { FlattenComponent } from './flattenLayout';
@@ -44,16 +44,43 @@ const DIMENSION_MAP: Record<'h' | 'w', Record<DimensionType, string>> = {
   h: { full: 'h-full', auto: 'h-auto', sm: 'h-1/4', md: 'h-1/2', lg: 'h-3/4' },
 };
 
-export const CONTENT_POSITION_MAP: Record<HeroBannerContentPosition, string> = {
-  'top-left': 'justify-start items-start text-left',
-  'top-center': 'justify-start items-center text-center',
-  'top-right': 'justify-start items-end text-right',
-  'middle-left': 'justify-center items-start text-left',
-  'middle-center': 'justify-center items-center text-center',
-  'middle-right': 'justify-center items-end text-right',
-  'bottom-left': 'justify-end items-start text-left',
-  'bottom-center': 'justify-end items-center text-center',
-  'bottom-right': 'justify-end items-end text-right',
+export const HERO_POSITION_CLASSES: Record<
+  'mobile' | 'tablet' | 'desktop',
+  Record<HeroBannerContentPosition, string>
+> = {
+  mobile: {
+    'top-left': 'justify-start items-start text-left',
+    'top-center': 'justify-start items-center text-center',
+    'top-right': 'justify-start items-end text-right',
+    'middle-left': 'justify-center items-start text-left',
+    'middle-center': 'justify-center items-center text-center',
+    'middle-right': 'justify-center items-end text-right',
+    'bottom-left': 'justify-end items-start text-left',
+    'bottom-center': 'justify-end items-center text-center',
+    'bottom-right': 'justify-end items-end text-right',
+  },
+  tablet: {
+    'top-left': 'md:justify-start md:items-start md:text-left',
+    'top-center': 'md:justify-start md:items-center md:text-center',
+    'top-right': 'md:justify-start md:items-end md:text-right',
+    'middle-left': 'md:justify-center md:items-start md:text-left',
+    'middle-center': 'md:justify-center md:items-center md:text-center',
+    'middle-right': 'md:justify-center md:items-end md:text-right',
+    'bottom-left': 'md:justify-end md:items-start md:text-left',
+    'bottom-center': 'md:justify-end md:items-center md:text-center',
+    'bottom-right': 'md:justify-end md:items-end md:text-right',
+  },
+  desktop: {
+    'top-left': 'lg:justify-start lg:items-start lg:text-left',
+    'top-center': 'lg:justify-start lg:items-center lg:text-center',
+    'top-right': 'lg:justify-start lg:items-end lg:text-right',
+    'middle-left': 'lg:justify-center lg:items-start lg:text-left',
+    'middle-center': 'lg:justify-center lg:items-center lg:text-center',
+    'middle-right': 'lg:justify-center lg:items-end lg:text-right',
+    'bottom-left': 'lg:justify-end lg:items-start lg:text-left',
+    'bottom-center': 'lg:justify-end lg:items-center lg:text-center',
+    'bottom-right': 'lg:justify-end lg:items-end lg:text-right',
+  },
 };
 
 const SURFACE_THEME_MAP: Record<SurfaceTheme, string> = {
@@ -181,7 +208,7 @@ export function getTextStyle(style: TextConfig): CSSProperties {
 
   return {
     color: style.textColor,
-    textAlign: style.textAlign,
+    ...(style.textAlign ? { textAlign: style.textAlign } : {}),
     textDecoration,
     fontStyle: style.fontStyle,
     fontWeight:
@@ -199,18 +226,22 @@ export function getBaseLayoutClassesAndStyle(
   let style: CSSProperties = {};
   const classes: (string | undefined)[] = [];
 
+  const widthConfig = 'w' in config ? config.w : undefined;
+  const heightConfig = 'h' in config ? config.h : undefined;
   const paddingConfig = 'padding' in config ? config.padding : undefined;
   const surfaceThemeConfig =
     'surfaceTheme' in config ? config.surfaceTheme : undefined;
+  const alignXConfig = 'alignSelfX' in config ? config.alignSelfX : undefined;
+  const alignYConfig = 'alignSelfY' in config ? config.alignSelfY : undefined;
 
   const objects = [
     // Dimensions
-    getDimensionClass('w', config.w),
-    getDimensionClass('h', config.h),
+    widthConfig && getDimensionClass('w', widthConfig),
+    heightConfig && getDimensionClass('h', heightConfig),
 
     // Alignments
-    getAlignXClass(config.alignSelfX),
-    getAlignYClass(config.alignSelfY),
+    alignXConfig && getAlignXClass(alignXConfig),
+    alignYConfig && getAlignYClass(alignYConfig),
 
     // Paddings
     paddingConfig && getPaddingClass('t', paddingConfig.top),

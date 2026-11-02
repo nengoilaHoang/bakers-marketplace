@@ -1043,7 +1043,6 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
-
     await trx('composite_components').insert({
       id: homeRootGrid.id,
       component_type: 'GRID',
@@ -1054,8 +1053,9 @@ export async function seed(knex: Knex): Promise<void> {
         name: 'Home Primary Hero Banner',
         description: 'Top hero banner highlighting bakery daily specialties',
         config: JSON.stringify({
-          h: 'lg',
           w: 'full',
+          aspect: '16:9',
+          fit: 'cover',
           alignSelfX: 'stretch',
           alignSelfY: 'top',
           mediaType: 'image',
@@ -1088,7 +1088,11 @@ export async function seed(knex: Knex): Promise<void> {
             fontWeight: 400,
             fontStyle: 'normal',
           },
-          contentPosition: 'middle-center',
+          contentPosition: {
+            desktop: 'middle-center',
+            tablet: 'middle-center',
+            mobile: 'middle-center',
+          },
           contentSize: 'large',
           overlay: {
             type: 'solid',
