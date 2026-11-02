@@ -12,6 +12,7 @@ const HeroBannerInspector = ({
   onUpdate,
   onActiveSectionChange,
   getSectionZIndex,
+  currentBp,
 }: HeroBannerInspectorProps) => {
   const { config } = component;
 
@@ -42,6 +43,7 @@ const HeroBannerInspector = ({
           onActiveSectionChange(active ? 'hero-content' : null)
         }
         zIndex={getSectionZIndex('hero-content')}
+        currentBp={currentBp}
       />
     </>
   );

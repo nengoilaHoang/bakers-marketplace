@@ -14,9 +14,9 @@ const StorefrontConfigSidebar = () => {
     : null;
 
   const handleUpdate = useCallback(
-    (pathname: string, value: unknown) => {
+    (pathname: string, value: unknown, bp?: string) => {
       if (selectedComponentId === null) return;
-      updateConfig(selectedComponentId, pathname, value);
+      updateConfig(selectedComponentId, pathname, value, bp);
     },
     [selectedComponentId, updateConfig],
   );

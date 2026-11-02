@@ -1,3 +1,4 @@
+import { DeviceBreakpoint } from '@/types/canvas';
 import { TextConfig } from '@/types/layout-component';
 import {
   HeroBannerContent,
@@ -14,15 +15,6 @@ type TextAlignmentType = 'left' | 'center' | 'right' | 'justify';
 type HeroTextItem = {
   value?: string;
 } & Partial<TextConfig>;
-
-type HeroContentSectionProps = {
-  isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
-  content: HeroBannerContent;
-  onUpdate: (pathname: string, value: unknown) => void;
-  onActiveSectionChange: (isActive: boolean) => void;
-  zIndex: number;
-};
 
 const POSITION_GRID: HeroBannerContentPosition[][] = [
   ['top-left', 'top-center', 'top-right'],
@@ -179,6 +171,16 @@ const TextConfigGroup = ({
   );
 };
 
+type HeroContentSectionProps = {
+  isOpen: boolean;
+  toggleSection: (id: SectionId) => void;
+  content: HeroBannerContent;
+  onUpdate: (pathname: string, value: unknown, bp?: string) => void;
+  onActiveSectionChange: (isActive: boolean) => void;
+  zIndex: number;
+  currentBp: DeviceBreakpoint;
+};
+
 const HeroContentSection = ({
   isOpen,
   toggleSection,
@@ -186,6 +188,7 @@ const HeroContentSection = ({
   onUpdate,
   onActiveSectionChange,
   zIndex,
+  currentBp,
 }: HeroContentSectionProps) => {
   const id: SectionId = 'hero-content';
   const title = 'Content';
@@ -202,8 +205,6 @@ const HeroContentSection = ({
       }) as const,
     [],
   );
-
-  console.log('content', content);
 
   return (
     <ConfigSectionWrapper
@@ -224,9 +225,9 @@ const HeroContentSection = ({
                 key={pos}
                 type='button'
                 aria-label={`Align ${pos}`}
-                onClick={() => onUpdate('contentPosition', pos)}
+                onClick={() => onUpdate('contentPosition', pos, currentBp)}
                 className={`h-7 w-7 rounded border transition-colors ${
-                  content.contentPosition === pos
+                  content.contentPosition[currentBp] === pos
                     ? 'border-zinc-900 bg-zinc-900 text-white'
                     : 'border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-600'
                 }`}
