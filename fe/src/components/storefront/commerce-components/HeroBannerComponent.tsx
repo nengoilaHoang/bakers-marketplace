@@ -132,55 +132,50 @@ const HeroBannerComponent = ({
     [contentSize],
   );
 
-  const focalPointStyle = useMemo(() => {
-    if (focalPoint) {
-      return getFocalPointStyle(focalPoint);
-    }
-    return {};
-  }, [focalPoint]);
+  const containerStyle = useMemo(() => {
+    const focalPointStyle = focalPoint ? getFocalPointStyle(focalPoint) : {};
 
-  const aspectStyles = useMemo(() => {
-    if (!aspect) return {};
+    const aspectStyles = (function () {
+      if (!aspect) return {};
 
-    const desktopRatio = getAspectRatio(aspect.desktop);
-    const tabletRatio = aspect.tablet
-      ? getAspectRatio(aspect.tablet)
-      : desktopRatio;
-    const mobileRatio = aspect.mobile
-      ? getAspectRatio(aspect.mobile)
-      : tabletRatio;
+      const desktopRatio = getAspectRatio(aspect.desktop);
+      const tabletRatio = aspect.tablet
+        ? getAspectRatio(aspect.tablet)
+        : desktopRatio;
+      const mobileRatio = aspect.mobile
+        ? getAspectRatio(aspect.mobile)
+        : tabletRatio;
+
+      return {
+        '--aspect-ratio-mobile': `${mobileRatio}`,
+        '--aspect-ratio-tablet': `${tabletRatio}`,
+        '--aspect-ratio-desktop': `${desktopRatio}`,
+      } as CSSProperties;
+    })();
 
     return {
-      '--aspect-ratio-mobile': `${mobileRatio}`,
-      '--aspect-ratio-tablet': `${tabletRatio}`,
-      '--aspect-ratio-desktop': `${desktopRatio}`,
-    } as CSSProperties;
-  }, [aspect]);
+      ...baseStyle,
+      ...focalPointStyle,
+      ...aspectStyles,
+    };
+  }, [aspect, baseStyle, focalPoint]);
 
-  const fitClass = useMemo(() => {
-    if (fit) {
-      return getFitClass(fit);
-    }
-    return '';
-  }, [fit]);
-
-  const className = useMemo(
-    () =>
-      cn(
-        baseClasses,
-        'relative flex overflow-hidden',
-        'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
-        fitClass,
-      ),
-    [baseClasses, fitClass],
-  );
+  const containerClassName = useMemo(() => {
+    const fitClass = fit ? getFitClass(fit) : '';
+    return cn(
+      baseClasses,
+      'relative flex overflow-hidden',
+      'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
+      fitClass,
+    );
+  }, [baseClasses, fit]);
 
   return (
     <div
       id={id}
       tabIndex={tabIndex}
-      className={className}
-      style={{ ...baseStyle, ...aspectStyles, ...focalPointStyle }}
+      className={containerClassName}
+      style={containerStyle}
       ref={ref}
       role='button'
       data-layout-node='true'
