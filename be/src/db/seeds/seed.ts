@@ -360,7 +360,7 @@ const posts: PostSeed[] = [
     recipeTitle: 'Chiffon Cake Matcha',
   },
   {
-    title: 'Nên dùng bơ thực vật hay bơ động vật khi nướng bánh?',
+    title: 'Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?',
     content:
       'Nhiều bạn hỏi thay bơ lạt bằng bơ phe được không. Lời khuyên là bánh âu luôn ưu tiên bơ động vật.',
     tags: ['hoi-dap', 'nguyen-lieu'],
@@ -597,7 +597,10 @@ async function seedReport(
     .returning(['id']);
 
   if ('postId' in report.target) {
-    await trx('post_reports').insert({ id: created.id, post_id: report.target.postId });
+    await trx('post_reports').insert({
+      id: created.id,
+      post_id: report.target.postId,
+    });
   } else {
     await trx('user_reports').insert({
       id: created.id,
@@ -633,9 +636,15 @@ async function seedTakedown(
     .returning(['id']);
 
   if ('postId' in takedown.target) {
-    await trx('post_removals').insert({ id: created.id, post_id: takedown.target.postId });
+    await trx('post_removals').insert({
+      id: created.id,
+      post_id: takedown.target.postId,
+    });
   } else {
-    await trx('user_bans').insert({ id: created.id, user_id: takedown.target.userId });
+    await trx('user_bans').insert({
+      id: created.id,
+      user_id: takedown.target.userId,
+    });
   }
 }
 
@@ -1762,7 +1771,12 @@ export async function seed(knex: Knex): Promise<void> {
       reason: 'Nhắn tin mời mua hàng liên tục',
       hoursAgo: 13 * 24,
       target: { targetUserId: bannedId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 12 * 24, note: 'Đăng quảng cáo bán hàng hàng loạt' },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 12 * 24,
+        note: 'Đăng quảng cáo bán hàng hàng loạt',
+      },
     });
     await seedTakedown(trx, {
       target: { userId: bannedId },
@@ -1784,7 +1798,12 @@ export async function seed(knex: Knex): Promise<void> {
         reason,
         hoursAgo: 3.5 * 24,
         target: { postId: spamPostId },
-        handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 3 * 24, note: spamRemoval },
+        handled: {
+          status: 'RESOLVED',
+          handledBy: adminId,
+          hoursAgo: 3 * 24,
+          note: spamRemoval,
+        },
       });
     }
     await seedTakedown(trx, {
@@ -1804,7 +1823,12 @@ export async function seed(knex: Knex): Promise<void> {
         reason,
         hoursAgo: 2.5 * 24,
         target: { targetUserId: bannedId },
-        handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 2 * 24, note: rebanReason },
+        handled: {
+          status: 'RESOLVED',
+          handledBy: adminId,
+          hoursAgo: 2 * 24,
+          note: rebanReason,
+        },
       });
     }
     await seedTakedown(trx, {
@@ -1822,7 +1846,12 @@ export async function seed(knex: Knex): Promise<void> {
       reason: 'Ảnh lấy trên mạng, không phải tự làm',
       hoursAgo: 5.5 * 24,
       target: { postId: restoredPostId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 5 * 24, note: wrongRemoval },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 5 * 24,
+        note: wrongRemoval,
+      },
     });
     await seedTakedown(trx, {
       target: { postId: restoredPostId },
@@ -1839,7 +1868,12 @@ export async function seed(knex: Knex): Promise<void> {
       reason: 'Bình luận chửi bới dưới bài của tôi',
       hoursAgo: 9 * 24,
       target: { targetUserId: hoangNamId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 8 * 24, note: insultBan },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 8 * 24,
+        note: insultBan,
+      },
     });
     await seedTakedown(trx, {
       target: { userId: hoangNamId },
@@ -1852,13 +1886,19 @@ export async function seed(knex: Knex): Promise<void> {
     // (d) Đặng Quốc Huy: warned from a post page (the report is linked to the warning),
     // and still has two pending reports about the account
     const warnedPostId = await insertPost(quocHuyId, warnedPost, 3 * 24);
-    const warnReason = 'Bài viết công kích cửa hàng khác; tái phạm sẽ bị gỡ bài';
+    const warnReason =
+      'Bài viết công kích cửa hàng khác; tái phạm sẽ bị gỡ bài';
     const warnedReportId = await seedReport(trx, {
       reporterId: minhAnhId,
       reason: 'Nói xấu, kêu gọi tẩy chay cửa hàng khác',
       hoursAgo: 2.5 * 24,
       target: { postId: warnedPostId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 2 * 24, note: warnReason },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 2 * 24,
+        note: warnReason,
+      },
     });
     const [warning] = await trx('warnings')
       .insert({
@@ -1868,7 +1908,10 @@ export async function seed(knex: Knex): Promise<void> {
         created_at: hoursAgo(trx, 2 * 24),
       })
       .returning(['id']);
-    await trx('warning_reports').insert({ warning_id: warning.id, report_id: warnedReportId });
+    await trx('warning_reports').insert({
+      warning_id: warning.id,
+      report_id: warnedReportId,
+    });
 
     await seedReport(trx, {
       reporterId: thaoVyId,
@@ -1888,15 +1931,29 @@ export async function seed(knex: Knex): Promise<void> {
       reporterId: quocHuyId,
       reason: 'Câu hỏi trùng lặp',
       hoursAgo: 4 * 24,
-      target: { postId: await postIdByTitle('Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?') },
-      handled: { status: 'DISMISSED', handledBy: adminId, hoursAgo: 3.5 * 24, note: 'Không vi phạm quy định' },
+      target: {
+        postId: await postIdByTitle(
+          'Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?',
+        ),
+      },
+      handled: {
+        status: 'DISMISSED',
+        handledBy: adminId,
+        hoursAgo: 3.5 * 24,
+        note: 'Không vi phạm quy định',
+      },
     });
     await seedReport(trx, {
       reporterId: quocHuyId,
       reason: 'Tài khoản giả mạo',
       hoursAgo: 7 * 24,
       target: { targetUserId: minhAnhId },
-      handled: { status: 'DISMISSED', handledBy: adminId, hoursAgo: 6.5 * 24, note: 'Đã kiểm tra, tài khoản thật' },
+      handled: {
+        status: 'DISMISSED',
+        handledBy: adminId,
+        hoursAgo: 6.5 * 24,
+        note: 'Đã kiểm tra, tài khoản thật',
+      },
     });
   });
 }

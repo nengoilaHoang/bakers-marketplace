@@ -15,11 +15,17 @@ export type DashboardNavItem = {
   inners?: Array<{ label: string; href: string }>;
 };
 
-function isActive(pathname: string, item: Pick<DashboardNavItem, 'href' | 'exact'>) {
+function isActive(
+  pathname: string,
+  item: Pick<DashboardNavItem, 'href' | 'exact'>,
+) {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }
 
-function SidebarItem({ item, pathname }: { item: DashboardNavItem; pathname: string }) {
+function SidebarItem({
+  item,
+  pathname,
+}: Readonly<{ item: DashboardNavItem; pathname: string }>) {
   const active = isActive(pathname, item);
   const inners = item.inners ?? [];
   const submenuId = useId();
