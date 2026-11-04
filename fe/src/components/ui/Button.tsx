@@ -7,7 +7,8 @@ export type ButtonVariant =
   | 'primary'
   | 'outline'
   | 'outline-inverse'
-  | 'ghost';
+  | 'ghost'
+  | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 type ButtonStyleProps = {
@@ -28,6 +29,9 @@ const VARIANTS: Record<ButtonVariant, string> = {
   'outline-inverse':
     'border border-accent bg-transparent text-on-primary hover:bg-accent hover:text-on-accent',
   ghost: 'border border-transparent bg-transparent text-ink hover:bg-ink/5',
+  // Hành động khó hoàn tác: gỡ bài, khoá tài khoản.
+  danger:
+    'border border-danger-border bg-danger-soft text-danger-strong hover:border-danger-strong',
 };
 
 const SIZES: Record<ButtonSize, string> = {

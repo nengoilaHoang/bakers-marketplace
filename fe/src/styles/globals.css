@@ -250,10 +250,10 @@
     color-scheme: light;
   }
 
-  /* Khu vendor (trang quản trị): tông trung tính, nhưng mọi màu vẫn lấy từ
+  /* Khu quản lý (vendor, admin; DashboardLayout): tông trung tính, nhưng mọi màu vẫn lấy từ
      bảng màu của design system. Màu trạng thái (success/warning/danger/info)
      và chữ trên nền primary/accent giữ nguyên như trang người dùng. */
-  [data-theme='vendor'] {
+  [data-theme='dashboard'] {
     /* Nền: trang xám ấm rất nhạt, thẻ/ô nhập trắng */
     --color-page: var(--color-neutral-50);
     --color-surface: var(--color-white);

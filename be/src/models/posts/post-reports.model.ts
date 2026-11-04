@@ -1,11 +1,9 @@
 import { z } from 'zod';
 
-export const PostReportSchema = z.object({
-	id: z.uuidv4().optional(),
+import { ReportSchema, type ReportStatus } from '#/models/reports/reports.model.js';
+
+export const PostReportSchema = ReportSchema.extend({
 	postId: z.uuidv4(),
-	reporterId: z.uuidv4().nullable().optional(),
-	reason: z.string().trim().min(1).max(500),
-	createdAt: z.date().optional(),
 });
 
 export const PostReportCreateSchema = PostReportSchema.pick({
@@ -20,6 +18,10 @@ export class PostReport implements PostReportData {
 	postId!: string;
 	reporterId?: string | null;
 	reason!: string;
+	status?: ReportStatus;
+	handledBy?: string | null;
+	handledAt?: Date | null;
+	note?: string | null;
 	createdAt?: Date;
 
 	constructor(data?: Partial<PostReportData>) {

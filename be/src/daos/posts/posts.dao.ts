@@ -169,11 +169,12 @@ class PostDAO {
 		return new Post(deletedPost);
 	}
 
+	/** A post removed by an admin counts as not existing outside the admin pages. */
 	public async existsById(id: string): Promise<boolean> {
 		return Boolean(
 			await this.db.instance(this.tableName)
 				.select('id')
-				.where('id', id)
+				.where({ id, status: 'VISIBLE' })
 				.first(),
 		);
 	}
@@ -221,7 +222,9 @@ class PostDAO {
 			.joinRaw('LEFT JOIN recipes AS r ON r.id = substring(p.content from ?)::uuid', [
 				RECIPE_TOKEN_SQL_PATTERN,
 			])
-			.leftJoin('images as i', 'i.id', 'r.coverImgId');
+			.leftJoin('images as i', 'i.id', 'r.coverImgId')
+			// Removed posts are only listed by the admin pages
+			.where('p.status', 'VISIBLE');
 	}
 
 	private toPostView(row: PostViewRow): PostView {

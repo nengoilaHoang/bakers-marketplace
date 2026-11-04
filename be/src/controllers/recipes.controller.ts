@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 
 import asyncHandler from '#/utils/asyncHandler.js';
+import { BadRequestError } from '#/utils/http-errors.js';
 
 import recipeService from '#/services/recipes/recipes.service.js';
 import stepsService from '#/services/recipes/recipe-steps.service.js';
@@ -119,23 +120,6 @@ class RecipeController {
 		},
 	);
 
-	public createSnapshot = asyncHandler(
-		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-			const parsedRecipe = RecipeCreateSchema.parse(req.body);
-			const recipe = {
-				...parsedRecipe,
-				...req.body,
-			} as RecipeCreatePayload;
-			recipe.isSnapshot = true;
-			recipe.isPublic = true;
-			const createdRecipe = await recipeService.set(req.user.id, recipe);
-
-			res.status(201).json({
-				data: createdRecipe,
-			});
-		},
-	);
-
 	public update = asyncHandler(
 		async (
 			req: AuthenticatedRequest<RecipeIdParams>,
@@ -157,6 +141,11 @@ class RecipeController {
 				throw new Error('you dont have permission');
 			}
 			const id: string = recipe.id;
+			if (await this.recipeService.isSnapshot(id)) {
+				throw new BadRequestError('A recipe attached to a post cannot be edited');
+			}
+			// Only the post flow creates snapshots
+			delete recipe.isSnapshot;
 			const updatedRecipe = await recipeService.update(id, recipe);
 			if (!updatedRecipe) {
 				res.status(404).json({
@@ -180,6 +169,9 @@ class RecipeController {
 			const isOwner = await this.recipeService.checkRecipeOwner(req.user.id, id);
 			if (!isOwner) {
 				throw new Error('you dont have permission');
+			}
+			if (await this.recipeService.isSnapshot(id)) {
+				throw new BadRequestError('A recipe attached to a post is deleted together with the post');
 			}
 			const deletedRecipe = await recipeService.delete(id);
 			if (!deletedRecipe) {

@@ -9,8 +9,8 @@ import { ButtonLink } from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
-import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
-import VendorPage from '@/components/vendor/VendorPage';
+import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { collectionApi } from '@/services/collections';
 import type { Collection } from '@/types/collection';
@@ -51,29 +51,29 @@ const CollectionDetailPage: NextPageWithLayout = () => {
 
   if (loadError) {
     return (
-      <VendorPage title='Bộ sưu tập' breadcrumb={breadcrumb}>
+      <DashboardPage title='Bộ sưu tập' breadcrumb={breadcrumb}>
         <ErrorState
           title='Không thể tải bộ sưu tập'
           message={loadError}
           onRetry={() => setAttempt((current) => current + 1)}
         />
-      </VendorPage>
+      </DashboardPage>
     );
   }
 
   if (!collection) {
     return (
-      <VendorPage title='Bộ sưu tập' breadcrumb={breadcrumb}>
+      <DashboardPage title='Bộ sưu tập' breadcrumb={breadcrumb}>
         <PanelSkeleton className='h-32' />
         <PanelSkeleton className='h-64' />
-      </VendorPage>
+      </DashboardPage>
     );
   }
 
   const products = collection.products ?? [];
 
   return (
-    <VendorPage
+    <DashboardPage
       title={collection.name}
       heading={
         <span className='flex flex-wrap items-center gap-3'>
@@ -133,7 +133,7 @@ const CollectionDetailPage: NextPageWithLayout = () => {
           <ProductTable products={products} />
         )}
       </section>
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

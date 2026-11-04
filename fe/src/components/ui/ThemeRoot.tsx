@@ -5,7 +5,8 @@ import { cn } from '@/lib/cn';
 type ThemeRootProps = Readonly<{
   children: ReactNode;
   className?: string;
-  theme?: 'vendor' | 'default';
+  // dashboard: tông trung tính cho khu quản lý (vendor, admin).
+  theme?: 'dashboard' | 'default';
 }>;
 
 // Bọc mọi trang dùng design system: nền, font, cỡ và màu chữ mặc định.

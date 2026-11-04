@@ -4,8 +4,8 @@ import Button, { ButtonLink } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import Field from '@/components/ui/Field';
 import Input, { Textarea } from '@/components/ui/Input';
-import ApiErrorAlert from '@/components/vendor/ApiErrorAlert';
-import Panel from '@/components/vendor/Panel';
+import ApiErrorAlert from '@/components/dashboard/ApiErrorAlert';
+import Panel from '@/components/dashboard/Panel';
 import type { CollectionInput } from '@/types/collection';
 
 export type CollectionFormValues = {

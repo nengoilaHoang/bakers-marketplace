@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import ColorScales from '@/components/mockup/ColorScales';
 import { ARTICLES, COLLECTIONS, RECIPES } from '@/components/mockup/data';
@@ -20,7 +20,10 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Field from '@/components/ui/Field';
 import FollowLinks from '@/components/ui/FollowLinks';
 import Icon, { ICON_NAMES } from '@/components/ui/Icon';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import DashboardSidebar, { type DashboardNavItem } from '@/components/dashboard/DashboardSidebar';
 import IconButton from '@/components/ui/IconButton';
+import Modal from '@/components/ui/Modal';
 import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 import Input, { PasswordInput, Textarea } from '@/components/ui/Input';
 import Logo, { LogoMark } from '@/components/ui/Logo';
@@ -147,6 +150,34 @@ const TYPE_SCALE = [
   { token: 'text-micro', sample: 'NÂNG CAO · (18)', className: 'text-micro' },
   { token: 'font-brand', sample: 'BAKERS MARKETPLACE', className: 'font-brand text-h2 font-bold' },
 ];
+
+const DASHBOARD_NAV_DEMO: DashboardNavItem[] = [
+  { label: 'Tổng quan', href: '/mockup', icon: 'summary', exact: true },
+  { label: 'Bài viết', href: '/mockup/posts', icon: 'message' },
+  {
+    label: 'Storefront',
+    href: '/mockup/storefront',
+    icon: 'smartphone',
+    inners: [{ label: 'Overview', href: '/mockup/storefront' }],
+  },
+];
+
+function ModalDemo() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button variant='outline' onClick={() => setOpen(true)}>
+        Mở hộp thoại
+      </Button>
+      <Modal open={open} onClose={() => setOpen(false)} title='Hồ sơ'>
+        <p className='text-body-sm font-light text-ink-muted'>
+          Đóng bằng Esc, nút X hoặc bấm ra ngoài.
+        </p>
+      </Modal>
+    </>
+  );
+}
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -347,6 +378,18 @@ export default function MockupIndexPage() {
                 <SiteHeader variant='member' />
               </div>
               <p className='text-caption text-ink-muted'>SiteFooter: xem cuối trang này.</p>
+              <p className='mt-3 text-meta font-medium text-ink-subtle uppercase'>
+                DashboardHeader + DashboardSidebar — khu vendor / admin (theme dashboard)
+              </p>
+              <div data-theme='dashboard' className='overflow-hidden rounded-box border border-border-soft bg-page'>
+                <DashboardHeader label='Quản trị' />
+                <div className='flex flex-col lg:flex-row'>
+                  <DashboardSidebar items={DASHBOARD_NAV_DEMO} label='Điều hướng mẫu' />
+                  <p className='flex-1 p-6 text-body-sm text-ink-muted'>
+                    Nội dung trang (DashboardPage + Panel). Dưới lg, điều hướng thành hàng ngang cuộn được.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </Block>
@@ -375,6 +418,8 @@ export default function MockupIndexPage() {
               <Button>Primary</Button>
               <Button variant='outline'>Outline</Button>
               <Button variant='ghost'>Ghost</Button>
+              <Button variant='danger'>Danger</Button>
+              <ModalDemo />
               <span className='rounded-control bg-primary p-3'>
                 <Button variant='outline-inverse'>Outline inverse</Button>
               </span>
@@ -456,6 +501,12 @@ export default function MockupIndexPage() {
               <Select id='demo-select' wrapperClassName='w-44'>
                 <option>Bữa ăn</option>
                 <option>Bữa sáng</option>
+              </Select>
+            </Field>
+            <Field label='Chọn trong form (tone field)' htmlFor='demo-select-field'>
+              <Select id='demo-select-field' tone='field' wrapperClassName='w-full'>
+                <option>Không đính kèm</option>
+                <option>Bánh Chocolate Fudge</option>
               </Select>
             </Field>
             <Field label='Email (trạng thái lỗi)' htmlFor='demo-error' required error='Email không đúng định dạng.'>

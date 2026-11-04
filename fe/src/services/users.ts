@@ -1,5 +1,5 @@
 import request from '@/lib/api';
-import { User } from '@/types/user';
+import type { PublicProfile, User } from '@/types/user';
 
 export async function getSession() {
   const res = await request<{ data: User }>('/authen/session');
@@ -36,4 +36,22 @@ export async function googleRegister(
     }),
   });
   return res.data;
+}
+
+export async function getUserProfile(
+  id: string,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<PublicProfile> {
+  const res = await request<{ data: PublicProfile }>(`/users/${encodeURIComponent(id)}`, {
+    signal,
+  });
+  return res.data;
+}
+
+// Báo cáo một người dùng (mỗi người chỉ có một báo cáo đang chờ với cùng một người).
+export async function reportUser(id: string, reason: string): Promise<void> {
+  await request(`/users/${encodeURIComponent(id)}/reports`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
 }

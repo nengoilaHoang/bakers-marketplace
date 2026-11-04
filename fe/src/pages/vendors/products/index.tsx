@@ -9,8 +9,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
 import Input from '@/components/ui/Input';
-import { PanelSkeleton } from '@/components/vendor/Panel';
-import VendorPage from '@/components/vendor/VendorPage';
+import { PanelSkeleton } from '@/components/dashboard/Panel';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import { useVendorStocks } from '@/hooks/useVendorStocks';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
@@ -56,7 +56,7 @@ const ProductListPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title='Sản phẩm'
       description={
         isLoading || error
@@ -114,7 +114,7 @@ const ProductListPage: NextPageWithLayout = () => {
           )}
         </>
       )}
-    </VendorPage>
+    </DashboardPage>
   );
 };
 

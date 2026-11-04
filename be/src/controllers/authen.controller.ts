@@ -2,7 +2,11 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import authAccountDAO from '#/daos/users/auth-accounts.dao.js';
 import userDAO from '#/daos/users/users.dao.js';
-import { UserCreateSchema } from '#/models/users/users.model.js';
+import takedownDAO from '#/daos/takedowns/takedowns.dao.js';
+import {
+	UserCreateSchema,
+	type UserInfo,
+} from '#/models/users/users.model.js';
 import { AuthenticatedRequest } from '#/types/request.types.js';
 import authenMailService from '#/services/authen/authen-mail.service.js';
 import authenRedisService from '#/services/authen/authen-redis.service.js';
@@ -14,6 +18,7 @@ import redisService from '#/services/redis.service.js';
 import asyncHandler from '#/utils/asyncHandler.js';
 import {
 	ConflictError,
+	ForbiddenError,
 	InternalServerError,
 	NotFoundError,
 	UnauthorizedError,
@@ -140,6 +145,8 @@ class AuthenController {
 				throw new UnauthorizedError('Email or password is incorrect');
 			}
 
+			await this.assertNotBanned(user);
+
 			try {
 				await jwtService.generateToken(user, 'access', res);
 				await jwtService.generateToken(user, 'refresh', res);
@@ -180,6 +187,8 @@ class AuthenController {
 					'GOOGLE_ACCOUNT_NOT_AVAILABLE',
 				);
 			}
+
+			await this.assertNotBanned(user);
 
 			try {
 				await jwtService.generateToken(user, 'access', res);
@@ -413,6 +422,20 @@ class AuthenController {
 			});
 		},
 	);
+
+	/** A banned account cannot sign in; the message carries the reason of the ban in force. */
+	private async assertNotBanned(user: UserInfo): Promise<void> {
+		if (user.status !== 'BANNED' || !user.id) {
+			return;
+		}
+
+		const ban = await takedownDAO.getActiveBanByUserId(user.id);
+
+		throw new ForbiddenError(
+			ban ? `Account has been banned: ${ban.reason}` : 'Account has been banned',
+			'ACCOUNT_BANNED',
+		);
+	}
 
 	private async sendPasswordResetEmail(
 		email: string,

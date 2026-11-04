@@ -38,6 +38,14 @@ export async function up(knex: Knex): Promise<void> {
         .defaultTo('CUSTOMER');
 
       table
+        .enum('status', ['PENDING_VERIFICATION', 'ACTIVE', 'BANNED'], {
+          useNative: true,
+          enumName: 'user_status',
+        })
+        .notNullable()
+        .defaultTo('ACTIVE');
+
+      table
         .timestamp('created_at', { useTz: true })
         .notNullable()
         .defaultTo(knex.fn.now());
@@ -409,6 +417,15 @@ export async function up(knex: Knex): Promise<void> {
         .text('content')
         .notNullable();
 
+      // Admins remove a post by hiding it, so its reports are kept as evidence; who and why live in post_removals
+      table
+        .enum('status', ['VISIBLE', 'REMOVED'], {
+          useNative: true,
+          enumName: 'post_status',
+        })
+        .notNullable()
+        .defaultTo('VISIBLE');
+
       table
         .timestamp('created_at', { useTz: true })
         .notNullable()
@@ -580,11 +597,36 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table
+        .enum('status', ['PENDING', 'DISMISSED', 'RESOLVED'], {
+          useNative: true,
+          enumName: 'report_status',
+        })
+        .notNullable()
+        .defaultTo('PENDING');
+
+      // The admin who dismissed or resolved the report
+      table
+        .uuid('handled_by')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .timestamp('handled_at', { useTz: true })
+        .nullable();
+
+      table
+        .text('note')
+        .nullable();
+
+      table
         .timestamp('created_at', { useTz: true })
         .notNullable()
         .defaultTo(knex.fn.now());
 
       table.index(['reporter_id'], 'idx_reports_reporter_id');
+      table.index(['status', 'created_at'], 'idx_reports_status_created');
     })
 
     .createTable('post_reports', (table) => {
@@ -603,6 +645,152 @@ export async function up(knex: Knex): Promise<void> {
         .onDelete('CASCADE');
 
       table.index(['post_id'], 'idx_post_reports_post_id');
+    })
+
+    .createTable('user_reports', (table) => {
+      table
+        .uuid('id')
+        .references('id')
+        .inTable('reports')
+        .primary()
+        .onDelete('CASCADE');
+
+      table
+        .uuid('target_user_id')
+        .notNullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('CASCADE');
+
+      table.index(['target_user_id'], 'idx_user_reports_target_user_id');
+    })
+
+    .createTable('warnings', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('user_id')
+        .notNullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('issued_by')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .text('reason')
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['user_id'], 'idx_warnings_user_id');
+    })
+
+    // The reports a warning settled: a warning has any number of them, a report belongs to at most one warning
+    .createTable('warning_reports', (table) => {
+      table
+        .uuid('warning_id')
+        .notNullable()
+        .references('id')
+        .inTable('warnings')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('report_id')
+        .notNullable()
+        .references('id')
+        .inTable('reports')
+        .onDelete('CASCADE');
+
+      table.primary(['warning_id', 'report_id']);
+
+      table.unique(['report_id'], {
+        indexName: 'uq_warning_reports_report_id',
+        useConstraint: true,
+      });
+    })
+
+    // Columns shared by every kind of takedown; post_removals and user_bans add the target.
+    // revoked_at IS NULL means the takedown is still in force (post hidden / account banned).
+    .createTable('takedowns', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('issued_by')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .text('reason')
+        .notNullable();
+
+      table
+        .timestamp('issued_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table
+        .uuid('revoked_by')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .timestamp('revoked_at', { useTz: true })
+        .nullable();
+    })
+
+    .createTable('post_removals', (table) => {
+      table
+        .uuid('id')
+        .references('id')
+        .inTable('takedowns')
+        .primary()
+        .onDelete('CASCADE');
+
+      table
+        .uuid('post_id')
+        .notNullable()
+        .references('id')
+        .inTable('posts')
+        .onDelete('CASCADE');
+
+      table.index(['post_id'], 'idx_post_removals_post_id');
+    })
+
+    .createTable('user_bans', (table) => {
+      table
+        .uuid('id')
+        .references('id')
+        .inTable('takedowns')
+        .primary()
+        .onDelete('CASCADE');
+
+      table
+        .uuid('user_id')
+        .notNullable()
+        .references('id')
+        .inTable('users')
+        .onDelete('CASCADE');
+
+      table.index(['user_id'], 'idx_user_bans_user_id');
     })
 
     .createTable('brands', (table) => {
@@ -1468,6 +1656,12 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('products')
     .dropTableIfExists('brands')
     .dropTableIfExists('social_links')
+    .dropTableIfExists('user_bans')
+    .dropTableIfExists('post_removals')
+    .dropTableIfExists('takedowns')
+    .dropTableIfExists('warning_reports')
+    .dropTableIfExists('warnings')
+    .dropTableIfExists('user_reports')
     .dropTableIfExists('post_reports')
     .dropTableIfExists('reports')
     .dropTableIfExists('post_saves')
@@ -1493,6 +1687,9 @@ export async function down(knex: Knex): Promise<void> {
     DROP TYPE IF EXISTS breakpoint_type;
     DROP TYPE IF EXISTS page_type;
 		DROP TYPE IF EXISTS stock_alert_type;
+    DROP TYPE IF EXISTS report_status;
+    DROP TYPE IF EXISTS post_status;
+    DROP TYPE IF EXISTS user_status;
     DROP TYPE IF EXISTS user_role;
   `);
 	

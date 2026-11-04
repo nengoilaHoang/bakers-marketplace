@@ -17,9 +17,9 @@ import Icon from '@/components/ui/Icon';
 import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import Panel, { PanelSkeleton } from '@/components/vendor/Panel';
+import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
 import RemovableTag from '@/components/vendor/RemovableTag';
-import VendorPage from '@/components/vendor/VendorPage';
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { collectionApi, type Collection } from '@/services/collections';
 import { productApi, type Product } from '@/services/products';
@@ -92,24 +92,24 @@ const ProductDetailPage: NextPageWithLayout = () => {
 
   if (loadError) {
     return (
-      <VendorPage title='Sản phẩm' breadcrumb={breadcrumb}>
+      <DashboardPage title='Sản phẩm' breadcrumb={breadcrumb}>
         <ErrorState
           title='Không thể tải sản phẩm'
           message={loadError}
           onRetry={() => void load()}
         />
-      </VendorPage>
+      </DashboardPage>
     );
   }
 
   if (!product) {
     return (
-      <VendorPage title='Sản phẩm' breadcrumb={breadcrumb}>
+      <DashboardPage title='Sản phẩm' breadcrumb={breadcrumb}>
         <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]'>
           <PanelSkeleton className='h-96' />
           <PanelSkeleton className='h-64' />
         </div>
-      </VendorPage>
+      </DashboardPage>
     );
   }
 
@@ -150,7 +150,7 @@ const ProductDetailPage: NextPageWithLayout = () => {
   }
 
   return (
-    <VendorPage
+    <DashboardPage
       title={product.title}
       breadcrumb={breadcrumb}
       description={product.description || undefined}
@@ -383,7 +383,7 @@ const ProductDetailPage: NextPageWithLayout = () => {
           </Panel>
         </div>
       </div>
-    </VendorPage>
+    </DashboardPage>
   );
 };
 
