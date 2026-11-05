@@ -192,18 +192,38 @@ const HeroBannerComponent = ({
       {/* Background Media */}
       {mediaType === 'image' && (
         <div className='absolute inset-0 min-h-0 min-w-0'>
-          <Image
-            src={
-              breakpoint === 'mobile' && mobileMediaUrl
-                ? mobileMediaUrl
-                : desktopMediaUrl
-            }
-            draggable={false}
-            alt={altText}
-            fill
-            className='object-cover'
-            priority
-          />
+          {/* If you have distinct mobile & desktop URLs, render both and toggle visibility with CSS */}
+          {mobileMediaUrl && (
+            <Image
+              src={mobileMediaUrl}
+              draggable={false}
+              alt={altText || 'Hero Banner'}
+              fill
+              priority
+              sizes='100vw'
+              className={cn(
+                'object-cover',
+                // Show on mobile, hide on md/desktop
+                desktopMediaUrl ? 'block md:hidden' : 'block',
+              )}
+            />
+          )}
+
+          {desktopMediaUrl && (
+            <Image
+              src={desktopMediaUrl}
+              draggable={false}
+              alt={altText || 'Hero Banner'}
+              fill
+              priority
+              sizes='100vw'
+              className={cn(
+                'object-cover',
+                // Hide on mobile, show on md/desktop
+                mobileMediaUrl ? 'hidden md:block' : 'block',
+              )}
+            />
+          )}
         </div>
       )}
       {/* Overlay */}

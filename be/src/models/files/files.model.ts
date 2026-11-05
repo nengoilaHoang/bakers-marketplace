@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import z from 'zod';
 
-export const ImageTableSchema = z.object({
+export const FileTableSchema = z.object({
 	id: z.uuidv4().readonly(),
 	displayName: z.string().trim().min(3).max(255),
 	originalName: z.string().trim().min(3).max(255),
@@ -13,7 +13,7 @@ export const ImageTableSchema = z.object({
 	createdAt: z.date().readonly(),
 });
 
-export const ImageSchema = ImageTableSchema;
+export const FileSchema = FileTableSchema;
 
-export type ImageRow = z.infer<typeof ImageTableSchema>;
-export type Image = z.infer<typeof ImageSchema>;
+export type FileRow = z.infer<typeof FileTableSchema>;
+export type File = z.infer<typeof FileSchema>;
