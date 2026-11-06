@@ -11,6 +11,8 @@ export type User = {
 	displayName: string;
 	role: UserRole;
 	status?: UserStatus;
+	role: UserRole;
+	status?: UserStatus;
 	createdAt: Date;
 }
 

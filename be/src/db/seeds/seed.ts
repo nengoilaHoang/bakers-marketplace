@@ -82,6 +82,7 @@ const users = [
   },
 ];
 
+// Inserted apart from `users` so the admin does not author seeded recipes or posts.
 const adminUser = {
   email: 'admin@example.com',
   displayname: 'Quản trị viên',
@@ -582,6 +583,7 @@ async function createRecipeSnapshot(
   return snapshotId;
 }
 
+/** Inserts a report and its post_reports / user_reports row; without `handled` it stays PENDING. */
 async function seedReport(
   trx: Knex.Transaction,
   report: {
@@ -608,10 +610,7 @@ async function seedReport(
     .returning(['id']);
 
   if ('postId' in report.target) {
-    await trx('post_reports').insert({
-      id: created.id,
-      post_id: report.target.postId,
-    });
+    await trx('post_reports').insert({ id: created.id, post_id: report.target.postId });
   } else {
     await trx('user_reports').insert({
       id: created.id,
@@ -622,6 +621,7 @@ async function seedReport(
   return created.id;
 }
 
+/** Inserts a takedown and its post_removals / user_bans row; without `revoked` it is still in force. */
 async function seedTakedown(
   trx: Knex.Transaction,
   takedown: {
@@ -646,15 +646,9 @@ async function seedTakedown(
     .returning(['id']);
 
   if ('postId' in takedown.target) {
-    await trx('post_removals').insert({
-      id: created.id,
-      post_id: takedown.target.postId,
-    });
+    await trx('post_removals').insert({ id: created.id, post_id: takedown.target.postId });
   } else {
-    await trx('user_bans').insert({
-      id: created.id,
-      user_id: takedown.target.userId,
-    });
+    await trx('user_bans').insert({ id: created.id, user_id: takedown.target.userId });
   }
 }
 
