@@ -81,10 +81,10 @@ export const HeroBannerContentSchema = z.object({
 export const BaseHeroBannerConfigSchema = BasePlacementConfigSchema.extend({
   aspect: ResponsiveProp(AspectRatioValueSchema.default('16:9')),
   fit: MediaFitSchema,
-  focalPoint: MediaFocalPointSchema.optional(),
+  focalPoint: MediaFocalPointSchema.nullable().optional().default(null),
   mediaType: HeroBannerMediaTypeSchema,
   desktopMediaUrl: z.url(),
-  mobileMediaUrl: z.url().nullable(),
+  mobileMediaUrl: z.url().nullable().optional().default(null),
   altText: z.string(),
 
   overlay: HeroBannerOverlaySchema.default({ type: 'none' }),

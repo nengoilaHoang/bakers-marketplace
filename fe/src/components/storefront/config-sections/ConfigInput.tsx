@@ -1,7 +1,7 @@
 import { useDropdown } from '@/hooks/useDropdown';
 import ColorPicker from './ColorPicker';
 import RadioButton from './RadioButton';
-import TypeableSelect from './TypeableSelect';
+import TypeableSelect from './inputs/TypeableSelect';
 
 type ConfigInputProps<T extends string | number | boolean> = {
   id: string;

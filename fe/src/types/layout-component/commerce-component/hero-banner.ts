@@ -60,9 +60,9 @@ export type BaseHeroBannerConfig = BasePlacementConfig &
   HeroBannerContent & {
     aspect: ResponsiveProp<AspectRatioValue>;
     fit: MediaFit;
-    focalPoint?: MediaFocalPoint | undefined;
+    focalPoint?: MediaFocalPoint | null | undefined;
     desktopMediaUrl: string;
-    mobileMediaUrl: string | null;
+    mobileMediaUrl?: string | null | undefined;
     altText: string;
     overlay: HeroBannerOverlay;
     primaryCta?: HeroBannerCta | undefined;
