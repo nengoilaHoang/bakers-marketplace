@@ -19,10 +19,15 @@ const StorefrontLayoutProvider = ({
   const { state, dispatch } = useLayoutReducer(initialState);
 
   const updateConfig = useCallback(
-    (targetComponentId: string, pathname: string, value: unknown) => {
+    (
+      targetComponentId: string,
+      pathname: string,
+      value: unknown,
+      bp?: string,
+    ) => {
       dispatch({
         type: 'UPDATE_CONFIG',
-        payload: { targetComponentId, pathname, value },
+        payload: { targetComponentId, pathname, value, bp },
       });
     },
     [dispatch],

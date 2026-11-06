@@ -39,13 +39,12 @@ const HARD_CODED_RECIPE_ID_1 = '22222222-2222-4222-8222-222222222222';
 const HARD_CODED_RECIPE_ID_2 = '33333333-3333-4333-8333-333333333333';
 const HARD_CODED_STOREFRONT_ID = '44444444-4444-4444-8444-444444444444';
 const HARD_CODED_STOREFRONT_RELEASE_ID = '55555555-5555-4555-8555-555555555555';
-
 const MATTROI_STOREFRONT_ID = '66666666-6666-4666-8666-666666666666';
 const MATTROI_STOREFRONT_RELEASE_ID = '77777777-7777-4777-8777-777777777777';
 
 const BREAKPOINTS = ['mobile', 'tablet', 'desktop'] as const;
 
-// Mọi tài khoản mẫu dùng chung mật khẩu "Bakers@123" (bcrypt, 12 vòng như bcrypt.service).
+// Mật khẩu mặc định: "Bakers@123" (bcrypt 12 rounds)
 const SEED_PASSWORD_HASH =
   '$2b$12$ZN9SBrqZPM3zIS2/JOUkX.8ffdiJ7LDy0O69ZMo.0HOlERB8pDc0K';
 
@@ -95,17 +94,17 @@ const baseRecipes: RecipeSeed[] = [
   {
     title: 'Bánh Chocolate Fudge',
     description:
-      'Bánh chocolate fudge đậm đà phủ sốt cacao thơm lừng. Chocolate sánh mịn béo ngậy, ngọt ngào vừa phải. Công thức phù hợp làm quà sinh nhật hoặc tráng miệng.',
+      'Bánh chocolate fudge đậm vị cacao truyền thống. Chocolate sánh mịn, ngọt béo vừa phải. Công thức phù hợp làm quà sinh nhật hoặc tráng miệng.',
     portion: 8,
     tags: ['chocolate', 'cake', 'dessert', 'birthday'],
     ingredients: [
-      ['Bột mì đa dụng', 180, 'g'],
+      ['Bột mì', 180, 'g'],
       ['Bột cacao', 55, 'g'],
       ['Đường tinh luyện', 160, 'g'],
       ['Trứng gà', 3, 'quả'],
       ['Sữa tươi không đường', 180, 'ml'],
       ['Bơ lạt', 100, 'g'],
-      ['Chocolate đen', 120, 'g'],
+      ['Chocolate đen 65%', 120, 'g'],
     ],
     tools: [
       ['Lò nướng', 1],
@@ -113,26 +112,26 @@ const baseRecipes: RecipeSeed[] = [
       ['Khuôn tròn 20cm', 1],
     ],
     steps: [
-      'Làm nóng lò nướng 175°C trong ít nhất 15 phút. Lót giấy nến vào khuôn tròn 20cm.',
-      'Rây bột mì và bột cacao, trộn đều hỗn hợp bột khô với đường.',
-      'Đun cách thủy bơ và chocolate đen cho tan chảy hoàn toàn.',
-      'Đánh tan trứng với sữa tươi, rót từ từ chocolate vào trộn đều.',
+      'Làm nóng lò 175°C trong ít nhất 15 phút. Lót giấy nến khuôn tròn 20cm.',
+      'Rây bột mì, bột cacao, trộn đều với đường tinh luyện.',
+      'Đun cách thủy chocolate đen cho tan chảy hoàn toàn.',
+      'Đánh tan trứng với bơ, rót chocolate vào trộn đều.',
       'Cho bột vào fold nhẹ tay đến khi vừa quyện.',
-      'Đổ hỗn hợp vào khuôn, nướng 32-38 phút đến khi tăm rút ra còn ẩm.',
+      'Đổ vào khuôn, nướng 32-38 phút đến khi tăm rút ra còn ẩm.',
       'Để nguội trong khuôn 15 phút trước khi lấy ra rack.',
     ],
     notes: [
-      'Không nướng quá khô để giữ độ ẩm mềm.',
-      'Ngon hơn sau khi bảo quản lạnh 2 giờ trong tủ mát.',
+      'Không nướng quá lửa để bánh giữ được độ ẩm mềm.',
+      'Ngon hơn sau khi bảo quản lạnh 2 giờ trong ngăn mát.',
     ],
   },
 ];
 
 const flavors: Flavor[] = [
   {
-    name: 'Dâu Tây',
+    name: 'Dâu',
     tag: 'strawberry',
-    ingredient: 'Dâu tây tươi xay nhuyễn',
+    ingredient: 'Dâu tây xay nhuyễn',
     amount: 120,
     unit: 'g',
     profile: 'Vị chua ngọt thanh mát tự nhiên.',
@@ -144,8 +143,8 @@ const flavors: Flavor[] = [
     ingredient: 'Bột matcha Uji',
     amount: 10,
     unit: 'g',
-    profile: 'Hương trà xanh thơm ngát, hậu vị ngọt thanh.',
-    tip: 'Rây bột matcha thật mịn để không bị vón cục.',
+    profile: 'Hương trà xanh thơm ngát, hậu vị thanh.',
+    tip: 'Rây kỹ matcha để không vón cục.',
   },
   {
     name: 'Caramel',
@@ -153,7 +152,7 @@ const flavors: Flavor[] = [
     ingredient: 'Sốt caramel',
     amount: 90,
     unit: 'g',
-    profile: 'Ngọt béo đậm đà, thơm mùi bơ cháy nhẹ.',
+    profile: 'Ngọt béo đậm đà, thơm lừng.',
     tip: 'Để sốt nguội hoàn toàn trước khi fold vào kem tươi.',
   },
 ];
@@ -161,7 +160,7 @@ const flavors: Flavor[] = [
 const families: Family[] = [
   {
     name: 'Mousse',
-    description: 'Mousse mềm mịn mát lạnh tan ngay trong miệng.',
+    description: 'Mousse mát lạnh, mềm mịn tan ngay trong miệng.',
     tags: ['mousse', 'cold-dessert'],
     ingredients: [
       ['Whipping cream', 250, 'ml'],
@@ -177,7 +176,7 @@ const families: Family[] = [
   },
   {
     name: 'Chiffon Cake',
-    description: 'Chiffon cake bông xốp mềm mượt như mây.',
+    description: 'Chiffon cake bông xốp nhẹ như mây.',
     tags: ['chiffon', 'cake'],
     ingredients: [
       ['Bột mì số 8', 120, 'g'],
@@ -200,18 +199,18 @@ function buildDescription(family: Family, flavor: Flavor): string {
 
 function buildFamilySteps(familyName: string, flavor: Flavor): string[] {
   return [
-    `Chuẩn bị đầy đủ nguyên liệu bao gồm ${flavor.amount}${flavor.unit} ${flavor.ingredient.toLowerCase()}.`,
-    `Thực hiện các thao tác theo từng bước tiêu chuẩn của món bánh ${familyName}.`,
-    'Bảo quản hoặc nướng ở dải nhiệt thích hợp trước khi thưởng thức.',
+    `Chuẩn bị nguyên liệu bao gồm ${flavor.amount}${flavor.unit} ${flavor.ingredient.toLowerCase()}.`,
+    `Thực hiện các thao tác theo từng bước tiêu chuẩn bánh ${familyName}.`,
+    'Bảo quản ở nhiệt độ thích hợp trước khi thưởng thức.',
   ];
 }
 
 function buildFamilyNotes(_familyName: string, flavor: Flavor): string[] {
-  return [flavor.tip, 'Bảo quản trong tủ mát từ 2-3 ngày.'];
+  return [flavor.tip, 'Bảo quản trong tủ mát 2-3 ngày.'];
 }
 
 // ==========================================================
-// VENDORS & PRODUCTS CONFIG
+// VENDORS & BRANDS CONFIG
 // ==========================================================
 const vendorUsers = [
   {
@@ -219,14 +218,30 @@ const vendorUsers = [
     displayname: 'Tiệm Bánh Hoa Sen',
     hashed_password: SEED_PASSWORD_HASH,
     role: 'VENDOR' as const,
+    businessType: 'COMPANY' as const,
     taxCode: '0312345678',
+    contact: {
+      representativeName: 'Nguyễn Văn Sen',
+      representativeRole: 'Chủ tiệm',
+      businessAddress: '123 Đường Hoa Sen, Quận 1, TP. Hồ Chí Minh',
+      businessPhone: '0901234567',
+      businessEmail: 'contact@hoasen-bakery.vn',
+    },
   },
   {
     email: 'vendor.mattroi@example.com',
     displayname: 'Bánh Ngọt Mặt Trời',
     hashed_password: SEED_PASSWORD_HASH,
     role: 'VENDOR' as const,
+    businessType: 'COMPANY' as const,
     taxCode: '0398765432',
+    contact: {
+      representativeName: 'Trần Thị Mặt Trời',
+      representativeRole: 'Chủ tiệm',
+      businessAddress: '456 Đường Mặt Trời, Quận 3, TP. Hồ Chí Minh',
+      businessPhone: '0909876543',
+      businessEmail: 'contact@sunrise-patisserie.vn',
+    },
   },
 ];
 
@@ -246,13 +261,13 @@ const collections = [
     name: 'Bánh Trung Thu',
     slug: 'banh-trung-thu',
     description: 'Bánh trung thu truyền thống và hiện đại.',
-    isActive: true,
+    is_active: true,
   },
   {
     name: 'Hàng Mới Về',
     slug: 'hang-moi-ve',
     description: 'Những sản phẩm mới ra lò trong tuần.',
-    isActive: true,
+    is_active: true,
   },
 ];
 
@@ -295,7 +310,7 @@ const products: SeedProduct[] = [
   {
     title: 'Croissant Bơ Pháp',
     slug: 'croissant-bo-phap',
-    description: 'Croissant ngàn lớp, thơm mùi bơ Pháp AOP.',
+    description: 'Croissant ngàn lớp, thơm mùi bơ AOP.',
     unitPrice: 35000,
     unitCost: 19000,
     unit: 'cái',
@@ -323,72 +338,71 @@ const posts: PostSeed[] = [
   {
     title: 'Mousse dâu cho buổi chiều cuối tuần',
     content:
-      'Trời nắng nóng nên mình làm liền mẻ mousse dâu tây. Lớp mousse mềm, chua ngọt vừa phải, cắt ra thấy rõ từng tầng. Mọi người thử nha.',
+      'Trời nắng nóng nên làm liền một mẻ mousse dâu tây. Lớp mousse mềm mịn, chua ngọt vừa phải, cắt ra thơm lừng góc bếp. Mọi người thử nha.',
     tags: ['mousse', 'strawberry'],
-    recipeTitle: 'Mousse Dâu Tây',
+    recipeTitle: 'Mousse Dâu',
   },
   {
-    title: 'Chiffon dẹp lép, mọi người giúp mình với',
+    title: 'Chiffon dâu xẹp, mọi người giúp mình với',
     content:
-      'Mình làm theo công thức nhưng lấy ra khỏi lò được 5 phút thì bánh xẹp hẳn. Có phải do mình đánh lòng trắng chưa đủ chóp không ạ?',
+      'Mình làm theo đúng công thức nhưng lấy ra khỏi lò được 5 phút thì bánh xẹp. Có phải do mình đánh lòng trắng chưa bông cứng không?',
     tags: ['chiffon', 'hoi-dap'],
-    recipeTitle: 'Chiffon Cake Dâu Tây',
+    recipeTitle: 'Chiffon Cake Dâu',
   },
   {
     title: 'Mẹo pha matcha không bị vón cục',
     content:
-      'Nên rây matcha vào bát trước rồi mới rót nước ấm 70-80 độ vào khuấy nhanh tay. Đừng dùng nước sôi sùng sục sẽ làm biến màu và đắng chát.',
+      'Nên rây matcha vào bát trước, thêm nước 70-80°C rồi khuấy nhanh tay bằng chổi chasen. Đừng dùng nước sôi kẻo biến chất đắng ngắt.',
     tags: ['matcha', 'tips'],
   },
   {
     title: 'Mousse matcha thanh mát vừa miệng',
     content:
-      'Hôm nay thử làm mousse matcha Uji. Vị đắng nhẹ, hậu ngọt, màu xanh mướt mắt.',
+      'Hôm nay thử làm mousse matcha Uji. Vị đắng nhẹ quyện kem béo ngậy, màu xanh mát mắt.',
     tags: ['matcha', 'mousse'],
     recipeTitle: 'Mousse Matcha',
   },
   {
     title: 'Khoe mẻ croissant đầu tiên ra lò',
     content:
-      'Cán bơ mất cả ngày nhưng thành quả giòn rụm từng lớp. Thơm nức cả gian bếp.',
+      'Cán bơ bằng tay tuy cực nhưng thành quả giòn rụm xốp mềm. Thơm nức cả gian bếp.',
     tags: ['croissant', 'khoe-banh'],
   },
   {
     title: 'Chiffon matcha cao 12cm nở đẹp',
     content:
-      'Cuối cùng cũng làm được ổ chiffon nở phồng chuẩn chỉnh không bị lõm đáy.',
+      'Cuối cùng cũng làm được chiffon nở chuẩn chỉ không bị lõm đáy hay xẹp.',
     tags: ['chiffon', 'matcha'],
     recipeTitle: 'Chiffon Cake Matcha',
   },
   {
-    title: 'Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?',
+    title: 'Nên dùng bơ thực vật hay bơ động vật?',
     content:
-      'Nhiều bạn hỏi dùng bơ mặn thay bơ nhạt được không. Lời khuyên là dùng bơ nhạt để kiểm soát muối tốt hơn.',
+      'Nhiều bạn hỏi thay bơ lạt bằng bơ phe được không. Lời khuyên là luôn ưu tiên bơ động vật để bánh thơm ngậy chuẩn vị.',
     tags: ['hoi-dap', 'nguyen-lieu'],
   },
   {
     title: 'Mousse caramel cho tiệc sinh nhật',
     content:
-      'Lớp caramel béo ngậy kết hợp mousse bồng bềnh ai ăn cũng thích mê.',
+      'Lớp caramel béo ngậy phủ trên mousse bồng bềnh, ai ăn cũng khen nức nở.',
     tags: ['caramel', 'mousse', 'birthday'],
     recipeTitle: 'Mousse Caramel',
   },
   {
-    title: 'Nhiệt lò thực tế khác xa số hiển thị',
+    title: 'Nhiệt kế lò nướng sai số lớn',
     content:
-      'Mọi người nên sắm nhiệt kế lò rời nhé. Lò mình bị chênh tận 15 độ C so với núm xoay.',
+      'Mới mua nhiệt kế cơ về test thử thấy chênh tận 15°C so với núm xoay lò.',
     tags: ['tips', 'lo-nuong'],
   },
   {
-    title: 'Chiffon caramel thơm ngọt dịu',
-    content:
-      'Một chút sốt caramel tự nấu giúp chiffon thơm lừng mà không bị ngọt gắt.',
+    title: 'Chiffon caramel thơm ngọt gian bếp',
+    content: 'Một chút caramel tự nấu giúp chiffon thơm ngon vượt bậc.',
     tags: ['chiffon', 'caramel'],
     recipeTitle: 'Chiffon Cake Caramel',
   },
   {
-    title: 'Bánh mì hoa cúc làm lần 3 thành công',
-    content: 'Thớ bánh xé sợi dai mềm, thơm phức mùi bơ và tinh dầu hoa cam.',
+    title: 'Bánh mì hoa cúc lần 3 thành công',
+    content: 'Thành phẩm thớ xé dai mềm, thơm phức tinh dầu hoa cam.',
     tags: ['banh-mi', 'khoe-banh'],
   },
   {
@@ -400,67 +414,64 @@ const posts: PostSeed[] = [
   {
     title: 'Bánh trung thu nhân thập cẩm xá xíu',
     content:
-      'Tự làm nhân thập cẩm tuy lích kích nhưng vị tươi ngon sạch sẽ hơn mua sẵn.',
+      'Tự làm nhân thập cẩm tuy lách cách nhưng vừa miệng và sạch sẽ hơn mua sẵn.',
     tags: ['trung-thu', 'banh-nuong'],
   },
   {
-    title: 'Cách bảo quản kem tươi đánh bông',
+    title: 'Cách bảo quản kem tươi tránh bị tách nước',
     content:
-      'Bọc màng bọc sát mặt kem và bảo quản ngăn mát dùng trong 24-48 giờ.',
+      'Hộp kem sau khi mở nắp, nên quấn màng bọc kín và dùng trong 24-48 giờ.',
     tags: ['tips', 'whipping-cream'],
   },
   {
     title: 'Tiramisu không dùng trứng sống',
-    content:
-      'Công thức tiệt trùng trứng cách thủy giúp cả nhà an tâm thưởng thức.',
+    content: 'Công thức tiệt trùng lòng đỏ cách thủy giúp an tâm thưởng thức.',
     tags: ['tiramisu', 'dessert'],
   },
   {
     title: 'Làm bánh quy bơ cùng con nhỏ',
-    content:
-      'Bánh quy bơ tạo hình đơn giản, cả hai mẹ con vừa làm vừa chơi rất vui.',
+    content: 'Bánh quy bơ đơn giản, cả hai mẹ con vừa nặn vừa nướng rất vui.',
     tags: ['cookie', 'gia-dinh'],
   },
   {
-    title: 'Bột số 8 và số 11 khác nhau thế nào?',
+    title: 'Bột mì số 8 và số 11 khác nhau thế nào?',
     content:
-      'Bột số 8 hàm lượng protein thấp hợp làm bánh mềm bông, số 11 hợp làm bánh mì và vỏ bánh giòn.',
+      'Bột số 8 hàm lượng protein thấp cho bánh mềm ẩm, số 11 tạo thớ dai giòn.',
     tags: ['hoi-dap', 'nguyen-lieu'],
   },
   {
     title: 'Tart trứng Bồ Đào Nha vỏ ngàn lớp',
-    content: 'Vỏ giòn rụm nhiều tầng, nhân trứng sữa béo ngậy xém vàng mặt.',
+    content: 'Vỏ giòn tan nhiều tầng, nhân trứng sữa béo ngậy ngọt ngào.',
     tags: ['tart', 'khoe-banh'],
   },
   {
     title: 'Thanh lý lò nướng giá rẻ, inbox ngay',
-    content: 'Thanh lý lò 50L mới 99%, liên hệ qua zalo ngay để chốt đơn.',
+    content:
+      'Thanh lý lò nướng 50L mới 99%, liên hệ qua zalo ngay để nhận giá tốt.',
     tags: ['thanh-ly'],
     reportReasons: ['Spam quảng cáo', 'Nội dung không liên quan làm bánh'],
   },
   {
     title: 'Bánh chocolate không cần lò nướng',
-    content: 'Công thức nướng cách thủy trên chảo chống dính siêu tiện lợi.',
+    content: 'Công thức đun cách thủy trên chảo chống dính siêu tiện lợi.',
     tags: ['chocolate', 'khong-lo'],
     reportReasons: ['Thông tin không chính xác'],
   },
 ];
 
 const postComments = [
-  'Nhìn ngon quá, cuối tuần mình sẽ thử làm!',
-  'Bánh nở đẹp và thớ bánh mịn màng quá bạn ơi.',
-  'Cảm ơn bạn đã chia sẻ mẹo làm bánh bổ ích.',
-  'Công thức chuẩn chỉnh, làm lần đầu ăn là mê luôn.',
+  'Nhìn ngon quá, cuối tuần mình sẽ làm thử!',
+  'Bánh nở đẹp quá bạn ơi.',
+  'Cảm ơn bạn đã chia sẻ bí quyết bổ ích.',
+  'Công thức chuẩn chỉnh, làm lần đầu ăn ngon luôn.',
 ];
 
 const POST_AUTHOR_REPLY =
-  'Cảm ơn bạn nha, làm xong nhớ chia sẻ thành quả với mình nhé!';
+  'Cảm ơn bạn nha, làm xong nhớ chia sẻ kết quả lên nhóm nhé!';
 
 // ==========================================================
 // MODERATION CONFIG (reports, warnings, takedowns)
 // ==========================================================
-// Spam account, banned right now: signing in is refused with the ban reason.
-// Inserted apart from `users` so it does not shift who authors the seeded posts.
 const bannedUser = {
   email: 'giasi.shop@example.com',
   displayname: 'Shop Bánh Giá Sỉ',
@@ -470,28 +481,27 @@ const bannedUser = {
 };
 
 const spamPost = {
-  title: 'Nhận order bánh sỉ giá gốc, inbox Zalo',
+  title: 'Nhận order bánh sinh nhật giá sốc, inbox Zalo',
   content:
-    'Nhận làm bánh sinh nhật, bánh kem giá sỉ chỉ từ 50k. Đặt cọc trước 50%, inbox Zalo 09xx để chốt đơn liền tay!',
+    'Nhận làm bánh sinh nhật, bánh kem giá từ 50k. Cọc trước 50%, inbox Zalo 09xx để nhận liền tay!',
   tags: ['quang-cao'],
 };
 
 const restoredPost = {
   title: 'Bánh bông lan trứng muối sốt phô mai',
   content:
-    'Mẻ bông lan trứng muối đầu tiên của mình, sốt phô mai tự nấu nên hơi đặc. Lần sau mình sẽ giảm bớt bột năng.',
+    'Mẻ bông lan trứng muối đầu tiên tự làm, sốt phô mai tự nấu béo ngậy. Lần sau mình sẽ chia sẻ công thức.',
   tags: ['bong-lan', 'trung-muoi'],
 };
 
 const warnedPost = {
-  title: 'Đừng mua bánh ở tiệm đầu hẻm, dở tệ',
+  title: 'Đừng mua bánh ở tiệm X, dở tệ',
   content:
-    'Bánh vừa khô vừa ngọt gắt, chủ tiệm thì thái độ. Ai mua ở đó là phí tiền, mọi người tẩy chay giùm mình.',
+    'Bánh vừa khô vừa ngọt gắt, thái độ phục vụ kém. Ai mua là phí tiền, mọi người tẩy chay giúp mình.',
   tags: ['review'],
 };
 
 type ReportTargetSeed = { postId: string } | { targetUserId: string };
-
 type HandledSeed = {
   status: 'DISMISSED' | 'RESOLVED';
   handledBy: string;
@@ -522,51 +532,51 @@ async function createRecipeSnapshot(
 ): Promise<string> {
   const result = await trx.raw(
     `INSERT INTO recipes (cover_img_id, user_id, title, description, portion, is_public, is_snapshot, created_at, updated_at)
-     SELECT cover_img_id, user_id, title, description, portion, TRUE, TRUE, created_at, updated_at
-     FROM recipes
-     WHERE id = ?
-     RETURNING id`,
+      SELECT cover_img_id, user_id, title, description, portion, TRUE, TRUE, created_at, updated_at
+      FROM recipes
+      WHERE id = ?
+      RETURNING id`,
     [recipeId],
   );
   const snapshotId: string = result.rows[0].id;
 
   await trx.raw(
     `INSERT INTO recipe_ingredients (recipe_id, cover_img_id, name, amount, unit)
-     SELECT ?, cover_img_id, name, amount, unit
-     FROM recipe_ingredients
-     WHERE recipe_id = ?`,
+      SELECT ?, cover_img_id, name, amount, unit
+      FROM recipe_ingredients
+      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
     `INSERT INTO recipe_tools (recipe_id, cover_img_id, name, amount)
-     SELECT ?, cover_img_id, name, amount
-     FROM recipe_tools
-     WHERE recipe_id = ?`,
+      SELECT ?, cover_img_id, name, amount
+      FROM recipe_tools
+      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
     `INSERT INTO recipe_steps (recipe_id, step_order, description)
-     SELECT ?, step_order, description
-     FROM recipe_steps
-     WHERE recipe_id = ?`,
+      SELECT ?, step_order, description
+      FROM recipe_steps
+      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
     `INSERT INTO recipe_notes (recipe_id, note_order, content)
-     SELECT ?, note_order, content
-     FROM recipe_notes
-     WHERE recipe_id = ?`,
+      SELECT ?, note_order, content
+      FROM recipe_notes
+      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
   await trx.raw(
     `INSERT INTO recipe_tags (recipe_id, name)
-     SELECT ?, name
-     FROM recipe_tags
-     WHERE recipe_id = ?`,
+      SELECT ?, name
+      FROM recipe_tags
+      WHERE recipe_id = ?`,
     [snapshotId, recipeId],
   );
 
@@ -645,7 +655,7 @@ async function seedTakedown(
 export async function seed(knex: Knex): Promise<void> {
   await knex.transaction(async (trx) => {
     // =========================================================================
-    // 1. CLEANUP ALL EXISTING RECORDS (DELETES ON TOP IN DEPENDENCY ORDER)
+    // 1. CLEANUP ALL EXISTING RECORDS (DEPENDENCY ORDER)
     // =========================================================================
     // Storefront Layout Hierarchy
     await trx('composite_component_children').del();
@@ -674,10 +684,15 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('product_images').del();
     await trx('products').del();
     await trx('collections').del();
+
+    // Vendors & Brands Cleanup (Brands reference Vendors, so delete Brands first)
     await trx('brands').del();
+    await trx('vendor_contact_infos').del();
+    await trx('company_vendors').del();
+    await trx('individual_vendors').del();
     await trx('vendors').del();
 
-    // Admin Module
+    // Admin Moderation Module
     await trx('user_bans').del();
     await trx('post_removals').del();
     await trx('takedowns').del();
@@ -703,8 +718,14 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('recipe_steps').del();
     await trx('recipes').del();
 
-    // Core Entities
+    // File System & Media
     await trx('images').del();
+    await trx('documents').del();
+    await trx('files').del();
+
+    // Authentication & Core Users
+    await trx('sessions').del();
+    await trx('auth_accounts').del();
     await trx('users').del();
 
     // =========================================================================
@@ -735,13 +756,26 @@ export async function seed(knex: Knex): Promise<void> {
       }
     }
 
-    const imageRows = await trx('images')
+    // Step A: Insert into files first
+    const recipeFiles = await trx('files')
       .insert(
         generatedRecipes.map((recipe, index) => ({
           display_name: `${recipe.title} cover`,
           original_name: `recipe-${index + 1}.jpg`,
           url: `https://picsum.photos/seed/bakers-recipe-${index + 1}/800/600`,
           content_type: 'image/jpeg',
+          ext_name: 'jpg',
+        })),
+      )
+      .returning(['id']);
+
+    // Step B: Insert into images referencing the file IDs
+    const imageRows = await trx('images')
+      .insert(
+        recipeFiles.map((file) => ({
+          id: file.id,
+          width: 800,
+          height: 600,
         })),
       )
       .returning(['id']);
@@ -750,7 +784,7 @@ export async function seed(knex: Knex): Promise<void> {
       const recipe = generatedRecipes[index];
       const user = userRows[index % userRows.length];
       const image = imageRows[index];
-      const isPublic = index % 7 !== 0;
+      const isPublic = index === 0 ? true : index % 7 !== 0;
       const isSnapshot = isPublic && index % 11 === 0;
 
       const [createdRecipe] = await trx('recipes')
@@ -817,6 +851,50 @@ export async function seed(knex: Knex): Promise<void> {
     // =========================================================================
     // 3. SEED VENDORS, BRANDS & PRODUCTS
     // =========================================================================
+    // Brand logos and favicons in files & images
+    const brandFiles = await trx('files')
+      .insert([
+        {
+          display_name: 'Hoa Sen Bakery Logo',
+          original_name: 'hoasen-logo.png',
+          url: 'https://picsum.photos/seed/hoasen-logo/200/200',
+          content_type: 'image/png',
+          ext_name: 'png',
+        },
+        {
+          display_name: 'Hoa Sen Bakery Favicon',
+          original_name: 'hoasen-favicon.png',
+          url: 'https://picsum.photos/seed/hoasen-favicon/64/64',
+          content_type: 'image/png',
+          ext_name: 'png',
+        },
+        {
+          display_name: 'Sunrise Patisserie Logo',
+          original_name: 'sunrise-logo.png',
+          url: 'https://picsum.photos/seed/sunrise-logo/200/200',
+          content_type: 'image/png',
+          ext_name: 'png',
+        },
+        {
+          display_name: 'Sunrise Patisserie Favicon',
+          original_name: 'sunrise-favicon.png',
+          url: 'https://picsum.photos/seed/sunrise-favicon/64/64',
+          content_type: 'image/png',
+          ext_name: 'png',
+        },
+      ])
+      .returning(['id']);
+
+    const brandImages = await trx('images')
+      .insert(
+        brandFiles.map((file) => ({
+          id: file.id,
+          width: 200,
+          height: 200,
+        })),
+      )
+      .returning(['id']);
+
     const vendorRows = await trx('users')
       .insert(
         vendorUsers.map(({ email, displayname, hashed_password, role }) => ({
@@ -828,23 +906,40 @@ export async function seed(knex: Knex): Promise<void> {
       )
       .returning(['id']);
 
+    // Step 1: Insert vendors (vendors reference only users)
     await trx('vendors').insert(
       vendorRows.map((row, index) => ({
         id: row.id,
+        business_type: vendorUsers[index].businessType,
         tax_code: vendorUsers[index].taxCode,
         registered_at: trx.fn.now(),
       })),
     );
 
+    // Step 2: Insert brands (brands reference vendors via vendor_id)
     const brandRows = await trx('brands')
       .insert(
         brands.map((brand, index) => ({
           name: brand.name,
           domain: brand.domain,
+          logo: brandImages[index * 2].id,
+          favicon: brandImages[index * 2 + 1].id,
           vendor_id: vendorRows[index].id,
         })),
       )
       .returning(['id']);
+
+    // Step 3: Insert vendor contact infos
+    await trx('vendor_contact_infos').insert(
+      vendorRows.map((row, index) => ({
+        id: row.id,
+        representative_name: vendorUsers[index].contact.representativeName,
+        representative_role: vendorUsers[index].contact.representativeRole,
+        business_address: vendorUsers[index].contact.businessAddress,
+        business_phone: vendorUsers[index].contact.businessPhone,
+        business_email: vendorUsers[index].contact.businessEmail,
+      })),
+    );
 
     const collectionRows = await trx('collections')
       .insert(collections)
@@ -857,9 +952,31 @@ export async function seed(knex: Knex): Promise<void> {
       ]),
     );
 
+    // Product media files & images
+    const productFiles = await trx('files')
+      .insert(
+        products.map((p, idx) => ({
+          display_name: `${p.title} media`,
+          original_name: `product-${idx + 1}.jpg`,
+          url: `https://picsum.photos/seed/bakers-product-${idx + 1}/600/600`,
+          content_type: 'image/jpeg',
+          ext_name: 'jpg',
+        })),
+      )
+      .returning(['id']);
+
+    const productImages = await trx('images')
+      .insert(
+        productFiles.map((file) => ({
+          id: file.id,
+          width: 600,
+          height: 600,
+        })),
+      )
+      .returning(['id']);
+
     for (let index = 0; index < products.length; index += 1) {
       const product = products[index];
-
       const [createdProduct] = await trx('products')
         .insert({
           brand_id: brandRows[product.brandIndex].id,
@@ -880,6 +997,12 @@ export async function seed(knex: Knex): Promise<void> {
       await trx('product_stocks').insert({
         id: productId,
         stock: product.stock,
+      });
+
+      await trx('product_images').insert({
+        product_id: productId,
+        image_id: productImages[index].id,
+        sort_order: 1,
       });
 
       if (product.alerts.length > 0) {
@@ -960,6 +1083,7 @@ export async function seed(knex: Knex): Promise<void> {
       color_accent: '#f59e0b',
       color_accent_foreground: '#000000',
     });
+
     await trx('typography').insert({
       id: release.id,
       heading_font: 'Playfair Display',
@@ -1000,6 +1124,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: collectionRootGrid.id,
       component_type: 'GRID',
@@ -1023,6 +1148,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: collectionIntroText.id,
       component_type: 'RICH_TEXT',
@@ -1050,7 +1176,7 @@ export async function seed(knex: Knex): Promise<void> {
                 style: {
                   textAlign: 'left',
                   decoration: 'underline',
-                  txtColor: '#0f172a',
+                  textColor: '#0f172a',
                   fontWeight: 'bold',
                   fontStyle: 'normal',
                 },
@@ -1061,7 +1187,7 @@ export async function seed(knex: Knex): Promise<void> {
                 style: {
                   textAlign: 'left',
                   decoration: 'underline',
-                  txtColor: '#64748b',
+                  textColor: '#64748b',
                   fontWeight: 400,
                   fontStyle: 'normal',
                 },
@@ -1075,7 +1201,7 @@ export async function seed(knex: Knex): Promise<void> {
                 style: {
                   textAlign: 'left',
                   decoration: 'underline',
-                  txtColor: '#334155',
+                  textColor: '#334155',
                   fontWeight: 400,
                   fontStyle: 'normal',
                 },
@@ -1097,6 +1223,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('commerce_components').insert({
       id: productCardBase.id,
       component_type: 'PRODUCT_CARD',
@@ -1119,6 +1246,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('repeater_components').insert({
       id: repeaterBase.id,
       item_template_id: productCardBase.id,
@@ -1176,6 +1304,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: homeRootGrid.id,
       component_type: 'GRID',
@@ -1186,8 +1315,9 @@ export async function seed(knex: Knex): Promise<void> {
         name: 'Home Primary Hero Banner',
         description: 'Top hero banner highlighting bakery daily specialties',
         config: JSON.stringify({
-          h: 'lg',
           w: 'full',
+          aspect: '16:9',
+          fit: 'cover',
           alignSelfX: 'stretch',
           alignSelfY: 'top',
           mediaType: 'image',
@@ -1199,7 +1329,7 @@ export async function seed(knex: Knex): Promise<void> {
             value: 'FRESHLY BAKED DAILY',
             textAlign: 'center',
             decoration: 'underline',
-            txtColor: '#d97706',
+            textColor: '#d97706',
             fontWeight: 'bold',
             fontStyle: 'normal',
           },
@@ -1207,7 +1337,7 @@ export async function seed(knex: Knex): Promise<void> {
             value: 'Warm Loaves, Sweet Moments',
             textAlign: 'center',
             decoration: 'underline',
-            txtColor: '#0f172a',
+            textColor: '#0f172a',
             fontWeight: 'bold',
             fontStyle: 'normal',
           },
@@ -1216,11 +1346,16 @@ export async function seed(knex: Knex): Promise<void> {
               'Handcrafted pastries, natural levain breads, and heartfelt bakes made fresh every morning.',
             textAlign: 'center',
             decoration: 'underline',
-            txtColor: '#475569',
+            textColor: '#475569',
             fontWeight: 400,
             fontStyle: 'normal',
           },
-          contentPosition: 'middle-center',
+          contentPosition: {
+            desktop: 'middle-center',
+            tablet: 'middle-center',
+            mobile: 'middle-center',
+          },
+          contentSize: 'large',
           overlay: {
             type: 'solid',
             color: '#ffffff',
@@ -1236,6 +1371,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('commerce_components').insert({
       id: homeHeroBanner.id,
       component_type: 'HERO_BANNER',
@@ -1266,6 +1402,7 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: homeFeaturesGrid.id,
       component_type: 'GRID',
@@ -1306,6 +1443,7 @@ export async function seed(knex: Knex): Promise<void> {
           }),
         })
         .returning(['id']);
+
       await trx('leaf_components').insert({
         id: leafCard.id,
         component_type: 'RICH_TEXT',
@@ -1384,6 +1522,7 @@ export async function seed(knex: Knex): Promise<void> {
       color_accent: '#f97316',
       color_accent_foreground: '#ffffff',
     });
+
     await trx('typography').insert({
       id: mattroiRelease.id,
       heading_font: 'Fraunces',
@@ -1422,12 +1561,13 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('composite_components').insert({
       id: mattroiHomeBentoGrid.id,
       component_type: 'GRID',
     });
 
-    // Bento Cell 1: Featured Card (desktop colSpan: 2, rowSpan: 2)
+    // Bento Cell 1: Featured Card
     const [bentoHeroCard] = await trx('layout_components')
       .insert({
         name: 'Sunrise Bento Featured Special',
@@ -1448,12 +1588,13 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoHeroCard.id,
       component_type: 'RICH_TEXT',
     });
 
-    // Bento Cell 2: Promotion Card (desktop colSpan: 2, rowSpan: 1)
+    // Bento Cell 2: Promotion Card
     const [bentoPromoCard] = await trx('layout_components')
       .insert({
         name: 'Sunrise Bento Promo Card',
@@ -1474,12 +1615,13 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoPromoCard.id,
       component_type: 'RICH_TEXT',
     });
 
-    // Bento Cell 3: Secondary Feature 1 (desktop colSpan: 1, rowSpan: 1)
+    // Bento Cell 3: Secondary Feature 1
     const [bentoFeature1] = await trx('layout_components')
       .insert({
         name: 'Sunrise Bento Feature Pure Butter',
@@ -1500,12 +1642,13 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoFeature1.id,
       component_type: 'RICH_TEXT',
     });
 
-    // Bento Cell 4: Secondary Feature 2 (desktop colSpan: 1, rowSpan: 1)
+    // Bento Cell 4: Secondary Feature 2
     const [bentoFeature2] = await trx('layout_components')
       .insert({
         name: 'Sunrise Bento Feature Hours',
@@ -1526,12 +1669,12 @@ export async function seed(knex: Knex): Promise<void> {
         }),
       })
       .returning(['id']);
+
     await trx('leaf_components').insert({
       id: bentoFeature2.id,
       component_type: 'RICH_TEXT',
     });
 
-    // Attach children to Bento Grid across all responsive breakpoints
     const bentoChildren = [
       bentoHeroCard.id,
       bentoPromoCard.id,
@@ -1550,7 +1693,6 @@ export async function seed(knex: Knex): Promise<void> {
       ),
     );
 
-    // Attach HOME layout to Storefront Release
     await trx('page_layouts').insert({
       storefront_release_id: mattroiRelease.id,
       type: 'HOME',
@@ -1566,9 +1708,9 @@ export async function seed(knex: Knex): Promise<void> {
 
     const recipeByTitle = new Map<string, { id: string; userId: string }>(
       publicRecipeRows.map(
-        (row: { id: string; title: string; userId: string }) => [
+        (row: { id: string; title: string; user_id: string }) => [
           row.title,
-          { id: row.id, userId: row.userId },
+          { id: row.id, userId: row.user_id },
         ],
       ),
     );
@@ -1578,12 +1720,13 @@ export async function seed(knex: Knex): Promise<void> {
       const recipe = post.recipeTitle
         ? recipeByTitle.get(post.recipeTitle)
         : undefined;
+
       const authorId = recipe?.userId ?? userRows[index % userRows.length].id;
       const snapshotId = recipe
         ? await createRecipeSnapshot(trx, recipe.id)
         : null;
-      const hoursAgo = (index + 1) * 6;
 
+      const postHoursAgo = (index + 1) * 6;
       const [createdPost] = await trx('posts')
         .insert({
           author_id: authorId,
@@ -1591,8 +1734,8 @@ export async function seed(knex: Knex): Promise<void> {
           content: snapshotId
             ? appendRecipeToken(post.content, snapshotId)
             : post.content,
-          created_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hoursAgo]),
-          updated_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [hoursAgo]),
+          created_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [postHoursAgo]),
+          updated_at: trx.raw(`NOW() - (? * INTERVAL '1 hour')`, [postHoursAgo]),
         })
         .returning(['id']);
 
@@ -1611,6 +1754,7 @@ export async function seed(knex: Knex): Promise<void> {
         index + 1,
         index % 4,
       );
+
       if (commenters.length > 0) {
         const commentRows = await trx('post_comments')
           .insert(
@@ -1621,7 +1765,7 @@ export async function seed(knex: Knex): Promise<void> {
                 postComments[(index + commentIndex) % postComments.length],
               created_at: trx.raw(
                 `NOW() - (? * INTERVAL '1 hour') + (? * INTERVAL '30 minute')`,
-                [hoursAgo, commentIndex + 1],
+                [postHoursAgo, commentIndex + 1],
               ),
             })),
           )
@@ -1635,7 +1779,7 @@ export async function seed(knex: Knex): Promise<void> {
             content: POST_AUTHOR_REPLY,
             created_at: trx.raw(
               `NOW() - (? * INTERVAL '1 hour') + (? * INTERVAL '30 minute')`,
-              [hoursAgo, commenters.length + 1],
+              [postHoursAgo, commenters.length + 1],
             ),
           });
         }
@@ -1691,21 +1835,23 @@ export async function seed(knex: Knex): Promise<void> {
     // =========================================================================
     // 9. SEED MODERATION: REPORTS, WARNINGS & TAKEDOWNS
     // =========================================================================
-    // The pending post reports above stay pending; these cover every other state.
     const adminId: string = adminRow.id;
     const userIdByEmail = new Map<string, string>(
       userRows.map((row: { id: string; email: string }) => [row.email, row.id]),
     );
-    const userId = (email: string): string => {
+
+    const getUserId = (email: string): string => {
       const id = userIdByEmail.get(email);
       if (!id) throw new Error(`Seed user ${email} not found`);
       return id;
     };
+
     const postIdByTitle = async (title: string): Promise<string> => {
       const row = await trx('posts').first('id').where({ title });
       if (!row) throw new Error(`Seed post "${title}" not found`);
       return row.id;
     };
+
     const insertPost = async (
       authorId: string,
       post: { title: string; content: string; tags: string[] },
@@ -1722,19 +1868,21 @@ export async function seed(knex: Knex): Promise<void> {
           updated_at: hoursAgo(trx, createdHoursAgo),
         })
         .returning(['id']);
+
       await trx('post_tags').insert(
         post.tags.map((name) => ({ post_id: created.id, name })),
       );
+
       return created.id;
     };
 
-    const minhAnhId = userId('minhanh@example.com');
-    const baoNgocId = userId('baongoc@example.com');
-    const hoangNamId = userId('hoangnam@example.com');
-    const thaoVyId = userId('thaovy@example.com');
-    const quocHuyId = userId('quochuy@example.com');
+    const minhAnhId = getUserId('minhanh@example.com');
+    const baoNgocId = getUserId('baongoc@example.com');
+    const hoangNamId = getUserId('hoangnam@example.com');
+    const thaoVyId = getUserId('thaovy@example.com');
+    const quocHuyId = getUserId('quochuy@example.com');
 
-    // (a) Spam account: banned 12 days ago, unbanned after 2 days, banned again 2 days ago.
+    // (a) Banned user
     const [bannedRow] = await trx('users').insert(bannedUser).returning(['id']);
     const bannedId: string = bannedRow.id;
 
@@ -1743,31 +1891,44 @@ export async function seed(knex: Knex): Promise<void> {
       reason: 'Nhắn tin mời mua hàng liên tục',
       hoursAgo: 13 * 24,
       target: { targetUserId: bannedId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 12 * 24, note: 'Đăng quảng cáo bán hàng hàng loạt' },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 12 * 24,
+        note: 'Đăng quảng cáo hàng loạt',
+      },
     });
+
     await seedTakedown(trx, {
       target: { userId: bannedId },
       issuedBy: adminId,
-      reason: 'Đăng quảng cáo bán hàng hàng loạt',
+      reason: 'Đăng quảng cáo hàng loạt',
       hoursAgo: 12 * 24,
       revoked: { by: adminId, hoursAgo: 10 * 24 },
     });
 
-    // Its spam post: removed 3 days ago, which settled both reports about it
+    // Spam post
     const spamPostId = await insertPost(bannedId, spamPost, 4 * 24, 'REMOVED');
-    const spamRemoval = 'Quảng cáo bán hàng, vi phạm quy định diễn đàn';
+    const spamRemoval = 'Quảng cáo sai quy định diễn đàn';
+
     for (const [reporterId, reason] of [
       [minhAnhId, 'Spam quảng cáo'],
-      [hoangNamId, 'Bán hàng trong diễn đàn làm bánh'],
+      [hoangNamId, 'Bán hàng trong diễn đàn'],
     ] as const) {
       await seedReport(trx, {
         reporterId,
         reason,
         hoursAgo: 3.5 * 24,
         target: { postId: spamPostId },
-        handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 3 * 24, note: spamRemoval },
+        handled: {
+          status: 'RESOLVED',
+          handledBy: adminId,
+          hoursAgo: 3 * 24,
+          note: spamRemoval,
+        },
       });
     }
+
     await seedTakedown(trx, {
       target: { postId: spamPostId },
       issuedBy: adminId,
@@ -1775,19 +1936,25 @@ export async function seed(knex: Knex): Promise<void> {
       hoursAgo: 3 * 24,
     });
 
-    const rebanReason = 'Tái phạm: tiếp tục spam quảng cáo và lừa đặt cọc';
+    const rebanReason = 'Tái phạm: tiếp tục spam quảng cáo';
     for (const [reporterId, reason] of [
-      [baoNgocId, 'Nhắn tin mời mua hàng dù đã từ chối'],
-      [thaoVyId, 'Nhận tiền cọc rồi chặn liên lạc'],
+      [baoNgocId, 'Nhắn tin mời mua hàng dồn dập'],
+      [thaoVyId, 'Nhắn tin spam link bán hàng'],
     ] as const) {
       await seedReport(trx, {
         reporterId,
         reason,
         hoursAgo: 2.5 * 24,
         target: { targetUserId: bannedId },
-        handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 2 * 24, note: rebanReason },
+        handled: {
+          status: 'RESOLVED',
+          handledBy: adminId,
+          hoursAgo: 2 * 24,
+          note: rebanReason,
+        },
       });
     }
+
     await seedTakedown(trx, {
       target: { userId: bannedId },
       issuedBy: adminId,
@@ -1795,16 +1962,23 @@ export async function seed(knex: Knex): Promise<void> {
       hoursAgo: 2 * 24,
     });
 
-    // (b) A post removed by mistake, then restored the next day
+    // (b) Post removed by mistake and restored
     const restoredPostId = await insertPost(thaoVyId, restoredPost, 6 * 24);
-    const wrongRemoval = 'Nghi dùng ảnh trên mạng, không phải tự làm';
+    const wrongRemoval = 'Nghi ngờ lấy ảnh trên mạng';
+
     await seedReport(trx, {
       reporterId: quocHuyId,
-      reason: 'Ảnh lấy trên mạng, không phải tự làm',
+      reason: 'Ảnh lấy trên mạng',
       hoursAgo: 5.5 * 24,
       target: { postId: restoredPostId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 5 * 24, note: wrongRemoval },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 5 * 24,
+        note: wrongRemoval,
+      },
     });
+
     await seedTakedown(trx, {
       target: { postId: restoredPostId },
       issuedBy: adminId,
@@ -1813,15 +1987,21 @@ export async function seed(knex: Knex): Promise<void> {
       revoked: { by: adminId, hoursAgo: 4 * 24 },
     });
 
-    // (c) Lê Hoàng Nam: banned once for insulting comments, unbanned two days later (now ACTIVE)
+    // (c) User unbanned (currently ACTIVE)
     const insultBan = 'Bình luận xúc phạm thành viên khác';
     await seedReport(trx, {
       reporterId: baoNgocId,
-      reason: 'Bình luận chửi bới dưới bài của tôi',
+      reason: 'Bình luận thô tục',
       hoursAgo: 9 * 24,
       target: { targetUserId: hoangNamId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 8 * 24, note: insultBan },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 8 * 24,
+        note: insultBan,
+      },
     });
+
     await seedTakedown(trx, {
       target: { userId: hoangNamId },
       issuedBy: adminId,
@@ -1830,17 +2010,24 @@ export async function seed(knex: Knex): Promise<void> {
       revoked: { by: adminId, hoursAgo: 6 * 24 },
     });
 
-    // (d) Đặng Quốc Huy: warned from a post page (the report is linked to the warning),
-    // and still has two pending reports about the account
+    // (d) Warned user
     const warnedPostId = await insertPost(quocHuyId, warnedPost, 3 * 24);
-    const warnReason = 'Bài viết công kích cửa hàng khác; tái phạm sẽ bị gỡ bài';
+    const warnReason =
+      'Bài viết công kích cá nhân; tái phạm sẽ bị khóa tài khoản';
+
     const warnedReportId = await seedReport(trx, {
       reporterId: minhAnhId,
-      reason: 'Nói xấu, kêu gọi tẩy chay cửa hàng khác',
+      reason: 'Nói xấu, kêu gọi tẩy chay không có bằng chứng',
       hoursAgo: 2.5 * 24,
       target: { postId: warnedPostId },
-      handled: { status: 'RESOLVED', handledBy: adminId, hoursAgo: 2 * 24, note: warnReason },
+      handled: {
+        status: 'RESOLVED',
+        handledBy: adminId,
+        hoursAgo: 2 * 24,
+        note: warnReason,
+      },
     });
+
     const [warning] = await trx('warnings')
       .insert({
         user_id: quocHuyId,
@@ -1849,35 +2036,53 @@ export async function seed(knex: Knex): Promise<void> {
         created_at: hoursAgo(trx, 2 * 24),
       })
       .returning(['id']);
-    await trx('warning_reports').insert({ warning_id: warning.id, report_id: warnedReportId });
+
+    await trx('warning_reports').insert({
+      warning_id: warning.id,
+      report_id: warnedReportId,
+    });
 
     await seedReport(trx, {
       reporterId: thaoVyId,
-      reason: 'Nhắn tin làm phiền dù đã bị chặn',
+      reason: 'Nhắn tin làm phiền',
       hoursAgo: 24,
       target: { targetUserId: quocHuyId },
     });
+
     await seedReport(trx, {
       reporterId: hoangNamId,
-      reason: 'Bình luận khiếm nhã dưới bài của tôi',
+      reason: 'Bình luận khiếm nhã',
       hoursAgo: 10,
       target: { targetUserId: quocHuyId },
     });
 
-    // (e) Dismissed reports: one about a post, one about an account
+    // (e) Dismissed reports
     await seedReport(trx, {
       reporterId: quocHuyId,
-      reason: 'Câu hỏi trùng lặp',
+      reason: 'Cãi nhau trong bình luận',
       hoursAgo: 4 * 24,
-      target: { postId: await postIdByTitle('Nên dùng bơ nhạt hay bơ mặn khi nướng bánh?') },
-      handled: { status: 'DISMISSED', handledBy: adminId, hoursAgo: 3.5 * 24, note: 'Không vi phạm quy định' },
+      target: {
+        postId: await postIdByTitle('Nên dùng bơ thực vật hay bơ động vật?'),
+      },
+      handled: {
+        status: 'DISMISSED',
+        handledBy: adminId,
+        hoursAgo: 3.5 * 24,
+        note: 'Không vi phạm quy định',
+      },
     });
+
     await seedReport(trx, {
       reporterId: quocHuyId,
       reason: 'Tài khoản giả mạo',
       hoursAgo: 7 * 24,
       target: { targetUserId: minhAnhId },
-      handled: { status: 'DISMISSED', handledBy: adminId, hoursAgo: 6.5 * 24, note: 'Đã kiểm tra, tài khoản thật' },
+      handled: {
+        status: 'DISMISSED',
+        handledBy: adminId,
+        hoursAgo: 6.5 * 24,
+        note: 'Đã kiểm tra, tài khoản thật',
+      },
     });
   });
 }

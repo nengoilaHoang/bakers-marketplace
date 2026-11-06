@@ -1,29 +1,35 @@
+// components/storefront/canvas/CanvasStage.tsx
+// components/storefront/canvas/CanvasStage.tsx
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
-import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
-import React, { useRef } from 'react';
+import { BREAKPOINT_PRESETS } from '@/types/canvas';
+import React, { useCallback, useRef, useState } from 'react';
+import { CanvasIframe } from './CanvasIframe';
 import CanvasSelectionOverlay from './CanvasSelectionOverlay';
 
 type CanvasStageProps = {
   children: React.ReactNode;
-  currentBreakpoint: DeviceBreakpointWithFluid;
-  zoom: number;
-  isPreview: boolean;
 };
 
-const CanvasStage = ({
-  children,
-  currentBreakpoint,
-  zoom,
-  isPreview,
-}: CanvasStageProps) => {
-  const artboardRef = useRef<HTMLDivElement | null>(null);
-  const { selectComponent } = useStorefrontCanvasContext();
+const CanvasStage = ({ children }: CanvasStageProps) => {
+  const artboardContainerRef = useRef<HTMLElement | null>(null);
+  const [isIframeReady, setIsIframeReady] = useState(false);
+  const {
+    selectComponent,
+    zoom,
+    breakpoint,
+    isPreview,
+    isResizing,
+    isDragging,
+  } = useStorefrontCanvasContext();
+  const widthStyle = BREAKPOINT_PRESETS[breakpoint].width;
 
-  const widthStyle = BREAKPOINT_PRESETS[currentBreakpoint].width;
+  const handleArtboardMount = useCallback((root: HTMLElement) => {
+    artboardContainerRef.current = root;
+    setIsIframeReady(true);
+  }, []);
 
   const handleCaptureClick = (e: React.MouseEvent) => {
     if (isPreview) return;
-
     const target = e.target as HTMLElement;
     const interactive = target.closest(
       'a, form, button:not([data-cms-action])',
@@ -59,19 +65,21 @@ const CanvasStage = ({
         }}
         className='relative max-w-full shrink-0'
       >
-        <div
-          id='cms-board'
-          ref={artboardRef}
+        <CanvasIframe
+          onArtboardMount={handleArtboardMount}
           onClickCapture={handleCaptureClick}
-          className={`relative w-full rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-all duration-150 ${isPreview ? 'pointer-events-none select-none' : ''}`}
+          className={`w-full min-h-200 border-0 rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-all duration-150 ${
+            isPreview || isResizing || isDragging
+              ? 'pointer-events-none select-none'
+              : ''
+          }`}
+          freezeHeight={isDragging}
         >
-          {children}
-          {!isPreview && (
-            <CanvasSelectionOverlay
-              artboardRef={artboardRef}
-            ></CanvasSelectionOverlay>
-          )}
-        </div>
+          {() => children}
+        </CanvasIframe>
+        {!isPreview && isIframeReady && (
+          <CanvasSelectionOverlay artboardRef={artboardContainerRef} />
+        )}
       </div>
     </div>
   );

@@ -13,8 +13,8 @@ export type LeafComponentType =
   | 'DIVIDER';
 
 export interface BaseLeafComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends BaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'LEAF';
   componentType: LeafComponentType;
 }

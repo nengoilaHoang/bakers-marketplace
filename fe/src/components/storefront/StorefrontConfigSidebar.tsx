@@ -1,3 +1,4 @@
+// components/storefront/StorefrontConfigSidebar.tsx
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { useCallback, useState } from 'react';
@@ -6,16 +7,16 @@ import ConfigSidebar from './ConfigSidebar';
 const StorefrontConfigSidebar = () => {
   const { state, updateConfig } = useStorefrontLayoutContext();
   const { selectedComponentId } = useStorefrontCanvasContext();
-  const [openConfig, setOpenConfig] = useState(false);
+  const [openConfig, setOpenConfig] = useState(true);
 
   const selectedComponent = selectedComponentId
     ? state.components[selectedComponentId]
     : null;
 
   const handleUpdate = useCallback(
-    (pathname: string, value: unknown) => {
+    (pathname: string, value: unknown, bp?: string) => {
       if (selectedComponentId === null) return;
-      updateConfig(selectedComponentId, pathname, value);
+      updateConfig(selectedComponentId, pathname, value, bp);
     },
     [selectedComponentId, updateConfig],
   );
@@ -25,19 +26,16 @@ const StorefrontConfigSidebar = () => {
     [],
   );
 
-  if (!selectedComponent) {
-    setOpenConfig(false);
-    return null;
-  }
+  if (!selectedComponent) return null;
 
   return (
     <ConfigSidebar
+      key={selectedComponent.id}
       isOpen={openConfig}
       toggleConfig={handleToggleConfig}
-      key={selectedComponent.id}
-      config={selectedComponent.config}
+      component={selectedComponent}
       onUpdate={handleUpdate}
-    ></ConfigSidebar>
+    />
   );
 };
 

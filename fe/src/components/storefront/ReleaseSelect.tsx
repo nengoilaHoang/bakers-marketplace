@@ -1,6 +1,6 @@
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { useMemo, useState } from 'react';
-import TypeableSelect from './config-sections/TypeableSelect';
+import TypeableSelect from './config-sections/inputs/TypeableSelect';
 
 const ReleaseSelect = () => {
   const { currentStorefront, currentRelease, setCurrentReleaseId } =

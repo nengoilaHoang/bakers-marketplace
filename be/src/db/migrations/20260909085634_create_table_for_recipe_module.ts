@@ -1,3 +1,4 @@
+import { URL_MAX_LENGTH } from '#/utils/constants.js';
 import type { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
@@ -13,6 +14,77 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   await knex.schema
+		.createTable('files', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table.text('display_name');
+      table.text('original_name');
+
+      table
+        .string('url', URL_MAX_LENGTH)
+        .notNullable();
+
+      table.text('content_type');
+
+      table.text('ext_name');
+
+      table
+        .bigInteger('size')
+        .unsigned()
+        .nullable();
+
+      table
+        .string('checksum')
+        .nullable();
+
+      table
+        .timestamp('uploaded_at', { useTz: true })
+        .nullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['checksum'], 'idx_images_check_sum');
+    })
+
+		.createTable('images', (table) => {
+			table
+				.uuid('id')
+				.references('id')
+				.inTable('files')
+				.primary()
+				.onDelete('CASCADE');
+
+			table
+				.smallint('width')
+				.unsigned()
+				.nullable();
+
+			table
+				.smallint('height')
+				.unsigned()
+				.nullable();
+		})
+
+		.createTable('documents', (table) => {
+			table
+				.uuid('id')
+				.references('id')
+				.inTable('files')
+				.primary()
+				.onDelete('CASCADE');
+
+			table
+				.smallint('page_count')
+				.unsigned()
+				.nullable();
+		})
+
     .createTable('users', (table) => {
       table
         .uuid('id')
@@ -64,6 +136,13 @@ export async function up(knex: Knex): Promise<void> {
         .primary()
         .onDelete('CASCADE');
 
+			table
+				.enum('business_type', ['INDIVIDUAL', 'HOUSEHOLD', 'COMPANY'], {
+					useNative: true,
+					enumName: 'vendor_business_type',
+				})
+				.notNullable();
+
       table
         .specificType('tax_code', 'char(13)')
         .unique()
@@ -77,43 +156,108 @@ export async function up(knex: Knex): Promise<void> {
         .check('char_length(??) IN (10, 13)', ['tax_code'], 'chk_tax_code_length');
     })
 
-    .createTable('images', (table) => {
-      table
+		.createTable('individual_vendors', (table) => {
+			table
         .uuid('id')
+        .references('id')
+        .inTable('vendors')
         .primary()
-        .defaultTo(knex.raw('gen_random_uuid()'));
+        .onDelete('CASCADE');
 
-      table.text('display_name');
-      table.text('original_name');
+			table
+				.string('citizen_id', 12)
+				.unique()
+				.defaultTo(null);
 
-      table
-        .text('url')
-        .notNullable();
+			table
+				.uuid('identity_card_front_doc_id')
+				.references('id')
+				.inTable('images')
+				.unique()
+				.defaultTo(null)
+				.onDelete('RESTRICT');
 
-      table.text('content_type');
+			table
+				.uuid('identity_card_back_doc_id')
+				.references('id')
+				.inTable('images')
+				.unique()
+				.defaultTo(null)
+				.onDelete('RESTRICT');
+		})
 
-      table.text('ext_name');
+		.createTable('company_vendors', (table) => {
+			table
+        .uuid('id')
+        .references('id')
+        .inTable('vendors')
+        .primary()
+        .onDelete('CASCADE');
 
-      table
-        .bigInteger('size')
-        .unsigned()
-        .nullable();
+			table
+				.string('legal_business_name', 255)
+				.notNullable();
 
-      table
-        .string('checksum')
-        .nullable();
+			table
+				.enum('entity_type', ['LIMITED_LIABILITY_COMPANY', 'JOINT_STOCK_COMPANY', 'PARTNERSHIP_COMPANY', 'PRIVATE_ENTERPRISE', 'STATE_OWNED_ENTERPRISE', 'OTHER'], {
+					useNative: true,
+					enumName: 'company_entity_type',
+				})
+				.notNullable();
 
-      table
-        .timestamp('uploaded_at', { useTz: true })
-        .nullable();
+			table
+				.smallint('year_of_establishment')
+				.unsigned()
+				.notNullable();
 
-      table
-        .timestamp('created_at', { useTz: true })
-        .notNullable()
-        .defaultTo(knex.fn.now());
+			table
+				.uuid('business_license_doc_id')
+				.references('id')
+				.inTable('documents')
+				.unique()
+				.notNullable()
+				.onDelete('RESTRICT');
 
-      table.index(['checksum'], 'idx_images_check_sum');
-    })
+			table
+				.string('business_description', 1000)
+				.notNullable();
+
+			table
+				.string('business_website_url', URL_MAX_LENGTH)
+				.nullable()
+				.defaultTo(null);
+		})
+
+		.createTable('vendor_contact_infos', (table) => {
+			table
+				.uuid('id')
+				.references('id')
+				.inTable('vendors')
+				.primary()
+				.onDelete('CASCADE');
+
+			table
+				.string('representative_name', 255)
+				.notNullable();
+
+			table
+				.string('representative_role', 100)
+				.notNullable();
+
+			table
+				.string('business_address', 500)
+				.notNullable();
+
+			table
+				.string('business_phone', 15)
+				.unique()
+				.notNullable();
+
+			table
+				.string('business_email', 255)
+				.unique()
+				.notNullable();
+		})
 
     .createTable('recipes', (table) => {
       table
@@ -808,6 +952,7 @@ export async function up(knex: Knex): Promise<void> {
         .uuid('vendor_id')
         .references('id')
         .inTable('vendors')
+				.unique()
         .nullable()
         .onDelete('SET NULL');
 
@@ -1126,7 +1271,7 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table
-        .string('url', 2048)
+        .string('url', URL_MAX_LENGTH)
         .notNullable();
 
       table
@@ -1515,6 +1660,160 @@ export async function up(knex: Knex): Promise<void> {
         .defaultTo(0.000);
     });
 
+		await knex.schema.createTable('vendor_applications', (table) => {
+    table
+      .uuid('id')
+      .primary()
+      .defaultTo(knex.raw('gen_random_uuid()'));
+
+    table
+      .uuid('applicant_id')
+      .notNullable()
+      .references('id')
+      .inTable('users')
+      .onDelete('CASCADE');
+
+    table
+      .specificType('business_type', 'vendor_business_type')
+      .notNullable();
+
+    table
+      .string('brand_name', 100)
+      .notNullable();
+
+    table
+      .string('tax_code', 13)
+      .notNullable();
+
+    table
+      .enum('status', ['PENDING', 'APPROVED', 'DECLINED'], {
+				useNative: true,
+				enumName: 'vendor_application_status',
+			})
+      .notNullable()
+      .defaultTo('PENDING');
+
+    table
+      .text('decline_reason')
+      .nullable();
+
+    table
+      .uuid('reviewed_by')
+      .references('id')
+      .inTable('users')
+      .nullable()
+      .onDelete('SET NULL');
+
+    table
+      .timestamp('reviewed_at', { useTz: true })
+      .nullable();
+
+    table
+      .timestamp('created_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+
+    table
+      .timestamp('updated_at', { useTz: true })
+      .notNullable()
+      .defaultTo(knex.fn.now());
+
+    // Tax code constraint (10 digits for corporations/enterprises, 13 digits for branches/sub-units)
+    table.check(
+      'char_length(??) IN (10, 13)',
+      ['tax_code'],
+      'chk_vendor_applications_tax_code_length',
+    );
+
+    table.index(['applicant_id'], 'idx_vendor_applications_applicant_id');
+    table.index(['status'], 'idx_vendor_applications_status');
+    table.index(['created_at'], 'idx_vendor_applications_created_at');
+  });
+
+  // Unique partial index: An applicant can only have one active 'PENDING' application at any given time
+  await knex.raw(`
+    CREATE UNIQUE INDEX uq_vendor_applications_single_pending
+    ON vendor_applications (applicant_id)
+    WHERE status = 'PENDING';
+  `);
+
+  await knex.schema.createTable('vendor_application_contact_infos', (table) => {
+    table
+      .uuid('id')
+      .references('id')
+      .inTable('vendor_applications')
+      .primary()
+      .onDelete('CASCADE');
+
+    table.string('representative_name', 255).notNullable();
+    table.string('representative_role', 100).notNullable();
+    table.string('business_address', 500).notNullable();
+    table.string('business_phone', 15).notNullable();
+    table.string('business_email', 255).notNullable();
+  });
+
+  await knex.schema.createTable('individual_vendor_applications', (table) => {
+    table
+      .uuid('id')
+      .references('id')
+      .inTable('vendor_applications')
+      .primary()
+      .onDelete('CASCADE');
+
+    table.string('citizen_id', 12).notNullable();
+
+    table
+      .uuid('identity_card_front_doc_id')
+      .references('id')
+      .inTable('images')
+      .notNullable()
+      .onDelete('RESTRICT');
+
+    table
+      .uuid('identity_card_back_doc_id')
+      .references('id')
+      .inTable('images')
+      .notNullable()
+      .onDelete('RESTRICT');
+  });
+
+  await knex.schema.createTable('company_vendor_applications', (table) => {
+    table
+      .uuid('id')
+      .references('id')
+      .inTable('vendor_applications')
+      .primary()
+      .onDelete('CASCADE');
+
+    table.string('legal_business_name', 255).notNullable();
+
+    table
+      .specificType('entity_type', 'company_entity_type')
+      .notNullable();
+
+    table.smallint('year_of_establishment').unsigned().notNullable();
+
+    table
+      .uuid('business_license_doc_id')
+      .references('id')
+      .inTable('documents')
+      .notNullable()
+      .onDelete('RESTRICT');
+
+    table.string('business_description', 1000).notNullable();
+
+    table
+      .string('business_website_url', URL_MAX_LENGTH)
+      .nullable()
+      .defaultTo(null);
+
+    table.check(
+      'year_of_establishment >= 1900',
+      [],
+      'chk_company_app_year_min',
+    );
+  });
+
 		await knex.raw(`
 			CREATE OR REPLACE FUNCTION get_layout_tree_json(target_id uuid)
 			RETURNS jsonb AS $$
@@ -1630,9 +1929,9 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-	await knex.raw('DROP FUNCTION IF EXISTS get_layout_tree_json(uuid);');
+  await knex.raw('DROP FUNCTION IF EXISTS get_layout_tree_json(uuid);');
 
-	await knex.schema
+  await knex.schema
     .dropTableIfExists('typography')
     .dropTableIfExists('color_palettes')
     .dropTableIfExists('theme_settings')
@@ -1675,23 +1974,30 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('recipe_ingredients')
     .dropTableIfExists('recipe_steps')
     .dropTableIfExists('recipes')
+    .dropTableIfExists('individual_vendors')
+    .dropTableIfExists('company_vendors')
+    .dropTableIfExists('vendor_contact_infos')
     .dropTableIfExists('vendors')
+    .dropTableIfExists('documents')
     .dropTableIfExists('images')
+    .dropTableIfExists('files')
     .dropTableIfExists('users');
 
-	await knex.raw(`
+  await knex.raw(`
     DROP TYPE IF EXISTS composite_component_type;
     DROP TYPE IF EXISTS repeater_component_type;
     DROP TYPE IF EXISTS leaf_component_type;
     DROP TYPE IF EXISTS commerce_component_type;
     DROP TYPE IF EXISTS breakpoint_type;
     DROP TYPE IF EXISTS page_type;
-		DROP TYPE IF EXISTS stock_alert_type;
+    DROP TYPE IF EXISTS stock_alert_type;
     DROP TYPE IF EXISTS report_status;
     DROP TYPE IF EXISTS post_status;
+    DROP TYPE IF EXISTS company_entity_type;
+    DROP TYPE IF EXISTS vendor_business_type;
     DROP TYPE IF EXISTS user_status;
     DROP TYPE IF EXISTS user_role;
   `);
-	
-	await knex.raw('DROP EXTENSION IF EXISTS pg_trgm;');
+
+  await knex.raw('DROP EXTENSION IF EXISTS pg_trgm;');
 }

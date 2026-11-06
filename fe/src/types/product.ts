@@ -1,15 +1,4 @@
-export type Image = {
-	id: string;
-	displayName: string | null;
-	originalName: string | null;
-	url: string;
-	contentType: string | null;
-	extName: string | null;
-	size: number | null;
-	checksum: string | null;
-	uploadedAt: string | null;
-	createdAt: string;
-};
+import { Image } from './files';
 
 export type ProductNote = {
 	id: string;

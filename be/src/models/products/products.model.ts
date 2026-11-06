@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ImageSchema } from "#/models/images.model.js";
+import { ImageSchema } from '../files/images.model.js';
 
 export const StockAlertEnum = z.enum(["MAXIMUM", "REORDER", "MINIMUM"]);
 

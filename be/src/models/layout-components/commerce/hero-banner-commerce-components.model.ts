@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import {
-	BaseLayoutComponentConfigSchema,
-	TextStyle,
+	AspectRatioValueSchema,
+	MediaFitSchema,
+	MediaFocalPointSchema,
+} from '../aspect-ratio.model.js';
+import {
+	BasePlacementConfigSchema,
+	ResponsiveProp,
+	TextConfigSchema,
 } from '../base-layout-components.model.js';
 import {
 	BaseCommerceComponentSchema,
@@ -44,52 +50,67 @@ export const HeroBannerOverlaySchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-export const BaseHeroBannerConfigSchema =
-  BaseLayoutComponentConfigSchema.extend({
-    mediaType: HeroBannerMediaTypeSchema,
-    desktopMediaUrl: z.url(),
-    mobileMediaUrl: z.url().nullable(),
-    altText: z.string(),
+export const HeroBannerContentSizeTypeSchema = z.enum([
+  'compact',
+  'medium',
+  'large',
+  'impact',
+]);
 
-    eyebrow: z
-      .object({
-        value: z.string(),
-        ...TextStyle.shape,
-      })
-      .optional(),
-    title: z.object({
+export const HeroBannerContentSchema = z.object({
+  eyebrow: z
+    .object({
       value: z.string(),
-      ...TextStyle.shape,
-    }),
-    subtitle: z.object({
-      value: z.string(),
-      ...TextStyle.shape,
-    }),
+      ...TextConfigSchema.shape,
+    })
+    .optional(),
+  title: z.object({
+    value: z.string(),
+    ...TextConfigSchema.shape,
+  }),
+  subtitle: z.object({
+    value: z.string(),
+    ...TextConfigSchema.shape,
+  }),
+  contentPosition: ResponsiveProp(
+    HeroBannerContentPositionTypeSchema.default('middle-center'),
+  ),
+  contentSize: HeroBannerContentSizeTypeSchema.default('large'),
+});
 
-    contentPosition: HeroBannerContentPositionTypeSchema,
+export const BaseHeroBannerConfigSchema = BasePlacementConfigSchema.extend({
+  aspect: ResponsiveProp(AspectRatioValueSchema.default('16:9')),
+  fit: MediaFitSchema,
+  focalPoint: MediaFocalPointSchema.nullable().optional().default(null),
+  mediaType: HeroBannerMediaTypeSchema,
+  desktopMediaUrl: z.url(),
+  mobileMediaUrl: z.url().nullable().optional().default(null),
+  altText: z.string(),
 
-    overlay: HeroBannerOverlaySchema.default({ type: 'none' }),
+  overlay: HeroBannerOverlaySchema.default({ type: 'none' }),
 
-    primaryCta: z
-      .object({
-        label: z.string(),
-        url: z.url(),
-        style: HeroBannerCtaStyleTypeSchema,
-        size: HeroBannerCtaSizeTypeSchema,
-        target: HeroBannerCtaTargetTypeSchema,
-      })
-      .optional(),
-    secondaryCta: z
-      .object({
-        label: z.string(),
-        url: z.url(),
-        style: HeroBannerCtaStyleTypeSchema,
-        size: HeroBannerCtaSizeTypeSchema,
-        target: HeroBannerCtaTargetTypeSchema,
-      })
-      .optional(),
-    ctaPosition: HeroBannerContentPositionTypeSchema.optional(),
-  });
+  ...HeroBannerContentSchema.shape,
+
+  primaryCta: z
+    .object({
+      label: z.string(),
+      url: z.url(),
+      style: HeroBannerCtaStyleTypeSchema,
+      size: ResponsiveProp(HeroBannerCtaSizeTypeSchema.default('md')),
+      target: HeroBannerCtaTargetTypeSchema,
+    })
+    .optional(),
+  secondaryCta: z
+    .object({
+      label: z.string(),
+      url: z.url(),
+      style: HeroBannerCtaStyleTypeSchema,
+      size: ResponsiveProp(HeroBannerCtaSizeTypeSchema.default('md')),
+      target: HeroBannerCtaTargetTypeSchema,
+    })
+    .optional(),
+  ctaPosition: ResponsiveProp(HeroBannerContentPositionTypeSchema).optional(),
+});
 
 export const ImageHeroBannerConfigSchema = BaseHeroBannerConfigSchema.extend({
   mediaType: z.literal(HeroBannerMediaTypeSchema.enum.image),

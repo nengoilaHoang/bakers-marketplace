@@ -2,12 +2,18 @@ import { PaddingType } from '@/types/layout-component';
 import { useMemo } from 'react';
 import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type PaddingSectionProps = {
   isOpen: boolean;
   toggleSection: (id: SectionId) => void;
-  padding: PaddingType;
+  paddings: {
+    top: PaddingType;
+    bottom: PaddingType;
+    left: PaddingType;
+    right: PaddingType;
+  };
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
   zIndex: number;
@@ -23,7 +29,7 @@ const PADDING_OPTIONS = {
 const PaddingSection = ({
   isOpen,
   toggleSection,
-  padding,
+  paddings,
   onUpdate,
   onActiveSectionChange,
   zIndex,
@@ -31,16 +37,25 @@ const PaddingSection = ({
   const id = 'padding';
   const title = 'Padding';
   const description = 'Adjust the padding of the component.';
-  const sides: ReadonlyArray<Readonly<{ key: string; label: string }>> =
-    useMemo(
-      () => [
-        { key: 'top', label: 'Top' },
-        { key: 'bottom', label: 'Bottom' },
-        { key: 'left', label: 'Left' },
-        { key: 'right', label: 'Right' },
-      ],
-      [],
-    );
+  const sides = useMemo(
+    () => [
+      { id: 'padding-top', key: 'top', name: 'padding.top', label: 'Top' },
+      {
+        id: 'padding-bottom',
+        key: 'bottom',
+        name: 'padding.bottom',
+        label: 'Bottom',
+      },
+      { id: 'padding-left', key: 'left', name: 'padding.left', label: 'Left' },
+      {
+        id: 'padding-right',
+        key: 'right',
+        name: 'padding.right',
+        label: 'Right',
+      },
+    ],
+    [],
+  );
 
   return (
     <ConfigSectionWrapper
@@ -52,19 +67,25 @@ const PaddingSection = ({
       zIndex={zIndex}
     >
       <div className='grid grid-cols-2 gap-2'>
-        {sides.map(({ key, label }) => (
-          <ConfigInput
-            key={key}
-            id={`padding-${key}`}
-            name={`padding.${key}`}
-            label={label}
-            inputType='select'
-            selectOptions={PADDING_OPTIONS}
-            currentValue={String(padding[key as keyof typeof padding])}
-            onValueChange={(val) => onUpdate(`padding.${key}`, val)}
-            onOpenStateChange={onActiveSectionChange}
-          />
-        ))}
+        {sides.map(({ name, key, label, id }) => {
+          return (
+            <div
+              key={name}
+              className='flex flex-col gap-2 justify-start items-center'
+            >
+              <ConfigLabel label={label} forId={id}></ConfigLabel>
+              <ConfigInput
+                id={id}
+                name={name}
+                inputType='select'
+                selectOptions={PADDING_OPTIONS}
+                currentValue={String(paddings[key as keyof typeof paddings])}
+                onValueChange={(val) => onUpdate(name, val)}
+                onOpenStateChange={onActiveSectionChange}
+              />
+            </div>
+          );
+        })}
       </div>
     </ConfigSectionWrapper>
   );
