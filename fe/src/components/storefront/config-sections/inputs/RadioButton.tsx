@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 type RadioButtonProps<T extends string | number | boolean> = {
   id: string;
@@ -6,6 +6,8 @@ type RadioButtonProps<T extends string | number | boolean> = {
   currentValue: T;
   value: T;
   onValueChange: (value: T) => void;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
 };
 
 const RadioButton = <T extends string | number | boolean>({
@@ -14,13 +16,16 @@ const RadioButton = <T extends string | number | boolean>({
   currentValue,
   value,
   onValueChange,
+  isOpen,
+  onOpenChange,
 }: RadioButtonProps<T>) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleMouseDown = useCallback(() => {
     const input = inputRef.current;
     if (!input) return;
     input.click();
-  }, []);
+    onOpenChange(true);
+  }, [onOpenChange]);
 
   const isChecked = currentValue === value;
   return (

@@ -1,8 +1,6 @@
 import {
-	BasePlacementConfig,
-	BentoItemConfig,
 	ResponsiveProp,
-	TextConfig,
+	TextConfig
 } from '..';
 import { AspectRatioValue, MediaFit, MediaFocalPoint } from '../aspect-ratio';
 import {
@@ -55,8 +53,7 @@ export type HeroBannerContent = {
   contentSize: HeroBannerContentSize;
 };
 
-export type BaseHeroBannerConfig = BasePlacementConfig &
-  Partial<BentoItemConfig> &
+export type BaseHeroBannerConfig = 
   HeroBannerContent & {
     aspect: ResponsiveProp<AspectRatioValue>;
     fit: MediaFit;

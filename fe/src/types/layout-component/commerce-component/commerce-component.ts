@@ -1,3 +1,4 @@
+// types/layout-component/commerce-component/commerce-component.ts
 import {
 	BaseLayoutComponent,
 	BaseLayoutComponentConfig,
@@ -25,22 +26,22 @@ export type CommerceComponentType =
   | 'FAQ';
 
 export interface BaseCommerceComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends BaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMMERCE';
   componentType: CommerceComponentType;
 }
 
 export interface UpdateBaseCommerceComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends UpdateBaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends UpdateBaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMMERCE';
   componentType: CommerceComponentType;
 }
 
 export interface CreateBaseCommerceComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends CreateBaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends CreateBaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMMERCE';
   componentType: CommerceComponentType;
 }

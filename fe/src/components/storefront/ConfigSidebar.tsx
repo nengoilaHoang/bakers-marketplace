@@ -3,6 +3,7 @@ import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasCo
 import { FlattenComponent } from '@/utils/flattenLayout';
 import { useMemo, useState } from 'react';
 import BaseLayoutSections from './config-sections/BaseLayoutSections';
+import { HeroBannerSectionId } from './inspectors/HeroBannerInspector';
 import { COMPONENT_INSPECTORS } from './inspectors/registry';
 
 export type SectionId =
@@ -11,8 +12,7 @@ export type SectionId =
   | 'padding'
   | 'surface-theme'
   | 'bento'
-  | 'hero-overlay'
-  | 'hero-content';
+  | HeroBannerSectionId;
 
 type ConfigSidebarProps = {
   isOpen: boolean;

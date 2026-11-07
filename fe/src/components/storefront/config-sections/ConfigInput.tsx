@@ -1,21 +1,26 @@
 import { useDropdown } from '@/hooks/useDropdown';
-import ColorPicker from './ColorPicker';
-import RadioButton from './RadioButton';
+import ColorPicker from './inputs/ColorPicker';
+import FilePicker from './inputs/FilePicker';
+import RadioButton from './inputs/RadioButton';
 import TypeableSelect from './inputs/TypeableSelect';
 
-type ConfigInputProps<T extends string | number | boolean> = {
-  id: string;
-  name: string;
-  inputType: 'text' | 'checkbox' | 'select' | 'color' | 'radio';
-  presets?: ReadonlyArray<T>;
-  currentValue: T;
-  value?: T;
-  selectOptions?: Readonly<Record<string, T>>;
-  onValueChange: (value: T) => void;
-  onOpenStateChange?: (isOpen: boolean) => void;
-};
+/**
+ * @param {string} value This value is meant to set the value of a radio button only when `inputType` is of type **`'radio'`**.
+ */
+type ConfigInputProps<T extends string | number | boolean | null | undefined> =
+  {
+    id: string;
+    name: string;
+    inputType: 'text' | 'checkbox' | 'select' | 'color' | 'radio' | 'file';
+    presets?: ReadonlyArray<T>;
+    currentValue: T;
+    value?: T;
+    selectOptions?: Readonly<Record<string, T>>;
+    onValueChange: (value: T) => void;
+    onOpenStateChange?: (isOpen: boolean) => void;
+  };
 
-const ConfigInput = <T extends string | number | boolean>({
+const ConfigInput = <T extends string | number | boolean | null | undefined>({
   id,
   name,
   inputType,
@@ -28,9 +33,9 @@ const ConfigInput = <T extends string | number | boolean>({
 }: ConfigInputProps<T>) => {
   const { ref, isOpen, toggle } = useDropdown();
 
-  const handleOpenChange = () => {
+  const handleOpenChange = (state: boolean) => {
     toggle();
-    onOpenStateChange?.(!isOpen);
+    onOpenStateChange?.(state);
   };
 
   return (
@@ -67,13 +72,39 @@ const ConfigInput = <T extends string | number | boolean>({
               );
             }
 
+            // Check if selectOptions is a valid object and each value is of type number, string, or boolean
+            if (
+              typeof selectOptions !== 'object' ||
+              selectOptions === null ||
+              !Object.values(selectOptions).every(
+                (value) =>
+                  typeof value === 'string' ||
+                  typeof value === 'number' ||
+                  typeof value === 'boolean',
+              )
+            ) {
+              throw new TypeError(
+                'Select options must be an object with values of type number, string, or boolean',
+              );
+            }
+
+            if (currentValue === undefined || currentValue === null) {
+              throw new TypeError(
+                'Current value must not be null or undefined for select input',
+              );
+            }
+
             return (
               <TypeableSelect
                 id={id}
                 name={name}
-                options={selectOptions}
+                options={
+                  selectOptions as Readonly<
+                    Record<string, string | number | boolean>
+                  >
+                }
                 currentValue={currentValue}
-                onValueChange={onValueChange}
+                onValueChange={(value) => onValueChange(value as T)}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               />
@@ -85,6 +116,7 @@ const ConfigInput = <T extends string | number | boolean>({
                 `Invalid value type for color input: ${typeof currentValue}`,
               );
             }
+
             return (
               <ColorPicker
                 id={id}
@@ -98,8 +130,22 @@ const ConfigInput = <T extends string | number | boolean>({
             );
           }
           case 'radio': {
-            if (value === undefined) {
-              throw new TypeError('Value must be provided for radio input');
+            if (value === null || value === undefined) {
+              throw new TypeError(
+                'Value must not be null or undefined for radio input',
+              );
+            }
+
+            if (currentValue === null || currentValue === undefined) {
+              throw new TypeError(
+                'Current value must not be null or undefined for radio input',
+              );
+            }
+
+            if (typeof currentValue !== typeof value) {
+              throw new TypeError(
+                `Invalid value type for radio input: ${typeof currentValue}`,
+              );
             }
 
             return (
@@ -109,6 +155,8 @@ const ConfigInput = <T extends string | number | boolean>({
                 currentValue={currentValue}
                 value={value}
                 onValueChange={onValueChange}
+                isOpen={isOpen}
+                onOpenChange={handleOpenChange}
               />
             );
           }
@@ -122,6 +170,19 @@ const ConfigInput = <T extends string | number | boolean>({
                 onChange={(e) => onValueChange(e.target.value as T)}
                 className='min-w-0 w-full rounded-md border border-zinc-200 bg-zinc-50/50 px-2.5 py-1.5 text-xs text-zinc-800 placeholder-zinc-400 transition hover:bg-white focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950'
               />
+            );
+          }
+          case 'file': {
+            const value = currentValue === null ? null : String(currentValue);
+            return (
+              <FilePicker
+                id={id}
+                name={name}
+                currentValue={value}
+                onValueChange={(value) => onValueChange(value as T)}
+                isOpen={isOpen}
+                onOpenChange={handleOpenChange}
+              ></FilePicker>
             );
           }
           default:

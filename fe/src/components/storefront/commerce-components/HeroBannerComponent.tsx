@@ -199,7 +199,7 @@ const HeroBannerComponent = ({
               draggable={false}
               alt={altText || 'Hero Banner'}
               fill
-              priority
+              preload
               sizes='100vw'
               className={cn(
                 'object-cover',
@@ -215,7 +215,7 @@ const HeroBannerComponent = ({
               draggable={false}
               alt={altText || 'Hero Banner'}
               fill
-              priority
+              preload
               sizes='100vw'
               className={cn(
                 'object-cover',
