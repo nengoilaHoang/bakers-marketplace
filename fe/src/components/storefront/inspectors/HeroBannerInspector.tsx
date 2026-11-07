@@ -1,9 +1,13 @@
 import { HeroBannerCommerceComponent } from '@/types/layout-component/commerce-component';
+import HeroBannerImageSection from '../config-sections/hero-banner/HeroBannerImageSection';
 import HeroContentSection from '../config-sections/hero-banner/HeroContentSection';
 import HeroOverlaySection from '../config-sections/hero-banner/HeroOverlaySection';
 import { InspectorProps } from './registry';
 
-export type HeroBannerSectionId = 'hero-overlay' | 'hero-content';
+export type HeroBannerSectionId =
+  | 'hero-banner-image'
+  | 'hero-overlay'
+  | 'hero-content';
 
 type HeroBannerInspectorProps = InspectorProps<HeroBannerCommerceComponent>;
 
@@ -20,6 +24,22 @@ const HeroBannerInspector = ({
 
   return (
     <>
+      <HeroBannerImageSection
+        isOpen={Boolean(openSections['hero-banner-image'])}
+        toggleSection={toggleSection}
+        banner={{
+          desktopMediaUrl: config.desktopMediaUrl,
+          mobileMediaUrl: config.mobileMediaUrl,
+          aspect: config.aspect,
+          fit: config.fit,
+          focalPoint: config.focalPoint,
+        }}
+        onUpdate={onUpdate}
+        onActiveSectionChange={(active) => {
+          if (active) onActiveSectionChange('hero-banner-image');
+        }}
+        zIndex={getSectionZIndex('hero-overlay')}
+      />
       <HeroOverlaySection
         isOpen={Boolean(openSections['hero-overlay'])}
         toggleSection={toggleSection}

@@ -52,7 +52,7 @@ const HeroBannerImageSection = ({
       zIndex={zIndex}
     >
       {/* 1. Desktop Image */}
-      <div className='flex items-center gap-2'>
+      <div className='flex flex-col justify-center items-start gap-2'>
         <ConfigLabel label='Desktop Image' forId='desktop-image' />
         <ConfigInput
           id='desktop-image'
@@ -65,7 +65,7 @@ const HeroBannerImageSection = ({
       </div>
 
       {/* 2. Mobile Image */}
-      <div className='flex items-center gap-2'>
+      <div className='flex flex-col justify-center items-start gap-2'>
         <ConfigLabel label='Mobile Image' forId='mobile-image' />
         <ConfigInput
           id='mobile-image'
