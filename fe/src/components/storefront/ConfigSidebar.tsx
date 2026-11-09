@@ -10,7 +10,7 @@ export type SectionId =
   | 'dimensions'
   | 'alignment'
   | 'padding'
-  | 'surface-theme'
+  | 'theme'
   | 'bento'
   | HeroBannerSectionId;
 

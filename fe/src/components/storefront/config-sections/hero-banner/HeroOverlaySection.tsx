@@ -14,9 +14,9 @@ type HeroOverlaySectionProps = {
 };
 
 const OVERLAY_OPTIONS = {
-  None: 'none',
-  Solid: 'solid',
-  Gradient: 'gradient',
+  none: 'None',
+  solid: 'Solid',
+  gradient: 'Gradient',
 } as const;
 
 // Common quick-pick shades for overlays

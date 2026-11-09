@@ -1,6 +1,7 @@
 import { SurfaceTheme } from '@/types/layout-component';
 import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type ThemeSectionProps = {
@@ -13,11 +14,11 @@ type ThemeSectionProps = {
 };
 
 const SURFACE_THEME_TOKENS = {
-  Default: 'default',
-  Surface: 'surface',
-  Primary: 'primary',
-  Secondary: 'secondary',
-  Accent: 'accent',
+  default: 'Default',
+  surface: 'Surface',
+  primary: 'Primary',
+  secondary: 'Secondary',
+  accent: 'Accent',
 } as const;
 
 const ThemeSection = ({
@@ -28,7 +29,7 @@ const ThemeSection = ({
   onActiveSectionChange,
   zIndex,
 }: ThemeSectionProps) => {
-  const id = 'surfaceTheme';
+  const id = 'theme';
   const title = 'Theme Surface';
   const description = 'Select a theme surface for the component.';
   const name = 'surfaceTheme';
@@ -42,15 +43,14 @@ const ThemeSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      <div className='space-y-3'>
+      <div className='flex flex-row justify-center items-start gap-2'>
+        <ConfigLabel label='Surface Theme' forId='surface-theme' />
         <ConfigInput
-          id='surfaceTheme'
+          id='surface-theme'
           name={name}
-          label='Surface Theme'
           inputType='select'
           selectOptions={SURFACE_THEME_TOKENS}
           currentValue={surfaceTheme ?? 'default'}
-          arrangement='horizontal'
           onValueChange={(val) => onUpdate(name, val)}
           onOpenStateChange={onActiveSectionChange}
         />

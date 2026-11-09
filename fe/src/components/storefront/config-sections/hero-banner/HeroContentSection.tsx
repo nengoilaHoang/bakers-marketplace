@@ -4,7 +4,6 @@ import {
   HeroBannerContent,
   HeroBannerContentPosition,
 } from '@/types/layout-component/commerce-component';
-import { useMemo } from 'react';
 import { SectionId } from '../../ConfigSidebar';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
@@ -31,30 +30,37 @@ const QUICK_PALETTE = [
   '#B91C1C',
 ];
 
-const TEXT_ALIGN_OPTIONS: Record<string, TextAlignmentType> = {
-  Left: 'left',
-  Center: 'center',
-  Right: 'right',
-  Justify: 'justify',
+const TEXT_ALIGN_OPTIONS: Record<TextAlignmentType, string> = {
+  left: 'Left',
+  center: 'Center',
+  right: 'Right',
+  justify: 'Justify',
 };
 
 const FONT_WEIGHT_OPTIONS = {
-  Normal: 'normal',
-  'Semi Bold': 'semi-bold',
-  Bold: 'bold',
-  'Extra Bold': 'extra-bold',
+  normal: 'Normal',
+  'semi-bold': 'Semi Bold',
+  bold: 'Bold',
+  'extra-bold': 'Extra Bold',
 } as const;
 
 const FONT_STYLE_OPTIONS = {
-  Normal: 'normal',
-  Italic: 'italic',
-  Oblique: 'oblique',
+  normal: 'Normal',
+  italic: 'Italic',
+  oblique: 'Oblique',
 } as const;
 
 const DECORATION_OPTIONS = {
-  None: 'none',
-  Underline: 'underline',
-  Strikethrough: 'strikethrough',
+  none: 'None',
+  underline: 'Underline',
+  strikethrough: 'Strikethrough',
+} as const;
+
+const CONTENT_SIZE_OPTIONS = {
+  compact: 'Compact',
+  medium: 'Medium',
+  large: 'Large',
+  impact: 'Impact',
 } as const;
 
 interface TextConfigGroupProps {
@@ -195,17 +201,6 @@ const HeroContentSection = ({
   const description =
     'Configure the content and typography of the hero banner.';
 
-  const contentSizeOptions = useMemo(
-    () =>
-      ({
-        Compact: 'compact',
-        Medium: 'medium',
-        Large: 'large',
-        Impact: 'impact',
-      }) as const,
-    [],
-  );
-
   return (
     <ConfigSectionWrapper
       id={id}
@@ -251,7 +246,7 @@ const HeroContentSection = ({
             id='banner-content-size'
             name='contentSize'
             inputType='select'
-            selectOptions={contentSizeOptions}
+            selectOptions={CONTENT_SIZE_OPTIONS}
             currentValue={content.contentSize}
             onValueChange={(val) => onUpdate('contentSize', val)}
           />

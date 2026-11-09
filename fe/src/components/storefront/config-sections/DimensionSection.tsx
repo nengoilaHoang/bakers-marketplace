@@ -19,11 +19,11 @@ type DimensionSectionProps = {
 };
 
 const DIMENSION_OPTIONS = {
-  Auto: 'auto',
-  Full: 'full',
-  Large: 'lg',
-  Medium: 'md',
-  Small: 'sm',
+  auto: 'Auto',
+  full: 'Full',
+  lg: 'Large',
+  md: 'Medium',
+  sm: 'Small',
 } as const;
 
 const DimensionSection = ({
@@ -52,7 +52,7 @@ const DimensionSection = ({
   const dimensionOptions = useMemo(() => {
     if (!isBento) return DIMENSION_OPTIONS;
     return Object.fromEntries(
-      Object.entries(DIMENSION_OPTIONS).filter(([, value]) => value !== 'auto'),
+      Object.entries(DIMENSION_OPTIONS).filter(([key]) => key !== 'auto'),
     );
   }, [isBento]);
 

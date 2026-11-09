@@ -4,33 +4,80 @@ import FilePicker from './inputs/FilePicker';
 import RadioButton from './inputs/RadioButton';
 import TypeableSelect from './inputs/TypeableSelect';
 
+type BaseConfigInputProps = {
+  id: string;
+  name: string;
+  onOpenStateChange?: (isOpen: boolean) => void;
+};
+
+type TextInputProps = {
+  inputType: 'text';
+  currentValue: string;
+  onValueChange: (value: string) => void;
+};
+
+type CheckboxInputProps = {
+  inputType: 'checkbox';
+  currentValue: boolean;
+  value?: boolean | string;
+  onValueChange: (value: boolean) => void;
+};
+
+type SelectInputProps = {
+  inputType: 'select';
+  currentValue: string | number;
+  selectOptions: Readonly<Record<string | number, string>>;
+  onValueChange: (value: string | number) => void;
+};
+
+type ColorInputProps = {
+  inputType: 'color';
+  currentValue: string;
+  presets?: ReadonlyArray<string>;
+  onValueChange: (value: string) => void;
+};
+
+type RadioInputProps = {
+  inputType: 'radio';
+  value: string | number | boolean;
+  currentValue: string | number | boolean;
+  onValueChange: (value: string | number | boolean) => void;
+};
+
+type FileInputProps = {
+  inputType: 'file';
+  currentValue: string | null;
+  onValueChange: (value: string | null) => void;
+};
+
 /**
  * @param {string} value This value is meant to set the value of a radio button only when `inputType` is of type **`'radio'`**.
+ * @param selectOptions This value is meant to set the options of a select input only when `inputType` is of type **`'select'`**.
+ * @param presets This value is meant to set the preset values of a color input only when `inputType` is of type **`'color'`**.
  */
-type ConfigInputProps<T extends string | number | boolean | null | undefined> =
-  {
-    id: string;
-    name: string;
-    inputType: 'text' | 'checkbox' | 'select' | 'color' | 'radio' | 'file';
-    presets?: ReadonlyArray<T>;
-    currentValue: T;
-    value?: T;
-    selectOptions?: Readonly<Record<string, T>>;
-    onValueChange: (value: T) => void;
-    onOpenStateChange?: (isOpen: boolean) => void;
-  };
+export type ConfigInputProps = BaseConfigInputProps &
+  (
+    | TextInputProps
+    | CheckboxInputProps
+    | SelectInputProps
+    | ColorInputProps
+    | RadioInputProps
+    | FileInputProps
+  );
 
-const ConfigInput = <T extends string | number | boolean | null | undefined>({
-  id,
-  name,
-  inputType,
-  presets,
-  value,
-  currentValue,
-  selectOptions,
-  onValueChange,
-  onOpenStateChange,
-}: ConfigInputProps<T>) => {
+const ConfigInput = (props: ConfigInputProps) => {
+  const {
+    id,
+    name,
+    inputType,
+    currentValue,
+    onValueChange,
+    onOpenStateChange,
+  } = props;
+  const value = 'value' in props ? props.value : undefined;
+  const presets = 'presets' in props ? props.presets : undefined;
+  const selectOptions =
+    'selectOptions' in props ? props.selectOptions : undefined;
   const { ref, isOpen, toggle } = useDropdown();
 
   const handleOpenChange = (state: boolean) => {
@@ -61,7 +108,7 @@ const ConfigInput = <T extends string | number | boolean | null | undefined>({
                 type='checkbox'
                 value={String(value)}
                 checked={currentValue === value}
-                onChange={(event) => onValueChange(event.target.checked as T)}
+                onChange={(event) => onValueChange(event.target.checked)}
               />
             );
           }
@@ -71,40 +118,43 @@ const ConfigInput = <T extends string | number | boolean | null | undefined>({
                 'Select options must be provided for select input',
               );
             }
-
-            // Check if selectOptions is a valid object and each value is of type number, string, or boolean
             if (
               typeof selectOptions !== 'object' ||
               selectOptions === null ||
-              !Object.values(selectOptions).every(
-                (value) =>
-                  typeof value === 'string' ||
-                  typeof value === 'number' ||
-                  typeof value === 'boolean',
+              !Object.entries(selectOptions).every(
+                ([key, val]) =>
+                  (typeof key === 'string' || typeof key === 'number') &&
+                  typeof val === 'string',
               )
             ) {
               throw new TypeError(
-                'Select options must be an object with values of type number, string, or boolean',
+                'Select options must be a non-null object with string or number keys and string values',
               );
             }
-
-            if (currentValue === undefined || currentValue === null) {
+            if (
+              typeof currentValue !== 'string' &&
+              typeof currentValue !== 'number'
+            ) {
               throw new TypeError(
-                'Current value must not be null or undefined for select input',
+                `Invalid value type for select input: ${typeof currentValue}`,
               );
             }
-
+            const handleValueChange = (value: string) => {
+              const trimmed = value.trim();
+              const num = Number(trimmed);
+              if (trimmed !== '' && !Number.isNaN(num)) {
+                onValueChange(num);
+                return;
+              }
+              onValueChange(value);
+            };
             return (
               <TypeableSelect
                 id={id}
                 name={name}
-                options={
-                  selectOptions as Readonly<
-                    Record<string, string | number | boolean>
-                  >
-                }
-                currentValue={currentValue}
-                onValueChange={(value) => onValueChange(value as T)}
+                options={selectOptions}
+                currentValue={String(currentValue)}
+                onValueChange={handleValueChange}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               />
@@ -123,7 +173,7 @@ const ConfigInput = <T extends string | number | boolean | null | undefined>({
                 name={name}
                 presets={presets as ReadonlyArray<string> | undefined}
                 currentValue={currentValue}
-                onValueChange={(value) => onValueChange(value as T)}
+                onValueChange={(value) => onValueChange(value)}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               />
@@ -167,7 +217,7 @@ const ConfigInput = <T extends string | number | boolean | null | undefined>({
                 type='text'
                 name={name}
                 value={String(currentValue)}
-                onChange={(e) => onValueChange(e.target.value as T)}
+                onChange={(e) => onValueChange(e.target.value)}
                 className='min-w-0 w-full rounded-md border border-zinc-200 bg-zinc-50/50 px-2.5 py-1.5 text-xs text-zinc-800 placeholder-zinc-400 transition hover:bg-white focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950'
               />
             );
@@ -179,7 +229,7 @@ const ConfigInput = <T extends string | number | boolean | null | undefined>({
                 id={id}
                 name={name}
                 currentValue={value}
-                onValueChange={(value) => onValueChange(value as T)}
+                onValueChange={(value) => onValueChange(value)}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               ></FilePicker>

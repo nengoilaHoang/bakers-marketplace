@@ -9,12 +9,12 @@ import React, {
   useState,
 } from 'react';
 
-type TypeableSelectProps<T extends string | number | boolean> = {
+type TypeableSelectProps = {
   id: string;
   name: string;
-  options: Readonly<Record<string, T>>;
-  currentValue: T;
-  onValueChange: (value: T) => void;
+  options: Readonly<Record<string, string>>;
+  currentValue: string;
+  onValueChange: (value: string) => void;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   isTypeable?: boolean;
@@ -33,7 +33,7 @@ type TypeableSelectProps<T extends string | number | boolean> = {
  *
  * @
  */
-const TypeableSelect = <T extends string | number | boolean>({
+const TypeableSelect = ({
   id,
   name,
   options,
@@ -43,7 +43,7 @@ const TypeableSelect = <T extends string | number | boolean>({
   onOpenChange,
   isTypeable = true,
   showKeyValue = true,
-}: TypeableSelectProps<T>) => {
+}: TypeableSelectProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -57,16 +57,13 @@ const TypeableSelect = <T extends string | number | boolean>({
   );
 
   const enumKeys = useMemo(
-    () => (options ? (Object.keys(options) as string[]) : []),
+    () => (options ? Object.keys(options) : []),
     [options],
   );
   const enumValues = useMemo(
-    () => (options ? (Object.values(options) as T[]) : []),
+    () => (options ? Object.values(options) : []),
     [options],
   );
-  const convertedValues = enumValues.every((v) => typeof v === 'boolean')
-    ? enumValues.map((v) => +v)
-    : enumValues;
 
   useLayoutEffect(() => {
     const updateOverflowingOptions = () => {
@@ -98,24 +95,13 @@ const TypeableSelect = <T extends string | number | boolean>({
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateOverflowingOptions);
     };
-  }, [convertedValues.length, showKeyValue]);
+  }, [enumValues.length, showKeyValue]);
 
-  const getKey = useCallback(
-    (value: string) => {
-      if (value === undefined || value === null) return '';
-      const foundEntry = Object.entries(options).find(
-        ([, val]) => val === value,
-      );
-      return foundEntry ? foundEntry[0] : value;
-    },
-    [options],
-  );
-
-  const [inputValue, setInputValue] = useState(getKey(String(currentValue)));
+  const [inputValue, setInputValue] = useState(options[currentValue]);
 
   useEffect(() => {
-    queueMicrotask(() => setInputValue(getKey(String(currentValue))));
-  }, [currentValue, getKey]);
+    queueMicrotask(() => setInputValue(options[currentValue]));
+  }, [currentValue, options]);
 
   useLayoutEffect(() => {
     if (inputRef.current) {
@@ -134,13 +120,12 @@ const TypeableSelect = <T extends string | number | boolean>({
 
     // Measures the real height of the options list instead of hardcoding 180
     const measuredHeight =
-      contentRef.current?.scrollHeight ||
-      convertedValues.length * 22 + inputHeight; // fallback to a rough estimate
+      contentRef.current?.scrollHeight || enumValues.length * 22 + inputHeight; // fallback to a rough estimate
     const contentHeight = Math.min(measuredHeight, 150);
     const requiredSpace = contentHeight + 8;
 
     setIsNearBottom(spaceBelow < requiredSpace);
-  }, [convertedValues.length, inputHeight]);
+  }, [enumValues.length, inputHeight]);
 
   useLayoutEffect(() => {
     updateView();
@@ -166,33 +151,26 @@ const TypeableSelect = <T extends string | number | boolean>({
       const query = rawInput.trim().toLowerCase();
       if (!query) return;
 
-      const matchedOption = enumKeys.find((key) =>
-        key.toLowerCase().startsWith(query),
-      );
+      const matchedOptionIndex =
+        enumKeys.findIndex((key) => {
+          if (typeof key === 'string') {
+            return key.toLowerCase().startsWith(query);
+          }
+          return false;
+        }) ??
+        enumValues.findIndex((val) => val.toLowerCase().startsWith(query));
 
-      if (matchedOption) {
-        onValueChange(options[matchedOption]);
+      if (matchedOptionIndex) {
+        onValueChange(enumKeys[matchedOptionIndex]);
         return;
       }
 
       const formattedNumber = Number(query);
       if (!Number.isNaN(formattedNumber)) {
-        onValueChange(formattedNumber as T);
-        return;
-      }
-
-      let formattedBoolean: boolean | null = null;
-      if (query === 'true') {
-        formattedBoolean = true;
-      } else if (query === 'false') {
-        formattedBoolean = false;
-      }
-
-      if (formattedBoolean !== null) {
-        onValueChange(formattedBoolean as T);
+        onValueChange(String(formattedNumber));
       }
     },
-    [enumKeys, onValueChange, options],
+    [enumKeys, enumValues, onValueChange],
   );
 
   const handleDebouncedChange = useDebouncedCallback(handleChange, 400);
@@ -200,15 +178,16 @@ const TypeableSelect = <T extends string | number | boolean>({
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const nextValue = e.target.value;
-      setInputValue(getKey(nextValue));
+      setInputValue(nextValue);
       handleDebouncedChange(nextValue);
     },
-    [handleDebouncedChange, getKey],
+    [handleDebouncedChange],
   );
 
-  const handleSelectOption = (value: string) => {
-    setInputValue(getKey(value));
-    onValueChange(value as T);
+  const handleSelectOption = (key: string) => {
+    const value = options[key];
+    setInputValue(value);
+    onValueChange(key);
     onOpenChange(false);
   };
 
@@ -263,13 +242,13 @@ const TypeableSelect = <T extends string | number | boolean>({
           className='min-h-0 min-w-0 overflow-y-auto scrollbar-none'
           ref={contentRef}
         >
-          {convertedValues.map((val, idx) => {
+          {enumValues.map((val, idx) => {
             return (
               <button
                 key={`${String(val)}-${idx}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  handleSelectOption(String(val));
+                  handleSelectOption(enumKeys[idx]);
                 }}
                 className='appearance-none flex min-h-0 w-full items-center justify-between px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
               >
@@ -283,11 +262,11 @@ const TypeableSelect = <T extends string | number | boolean>({
                       : ''
                   }`}
                 >
-                  {enumKeys[idx]}
+                  {val}
                 </span>
                 {showKeyValue && (
                   <span className='ml-auto font-mono text-[10px] text-zinc-400'>
-                    {val}
+                    {enumKeys[idx]}
                   </span>
                 )}
               </button>

@@ -1,16 +1,16 @@
 import { useCallback, useRef } from 'react';
 
-type RadioButtonProps<T extends string | number | boolean> = {
+type RadioButtonProps = {
   id: string;
   name: string;
-  currentValue: T;
-  value: T;
-  onValueChange: (value: T) => void;
+  currentValue: string | number | boolean;
+  value: string | number | boolean;
+  onValueChange: (value: string | number | boolean) => void;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 };
 
-const RadioButton = <T extends string | number | boolean>({
+const RadioButton = ({
   id,
   name,
   currentValue,
@@ -18,7 +18,7 @@ const RadioButton = <T extends string | number | boolean>({
   onValueChange,
   isOpen,
   onOpenChange,
-}: RadioButtonProps<T>) => {
+}: RadioButtonProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleMouseDown = useCallback(() => {
     const input = inputRef.current;
@@ -38,7 +38,7 @@ const RadioButton = <T extends string | number | boolean>({
         checked={isChecked}
         value={String(value)}
         className='peer sr-only'
-        onChange={(e) => onValueChange(e.target.value as T)}
+        onChange={(e) => onValueChange(e.target.value)}
       />
 
       <button

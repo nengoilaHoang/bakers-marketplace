@@ -20,10 +20,10 @@ type PaddingSectionProps = {
 };
 
 const PADDING_OPTIONS = {
-  None: 'none',
-  Small: 'sm',
-  Medium: 'md',
-  Large: 'lg',
+  none: 'None',
+  sm: 'Small',
+  md: 'Medium',
+  lg: 'Large',
 } as const;
 
 const PaddingSection = ({
@@ -79,7 +79,7 @@ const PaddingSection = ({
                 name={name}
                 inputType='select'
                 selectOptions={PADDING_OPTIONS}
-                currentValue={String(paddings[key as keyof typeof paddings])}
+                currentValue={paddings[key as keyof typeof paddings]}
                 onValueChange={(val) => onUpdate(name, val)}
                 onOpenStateChange={onActiveSectionChange}
               />

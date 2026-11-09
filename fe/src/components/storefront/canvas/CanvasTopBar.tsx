@@ -1,6 +1,39 @@
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
 import { useEffect, useState } from 'react';
+import TypeableSelect from '../config-sections/inputs/TypeableSelect';
+
+type PageSelectProps = {
+  pages: Record<string, string>;
+  startPage?: string;
+};
+
+const PageSelect = ({ pages, startPage }: PageSelectProps) => {
+  const [selectedPage, setSelectedPage] = useState<string>(
+    startPage && pages[startPage] ? startPage : Object.keys(pages)[0],
+  );
+  const [isOpen, setIsOpen] = useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+  };
+  const handleValueChange = (value: string) => {
+    setSelectedPage(value);
+    setIsOpen(false);
+  };
+  return (
+    <TypeableSelect
+      id='page-select'
+      name='pageSelect'
+      isOpen={isOpen}
+      onValueChange={handleValueChange}
+      currentValue={selectedPage}
+      options={pages}
+      onOpenChange={handleOpenChange}
+      isTypeable={false}
+      showKeyValue={false}
+    />
+  );
+};
 
 const CanvasTopBar = () => {
   const {
@@ -42,6 +75,7 @@ const CanvasTopBar = () => {
       </div>
 
       <div className='flex items-center gap-3'>
+        {/* Page Select */}
         <div className='flex items-center gap-1 text-xs text-zinc-600'>
           <button
             type='button'
