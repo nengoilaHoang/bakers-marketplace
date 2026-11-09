@@ -110,37 +110,22 @@ const layoutReducer = (
 
       const componentsToRemove = new Set<string>();
 
-      // Delete every child that in a composite/repeater.
+      // Delete every child in a composite/repeater.
       // Delete on any bp means delete on every bp.
       const traverseDeleteChildren = (
         parent: FlattenComponent,
         components: Record<string, FlattenComponent>,
       ) => {
         if (parent.type === 'COMPOSITE') {
-          const bps = Object.entries(parent.children);
-          bps.forEach(([bp, map]) => {
-            const seen = new Set<string>();
-            const composite = components[
-              parent.id
-            ] as FlattenCompositeComponent;
-            const childMap = composite.children[
-              bp as keyof typeof composite.children
-            ] as Record<number, string> | undefined;
+          const composite = components[parent.id] as FlattenCompositeComponent;
+          const childIds = composite.children;
+          if (!childIds || childIds.length === 0) return;
 
-            Object.entries(map).forEach(([slot, id]) => {
-              if (childMap) {
-                delete childMap[Number(slot)];
-              }
-
-              const component = components[id];
-              if (component) {
-                seen.add(id);
-                traverseDeleteChildren(component, components);
-                componentsToRemove.add(id);
-              }
-            });
-            seen.forEach((value) => delete components[value]);
-          });
+          for (const childId of childIds) {
+            traverseDeleteChildren(components[childId], components);
+            delete components[childId];
+            componentsToRemove.add(childId);
+          }
         } else if (parent.type === 'REPEATER') {
           const itemTemplateId = parent.itemTemplate;
           if (itemTemplateId) {
@@ -156,18 +141,34 @@ const layoutReducer = (
       switch (parent.type) {
         case 'COMPOSITE': {
           const newComponents = { ...state.components };
-          const newChildren = Object.fromEntries(
-            Object.entries(parent.children).map(([breakpoint, map]) => [
-              breakpoint,
-              Object.fromEntries(
-                Object.entries(map).filter(
-                  ([, id]) => id !== targetComponentId,
+          const newChildren = parent.children?.filter(
+            (id) => id !== targetComponentId,
+          );
+          const newSlots = parent.slots
+            ? {
+                desktop: Object.fromEntries(
+                  Object.entries(parent.slots.desktop ?? {}).filter(
+                    ([, id]) => id !== targetComponentId,
+                  ),
                 ),
-              ),
-            ]),
-          ) as typeof parent.children;
-
+                mobile: parent.slots.mobile
+                  ? Object.fromEntries(
+                      Object.entries(parent.slots.mobile).filter(
+                        ([, id]) => id !== targetComponentId,
+                      ),
+                    )
+                  : undefined,
+                tablet: parent.slots.tablet
+                  ? Object.fromEntries(
+                      Object.entries(parent.slots.tablet).filter(
+                        ([, id]) => id !== targetComponentId,
+                      ),
+                    )
+                  : undefined,
+              }
+            : undefined;
           traverseDeleteChildren(targetComponent, newComponents);
+
           return {
             ...state,
             removedComponents: new Set([
@@ -180,6 +181,7 @@ const layoutReducer = (
               [parentId]: {
                 ...parent,
                 children: newChildren,
+                slots: newSlots,
               },
             },
           };
@@ -228,7 +230,13 @@ const layoutReducer = (
         return state;
       }
 
-      const draggedComponentId = sourceParent.children[breakpoint][sourceSlot];
+      // If the source parent doesn't have a slot map for the specified breakpoint, we can't move anything.
+      // This is just to satisfy TS, since you can't trigger this action if the slot map doesn't exist.
+      if (!sourceParent.slots?.[breakpoint] || !sourceParent.children) {
+        return state;
+      }
+
+      const draggedComponentId = sourceParent.slots[breakpoint][sourceSlot];
       if (!draggedComponentId) {
         return state;
       }
@@ -247,7 +255,10 @@ const layoutReducer = (
           seen.add(currentId);
           const node = state.components[currentId];
           if (node?.type === 'COMPOSITE') {
-            stack.push(...Object.values(node.children[breakpoint]));
+            // Add all children of the composite to the stack for further exploration.
+            if (node.slots?.[breakpoint]) {
+              stack.push(...Object.values(node.slots[breakpoint]));
+            }
           } else if (node?.type === 'REPEATER' && node.itemTemplate) {
             stack.push(node.itemTemplate);
           }
@@ -263,16 +274,18 @@ const layoutReducer = (
 
       // If the occupant is an ancestor of the source parent, that
       // would also create a cycle.
-      const occupantId = targetParent.children[breakpoint][targetSlot];
+      const occupantId = targetParent.slots?.[breakpoint]?.[targetSlot];
       if (
         occupantId &&
         isSelfOrDescendant(occupantId, sourceParentId, breakpoint)
       )
         return state;
 
+      // 1. Moving in the same container
       if (targetParentId === sourceParentId) {
-        const nextBreakpointSlots = { ...sourceParent.children[breakpoint] };
+        const nextBreakpointSlots = { ...sourceParent.slots[breakpoint] };
 
+        // Swap if there is an occupant
         if (occupantId) {
           nextBreakpointSlots[sourceSlot] = occupantId;
         } else {
@@ -286,8 +299,10 @@ const layoutReducer = (
             ...state.components,
             [sourceParentId]: {
               ...sourceParent,
-              children: {
-                ...sourceParent.children,
+              slots: {
+                desktop: sourceParent.slots.desktop ?? {},
+                mobile: sourceParent.slots.mobile ?? {},
+                tablet: sourceParent.slots.tablet ?? {},
                 [breakpoint]: nextBreakpointSlots,
               },
             },
@@ -295,8 +310,9 @@ const layoutReducer = (
         };
       }
 
-      const newSourceSlots = { ...sourceParent.children[breakpoint] };
-      const newTargetSlots = { ...targetParent.children[breakpoint] };
+      // 2. Moving to another container
+      const newSourceSlots = { ...sourceParent.slots[breakpoint] };
+      const newTargetSlots = { ...targetParent.slots?.[breakpoint] };
 
       if (occupantId) {
         newSourceSlots[sourceSlot] = occupantId;
@@ -305,23 +321,44 @@ const layoutReducer = (
       }
       newTargetSlots[targetSlot] = draggedComponentId;
 
+      const newSourceChildren = sourceParent.children.filter(
+        (childId) => childId !== draggedComponentId,
+      );
+      const newTargetChildren = [
+        ...(targetParent.children || []),
+        draggedComponentId,
+      ];
+
       return {
         ...state,
         components: {
           ...state.components,
           [sourceParentId]: {
             ...sourceParent,
-            children: {
-              ...sourceParent.children,
+            children: newSourceChildren,
+            slots: {
+              desktop: sourceParent.slots.desktop,
+              mobile: sourceParent.slots.mobile,
+              tablet: sourceParent.slots.tablet,
               [breakpoint]: newSourceSlots,
             },
           },
           [targetParentId]: {
             ...targetParent,
-            children: {
-              ...targetParent.children,
-              [breakpoint]: newTargetSlots,
-            },
+            children: newTargetChildren,
+            slots: targetParent.slots
+              ? {
+                  desktop: targetParent.slots.desktop,
+                  mobile: targetParent.slots.mobile,
+                  tablet: targetParent.slots.tablet,
+                  [breakpoint]: newTargetSlots,
+                }
+              : {
+                  desktop: newTargetSlots,
+                  mobile: undefined,
+                  tablet: undefined,
+                  [breakpoint]: newTargetSlots,
+                },
           },
         },
       };

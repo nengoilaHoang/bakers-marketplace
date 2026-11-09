@@ -107,7 +107,7 @@ export type UpdateLayoutComponent =
   | UpdateRepeaterComponent
   | UpdateCommerceComponent;
 export type ResponsiveProp<T> = {
-  mobile: T;
-  tablet: T;
   desktop: T;
+  mobile: T | undefined;
+  tablet: T | undefined;
 };

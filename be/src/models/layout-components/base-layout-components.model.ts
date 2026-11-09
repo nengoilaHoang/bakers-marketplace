@@ -35,6 +35,8 @@ const HorizontalAlignTypeSchema = z.enum([
 ]);
 const VerticalAlignTypeSchema = z.enum(['top', 'center', 'bottom', 'stretch']);
 
+export const DeviceBreakpoint = z.enum(['desktop', 'tablet', 'mobile']);
+
 const DYNAMIC_PLACEHOLDER_REGEX = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
 const TOKEN_ALLOWLIST_REGEX = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/;
 const CONTAINS_URL_REGEX =
@@ -93,11 +95,6 @@ export const SurfaceThemeSchema = z.enum([
 
 export type SurfaceTheme = z.infer<typeof SurfaceThemeSchema>;
 
-export const BentoCellConfig = z.object({
-  colSpan: z.uint32().min(1).max(50),
-  rowSpan: z.uint32().min(1).max(50),
-});
-
 /**
  * A helper that takes a Zod schema and outputs a 3-breakpoint Zod schema to support responsive layout.
  * @param valueSchema The Zod schema to make responsive.
@@ -133,6 +130,11 @@ export const ResponsiveProp = <T extends z.ZodType>(valueSchema: T) =>
         };
       }),
   ]);
+
+export const BentoCellConfig = z.object({
+  colSpan: ResponsiveProp(z.uint32().min(1).max(50).default(1)),
+  rowSpan: ResponsiveProp(z.uint32().min(1).max(50).default(1)),
+});
 
 /**
  * Base placement config for all components

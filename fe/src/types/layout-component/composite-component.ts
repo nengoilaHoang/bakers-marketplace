@@ -7,20 +7,34 @@ import {
 	UpdateBaseLayoutComponent,
 } from '.';
 
+export interface BreakpointSlotMap {
+  [order: string]: string;
+}
+
 export interface BaseCompositeComponent<
   TConfig = unknown,
 > extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children: ResponsiveProp<Map<number, LayoutComponent>>;
+  children: LayoutComponent[];
+  slots?: ResponsiveProp<BreakpointSlotMap> | undefined;
 }
+
+export interface BreakpointIndexSlotMap {
+  [order: string]: number;
+}
+
+export type CompositePutSlot = ResponsiveProp<
+  BreakpointSlotMap | BreakpointIndexSlotMap
+>;
 
 export interface UpdateBaseCompositeComponent<
   TConfig = BaseLayoutComponentConfig<unknown>,
 > extends UpdateBaseLayoutComponent<TConfig> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: ResponsiveProp<Map<number, LayoutComponent>>;
+  children?: LayoutComponent[] | undefined;
+  slots?: CompositePutSlot | undefined;
 }
 
 export interface CreateBaseCompositeComponent<
@@ -28,7 +42,8 @@ export interface CreateBaseCompositeComponent<
 > extends CreateBaseLayoutComponent<TConfig> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: ResponsiveProp<Map<number, LayoutComponent>>;
+  children?: LayoutComponent[] | undefined;
+  slots?: CompositePutSlot | undefined;
 }
 
 export type CompositeComponentType = 'GRID' | 'COLUMN' | 'ROW' | 'CAROUSEL';

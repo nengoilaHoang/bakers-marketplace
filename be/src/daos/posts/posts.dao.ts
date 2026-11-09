@@ -1,5 +1,4 @@
 import db from '#/db/index.js';
-import type { Knex } from 'knex';
 import {
 	Post,
 	type PostCreate,
@@ -9,6 +8,7 @@ import {
 	type PostView,
 } from '#/models/posts/posts.model.js';
 import { RECIPE_TOKEN_SQL_PATTERN } from '#/utils/post-content.js';
+import type { Knex } from 'knex';
 
 const PAGE_SIZE = 20;
 
@@ -201,7 +201,7 @@ class PostDAO {
 				'u.displayname as authorDisplayName',
 				'r.id as recipeId',
 				'r.title as recipeTitle',
-				'i.url as recipeCoverImgUrl',
+				'f.url as recipeCoverImgUrl',
 				knex.raw(
 					'(SELECT count(*) FROM post_likes pl WHERE pl.post_id = p.id)::int AS like_count',
 				),
@@ -222,7 +222,7 @@ class PostDAO {
 			.joinRaw('LEFT JOIN recipes AS r ON r.id = substring(p.content from ?)::uuid', [
 				RECIPE_TOKEN_SQL_PATTERN,
 			])
-			.leftJoin('images as i', 'i.id', 'r.coverImgId')
+			.leftJoin('files as f', 'f.id', 'r.coverImgId')
 			// Removed posts are only listed by the admin pages
 			.where('p.status', 'VISIBLE');
 	}

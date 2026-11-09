@@ -99,8 +99,12 @@ const GridComponent = ({
   const gridItems = useMemo(() => {
     return (['desktop', 'tablet', 'mobile'] as const).reduce(
       (acc, bp) => {
+        if (!component.slots) {
+          acc[bp] = [];
+          return acc;
+        }
         const currentCols = cols[bp] ?? cols['desktop'];
-        const activeSlots = component.children[bp];
+        const activeSlots = component.slots[bp] ?? component.slots['desktop'];
 
         const maxOccupiedSlot = Math.max(
           0,
@@ -175,7 +179,7 @@ const GridComponent = ({
         }[];
       },
     );
-  }, [cols, component.children, components, layout, rows]);
+  }, [cols, component.slots, components, layout, rows]);
 
   return (
     <div

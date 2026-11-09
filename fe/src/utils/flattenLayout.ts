@@ -1,11 +1,11 @@
-import { LayoutComponent, ResponsiveProp } from '@/types/layout-component';
+import { LayoutComponent } from '@/types/layout-component';
 import { CommerceComponent } from '@/types/layout-component/commerce-component/commerce-component';
 import { CompositeComponent } from '@/types/layout-component/composite-component';
 import { LeafComponent } from '@/types/layout-component/leaf-component';
 import { RepeaterComponent } from '@/types/layout-component/repeater-component';
 
 export type FlattenCompositeComponent = Omit<CompositeComponent, 'children'> & {
-  children: ResponsiveProp<Record<number, string>>;
+	children: string[] | undefined;
 };
 
 export type FlattenRepeaterComponent = Omit<
@@ -25,32 +25,21 @@ const flattenLayout = (component: LayoutComponent): FlattenComponent[] => {
   const flattenComponents: FlattenComponent[] = [];
   switch (component.type) {
     case 'COMPOSITE': {
-      const transformedChildren = Object.fromEntries(
-        Object.entries(component.children).map(([bp, value]) => [
-          bp,
-          Object.fromEntries(
-            Object.entries(value ?? {}).map(([slot, child]) => [
-              slot,
-              child.id,
-            ]),
-          ),
-        ]),
-      ) as ResponsiveProp<Record<number, string>>;
-
       const visitedChildIds = new Set<string>();
 
+      const { children, ...rest } = component;
       const composite: FlattenCompositeComponent = {
-        ...component,
-        children: transformedChildren,
+        ...rest,
+				children: children.length > 0 ? children.map((child) => child.id) : undefined,
       };
-      Object.values(component.children).forEach((slots) => {
-        if (slots) {
-          Object.values(slots).forEach((child) => {
-            if (child && !visitedChildIds.has(child.id)) {
-              visitedChildIds.add(child.id);
-              flattenComponents.push(...flattenLayout(child));
-            }
-          });
+      if (!component.slots) {
+        flattenComponents.push(composite);
+        break;
+      }
+      component.children.forEach((child) => {
+        if (child && !visitedChildIds.has(child.id)) {
+          visitedChildIds.add(child.id);
+          flattenComponents.push(...flattenLayout(child));
         }
       });
 

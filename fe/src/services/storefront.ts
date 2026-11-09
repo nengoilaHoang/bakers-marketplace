@@ -22,15 +22,13 @@ const normalizeComponent = (value: unknown): value is LayoutComponent => {
       if (
         Array.isArray(component.children) &&
         component.children.every(
-          ([bp, map]) =>
-            typeof bp === 'string' &&
-            Array.isArray(map) &&
-            map.length === 2 &&
-            typeof map[0] === 'number' &&
-            normalizeComponent(map[1]),
+          (child) =>
+						typeof child === 'object' &&
+						child !== null &&
+						normalizeComponent(child),
         )
       ) {
-        component.children = new Map(component.children);
+        component.children = component.children.map((child) => child as LayoutComponent);
       } else return false;
       break;
     }

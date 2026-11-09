@@ -61,12 +61,11 @@ export const GridConfigSchema = z.discriminatedUnion('layout', [
   BentoGridConfigSchema,
 ]);
 
-export const GridCompositeComponentSchema = BaseCompositeComponentSchema.extend(
-  {
+export const GridCompositeComponentSchema =
+  BaseCompositeComponentSchema.safeExtend({
     componentType: z.literal(CompositeComponentTypeSchema.enum.GRID).readonly(),
     config: GridConfigSchema,
-  },
-);
+  });
 
 // Update Schemas
 
@@ -84,7 +83,7 @@ export const UpdateGridCompositeComponentSchema =
 // Create Schemas
 
 export const CreateGridCompositeComponentSchema =
-  CreateBaseCompositeComponentSchema.extend({
+  CreateBaseCompositeComponentSchema.safeExtend({
     componentType: z.literal(CompositeComponentTypeSchema.enum.GRID).readonly(),
     config: GridConfigSchema,
   });
