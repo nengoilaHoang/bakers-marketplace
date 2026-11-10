@@ -1,4 +1,5 @@
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
+import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
 import { useEffect, useState } from 'react';
 import TypeableSelect from '../config-sections/inputs/TypeableSelect';
@@ -44,7 +45,7 @@ const CanvasTopBar = () => {
     isPreview,
     setIsPreview: onTogglePreview,
   } = useStorefrontCanvasContext();
-
+  const { currentRelease } = useVendorContext();
   const [vpWidth, setVpWidth] = useState<number>(0);
 
   useEffect(() => {
@@ -55,6 +56,15 @@ const CanvasTopBar = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  if (!currentRelease) return null;
+  const pages: Record<string, string> = currentRelease.layouts.reduce(
+    (acc, page) => ({
+      ...acc,
+      [page.id]: page.name,
+    }),
+    {} as Record<string, string>,
+  );
 
   return (
     <div className='flex h-12 w-full shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 z-20 shadow-sx'>
@@ -76,6 +86,7 @@ const CanvasTopBar = () => {
 
       <div className='flex items-center gap-3'>
         {/* Page Select */}
+        <PageSelect pages={pages} />
         <div className='flex items-center gap-1 text-xs text-zinc-600'>
           <button
             type='button'

@@ -1260,10 +1260,13 @@ export async function up(knex: Knex): Promise<void> {
             'COLLECTION_LIST',
             'SEARCH',
             'PRODUCT',
+            'CUSTOM',
           ],
           { useNative: true, enumName: 'page_type' },
         )
         .notNullable();
+
+      table.string('name', 255).notNullable();
 
       table
         .uuid('root_component_id')
@@ -1498,11 +1501,16 @@ export async function up(knex: Knex): Promise<void> {
 		RETURNS TRIGGER AS $$
 		BEGIN
 			IF OLD.child_id IS NOT NULL THEN
-				DELETE FROM layout_components WHERE id = OLD.child_id;
+				IF NOT EXISTS (
+					SELECT 1 FROM composite_component_children 
+					WHERE child_id = OLD.child_id
+				) THEN
+					DELETE FROM layout_components WHERE id = OLD.child_id;
+				END IF;
 			END IF;
 			RETURN OLD;
 		END;
-		$$ LANGUAGE plpgsql
+		$$ LANGUAGE plpgsql;
 	`);
 
   await knex.raw(`

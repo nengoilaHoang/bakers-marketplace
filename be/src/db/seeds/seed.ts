@@ -1273,6 +1273,7 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('page_layouts').insert({
       storefront_release_id: release.id,
       type: 'COLLECTION',
+      name: 'Collection Page',
       root_component_id: collectionRootGrid.id,
     });
 
@@ -1482,6 +1483,7 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('page_layouts').insert({
       storefront_release_id: release.id,
       type: 'HOME',
+      name: 'Home Page',
       root_component_id: homeRootGrid.id,
     });
 
@@ -1696,6 +1698,7 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('page_layouts').insert({
       storefront_release_id: mattroiRelease.id,
       type: 'HOME',
+      name: 'Sunrise Home Page',
       root_component_id: mattroiHomeBentoGrid.id,
     });
 

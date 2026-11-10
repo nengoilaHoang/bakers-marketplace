@@ -60,6 +60,7 @@ export class StorefrontDao {
 								jsonb_build_object(
 									'id', pl.id,
 									'type', pl.type,
+									'name', pl.name,
 									'root', CASE
 										WHEN pl.root_component_id IS NOT NULL 
 										THEN get_layout_tree_json(pl.root_component_id)
