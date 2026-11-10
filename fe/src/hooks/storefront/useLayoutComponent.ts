@@ -14,8 +14,9 @@ const useLayoutComponent = ({
   sourceParentId?: string;
   sourceSlot?: number;
 }) => {
-  const { removeComponent } = useStorefrontLayoutContext();
-  const { selectComponent, selectedComponentId, isResizing } =
+  const { removeComponent, removeComponentInBreakpoint } =
+    useStorefrontLayoutContext();
+  const { selectComponent, selectedComponentId, isResizing, breakpoint } =
     useStorefrontCanvasContext();
   const isSelected = useMemo(
     () => selectedComponentId === component.id,
@@ -71,14 +72,26 @@ const useLayoutComponent = ({
         return;
       }
 
-      if (e.key === 'Delete') {
+      const isModifierKeyPressed = e.ctrlKey || e.metaKey;
+
+      if (isModifierKeyPressed && e.key === 'Delete') {
         e.stopPropagation();
         if (
           !isRoot &&
           sourceParentId !== undefined &&
           sourceSlot !== undefined
         ) {
-          removeComponent(sourceParentId, sourceSlot, component.id);
+          removeComponentInBreakpoint(
+            sourceParentId,
+            breakpoint === 'fluid' ? 'desktop' : breakpoint,
+            sourceSlot,
+          );
+          selectComponent(null);
+        }
+      } else if (!isModifierKeyPressed && e.key === 'Delete') {
+        e.stopPropagation();
+        if (!isRoot && sourceParentId !== undefined) {
+          removeComponent(sourceParentId, component.id);
           selectComponent(null);
         }
       }

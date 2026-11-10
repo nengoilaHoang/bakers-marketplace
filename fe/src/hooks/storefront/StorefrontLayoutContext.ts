@@ -17,10 +17,11 @@ export interface StorefrontLayoutContextValue {
     targetParentId: string,
     targetSlot: number,
   ) => void;
-  removeComponent: (
+  removeComponent: (parentId: string, targetComponentId: string) => void;
+  removeComponentInBreakpoint: (
     parentId: string,
+    breakpoint: DeviceBreakpoint,
     slot: number,
-    targetComponentId: string,
   ) => void;
 }
 

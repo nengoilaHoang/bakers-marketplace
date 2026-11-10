@@ -12,12 +12,8 @@ export type StorefrontRelease = {
   id: string;
   version: number;
   displayName: string;
-  layouts?: Array<PageLayout>;
+  layouts: Array<PageLayout>;
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
-};
-
-export type StorefrontReleaseWithLayout = Omit<StorefrontRelease, 'layouts'> & {
-  layouts: Array<PageLayout>;
 };

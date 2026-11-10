@@ -56,10 +56,20 @@ const StorefrontLayoutProvider = ({
   );
 
   const removeComponent = useCallback(
-    (parentId: string, slot: number, targetComponentId: string) => {
+    (parentId: string, targetComponentId: string) => {
       dispatch({
         type: 'REMOVE_COMPONENT',
-        payload: { parentId, slot, targetComponentId },
+        payload: { parentId, targetComponentId },
+      });
+    },
+    [dispatch],
+  );
+
+  const removeComponentInBreakpoint = useCallback(
+    (parentId: string, breakpoint: DeviceBreakpoint, slot: number) => {
+      dispatch({
+        type: 'REMOVE_BREAKPOINT_COMPONENT',
+        payload: { parentId, breakpoint, slot },
       });
     },
     [dispatch],
@@ -71,8 +81,15 @@ const StorefrontLayoutProvider = ({
       updateConfig,
       moveComponent,
       removeComponent,
+      removeComponentInBreakpoint,
     }),
-    [state, updateConfig, moveComponent, removeComponent],
+    [
+      state,
+      updateConfig,
+      moveComponent,
+      removeComponent,
+      removeComponentInBreakpoint,
+    ],
   );
 
   if (!state?.components) {

@@ -2,7 +2,7 @@ import {
   getMyStorefronts,
   getStorefrontReleaseLayouts,
 } from '@/services/storefront';
-import { Storefront, StorefrontReleaseWithLayout } from '@/types/storefront';
+import { Storefront, StorefrontRelease } from '@/types/storefront';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import useAuth from '../user/useAuthContext';
@@ -15,7 +15,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentStorefrontId, setCurrentStorefrontId] = useState<string>('');
   const [currentReleaseId, setCurrentReleaseId] = useState('');
   const [currentRelease, setCurrentRelease] =
-    useState<StorefrontReleaseWithLayout | null>(null);
+    useState<StorefrontRelease | null>(null);
 
   const isVendor = account?.role === 'VENDOR';
 
@@ -111,7 +111,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
 
     // CACHE HIT: layouts already present in state, exit early to prevent refetching
     const { layouts } = release;
-    if (layouts && layouts.length !== 0) {
+    if (layouts.length !== 0) {
       queueMicrotask(() => setCurrentRelease({ ...release, layouts }));
       return;
     }

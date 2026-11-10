@@ -1,7 +1,8 @@
+import { DeviceBreakpoint } from '@/types/canvas';
 import { PageLayoutType } from '@/types/page-layout';
 import {
-  FlattenComponent,
-  FlattenCompositeComponent,
+	FlattenComponent,
+	FlattenCompositeComponent,
 } from '@/utils/flattenLayout';
 import { useReducer } from 'react';
 
@@ -29,15 +30,23 @@ type LayoutAction =
       type: 'NEW_COMPONENT';
       payload: {
         targetParentId: string;
-        // newComponent
+        newComponent: FlattenComponent;
+        breakpoint: DeviceBreakpoint;
       };
     }
   | {
       type: 'REMOVE_COMPONENT';
       payload: {
         parentId: string;
-        slot: number;
         targetComponentId: string;
+      };
+    }
+  | {
+      type: 'REMOVE_BREAKPOINT_COMPONENT';
+      payload: {
+        parentId: string;
+        breakpoint: DeviceBreakpoint;
+        slot: number;
       };
     };
 
@@ -101,113 +110,6 @@ const layoutReducer = (
           } as FlattenComponent,
         },
       };
-    }
-    case 'REMOVE_COMPONENT': {
-      const { parentId, targetComponentId } = action.payload;
-      const parent = state.components[parentId];
-      const targetComponent = state.components[targetComponentId];
-      if (!parent || !targetComponent) return state;
-
-      const componentsToRemove = new Set<string>();
-
-      // Delete every child in a composite/repeater.
-      // Delete on any bp means delete on every bp.
-      const traverseDeleteChildren = (
-        parent: FlattenComponent,
-        components: Record<string, FlattenComponent>,
-      ) => {
-        if (parent.type === 'COMPOSITE') {
-          const composite = components[parent.id] as FlattenCompositeComponent;
-          const childIds = composite.children;
-          if (!childIds || childIds.length === 0) return;
-
-          for (const childId of childIds) {
-            traverseDeleteChildren(components[childId], components);
-            delete components[childId];
-            componentsToRemove.add(childId);
-          }
-        } else if (parent.type === 'REPEATER') {
-          const itemTemplateId = parent.itemTemplate;
-          if (itemTemplateId) {
-            const component = components[itemTemplateId];
-            traverseDeleteChildren(component, components);
-            delete components[component.id];
-            componentsToRemove.add(component.id);
-            parent.itemTemplate = null;
-          }
-        }
-      };
-
-      switch (parent.type) {
-        case 'COMPOSITE': {
-          const newComponents = { ...state.components };
-          const newChildren = parent.children?.filter(
-            (id) => id !== targetComponentId,
-          );
-          const newSlots = parent.slots
-            ? {
-                desktop: Object.fromEntries(
-                  Object.entries(parent.slots.desktop ?? {}).filter(
-                    ([, id]) => id !== targetComponentId,
-                  ),
-                ),
-                mobile: parent.slots.mobile
-                  ? Object.fromEntries(
-                      Object.entries(parent.slots.mobile).filter(
-                        ([, id]) => id !== targetComponentId,
-                      ),
-                    )
-                  : undefined,
-                tablet: parent.slots.tablet
-                  ? Object.fromEntries(
-                      Object.entries(parent.slots.tablet).filter(
-                        ([, id]) => id !== targetComponentId,
-                      ),
-                    )
-                  : undefined,
-              }
-            : undefined;
-          traverseDeleteChildren(targetComponent, newComponents);
-
-          return {
-            ...state,
-            removedComponents: new Set([
-              ...state.removedComponents,
-              ...componentsToRemove,
-              targetComponentId,
-            ]),
-            components: {
-              ...newComponents,
-              [parentId]: {
-                ...parent,
-                children: newChildren,
-                slots: newSlots,
-              },
-            },
-          };
-        }
-        case 'REPEATER': {
-          const newComponents = { ...state.components };
-          traverseDeleteChildren(targetComponent, newComponents);
-          return {
-            ...state,
-            removedComponents: new Set([
-              ...state.removedComponents,
-              ...componentsToRemove,
-              targetComponentId,
-            ]),
-            components: {
-              ...newComponents,
-              [parentId]: {
-                ...parent,
-                itemTemplate: null,
-              },
-            },
-          };
-        }
-        default:
-          return state;
-      }
     }
     case 'MOVE_COMPONENT': {
       const {
@@ -359,6 +261,139 @@ const layoutReducer = (
                   tablet: undefined,
                   [breakpoint]: newTargetSlots,
                 },
+          },
+        },
+      };
+    }
+    case 'REMOVE_COMPONENT': {
+      const { parentId, targetComponentId } = action.payload;
+      const parent = state.components[parentId];
+      const targetComponent = state.components[targetComponentId];
+      if (!parent || !targetComponent) return state;
+
+      const componentsToRemove = new Set<string>();
+
+      // Delete every child in a composite/repeater.
+      // Delete on any bp means delete on every bp.
+      const traverseDeleteChildren = (
+        parent: FlattenComponent,
+        components: Record<string, FlattenComponent>,
+      ) => {
+        if (parent.type === 'COMPOSITE') {
+          const composite = components[parent.id] as FlattenCompositeComponent;
+          const childIds = composite.children;
+          if (!childIds || childIds.length === 0) return;
+
+          for (const childId of childIds) {
+            traverseDeleteChildren(components[childId], components);
+            delete components[childId];
+            componentsToRemove.add(childId);
+          }
+        } else if (parent.type === 'REPEATER') {
+          const itemTemplateId = parent.itemTemplate;
+          if (itemTemplateId) {
+            const component = components[itemTemplateId];
+            traverseDeleteChildren(component, components);
+            delete components[component.id];
+            componentsToRemove.add(component.id);
+            parent.itemTemplate = null;
+          }
+        }
+      };
+
+      switch (parent.type) {
+        case 'COMPOSITE': {
+          const newComponents = { ...state.components };
+          const newChildren = parent.children?.filter(
+            (id) => id !== targetComponentId,
+          );
+          const newSlots = parent.slots
+            ? {
+                desktop: Object.fromEntries(
+                  Object.entries(parent.slots.desktop ?? {}).filter(
+                    ([, id]) => id !== targetComponentId,
+                  ),
+                ),
+                mobile: parent.slots.mobile
+                  ? Object.fromEntries(
+                      Object.entries(parent.slots.mobile).filter(
+                        ([, id]) => id !== targetComponentId,
+                      ),
+                    )
+                  : undefined,
+                tablet: parent.slots.tablet
+                  ? Object.fromEntries(
+                      Object.entries(parent.slots.tablet).filter(
+                        ([, id]) => id !== targetComponentId,
+                      ),
+                    )
+                  : undefined,
+              }
+            : undefined;
+          traverseDeleteChildren(targetComponent, newComponents);
+
+          return {
+            ...state,
+            removedComponents: new Set([
+              ...state.removedComponents,
+              ...componentsToRemove,
+              targetComponentId,
+            ]),
+            components: {
+              ...newComponents,
+              [parentId]: {
+                ...parent,
+                children: newChildren,
+                slots: newSlots,
+              },
+            },
+          };
+        }
+        case 'REPEATER': {
+          const newComponents = { ...state.components };
+          traverseDeleteChildren(targetComponent, newComponents);
+          return {
+            ...state,
+            removedComponents: new Set([
+              ...state.removedComponents,
+              ...componentsToRemove,
+              targetComponentId,
+            ]),
+            components: {
+              ...newComponents,
+              [parentId]: {
+                ...parent,
+                itemTemplate: null,
+              },
+            },
+          };
+        }
+        default:
+          return state;
+      }
+    }
+    case 'REMOVE_BREAKPOINT_COMPONENT': {
+      const { slot, parentId, breakpoint } = action.payload;
+      const parent = state.components[parentId];
+      if (!parent) return state;
+
+      if (parent.type !== 'COMPOSITE') return state;
+
+      const breakpointSlots = { ...parent.slots?.[breakpoint] };
+      delete breakpointSlots[slot];
+
+      return {
+        ...state,
+        components: {
+          ...state.components,
+          [parentId]: {
+            ...parent,
+            slots: parent.slots
+              ? {
+                  ...parent.slots,
+                  [breakpoint]: breakpointSlots,
+                }
+              : undefined,
           },
         },
       };
