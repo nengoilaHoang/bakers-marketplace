@@ -22,6 +22,7 @@ type LayoutAction =
         targetComponentId: string;
         pathname: string;
         value: unknown;
+        bp?: string;
       };
     }
   | {
@@ -55,7 +56,7 @@ const layoutReducer = (
 ): LayoutState => {
   switch (action.type) {
     case 'UPDATE_CONFIG': {
-      const { targetComponentId, pathname, value } = action.payload;
+      const { targetComponentId, pathname, value, bp } = action.payload;
 
       const { config } = state.components[targetComponentId];
       const keys = pathname.split('.');
@@ -64,7 +65,21 @@ const layoutReducer = (
         current: Record<string, unknown>,
         index: number,
       ): unknown => {
-        if (index === keys.length) return value;
+        if (index === keys.length) {
+          // If a breakpoint is specified, we want to update the value for that specific breakpoint.
+          if (bp) {
+            const currentObj =
+              typeof current === 'object' && current !== null
+                ? (current as Record<string, unknown>)
+                : {};
+            return {
+              ...currentObj,
+              [bp]: value,
+            };
+          }
+          return value;
+        }
+
         const key = keys[index];
         const nextCurrent =
           current && typeof current === 'object' ? current[key] : {};

@@ -11,6 +11,7 @@ type ColorPickerProps = {
   id: string;
   name: string;
   currentValue: string;
+  presets?: ReadonlyArray<string>;
   onValueChange: (value: string) => void;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -95,6 +96,7 @@ const getTextColor = (r: number, g: number, b: number, a: number) => {
 const ColorPicker = ({
   id,
   name,
+  presets,
   currentValue,
   onValueChange: onColorChange,
   isOpen,
@@ -127,8 +129,9 @@ const ColorPicker = ({
     [hsv.h, hsv.s, hsv.v],
   );
 
-  const [pureHueHexString, setPureHueHexString] = useState(() =>
-    formatHex(pureR, pureG, pureB, 1),
+  const pureHueHexString = useMemo(
+    () => formatHex(pureR, pureG, pureB, 1),
+    [pureB, pureG, pureR],
   );
 
   const [textInputValue, setTextInputValue] = useState(
@@ -150,11 +153,11 @@ const ColorPicker = ({
         v: newV,
         a,
       };
-      const [hueR, hueG, hueB] = hsvToRgb(newHsv.h, newHsv.s, 1);
-      setPureHueHexString(formatHex(hueR, hueG, hueB, 1));
       return newHsv;
     });
-  }, [currentValue]);
+
+    setTextInputValue(pureHueHexString.toUpperCase());
+  }, [currentValue, pureHueHexString]);
 
   // const getPixelByHsv = useCallback((hue: number, sat: number) => {
   //   const canvas = canvasRef.current;
@@ -341,7 +344,7 @@ const ColorPicker = ({
           '--pure-color': pureHueHexString,
         } as CSSProperties
       }
-      className='inline-block select-none'
+      className='w-full select-none'
     >
       <input
         ref={inputRef}
@@ -349,23 +352,59 @@ const ColorPicker = ({
         name={name}
         type='color'
         value={currentValue.slice(0, 7)}
+        readOnly
         className='sr-only appearance-none'
       />
-      <button
-        type='button'
-        onClick={() => onOpenChange(!isOpen)}
-        aria-label='Toggle color picker'
-        aria-expanded={isOpen}
-        className='w-8 p-0.5 rounded-md bg-zinc-50 border border-zinc-200 size-auto'
-      >
-        <div className='h-3 rounded-md border border-zinc-200 bg-(--current-color)'></div>
-      </button>
+
+      <div className='grid grid-cols-[auto_1fr] gap-2'>
+        {/* Trigger button */}
+        <button
+          type='button'
+          onClick={() => onOpenChange(!isOpen)}
+          aria-label='Toggle color picker'
+          aria-haspopup='true'
+          aria-controls={`${id}-color-picker`}
+          aria-expanded={isOpen}
+          className={`relative z-20 flex items-center justify-between w-full rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-800 transition ${
+            isOpen ? 'bg-white border-zinc-950' : 'bg-zinc-50/50 hover:bg-white'
+          } focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950`}
+        >
+          <div className='flex items-center gap-2 min-w-0'>
+            <div className='size-3.5 shrink-0 rounded border border-zinc-300 bg-(--current-color) shadow-2xs' />
+            <span className='font-mono text-xs uppercase text-zinc-700 truncate'>
+              {currentValue}
+            </span>
+          </div>
+        </button>
+
+        {/* Presets */}
+        {presets && presets.length > 0 && (
+          <div className='flex flex-wrap justify-end items-center gap-1'>
+            {presets.map((hex) => (
+              <button
+                key={hex}
+                type='button'
+                aria-label={`Select ${hex}`}
+                onClick={() => onColorChange(hex)}
+                className={
+                  'size-3.5 rounded-full border border-zinc-200 transition-transform hover:scale-110'
+                }
+                style={{ backgroundColor: hex }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Color picker dropdown panel */}
       <div
-        className={`absolute right-0 bottom-6 p-3.5 rounded-md border border-zinc-200 bg-zinc-50 shadow-lg z-50 ${
+        id={`${id}-color-picker`}
+        className={`absolute right-0 top-full mt-1.5 p-3.5 rounded-md border border-zinc-200 bg-zinc-50 shadow-lg z-50 ${
           isOpen ? '' : 'hidden'
         }`}
       >
         <div className='grid grid-cols-[minmax(0fr,auto)_minmax(0fr,1fr)] grid-rows-[minmax(0fr,auto)_minmax(0fr,1fr)_minmax(0fr,1fr)] gap-2'>
+          {/* The Wheel */}
           <div className='flex items-center justify-center min-h-0 min-w-0 relative'>
             <canvas
               ref={canvasRef}
@@ -386,6 +425,8 @@ const ColorPicker = ({
               }}
             ></div>
           </div>
+
+          {/* Value Slider */}
           <div className='relative flex items-center justify-center w-6 h-25 col-start-2 row-start-1'>
             <input
               type='range'
@@ -399,6 +440,8 @@ const ColorPicker = ({
               className={`${thumbStyleClass} cursor-pointer -rotate-90 w-25 h-3 bg-linear-to-l from-(--pure-color) to-black origin-center border border-black`}
             />
           </div>
+
+          {/* Alpha Slider */}
           <div className='relative flex items-center justify-center w-25 h-6 col-start-1 row-start-2'>
             <input
               type='range'
@@ -413,6 +456,8 @@ const ColorPicker = ({
             />
           </div>
         </div>
+
+        {/* Raw Hex Code */}
         <div className='justify-self-start self-center'>
           <input
             type='string'

@@ -2,12 +2,12 @@ import { z } from 'zod';
 import {
 	BaseLayoutComponentConfigSchema,
 	BoxStyleConfigSchema,
+	ResponsiveProp,
 } from '../base-layout-components.model.js';
 import {
 	BaseCompositeComponentSchema,
 	CompositeComponentTypeSchema,
 	CreateBaseCompositeComponentSchema,
-	ResponsiveValueSchema,
 	UpdateBaseCompositeComponentSchema,
 } from './base-composite-components.model.js';
 
@@ -32,15 +32,15 @@ export const RowHeightModeSchema = z.discriminatedUnion('mode', [
 export const BaseGridConfigSchema = BaseLayoutComponentConfigSchema.extend({
   ...BoxStyleConfigSchema.shape,
   layout: GridLayoutTypeSchema,
-  cols: ResponsiveValueSchema(z.uint32().min(1).max(12)),
-  rows: ResponsiveValueSchema(z.uint32().min(1).max(50)).optional(),
-  rowHeight: ResponsiveValueSchema(RowHeightModeSchema).default({
+  cols: ResponsiveProp(z.uint32().min(1).max(12)),
+  rows: ResponsiveProp(z.uint32().min(1).max(50)).optional(),
+  rowHeight: ResponsiveProp(RowHeightModeSchema).default({
     desktop: { mode: 'fixed', baseHeightPx: 180 },
     tablet: { mode: 'fixed', baseHeightPx: 160 },
     mobile: { mode: 'auto', minHeightPx: 120 },
   }),
   densePacking: z.boolean().default(true), // grid-auto-flow: dense
-  gap: ResponsiveValueSchema(z.uint32().min(0)), // in px
+  gap: ResponsiveProp(z.uint32().min(0)), // in px
   borderRadius: z.union([
     z.undefined(),
     z.uint32(), // in px

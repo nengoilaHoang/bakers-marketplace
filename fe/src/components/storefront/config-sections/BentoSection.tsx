@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type BentoSectionProps = {
@@ -25,6 +27,28 @@ const BentoSection = ({
   const id: SectionId = 'bento';
   const title = 'Bento';
   const description = 'Adjust the bento layout of the component.';
+  const spans = useMemo<Array<{
+    key: keyof BentoSectionProps['span'];
+    id: string;
+    name: string;
+    label: string;
+  }>>(
+    () => [
+      {
+        key: 'col',
+        id: 'col-span',
+        name: 'colSpan',
+        label: 'Column Span',
+      },
+      {
+        key: 'row',
+        id: 'row-span',
+        name: 'rowSpan',
+        label: 'Row Span',
+      },
+    ],
+    [],
+  );
 
   return (
     <ConfigSectionWrapper
@@ -36,24 +60,22 @@ const BentoSection = ({
       zIndex={zIndex}
     >
       <div className='flex flex-row w-full gap-2'>
-        <ConfigInput
-          id={`colSpan`}
-          name={'colSpan'}
-          label='Column Span'
-          inputType='text'
-          currentValue={span.col}
-          onValueChange={(val) => onUpdate('colSpan', val)}
-          onOpenStateChange={onActiveSectionChange}
-        />
-        <ConfigInput
-          id={`rowSpan`}
-          name={'rowSpan'}
-          label='Row Span'
-          inputType='text'
-          currentValue={span.row}
-          onValueChange={(val) => onUpdate('rowSpan', val)}
-          onOpenStateChange={onActiveSectionChange}
-        />
+        {spans.map(({ key, name, id, label }) => (
+          <div
+            key={name}
+            className='flex flex-col gap-2 justify-start items-center'
+          >
+            <ConfigLabel label={label} forId={id}></ConfigLabel>
+            <ConfigInput
+              id={id}
+              name={name}
+              inputType='text'
+              currentValue={span[key]}
+              onValueChange={(val) => onUpdate(name, val)}
+              onOpenStateChange={onActiveSectionChange}
+            />
+          </div>
+        ))}
       </div>
     </ConfigSectionWrapper>
   );

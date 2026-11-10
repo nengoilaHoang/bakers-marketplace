@@ -3,21 +3,16 @@ import {
 	BaseLayoutComponentConfig,
 	CreateBaseLayoutComponent,
 	LayoutComponent,
+	ResponsiveProp,
 	UpdateBaseLayoutComponent,
 } from '.';
 
-export type ResponsiveValue<T> = {
-  mobile: T;
-  tablet: T;
-  desktop: T;
-};
-
 export interface BaseCompositeComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends BaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children: ResponsiveValue<Map<number, LayoutComponent>>;
+  children: ResponsiveProp<Map<number, LayoutComponent>>;
 }
 
 export interface UpdateBaseCompositeComponent<
@@ -25,7 +20,7 @@ export interface UpdateBaseCompositeComponent<
 > extends UpdateBaseLayoutComponent<TConfig> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: ResponsiveValue<Map<number, LayoutComponent>>;
+  children?: ResponsiveProp<Map<number, LayoutComponent>>;
 }
 
 export interface CreateBaseCompositeComponent<
@@ -33,7 +28,7 @@ export interface CreateBaseCompositeComponent<
 > extends CreateBaseLayoutComponent<TConfig> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: ResponsiveValue<Map<number, LayoutComponent>>;
+  children?: ResponsiveProp<Map<number, LayoutComponent>>;
 }
 
 export type CompositeComponentType = 'GRID' | 'COLUMN' | 'ROW' | 'CAROUSEL';
@@ -54,11 +49,11 @@ export type RowHeightMode =
 
 export type GridCompositeComponentConfig = {
   layout: 'BENTO' | 'UNIFORM';
-  rows?: ResponsiveValue<number> | undefined;
-  cols: ResponsiveValue<number>;
-  gap: ResponsiveValue<number>;
+  rows?: ResponsiveProp<number> | undefined;
+  cols: ResponsiveProp<number>;
+  gap: ResponsiveProp<number>;
   borderRadius: string | number | undefined;
-  rowHeight: ResponsiveValue<RowHeightMode>;
+  rowHeight: ResponsiveProp<RowHeightMode>;
   densePacking: boolean;
 };
 

@@ -1,14 +1,14 @@
 import type { Knex } from 'knex';
 
 import db from '#/db/index.js';
-import type { Image } from '#/models/images.model.js';
+import type { Image } from '#/models/files/images.model.js';
 import type {
 	Product,
-	ProductRow,
-	ProductNoteRow,
-	ProductTagRow,
-	ProductStock,
 	ProductCollectionSummary,
+	ProductNoteRow,
+	ProductRow,
+	ProductStock,
+	ProductTagRow,
 	StockAlertRow,
 } from '#/models/products/products.model.js';
 
@@ -481,18 +481,25 @@ class ProductDAO {
 	): Promise<Map<string, Image[]>> {
 		const rows = await this.db.instance<ProductImageJoinRow>('images')
 			.select(
-				'images.*',
-				'product_images.product_id as productId',
+				'files.*',
+				'images.width',
+				'images.height',
+				'product_images.product_id',
 			)
 			.join(
 				'product_images',
 				'images.id',
 				'product_images.image_id',
 			)
+			.join(
+				'files',
+				'images.id',
+				'files.id',
+			)
 			.whereIn('product_images.product_id', productIds)
 			.orderBy('product_images.sort_order', 'asc');
 
-		return this.groupBy(rows, 'productId');
+		return this.groupBy(rows, 'product_id');
 	}
 
 	private async loadNotes(

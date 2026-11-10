@@ -3,28 +3,84 @@ import {
 	HorizontalAlignType,
 	PaddingType,
 	SurfaceTheme,
-	TextStyle,
-	VerticalAlignType,
+	TextConfig,
+	VerticalAlignType
 } from '@/types/layout-component';
-import { HeroBannerContentPosition } from '@/types/layout-component/commerce-component';
+import {
+	HeroBannerContentPosition,
+	HeroBannerContentSize,
+} from '@/types/layout-component/commerce-component';
 import { CSSProperties } from 'react';
 import { FlattenComponent } from './flattenLayout';
+
+export const HERO_TYPOGRAPHY_PRESETS: Record<
+  HeroBannerContentSize,
+  { eyebrow: string; title: string; subtitle: string }
+> = {
+  compact: {
+    eyebrow: 'text-xs tracking-wider uppercase',
+    title: 'text-2xl sm:text-3xl md:text-4xl leading-tight',
+    subtitle: 'text-sm sm:text-base text-ink-muted',
+  },
+  medium: {
+    eyebrow: 'text-xs sm:text-sm tracking-wider uppercase',
+    title: 'text-3xl sm:text-4xl md:text-5xl leading-tight',
+    subtitle: 'text-base sm:text-lg text-ink-muted',
+  },
+  large: {
+    eyebrow: 'text-sm tracking-widest uppercase',
+    title: 'text-4xl sm:text-5xl md:text-6xl leading-tight',
+    subtitle: 'text-lg sm:text-xl text-ink-muted',
+  },
+  impact: {
+    eyebrow: 'text-sm sm:text-base tracking-widest uppercase',
+    title: 'text-5xl sm:text-6xl md:text-7xl leading-none tracking-tight',
+    subtitle: 'text-xl sm:text-2xl text-ink-muted',
+  },
+};
 
 const DIMENSION_MAP: Record<'h' | 'w', Record<DimensionType, string>> = {
   w: { full: 'w-full', auto: 'w-auto', sm: 'w-1/4', md: 'w-1/2', lg: 'w-3/4' },
   h: { full: 'h-full', auto: 'h-auto', sm: 'h-1/4', md: 'h-1/2', lg: 'h-3/4' },
 };
 
-export const CONTENT_POSITION_MAP: Record<HeroBannerContentPosition, string> = {
-  'top-left': 'justify-start items-start text-left',
-  'top-center': 'justify-start items-center text-center',
-  'top-right': 'justify-start items-end text-right',
-  'middle-left': 'justify-center items-start text-left',
-  'middle-center': 'justify-center items-center text-center',
-  'middle-right': 'justify-center items-end text-right',
-  'bottom-left': 'justify-end items-start text-left',
-  'bottom-center': 'justify-end items-center text-center',
-  'bottom-right': 'justify-end items-end text-right',
+export const HERO_POSITION_CLASSES: Record<
+  'mobile' | 'tablet' | 'desktop',
+  Record<HeroBannerContentPosition, string>
+> = {
+  mobile: {
+    'top-left': 'justify-start items-start text-left',
+    'top-center': 'justify-start items-center text-center',
+    'top-right': 'justify-start items-end text-right',
+    'middle-left': 'justify-center items-start text-left',
+    'middle-center': 'justify-center items-center text-center',
+    'middle-right': 'justify-center items-end text-right',
+    'bottom-left': 'justify-end items-start text-left',
+    'bottom-center': 'justify-end items-center text-center',
+    'bottom-right': 'justify-end items-end text-right',
+  },
+  tablet: {
+    'top-left': 'md:justify-start md:items-start md:text-left',
+    'top-center': 'md:justify-start md:items-center md:text-center',
+    'top-right': 'md:justify-start md:items-end md:text-right',
+    'middle-left': 'md:justify-center md:items-start md:text-left',
+    'middle-center': 'md:justify-center md:items-center md:text-center',
+    'middle-right': 'md:justify-center md:items-end md:text-right',
+    'bottom-left': 'md:justify-end md:items-start md:text-left',
+    'bottom-center': 'md:justify-end md:items-center md:text-center',
+    'bottom-right': 'md:justify-end md:items-end md:text-right',
+  },
+  desktop: {
+    'top-left': 'lg:justify-start lg:items-start lg:text-left',
+    'top-center': 'lg:justify-start lg:items-center lg:text-center',
+    'top-right': 'lg:justify-start lg:items-end lg:text-right',
+    'middle-left': 'lg:justify-center lg:items-start lg:text-left',
+    'middle-center': 'lg:justify-center lg:items-center lg:text-center',
+    'middle-right': 'lg:justify-center lg:items-end lg:text-right',
+    'bottom-left': 'lg:justify-end lg:items-start lg:text-left',
+    'bottom-center': 'lg:justify-end lg:items-center lg:text-center',
+    'bottom-right': 'lg:justify-end lg:items-end lg:text-right',
+  },
 };
 
 const SURFACE_THEME_MAP: Record<SurfaceTheme, string> = {
@@ -136,7 +192,7 @@ function getAlignYClass(alignY?: VerticalAlignType): string {
   }
 }
 
-export function getTextStyle(style: TextStyle): CSSProperties {
+export function getTextStyle(style: TextConfig): CSSProperties {
   const fontWeight = {
     'semi-bold': 600,
     bold: 700,
@@ -151,8 +207,8 @@ export function getTextStyle(style: TextStyle): CSSProperties {
   }
 
   return {
-    color: style.txtColor,
-    textAlign: style.textAlign,
+    color: style.textColor,
+    ...(style.textAlign ? { textAlign: style.textAlign } : {}),
     textDecoration,
     fontStyle: style.fontStyle,
     fontWeight:
@@ -170,18 +226,22 @@ export function getBaseLayoutClassesAndStyle(
   let style: CSSProperties = {};
   const classes: (string | undefined)[] = [];
 
+  const widthConfig = 'w' in config ? config.w : undefined;
+  const heightConfig = 'h' in config ? config.h : undefined;
   const paddingConfig = 'padding' in config ? config.padding : undefined;
   const surfaceThemeConfig =
     'surfaceTheme' in config ? config.surfaceTheme : undefined;
+  const alignXConfig = 'alignSelfX' in config ? config.alignSelfX : undefined;
+  const alignYConfig = 'alignSelfY' in config ? config.alignSelfY : undefined;
 
   const objects = [
     // Dimensions
-    getDimensionClass('w', config.w),
-    getDimensionClass('h', config.h),
+    widthConfig && getDimensionClass('w', widthConfig),
+    heightConfig && getDimensionClass('h', heightConfig),
 
     // Alignments
-    getAlignXClass(config.alignSelfX),
-    getAlignYClass(config.alignSelfY),
+    alignXConfig && getAlignXClass(alignXConfig),
+    alignYConfig && getAlignYClass(alignYConfig),
 
     // Paddings
     paddingConfig && getPaddingClass('t', paddingConfig.top),

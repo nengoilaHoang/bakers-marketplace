@@ -5,10 +5,11 @@ export const HexColorSchema = z
   .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
 export const ColorSchema = z.union([z.string(), HexColorSchema]);
 const TextAlignmentTypeSchema = z.enum(['left', 'center', 'right', 'justify']);
-export const TextStyle = z.object({
+export const TextConfigSchema = z.object({
   textAlign: TextAlignmentTypeSchema.default('left'),
   decoration: z.enum(['strikethrough', 'underline']),
-  txtColor: ColorSchema,
+
+  textColor: ColorSchema,
   fontWeight: z
     .union([
       z.enum(['bold', 'semi-bold', 'extra-bold']),
@@ -97,14 +98,62 @@ export const BentoCellConfig = z.object({
   rowSpan: z.uint32().min(1).max(50),
 });
 
-export const SlotPlacementConfigSchema = z.object({
-  h: DimensionTypeSchema,
-  w: DimensionTypeSchema,
+/**
+ * A helper that takes a Zod schema and outputs a 3-breakpoint Zod schema to support responsive layout.
+ * @param valueSchema The Zod schema to make responsive.
+ * @returns A Zod schema that supports responsive values for desktop, tablet, and mobile breakpoints.
+ */
+export const ResponsiveProp = <T extends z.ZodType>(valueSchema: T) =>
+  z.union([
+    valueSchema.transform((val) => ({
+      desktop: val,
+      tablet: val,
+      mobile: val,
+    })),
+    z
+      .object({
+        desktop: valueSchema,
+        tablet: valueSchema.optional(),
+        mobile: valueSchema.optional(),
+      })
+      .transform((val) => {
+        const responsiveValue = val as {
+          desktop: z.output<T>;
+          tablet?: z.output<T>;
+          mobile?: z.output<T>;
+        };
+
+        return {
+          desktop: responsiveValue.desktop,
+          tablet: responsiveValue.tablet ?? responsiveValue.desktop,
+          mobile:
+            responsiveValue.mobile ??
+            responsiveValue.tablet ??
+            responsiveValue.desktop,
+        };
+      }),
+  ]);
+
+/**
+ * Base placement config for all components
+ */
+export const BasePlacementConfigSchema = z.object({
+  w: DimensionTypeSchema.default('full'),
   alignSelfX: HorizontalAlignTypeSchema.default('left'),
   alignSelfY: VerticalAlignTypeSchema.default('top'),
   ...BentoCellConfig.partial().shape,
 });
 
+/**
+ * A placement config for components with height control (e.g., grids, dividers)
+ */
+export const SlotPlacementConfigSchema = BasePlacementConfigSchema.extend({
+  h: DimensionTypeSchema.default('auto'),
+});
+
+/**
+ * A box style config for components with padding and surface theme control (e.g., grids, dividers)
+ */
 export const BoxStyleConfigSchema = z.object({
   padding: z
     .object({
@@ -121,6 +170,15 @@ export const BoxStyleConfigSchema = z.object({
     }),
   surfaceTheme: SurfaceThemeSchema.default('default'),
 });
+
+// /**
+//  * Media placement configuration: replaces `h` with `aspect` + responsive support
+//  */
+// export const MediaPlacementConfigSchema = BasePlacementConfigSchema.extend({
+//   aspect: ResponsiveProp(AspectRatioValueSchema.default('16:9')),
+//   fit: MediaFitSchema,
+//   focalPoint: MediaFocalPointSchema.optional(),
+// });
 
 export const BaseLayoutComponentConfigSchema = SlotPlacementConfigSchema;
 

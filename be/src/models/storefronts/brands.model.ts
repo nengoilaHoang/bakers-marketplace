@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { ImageSchema } from '../files/images.model.js';
 import { VendorSchema } from '../users/vendors.model.js';
-import { ImageSchema } from '../images.model.js';
 
 export const BrandTableSchema = z.object({
 	id: z.uuidv4().readonly(),

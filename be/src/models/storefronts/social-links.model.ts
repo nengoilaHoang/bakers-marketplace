@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ImageSchema } from '../images.model.js';
+import { ImageSchema } from '../files/images.model.js';
 
 export const SocialLinkTableSchema = z.object({
 	id: z.uuidv4().readonly(),

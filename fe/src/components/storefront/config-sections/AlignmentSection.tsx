@@ -2,6 +2,7 @@ import { BaseLayoutComponentConfig } from '@/types/layout-component';
 import { useMemo } from 'react';
 import { SectionId } from '../ConfigSidebar';
 import ConfigInput from './ConfigInput';
+import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type AlignmentSectionProps = {
@@ -46,13 +47,15 @@ const AlignmentSection = ({
   const configs = useMemo(
     () => [
       {
-        key: 'alignSelfX',
+        id: 'alignment-horizontal',
+        name: 'alignSelfX',
         label: 'Horizontal',
         options: HORIZONTAL_OPTIONS,
         value: alignment.horizontal ?? 'left',
       },
       {
-        key: 'alignSelfY',
+        id: 'alignment-vertical',
+        name: 'alignSelfY',
         label: 'Vertical',
         options: VERTICAL_OPTIONS,
         value: alignment.vertical ?? 'top',
@@ -70,20 +73,26 @@ const AlignmentSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      <div className='grid grid-cols-2 gap-2'>
-        {configs.map(({ key, label, options, value }) => (
-          <ConfigInput
-            key={key}
-            id={`alignment-${key}`}
-            name={key}
-            label={label}
-            inputType='select'
-            selectOptions={options}
-            currentValue={value}
-            onValueChange={(val) => onUpdate(key, val)}
-            onOpenStateChange={onActiveSectionChange}
-          />
-        ))}
+      <div className='grid grid-cols-2 w-full gap-2'>
+        {configs.map(({ name, id, label, options, value }) => {
+          return (
+            <div
+              key={name}
+              className='flex flex-col gap-2 justify-start items-start'
+            >
+              <ConfigLabel label={label} forId={id}></ConfigLabel>
+              <ConfigInput
+                id={id}
+                name={name}
+                inputType='select'
+                selectOptions={options}
+                currentValue={value}
+                onValueChange={(val) => onUpdate(name, val)}
+                onOpenStateChange={onActiveSectionChange}
+              />
+            </div>
+          );
+        })}
       </div>
     </ConfigSectionWrapper>
   );

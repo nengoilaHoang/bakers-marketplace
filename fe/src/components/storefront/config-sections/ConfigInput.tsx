@@ -1,32 +1,30 @@
 import { useDropdown } from '@/hooks/useDropdown';
 import ColorPicker from './ColorPicker';
 import RadioButton from './RadioButton';
-import TypeableSelect from './TypeableSelect';
+import TypeableSelect from './inputs/TypeableSelect';
 
 type ConfigInputProps<T extends string | number | boolean> = {
   id: string;
   name: string;
-  label?: string;
   inputType: 'text' | 'checkbox' | 'select' | 'color' | 'radio';
+  presets?: ReadonlyArray<T>;
   currentValue: T;
   value?: T;
   selectOptions?: Readonly<Record<string, T>>;
   onValueChange: (value: T) => void;
   onOpenStateChange?: (isOpen: boolean) => void;
-  arrangement?: 'horizontal' | 'vertical';
 };
 
 const ConfigInput = <T extends string | number | boolean>({
   id,
   name,
-  label,
   inputType,
+  presets,
   value,
   currentValue,
   selectOptions,
   onValueChange,
   onOpenStateChange,
-  arrangement = 'vertical',
 }: ConfigInputProps<T>) => {
   const { ref, isOpen, toggle } = useDropdown();
 
@@ -38,23 +36,11 @@ const ConfigInput = <T extends string | number | boolean>({
   return (
     <div
       ref={ref}
-      className={`relative min-w-0 flex ${
-        arrangement === 'horizontal'
-          ? 'flex-row justify-between items-center gap-2 space-x-2'
-          : 'flex-col items-start space-y-2'
-      }`}
+      className='relative min-w-0 w-full'
       style={{
         zIndex: isOpen ? 100 : 'auto',
       }}
     >
-      {label && (
-        <label
-          className='shrink-0 min-w-0 text-[11px] font-medium text-ink capitalize'
-          htmlFor={id}
-        >
-          {label}
-        </label>
-      )}
       {(() => {
         switch (inputType) {
           case 'checkbox': {
@@ -103,6 +89,7 @@ const ConfigInput = <T extends string | number | boolean>({
               <ColorPicker
                 id={id}
                 name={name}
+                presets={presets as ReadonlyArray<string> | undefined}
                 currentValue={currentValue}
                 onValueChange={(value) => onValueChange(value as T)}
                 isOpen={isOpen}

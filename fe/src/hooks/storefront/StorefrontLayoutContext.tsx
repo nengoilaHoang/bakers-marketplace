@@ -8,6 +8,7 @@ export interface StorefrontLayoutContextValue {
     targetComponentId: string,
     pathname: string,
     value: unknown,
+    bp?: string,
   ) => void;
   moveComponent: (
     breakpoint: DeviceBreakpoint,
