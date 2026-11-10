@@ -1,7 +1,7 @@
 import { DeviceBreakpointWithFluid } from '@/types/canvas';
 import { createContext } from 'react';
 
-type StorefrontCanvasContextType = {
+export type StorefrontCanvasContextValue = {
   zoom: number;
   setZoom: (zoom: number) => void;
   breakpoint: DeviceBreakpointWithFluid;
@@ -17,6 +17,6 @@ type StorefrontCanvasContextType = {
 };
 
 const StorefrontCanvasContext =
-  createContext<StorefrontCanvasContextType | null>(null);
+  createContext<StorefrontCanvasContextValue | null>(null);
 
 export default StorefrontCanvasContext;

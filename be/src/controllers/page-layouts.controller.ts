@@ -11,7 +11,6 @@ export class PageLayoutController {
   public getReleaseLayouts = asyncHandler(
     async (req: Request<{ releaseId: string }>, res: Response) => {
       const { releaseId: id } = req.params;
-      console.log('HERR');
       const layouts = await this.pageLayoutService.getReleaseLayouts(id);
 
       return res.status(200).json({ data: layouts });

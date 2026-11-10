@@ -1,7 +1,9 @@
 import { useContext } from 'react';
-import StorefrontLayoutContext from './StorefrontLayoutContext';
+import StorefrontLayoutContext, {
+	StorefrontLayoutContextValue,
+} from './StorefrontLayoutContext';
 
-const useStorefrontLayoutContext = () => {
+const useStorefrontLayoutContext = (): StorefrontLayoutContextValue => {
   const context = useContext(StorefrontLayoutContext);
   if (!context) {
     throw new Error(

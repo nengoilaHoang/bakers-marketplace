@@ -23,12 +23,14 @@ const normalizeComponent = (value: unknown): value is LayoutComponent => {
         Array.isArray(component.children) &&
         component.children.every(
           (child) =>
-						typeof child === 'object' &&
-						child !== null &&
-						normalizeComponent(child),
+            typeof child === 'object' &&
+            child !== null &&
+            normalizeComponent(child),
         )
       ) {
-        component.children = component.children.map((child) => child as LayoutComponent);
+        component.children = component.children.map(
+          (child) => child as LayoutComponent,
+        );
       } else return false;
       break;
     }
@@ -46,8 +48,8 @@ const normalizeComponent = (value: unknown): value is LayoutComponent => {
   return true;
 };
 
-export async function getMyStorefronts(abortSignal?: AbortSignal) {
-  const { data: storefronts } = await request<{ data: Storefront[] }>(
+export async function getMyStorefront(abortSignal?: AbortSignal) {
+  const { data: storefronts } = await request<{ data: Storefront | null }>(
     '/storefronts/mine',
     {
       signal: abortSignal,
@@ -70,12 +72,11 @@ export async function getStorefrontActiveRelease(
 }
 
 export async function getStorefrontRelease(
-  storeId: string,
   releaseId: string,
   abortSignal?: AbortSignal,
 ): Promise<StorefrontRelease> {
   const { data: release } = await request<{ data: StorefrontRelease }>(
-    `/storefronts/${storeId}/releases/${releaseId}`,
+    `/storefronts/releases/${releaseId}`,
     { signal: abortSignal },
   );
 
@@ -84,7 +85,6 @@ export async function getStorefrontRelease(
 }
 
 export async function getStorefrontReleaseLayouts(
-  storeId: string,
   releaseId: string,
   abortSignal?: AbortSignal,
 ) {

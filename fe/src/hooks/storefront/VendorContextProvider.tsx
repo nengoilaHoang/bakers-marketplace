@@ -1,18 +1,18 @@
+import { ApiError } from '@/lib/api';
 import {
-  getMyStorefronts,
+  getMyStorefront,
   getStorefrontReleaseLayouts,
 } from '@/services/storefront';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import useAuth from '../user/useAuthContext';
-import VendorContext from './VendorContext';
+import VendorContext, { VendorContextValue } from './VendorContext';
 
 const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { account, isAuthenticating } = useAuth();
-  const [storefronts, setStorefronts] = useState<Storefront[]>([]);
-  const [currentStorefrontId, setCurrentStorefrontId] = useState<string>('');
+  const [storefront, setStorefront] = useState<Storefront | null>(null);
   const [currentReleaseId, setCurrentReleaseId] = useState('');
   const [currentRelease, setCurrentRelease] =
     useState<StorefrontRelease | null>(null);
@@ -43,31 +43,36 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
 
     const fetchMyStorefronts = async () => {
       try {
-        const fetchedStorefronts = await getMyStorefronts(controller.signal);
+        const fetchedStorefront = await getMyStorefront(controller.signal);
         if (controller.signal.aborted) return;
-        setStorefronts(fetchedStorefronts);
+        setStorefront(fetchedStorefront);
 
-        if (fetchedStorefronts.length > 0) {
-          setCurrentStorefrontId((prevId) => {
-            if (prevId && fetchedStorefronts.some((s) => s.id === prevId)) {
-              return prevId;
-            }
-            return fetchedStorefronts[0].id;
-          });
-
+        if (fetchedStorefront !== null) {
           setCurrentReleaseId((prevReleaseId) => {
             if (prevReleaseId) return prevReleaseId;
             const defaultRelease =
-              fetchedStorefronts[0].releases.find((r) => r.isActive) ||
-              fetchedStorefronts[0].releases[0];
+              fetchedStorefront.releases.find((r) => r.isActive) ||
+              fetchedStorefront.releases[0];
             return defaultRelease ? defaultRelease.id : '';
           });
         }
       } catch (err: unknown) {
         const isAbortError =
           err instanceof DOMException && err.name === 'AbortError';
-        if (isAbortError || controller.signal.aborted) return;
-        setStorefronts([]);
+        if (isAbortError || controller.signal.aborted) {
+          // Do nothing
+        }
+        if (err instanceof ApiError) {
+          console.error(
+            'Error loading storefront:',
+            err.message,
+            'Status code:',
+            err.status,
+          );
+        } else if (err instanceof Error) {
+          console.error('Error loading storefront:', err.message);
+        }
+        setStorefront(null);
       }
     };
 
@@ -81,31 +86,17 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [router.isReady, router.pathname, account]);
 
-  const activeStorefront = useMemo(
-    function () {
-      if (!currentStorefrontId || storefronts.length === 0) return null;
-      return (
-        storefronts.find(function (s) {
-          return s.id === currentStorefrontId;
-        }) || null
-      );
-    },
-    [currentStorefrontId, storefronts],
-  );
-
   // Load and cache release layouts
   useEffect(() => {
-    if (!activeStorefront || !currentReleaseId) {
+    if (!storefront || !currentReleaseId) {
       return;
     }
 
-    const release = activeStorefront.releases.find(
-      (r) => r.id === currentReleaseId,
-    );
+    const release = storefront.releases.find((r) => r.id === currentReleaseId);
     if (!release) {
       queueMicrotask(() => setCurrentRelease(null));
       throw new Error(
-        `Release with ID ${currentReleaseId} not found in storefront ${activeStorefront.id}`,
+        `Release with ID ${currentReleaseId} does not exist within your storefront.`,
       );
     }
 
@@ -118,25 +109,19 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
 
     // CACHE MISS: fetch once and store into storefronts state
     const controller = new AbortController();
-    getStorefrontReleaseLayouts(
-      currentStorefrontId,
-      currentReleaseId,
-      controller.signal,
-    )
+    getStorefrontReleaseLayouts(currentReleaseId, controller.signal)
       .then((layouts) => {
         const releaseWithLayouts = { ...release, layouts };
         setCurrentRelease(releaseWithLayouts);
 
-        setStorefronts(function (prev) {
-          return prev.map((s) => {
-            if (s.id !== currentStorefrontId) return s;
-            return {
-              ...s,
-              releases: s.releases.map((r) => {
-                return r.id === currentReleaseId ? { ...r, layouts } : r;
-              }),
-            };
-          });
+        setStorefront((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            releases: prev.releases.map((r) => {
+              return r.id === currentReleaseId ? { ...r, layouts } : r;
+            }),
+          };
         });
       })
       .catch((err) => {
@@ -146,17 +131,15 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       controller.abort();
     };
-  }, [activeStorefront, currentReleaseId, currentStorefrontId]);
+  }, [currentReleaseId, storefront]);
 
-  const contextValue = useMemo(
+  const contextValue: VendorContextValue = useMemo(
     () => ({
-      storefronts,
-      currentStorefront: activeStorefront,
-      setCurrentStorefrontId,
+      storefront,
       currentRelease,
       setCurrentReleaseId,
     }),
-    [storefronts, activeStorefront, currentRelease],
+    [storefront, currentRelease],
   );
 
   return (

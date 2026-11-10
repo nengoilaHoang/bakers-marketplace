@@ -1,7 +1,7 @@
 import { useContext } from 'react';
-import VendorContext from './VendorContext';
+import VendorContext, { VendorContextValue } from './VendorContext';
 
-const useVendorContext = () => {
+const useVendorContext = (): VendorContextValue => {
   const context = useContext(VendorContext);
   if (!context) {
     throw new Error(

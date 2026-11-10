@@ -1,7 +1,9 @@
 import { useContext } from 'react';
-import StorefrontCanvasContext from './StorefrontCanvasContext';
+import StorefrontCanvasContext, {
+	StorefrontCanvasContextValue,
+} from './StorefrontCanvasContext';
 
-const useStorefrontCanvasContext = () => {
+const useStorefrontCanvasContext = (): StorefrontCanvasContextValue => {
   const context = useContext(StorefrontCanvasContext);
   if (!context) {
     throw new Error(

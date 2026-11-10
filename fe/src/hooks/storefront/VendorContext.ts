@@ -1,13 +1,11 @@
 import { Storefront, StorefrontRelease } from '@/types/storefront';
 import { createContext } from 'react';
 
-export type VendorContextValueType = {
-  storefronts: Storefront[];
-  currentStorefront: Storefront | null;
-  setCurrentStorefrontId: (storefrontId: string) => void;
+export type VendorContextValue = {
+  storefront: Storefront | null;
   currentRelease: StorefrontRelease | null;
   setCurrentReleaseId: (releaseId: string) => void;
 };
 
-const VendorContext = createContext<VendorContextValueType | null>(null);
+const VendorContext = createContext<VendorContextValue | null>(null);
 export default VendorContext;
