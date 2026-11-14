@@ -1,9 +1,16 @@
 import { DeviceBreakpoint } from '@/types/canvas';
+import { NewFlattenComponent } from '@/utils/flattenLayout';
 import { createContext } from 'react';
 import { LayoutState } from './useLayoutReducer';
 
 export interface StorefrontLayoutContextValue {
   state: LayoutState;
+  addNewComponent: (
+    targetParentId: string,
+    newComponent: NewFlattenComponent,
+    breakpoint: DeviceBreakpoint,
+    slot: number,
+  ) => void;
   updateConfig: (
     targetComponentId: string,
     pathname: string,

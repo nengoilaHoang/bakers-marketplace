@@ -3,6 +3,7 @@ import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasCo
 import { FlattenComponent } from '@/utils/flattenLayout';
 import { useMemo, useState } from 'react';
 import BaseLayoutSections from './config-sections/BaseLayoutSections';
+import { GridSectionId } from './inspectors/GridInspector';
 import { HeroBannerSectionId } from './inspectors/HeroBannerInspector';
 import { COMPONENT_INSPECTORS } from './inspectors/registry';
 
@@ -12,21 +13,22 @@ export type SectionId =
   | 'padding'
   | 'theme'
   | 'bento'
-  | HeroBannerSectionId;
+  | HeroBannerSectionId
+  | GridSectionId;
 
-type ConfigSidebarProps = {
+type ComponentInspectorProps = {
   isOpen: boolean;
   toggleConfig: () => void;
   component: FlattenComponent;
   onUpdate: (pathname: string, value: unknown) => void;
 };
 
-const ConfigSidebar = ({
+const ComponentInspector = ({
   isOpen,
   toggleConfig,
   component,
   onUpdate,
-}: ConfigSidebarProps) => {
+}: ComponentInspectorProps) => {
   const { breakpoint } = useStorefrontCanvasContext();
 
   const isBentoItem =
@@ -34,13 +36,17 @@ const ConfigSidebar = ({
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     dimensions: true,
-    alignment: false,
-    padding: false,
-    'surface-theme': false,
-    ...(isBentoItem && { bento: false }),
+    alignment: true,
+    padding: true,
+    'surface-theme': true,
+    ...(isBentoItem && { bento: true }),
     ...(component.componentType === 'HERO_BANNER' && {
-      'hero-overlay': false,
-      'hero-content': false,
+      'hero-overlay': true,
+      'hero-content': true,
+    }),
+    ...(component.componentType === 'GRID' && {
+      'grid-layout': true,
+      'grid-tracks': true,
     }),
   });
 
@@ -93,6 +99,7 @@ const ConfigSidebar = ({
       >
         <svg
           xmlns='http://www.w3.org/2000/svg'
+          aria-hidden='true'
           width='16'
           height='16'
           fill='currentColor'
@@ -134,10 +141,11 @@ const ConfigSidebar = ({
           onUpdate={onUpdate}
           onActiveSectionChange={setActiveSectionId}
           getSectionZIndex={getSectionZIndex}
+          currentBp={breakpoint === 'fluid' ? 'desktop' : breakpoint}
         />
       </div>
     </aside>
   );
 };
 
-export default ConfigSidebar;
+export default ComponentInspector;

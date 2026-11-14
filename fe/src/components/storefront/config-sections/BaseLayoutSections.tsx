@@ -1,6 +1,7 @@
 // components/storefront/config-sections/BaseLayoutSections.tsx
+import { DeviceBreakpoint } from '@/types/canvas';
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
-import { SectionId } from '../ConfigSidebar';
+import { SectionId } from '../ComponentInspector';
 import AlignmentSection from './AlignmentSection';
 import BentoSection from './BentoSection';
 import DimensionSection from './DimensionSection';
@@ -11,9 +12,10 @@ type BaseLayoutSectionsProps = {
   config: BaseLayoutComponentConfig<unknown>;
   openSections: Record<string, boolean | undefined>;
   toggleSection: (id: SectionId) => void;
-  onUpdate: (pathname: string, value: unknown) => void;
+  onUpdate: (pathname: string, value: unknown, bp?: string) => void;
   onActiveSectionChange: (id: SectionId | null) => void;
   getSectionZIndex: (id: SectionId) => number;
+  currentBp: DeviceBreakpoint;
 };
 
 const BaseLayoutSections = ({
@@ -23,18 +25,21 @@ const BaseLayoutSections = ({
   onUpdate,
   onActiveSectionChange,
   getSectionZIndex,
+  currentBp,
 }: BaseLayoutSectionsProps) => {
   const hasPadding = 'padding' in config && config.padding !== undefined;
   const hasSurfaceTheme =
     'surfaceTheme' in config && config.surfaceTheme !== undefined;
-  const hasBentoConfig = Boolean(config.colSpan && config.rowSpan);
+  const colSpan = config.colSpan?.[currentBp];
+  const rowSpan = config.rowSpan?.[currentBp];
+  const hasBentoConfig = colSpan !== undefined && rowSpan !== undefined;
 
   return (
     <>
       <DimensionSection
         isOpen={Boolean(openSections.dimensions)}
-        toggleSection={toggleSection}
-        dimensions={{ w: config.w, h: config.h }}
+        toggleSection={() => toggleSection('dimensions')}
+        dimensions={{ w: config.w, h: 'h' in config ? config.h : undefined }}
         onUpdate={onUpdate}
         onActiveSectionChange={(active) =>
           onActiveSectionChange(active ? 'dimensions' : null)
@@ -45,7 +50,7 @@ const BaseLayoutSections = ({
 
       <AlignmentSection
         isOpen={Boolean(openSections.alignment)}
-        toggleSection={toggleSection}
+        toggleSection={() => toggleSection('alignment')}
         alignment={{
           horizontal: config.alignSelfX,
           vertical: config.alignSelfY,
@@ -60,7 +65,7 @@ const BaseLayoutSections = ({
       {hasPadding && (
         <PaddingSection
           isOpen={Boolean(openSections.padding)}
-          toggleSection={toggleSection}
+          toggleSection={() => toggleSection('padding')}
           paddings={config.padding!}
           onUpdate={onUpdate}
           onActiveSectionChange={(active) =>
@@ -72,26 +77,26 @@ const BaseLayoutSections = ({
 
       {hasSurfaceTheme && (
         <ThemeSection
-          isOpen={Boolean(openSections['surface-theme'])}
-          toggleSection={toggleSection}
+          isOpen={Boolean(openSections['theme'])}
+          toggleSection={() => toggleSection('theme')}
           surfaceTheme={config.surfaceTheme!}
           onUpdate={onUpdate}
           onActiveSectionChange={(active) =>
-            onActiveSectionChange(active ? 'surface-theme' : null)
+            onActiveSectionChange(active ? 'theme' : null)
           }
-          zIndex={getSectionZIndex('surface-theme')}
+          zIndex={getSectionZIndex('theme')}
         />
       )}
 
       {hasBentoConfig && (
         <BentoSection
           isOpen={Boolean(openSections.bento)}
-          toggleSection={toggleSection}
+          toggleSection={() => toggleSection('bento')}
           span={{
-            col: config.colSpan!,
-            row: config.rowSpan!,
+            col: colSpan,
+            row: rowSpan,
           }}
-          onUpdate={onUpdate}
+          onUpdate={(pathname, value) => onUpdate(pathname, value, currentBp)}
           onActiveSectionChange={(active) =>
             onActiveSectionChange(active ? 'bento' : null)
           }

@@ -52,7 +52,7 @@ export class StorefrontDao {
     const releases = await getReleasesQueryBuilder(this.knex, {
       withThemeSettings: true,
       withLayouts: !simple,
-    }).whereIn('sr.storefrontId', storefront.id);
+    }).where('sr.storefrontId', storefront.id);
 
     const formattedReleases = z.array(StorefrontReleaseSchema).parse(releases);
 

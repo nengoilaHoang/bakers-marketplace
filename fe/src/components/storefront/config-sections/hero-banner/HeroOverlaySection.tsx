@@ -1,12 +1,12 @@
 import { HeroBannerOverlay } from '@/types/layout-component/commerce-component';
-import { SectionId } from '../../ConfigSidebar';
+import { SectionId } from '../../ComponentInspector';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
 
 type HeroOverlaySectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   overlay: HeroBannerOverlay;
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;

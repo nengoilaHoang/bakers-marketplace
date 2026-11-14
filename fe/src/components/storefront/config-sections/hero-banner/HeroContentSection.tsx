@@ -4,7 +4,7 @@ import {
   HeroBannerContent,
   HeroBannerContentPosition,
 } from '@/types/layout-component/commerce-component';
-import { SectionId } from '../../ConfigSidebar';
+import { SectionId } from '../../ComponentInspector';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
@@ -179,7 +179,7 @@ const TextConfigGroup = ({
 
 type HeroContentSectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   content: HeroBannerContent;
   onUpdate: (pathname: string, value: unknown, bp?: string) => void;
   onActiveSectionChange: (isActive: boolean) => void;

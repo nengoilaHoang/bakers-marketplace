@@ -1,17 +1,30 @@
 import { WithBase } from '@/utils/tsHelper';
 import {
 	CommerceComponent,
+	CreateCommerceComponent,
 	UpdateCommerceComponent,
 } from './commerce-component/commerce-component';
 import {
 	CompositeComponent,
+	CreateCompositeComponent,
 	UpdateCompositeComponent,
 } from './composite-component';
-import { LeafComponent, UpdateLeafComponent } from './leaf-component';
 import {
+	CreateLeafComponent,
+	LeafComponent,
+	UpdateLeafComponent,
+} from './leaf-component';
+import {
+	CreateRepeaterComponent,
 	RepeaterComponent,
 	UpdateRepeaterComponent,
 } from './repeater-component';
+
+export type ResponsiveProp<T> = {
+  desktop: T;
+  mobile: T | undefined;
+  tablet: T | undefined;
+};
 
 export type TextAlignmentType = 'center' | 'justify' | 'left' | 'right';
 export type DimensionType = number | 'auto' | 'full' | 'lg' | 'md' | 'sm';
@@ -26,15 +39,15 @@ export type SurfaceTheme =
   | 'accent';
 export type TextConfig = {
   textAlign: TextAlignmentType;
-  decoration: 'strikethrough' | 'underline';
+  decoration: 'strikethrough' | 'underline' | 'none';
   textColor: string;
   fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
   fontStyle: 'italic' | 'normal' | 'oblique';
 };
 
 export type BentoItemConfig = {
-  colSpan: number;
-  rowSpan: number;
+  colSpan: ResponsiveProp<number>;
+  rowSpan: ResponsiveProp<number>;
 };
 
 export type BasePlacementConfig = {
@@ -106,8 +119,9 @@ export type UpdateLayoutComponent =
   | UpdateLeafComponent
   | UpdateRepeaterComponent
   | UpdateCommerceComponent;
-export type ResponsiveProp<T> = {
-  desktop: T;
-  mobile: T | undefined;
-  tablet: T | undefined;
-};
+
+export type CreateLayoutComponent =
+  | CreateCompositeComponent
+  | CreateLeafComponent
+  | CreateRepeaterComponent
+  | CreateCommerceComponent;

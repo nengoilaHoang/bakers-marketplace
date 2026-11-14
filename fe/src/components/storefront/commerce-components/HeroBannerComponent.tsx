@@ -1,4 +1,3 @@
-import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { cn } from '@/lib/cn';
 import { ResponsiveProp } from '@/types/layout-component';
@@ -19,6 +18,8 @@ import {
 } from '@/utils/layoutClasses';
 import Image from 'next/image';
 import { CSSProperties, useMemo } from 'react';
+import { CanvasNodeWrapper } from '../canvas/CanvasNodeWrapper';
+import { NodeRendererMode } from '../NodeRenderer';
 
 const getAspectRatio = (aspect: AspectRatioValue): string => {
   let aspectRatio = '';
@@ -65,28 +66,17 @@ const getFocalPointStyle = (focalPoint: {
 
 type HeroBannerProps = {
   component: HeroBannerCommerceComponent;
-  sourceParentId: string;
-  sourceSlot: number;
+  sourceParentId?: string;
+  sourceSlot?: number;
+  mode: NodeRendererMode;
 };
 
 const HeroBannerComponent = ({
   component,
   sourceParentId,
   sourceSlot,
+  mode,
 }: HeroBannerProps) => {
-  const {
-    id,
-    tabIndex,
-    baseClasses,
-    baseStyle,
-    ref,
-    isDragging,
-    isSelected,
-    handleKeyDown,
-    handleMouseDown,
-    handleFocus,
-  } = useLayoutComponent({ component, sourceParentId, sourceSlot });
-
   const { breakpoint } = useStorefrontCanvasContext();
 
   const { config } = component;
@@ -154,40 +144,33 @@ const HeroBannerComponent = ({
     })();
 
     return {
-      ...baseStyle,
       ...focalPointStyle,
       ...aspectStyles,
     };
-  }, [aspect, baseStyle, focalPoint]);
+  }, [aspect, focalPoint]);
 
   const containerClassName = useMemo(() => {
     const fitClass = fit ? getFitClass(fit) : '';
     return cn(
-      baseClasses,
       'relative flex overflow-hidden',
       'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
       fitClass,
     );
-  }, [baseClasses, fit]);
+  }, [fit]);
+
+  const isEditor = {
+    'aria-label': 'Hero Banner',
+  };
 
   return (
-    <div
-      id={id}
-      tabIndex={tabIndex}
+    <CanvasNodeWrapper
+      mode={mode}
+      component={component}
+      sourceParentId={sourceParentId}
+      sourceSlot={sourceSlot}
       className={containerClassName}
       style={containerStyle}
-      ref={ref}
-      role='button'
-      data-layout-node='true'
-      data-source-parent-id={sourceParentId}
-      data-source-slot={sourceSlot}
-      aria-controls={sourceParentId}
-      aria-busy={isDragging}
-      aria-pressed={isSelected || isDragging}
-      aria-label='Hero Banner'
-      onKeyDown={handleKeyDown}
-      onMouseDown={handleMouseDown}
-      onFocus={handleFocus}
+      {...isEditor}
     >
       {/* Background Media */}
       {mediaType === 'image' && (
@@ -277,7 +260,7 @@ const HeroBannerComponent = ({
           )}
         </div>
       </div>
-    </div>
+    </CanvasNodeWrapper>
   );
 };
 

@@ -4,14 +4,14 @@ import {
   MediaFit,
   MediaFocalPoint,
 } from '@/types/layout-component/aspect-ratio';
-import { SectionId } from '../../ConfigSidebar';
+import { SectionId } from '../../ComponentInspector';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
 
 type HeroBannerImageSectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   banner: {
     desktopMediaUrl: string;
     mobileMediaUrl?: string | null | undefined;

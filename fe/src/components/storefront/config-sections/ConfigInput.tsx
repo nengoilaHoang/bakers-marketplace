@@ -1,6 +1,7 @@
 import { useDropdown } from '@/hooks/useDropdown';
 import ColorPicker from './inputs/ColorPicker';
 import FilePicker from './inputs/FilePicker';
+import NumberInput from './inputs/NumberInput';
 import RadioButton from './inputs/RadioButton';
 import TypeableSelect from './inputs/TypeableSelect';
 
@@ -50,10 +51,22 @@ type FileInputProps = {
   onValueChange: (value: string | null) => void;
 };
 
+type NumberInputProps = {
+  inputType: 'number';
+  min: number;
+  max?: number;
+  step: number;
+  currentValue: number;
+  onValueChange: (value: number) => void;
+};
+
 /**
  * @param {string} value This value is meant to set the value of a radio button only when `inputType` is of type **`'radio'`**.
  * @param selectOptions This value is meant to set the options of a select input only when `inputType` is of type **`'select'`**.
  * @param presets This value is meant to set the preset values of a color input only when `inputType` is of type **`'color'`**.
+ * @param min This value is meant to set the minimum value of a number input only when `inputType` is of type **`'number'`**.
+ * @param max This value is meant to set the maximum value of a number input only when `inputType` is of type **`'number'`**.
+ * @param step This value is meant to set the step value of a number input only when `inputType` is of type **`'number'`**.
  */
 export type ConfigInputProps = BaseConfigInputProps &
   (
@@ -63,6 +76,7 @@ export type ConfigInputProps = BaseConfigInputProps &
     | ColorInputProps
     | RadioInputProps
     | FileInputProps
+    | NumberInputProps
   );
 
 const ConfigInput = (props: ConfigInputProps) => {
@@ -78,6 +92,9 @@ const ConfigInput = (props: ConfigInputProps) => {
   const presets = 'presets' in props ? props.presets : undefined;
   const selectOptions =
     'selectOptions' in props ? props.selectOptions : undefined;
+  const min = 'min' in props ? props.min : undefined;
+  const max = 'max' in props ? props.max : undefined;
+  const step = 'step' in props ? props.step : undefined;
   const { ref, isOpen, toggle } = useDropdown();
 
   const handleOpenChange = (state: boolean) => {
@@ -233,6 +250,25 @@ const ConfigInput = (props: ConfigInputProps) => {
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               ></FilePicker>
+            );
+          }
+          case 'number': {
+            if (min === undefined || step === undefined) {
+              throw new TypeError(
+                'Min and step must be provided for number input',
+              );
+            }
+            return (
+              <NumberInput
+                id={id}
+                name={name}
+                min={min}
+                max={max}
+                step={step}
+                currentValue={currentValue}
+                onValueChange={(value) => onValueChange(value)}
+                onOpenChange={handleOpenChange}
+              />
             );
           }
           default:

@@ -1,12 +1,12 @@
 import { SurfaceTheme } from '@/types/layout-component';
-import { SectionId } from '../ConfigSidebar';
+import { SectionId } from '../ComponentInspector';
 import ConfigInput from './ConfigInput';
 import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type ThemeSectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   surfaceTheme: SurfaceTheme;
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
@@ -29,7 +29,7 @@ const ThemeSection = ({
   onActiveSectionChange,
   zIndex,
 }: ThemeSectionProps) => {
-  const id = 'theme';
+  const id: SectionId = 'theme';
   const title = 'Theme Surface';
   const description = 'Select a theme surface for the component.';
   const name = 'surfaceTheme';
@@ -43,7 +43,7 @@ const ThemeSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      <div className='flex flex-row justify-center items-start gap-2'>
+      <div className='flex flex-row justify-between items-center gap-2'>
         <ConfigLabel label='Surface Theme' forId='surface-theme' />
         <ConfigInput
           id='surface-theme'

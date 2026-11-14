@@ -1,5 +1,6 @@
 import Icon from '@/components/ui/Icon';
 import useDebouncedCallback from '@/hooks/useDebounceCallback';
+import { cn } from '@/lib/cn';
 import React, {
   useCallback,
   useEffect,
@@ -19,6 +20,7 @@ type TypeableSelectProps = {
   onOpenChange: (isOpen: boolean) => void;
   isTypeable?: boolean;
   showKeyValue?: boolean;
+  containerClassName?: string;
 };
 
 /**
@@ -43,6 +45,7 @@ const TypeableSelect = ({
   onOpenChange,
   isTypeable = true,
   showKeyValue = true,
+  containerClassName,
 }: TypeableSelectProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
@@ -97,10 +100,14 @@ const TypeableSelect = ({
     };
   }, [enumValues.length, showKeyValue]);
 
-  const [inputValue, setInputValue] = useState(options[currentValue]);
+  const [inputValue, setInputValue] = useState(
+    options[currentValue] ?? currentValue ?? '',
+  );
 
   useEffect(() => {
-    queueMicrotask(() => setInputValue(options[currentValue]));
+    queueMicrotask(() =>
+      setInputValue(options[currentValue] ?? currentValue ?? ''),
+    );
   }, [currentValue, options]);
 
   useLayoutEffect(() => {
@@ -197,7 +204,7 @@ const TypeableSelect = ({
   }
 
   return (
-    <div className='relative block w-full'>
+    <div className={cn('relative block w-full', containerClassName)}>
       <button
         ref={containerRef}
         tabIndex={-1}

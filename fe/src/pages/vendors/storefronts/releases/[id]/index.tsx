@@ -1,6 +1,5 @@
 import StorefrontEditLayout from '@/components/layout/StorefrontEditLayout';
 import VendorScope from '@/components/layout/VendorScope';
-import StorefrontEditor from '@/components/storefront/StorefrontEditor';
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { NextPageWithLayout } from '@/pages/_app';
 import { useRouter } from 'next/router';
@@ -15,9 +14,7 @@ const StorefrontReleasePage: NextPageWithLayout = () => {
 
   return (
     <div className='size-full flex flex-col flex-1 min-h-0'>
-      <div className='relative bg-zinc-50 size-full flex-1 min-h-0 flex flex-col'>
-        <StorefrontEditor release={currentRelease} />
-      </div>
+      <div className='relative bg-zinc-50 size-full flex-1 min-h-0 flex flex-col'></div>
     </div>
   );
 };

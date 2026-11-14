@@ -13,7 +13,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { account, isAuthenticating } = useAuth();
   const [storefront, setStorefront] = useState<Storefront | null>(null);
-  const [currentReleaseId, setCurrentReleaseId] = useState('');
+  const [currentReleaseId, setCurrentReleaseId] = useState<string | null>(null);
   const [currentRelease, setCurrentRelease] =
     useState<StorefrontRelease | null>(null);
 
@@ -27,35 +27,16 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isAuthenticating, isVendor, router]);
 
-  // Update currentReleaseId when the route changes
-  useEffect(() => {
-    if (!account || !router.isReady) return;
-    const { id } = router.query;
-    if (typeof id === 'string' && id !== currentReleaseId) {
-      queueMicrotask(() => setCurrentReleaseId(id));
-    }
-  }, [currentReleaseId, router.isReady, router.query, account]);
-
-  // Fetch all vendors' storefronts on first load
+  // Fetch vendor's storefront on first load
   useEffect(() => {
     if (!account || !router.isReady) return;
     const controller = new AbortController();
 
-    const fetchMyStorefronts = async () => {
+    const fetchMyStorefront = async () => {
       try {
         const fetchedStorefront = await getMyStorefront(controller.signal);
-        if (controller.signal.aborted) return;
+        console.log(fetchedStorefront);
         setStorefront(fetchedStorefront);
-
-        if (fetchedStorefront !== null) {
-          setCurrentReleaseId((prevReleaseId) => {
-            if (prevReleaseId) return prevReleaseId;
-            const defaultRelease =
-              fetchedStorefront.releases.find((r) => r.isActive) ||
-              fetchedStorefront.releases[0];
-            return defaultRelease ? defaultRelease.id : '';
-          });
-        }
       } catch (err: unknown) {
         const isAbortError =
           err instanceof DOMException && err.name === 'AbortError';
@@ -77,7 +58,7 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const requestTimer = window.setTimeout(() => {
-      void fetchMyStorefronts();
+      void fetchMyStorefront();
     }, 0);
 
     return () => {
@@ -94,7 +75,10 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
 
     const release = storefront.releases.find((r) => r.id === currentReleaseId);
     if (!release) {
-      queueMicrotask(() => setCurrentRelease(null));
+      queueMicrotask(() => {
+        setCurrentReleaseId(null);
+        setCurrentRelease(null);
+      });
       throw new Error(
         `Release with ID ${currentReleaseId} does not exist within your storefront.`,
       );
@@ -103,10 +87,11 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
     // CACHE HIT: layouts already present in state, exit early to prevent refetching
     const { layouts } = release;
     if (layouts.length !== 0) {
-      queueMicrotask(() => setCurrentRelease({ ...release, layouts }));
+      queueMicrotask(() => setCurrentRelease(release));
       return;
     }
 
+    queueMicrotask(() => setCurrentRelease(null));
     // CACHE MISS: fetch once and store into storefronts state
     const controller = new AbortController();
     getStorefrontReleaseLayouts(currentReleaseId, controller.signal)
@@ -136,10 +121,11 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
   const contextValue: VendorContextValue = useMemo(
     () => ({
       storefront,
+      setStorefront,
       currentRelease,
       setCurrentReleaseId,
     }),
-    [storefront, currentRelease],
+    [currentRelease, setCurrentReleaseId, storefront],
   );
 
   return (

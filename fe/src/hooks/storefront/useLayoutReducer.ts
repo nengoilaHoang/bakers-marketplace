@@ -3,6 +3,7 @@ import { PageLayoutType } from '@/types/page-layout';
 import {
 	FlattenComponent,
 	FlattenCompositeComponent,
+	NewFlattenComponent,
 } from '@/utils/flattenLayout';
 import { useReducer } from 'react';
 
@@ -30,8 +31,9 @@ type LayoutAction =
       type: 'NEW_COMPONENT';
       payload: {
         targetParentId: string;
-        newComponent: FlattenComponent;
+        newComponent: NewFlattenComponent;
         breakpoint: DeviceBreakpoint;
+        slot: number;
       };
     }
   | {
@@ -55,8 +57,14 @@ export type LayoutState = {
   type: PageLayoutType;
   rootId: string;
   components: Record<string, FlattenComponent>;
-  removedComponents: Set<string>;
-  // newComponents
+  newComponents: Set<string>; // Created in FE, not yet in DB
+  dirtyComponents: Set<string>; // Existing DB components modified in FE
+  removedComponents: Set<string>; // Existing DB components deleted in FE
+  // unplacedComponents: {
+  //   desktop: Set<string>;
+  //   tablet: Set<string>;
+  //   mobile: Set<string>;
+  // };
 };
 
 const layoutReducer = (
@@ -64,10 +72,96 @@ const layoutReducer = (
   action: LayoutAction,
 ): LayoutState => {
   switch (action.type) {
+    case 'NEW_COMPONENT': {
+      const { targetParentId, newComponent, breakpoint, slot } = action.payload;
+      const { components } = state;
+      const parent = components[targetParentId];
+      if (parent?.type !== 'COMPOSITE') return state;
+      if (parent.slots?.[breakpoint]?.[slot]) return state;
+
+      const nextComponents = { ...state.components };
+      const nextNewComponents = new Set(state.newComponents);
+
+      const isBentoParent =
+        parent.componentType === 'GRID' && parent.config.layout === 'BENTO';
+
+      const newComponentWithId = {
+        ...newComponent,
+        id: window.crypto.randomUUID(), // Generate new ID to replace preview ID
+        config: isBentoParent
+          ? {
+              ...newComponent.config,
+              w:
+                newComponent.config.w === 'auto'
+                  ? 'full'
+                  : newComponent.config.w,
+              colSpan: { desktop: 1, tablet: 1, mobile: 1 },
+              rowSpan: { desktop: 1, tablet: 1, mobile: 1 },
+            }
+          : newComponent.config,
+      } as FlattenComponent;
+
+      nextComponents[newComponentWithId.id] = newComponentWithId;
+      nextNewComponents.add(newComponentWithId.id);
+
+      const nextChildren = Array.from(
+        new Set([...(parent.children ?? []), newComponentWithId.id]),
+      );
+
+      const existingSlots = parent.slots ?? {
+        desktop: {},
+        mobile: {},
+        tablet: {},
+      };
+
+      // Get the next unoccupied slot if not empty, recursively
+      const getUnoccupiedSlot = (
+        bp: DeviceBreakpoint,
+        targetSlot: number,
+      ): number => {
+        const occupied = Boolean(existingSlots[bp]?.[targetSlot]);
+        return occupied ? getUnoccupiedSlot(bp, targetSlot + 1) : targetSlot;
+      };
+
+      const nextSlots = {
+        desktop: {
+          ...existingSlots.desktop,
+          [getUnoccupiedSlot('desktop', slot)]: newComponentWithId.id,
+        },
+        tablet: {
+          ...existingSlots.tablet,
+          [getUnoccupiedSlot('tablet', slot)]: newComponentWithId.id,
+        },
+        mobile: {
+          ...existingSlots.mobile,
+          [getUnoccupiedSlot('mobile', slot)]: newComponentWithId.id,
+        },
+      };
+
+      nextComponents[targetParentId] = {
+        ...parent,
+        children: nextChildren,
+        slots: nextSlots,
+      };
+
+      // Mark the parent as dirty
+      const nextDirtyComponents = new Set(state.dirtyComponents);
+      if (!nextNewComponents.has(targetParentId)) {
+        nextDirtyComponents.add(targetParentId);
+      }
+
+      return {
+        ...state,
+        components: nextComponents,
+        newComponents: nextNewComponents,
+        dirtyComponents: nextDirtyComponents,
+      };
+    }
     case 'UPDATE_CONFIG': {
       const { targetComponentId, pathname, value, bp } = action.payload;
+      const { components, newComponents } = state;
 
-      const { config } = state.components[targetComponentId];
+      const { config } = components[targetComponentId];
       const keys = pathname.split('.');
 
       const update = (
@@ -98,17 +192,70 @@ const layoutReducer = (
         };
       };
 
+      const targetComponent = components[targetComponentId];
+      const nextComponents: Record<string, FlattenComponent> = {
+        ...state.components,
+        [targetComponentId]: {
+          ...targetComponent,
+          config: {
+            ...(update(config, 0) as typeof config),
+          },
+        } as FlattenComponent,
+      };
+
+      const nextDirtyComponents = new Set(state.dirtyComponents);
+      if (!newComponents.has(targetComponentId)) {
+        nextDirtyComponents.add(targetComponentId);
+      }
+
+      // Update children config if layout is BENTO and vice versa
+      if (targetComponent.componentType === 'GRID' && pathname === 'layout') {
+        const childIds = targetComponent.children ?? [];
+        const defaultSpan = { desktop: 1, tablet: 1, mobile: 1 };
+
+        for (const childId of childIds) {
+          const child = nextComponents[childId];
+          if (!child) continue;
+
+          if (value === 'BENTO') {
+            let hConfig = {};
+            if ('h' in child.config) {
+              hConfig = {
+                h: child.config.h === 'auto' ? 'full' : child.config.h,
+              };
+            }
+
+            nextComponents[childId] = {
+              ...child,
+              config: {
+                ...child.config,
+                w: child.config.w === 'auto' ? 'full' : child.config.w,
+                ...hConfig,
+                colSpan: { ...defaultSpan, ...child.config.colSpan },
+                rowSpan: { ...defaultSpan, ...child.config.rowSpan },
+              },
+            } as FlattenComponent;
+          } else {
+            const restConfig = { ...child.config };
+            Reflect.deleteProperty(restConfig, 'colSpan');
+            Reflect.deleteProperty(restConfig, 'rowSpan');
+            nextComponents[childId] = {
+              ...child,
+              config: restConfig,
+            } as FlattenComponent;
+          }
+
+          // Mark the child as dirty
+          if (!newComponents.has(childId)) {
+            nextDirtyComponents.add(childId);
+          }
+        }
+      }
+
       return {
         ...state,
-        components: {
-          ...state.components,
-          [targetComponentId]: {
-            ...state.components[targetComponentId],
-            config: {
-              ...(update(config, 0) as typeof config),
-            },
-          } as FlattenComponent,
-        },
+        components: nextComponents,
+        dirtyComponents: nextDirtyComponents,
       };
     }
     case 'MOVE_COMPONENT': {
@@ -119,11 +266,12 @@ const layoutReducer = (
         targetParentId,
         targetSlot,
       } = action.payload;
+      const { components, newComponents, dirtyComponents } = state;
 
       if (sourceParentId === targetParentId && sourceSlot === targetSlot)
         return state;
-      const sourceParent = state.components[sourceParentId];
-      const targetParent = state.components[targetParentId];
+      const sourceParent = components[sourceParentId];
+      const targetParent = components[targetParentId];
 
       if (
         sourceParent?.type !== 'COMPOSITE' ||
@@ -183,6 +331,12 @@ const layoutReducer = (
       )
         return state;
 
+      // Mark component as dirty
+      const nextDirtyComponents = new Set(dirtyComponents);
+      if (!newComponents.has(targetParentId)) {
+        nextDirtyComponents.add(targetParentId);
+      }
+
       // 1. Moving in the same container
       if (targetParentId === sourceParentId) {
         const nextBreakpointSlots = { ...sourceParent.slots[breakpoint] };
@@ -209,6 +363,7 @@ const layoutReducer = (
               },
             },
           },
+          dirtyComponents: nextDirtyComponents,
         };
       }
 
@@ -231,44 +386,144 @@ const layoutReducer = (
         draggedComponentId,
       ];
 
-      return {
-        ...state,
-        components: {
-          ...state.components,
-          [sourceParentId]: {
-            ...sourceParent,
-            children: newSourceChildren,
-            slots: {
-              desktop: sourceParent.slots.desktop,
-              mobile: sourceParent.slots.mobile,
-              tablet: sourceParent.slots.tablet,
-              [breakpoint]: newSourceSlots,
+      // Mark both parents as dirty if they are not new components
+      if (!newComponents.has(targetParentId)) {
+        nextDirtyComponents.add(sourceParentId);
+      }
+      if (!newComponents.has(sourceParentId)) {
+        nextDirtyComponents.add(targetParentId);
+      }
+
+      // Mark the dragged component as dirty if it is not a new component
+      if (!newComponents.has(draggedComponentId)) {
+        nextDirtyComponents.add(draggedComponentId);
+      }
+
+      // If the target parent is a Bento grid, we need to update the children's config too
+      const isBentoTargetParent =
+        targetParent.componentType === 'GRID' &&
+        targetParent.config.layout === 'BENTO';
+
+      const draggedComponent = components[draggedComponentId];
+
+      let nextDraggedHeightConfig = {};
+      if ('h' in draggedComponent.config) {
+        nextDraggedHeightConfig = {
+          h:
+            isBentoTargetParent && draggedComponent.config.h === 'auto'
+              ? 'full'
+              : draggedComponent.config.h,
+        };
+      }
+      const nextDraggedComponent = {
+        ...draggedComponent,
+        config: isBentoTargetParent
+          ? {
+              ...draggedComponent.config,
+              ...nextDraggedHeightConfig,
+              w:
+                draggedComponent.config.w === 'auto'
+                  ? 'full'
+                  : draggedComponent.config.w,
+            }
+          : {
+              ...draggedComponent.config,
+              colSpan: undefined,
+              rowSpan: undefined,
             },
-          },
-          [targetParentId]: {
-            ...targetParent,
-            children: newTargetChildren,
-            slots: targetParent.slots
-              ? {
-                  desktop: targetParent.slots.desktop,
-                  mobile: targetParent.slots.mobile,
-                  tablet: targetParent.slots.tablet,
-                  [breakpoint]: newTargetSlots,
-                }
-              : {
-                  desktop: newTargetSlots,
-                  mobile: undefined,
-                  tablet: undefined,
-                  [breakpoint]: newTargetSlots,
-                },
+      } as FlattenComponent;
+
+      let nextComponents = {
+        ...components,
+        [draggedComponentId]: nextDraggedComponent,
+        [sourceParentId]: {
+          ...sourceParent,
+          children: newSourceChildren,
+          slots: {
+            desktop: sourceParent.slots.desktop,
+            mobile: sourceParent.slots.mobile,
+            tablet: sourceParent.slots.tablet,
+            [breakpoint]: newSourceSlots,
           },
         },
-      };
+        [targetParentId]: {
+          ...targetParent,
+          children: newTargetChildren,
+          slots: targetParent.slots
+            ? {
+                desktop: targetParent.slots.desktop,
+                mobile: targetParent.slots.mobile,
+                tablet: targetParent.slots.tablet,
+                [breakpoint]: newTargetSlots,
+              }
+            : {
+                desktop: newTargetSlots,
+                mobile: undefined,
+                tablet: undefined,
+                [breakpoint]: newTargetSlots,
+              },
+        },
+      } as Record<string, FlattenComponent>;
+
+      if (!occupantId)
+        return {
+          ...state,
+          components: nextComponents,
+          dirtyComponents: nextDirtyComponents,
+        };
+      else {
+        // Mark the occupant as dirty if it is not a new component
+        if (!newComponents.has(occupantId)) {
+          nextDirtyComponents.add(occupantId);
+        }
+
+        // If the source parent is a Bento grid, we need to update the occupant's config too
+        const isBentoSourceParent =
+          sourceParent.componentType === 'GRID' &&
+          sourceParent.config.layout === 'BENTO';
+        const occupant = components[occupantId];
+        let nextOccupantHeightConfig = {};
+        if ('h' in occupant.config) {
+          nextOccupantHeightConfig = {
+            h:
+              isBentoSourceParent && occupant.config.h === 'auto'
+                ? 'full'
+                : occupant.config.h,
+          };
+        }
+
+        const nextOccupant = {
+          ...occupant,
+          config: isBentoSourceParent
+            ? {
+                ...occupant.config,
+                ...nextOccupantHeightConfig,
+                w: occupant.config.w === 'auto' ? 'full' : occupant.config.w,
+              }
+            : {
+                ...occupant.config,
+                colSpan: undefined,
+                rowSpan: undefined,
+              },
+        } as FlattenComponent;
+
+        nextComponents = {
+          ...nextComponents,
+          [occupantId]: nextOccupant,
+        };
+
+        return {
+          ...state,
+          components: nextComponents,
+          dirtyComponents: nextDirtyComponents,
+        };
+      }
     }
     case 'REMOVE_COMPONENT': {
       const { parentId, targetComponentId } = action.payload;
-      const parent = state.components[parentId];
-      const targetComponent = state.components[targetComponentId];
+      const { components, dirtyComponents, newComponents } = state;
+      const parent = components[parentId];
+      const targetComponent = components[targetComponentId];
       if (!parent || !targetComponent) return state;
 
       const componentsToRemove = new Set<string>();
@@ -300,6 +555,12 @@ const layoutReducer = (
           }
         }
       };
+
+      // Mark parent component as dirty
+      const nextDirtyComponents = new Set(dirtyComponents);
+      if (!newComponents.has(parentId)) {
+        nextDirtyComponents.add(parentId);
+      }
 
       switch (parent.type) {
         case 'COMPOSITE': {
@@ -347,6 +608,7 @@ const layoutReducer = (
                 slots: newSlots,
               },
             },
+            dirtyComponents: nextDirtyComponents,
           };
         }
         case 'REPEATER': {
@@ -366,6 +628,7 @@ const layoutReducer = (
                 itemTemplate: null,
               },
             },
+            dirtyComponents: nextDirtyComponents,
           };
         }
         default:
@@ -374,13 +637,20 @@ const layoutReducer = (
     }
     case 'REMOVE_BREAKPOINT_COMPONENT': {
       const { slot, parentId, breakpoint } = action.payload;
-      const parent = state.components[parentId];
+      const { components, dirtyComponents, newComponents } = state;
+      const parent = components[parentId];
       if (!parent) return state;
 
       if (parent.type !== 'COMPOSITE') return state;
 
       const breakpointSlots = { ...parent.slots?.[breakpoint] };
       delete breakpointSlots[slot];
+
+      // Mark parent component as dirty
+      const nextDirtyComponents = new Set(dirtyComponents);
+      if (!newComponents.has(parentId)) {
+        nextDirtyComponents.add(parentId);
+      }
 
       return {
         ...state,
@@ -396,6 +666,7 @@ const layoutReducer = (
               : undefined,
           },
         },
+        dirtyComponents: nextDirtyComponents,
       };
     }
     default:

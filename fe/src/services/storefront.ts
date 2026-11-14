@@ -49,13 +49,13 @@ const normalizeComponent = (value: unknown): value is LayoutComponent => {
 };
 
 export async function getMyStorefront(abortSignal?: AbortSignal) {
-  const { data: storefronts } = await request<{ data: Storefront | null }>(
+  const { data: storefront } = await request<{ data: Storefront | null }>(
     '/storefronts/mine',
     {
       signal: abortSignal,
     },
   );
-  return storefronts;
+  return storefront;
 }
 
 export async function getStorefrontActiveRelease(

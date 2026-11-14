@@ -1,11 +1,41 @@
 import { LayoutComponent } from '@/types/layout-component';
-import { CommerceComponent } from '@/types/layout-component/commerce-component/commerce-component';
-import { CompositeComponent } from '@/types/layout-component/composite-component';
-import { LeafComponent } from '@/types/layout-component/leaf-component';
-import { RepeaterComponent } from '@/types/layout-component/repeater-component';
+import {
+	CommerceComponent,
+	CreateCommerceComponent,
+	UpdateCommerceComponent,
+} from '@/types/layout-component/commerce-component/commerce-component';
+import {
+	CompositeComponent,
+	CreateCompositeComponent,
+	UpdateCompositeComponent,
+} from '@/types/layout-component/composite-component';
+import {
+	CreateLeafComponent,
+	LeafComponent,
+	UpdateLeafComponent,
+} from '@/types/layout-component/leaf-component';
+import {
+	CreateRepeaterComponent,
+	RepeaterComponent,
+	UpdateRepeaterComponent,
+} from '@/types/layout-component/repeater-component';
 
 export type FlattenCompositeComponent = Omit<CompositeComponent, 'children'> & {
-	children: string[] | undefined;
+  children: string[] | undefined;
+};
+
+export type NewFlattenCompositeComponent = Omit<
+  CreateCompositeComponent,
+  'children'
+> & {
+  children?: string[] | undefined;
+};
+
+export type UpdateFlattenCompositeComponent = Omit<
+  UpdateCompositeComponent,
+  'children'
+> & {
+  children?: string[] | undefined;
 };
 
 export type FlattenRepeaterComponent = Omit<
@@ -15,11 +45,37 @@ export type FlattenRepeaterComponent = Omit<
   itemTemplate: string | null;
 };
 
+export type NewFlattenRepeaterComponent = Omit<
+  CreateRepeaterComponent,
+  'itemTemplate'
+> & {
+  itemTemplate?: string | null;
+};
+
+export type UpdateFlattenRepeaterComponent = Omit<
+  UpdateRepeaterComponent,
+  'itemTemplate'
+> & {
+  itemTemplate?: string | null;
+};
+
 export type FlattenComponent =
   | FlattenCompositeComponent
   | FlattenRepeaterComponent
   | LeafComponent
   | CommerceComponent;
+
+export type NewFlattenComponent =
+  | NewFlattenCompositeComponent
+  | NewFlattenRepeaterComponent
+  | CreateLeafComponent
+  | CreateCommerceComponent;
+
+export type UpdateFlattenComponent =
+  | UpdateFlattenCompositeComponent
+  | UpdateFlattenRepeaterComponent
+  | UpdateLeafComponent
+  | UpdateCommerceComponent;
 
 const flattenLayout = (component: LayoutComponent): FlattenComponent[] => {
   const flattenComponents: FlattenComponent[] = [];
@@ -30,7 +86,8 @@ const flattenLayout = (component: LayoutComponent): FlattenComponent[] => {
       const { children, ...rest } = component;
       const composite: FlattenCompositeComponent = {
         ...rest,
-				children: children.length > 0 ? children.map((child) => child.id) : undefined,
+        children:
+          children.length > 0 ? children.map((child) => child.id) : undefined,
       };
       if (!component.slots) {
         flattenComponents.push(composite);

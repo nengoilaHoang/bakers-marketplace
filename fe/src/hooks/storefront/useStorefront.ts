@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/api';
 import {
-  getStorefrontActiveRelease,
-  getStorefrontRelease,
+	getStorefrontActiveRelease,
+	getStorefrontRelease,
 } from '@/services/storefront';
 import { StorefrontRelease } from '@/types/storefront';
 import { useEffect, useState } from 'react';
@@ -16,11 +16,7 @@ const useStorefront = (storeId: string, releaseId?: string) => {
       if (!releaseId) {
         data = await getStorefrontActiveRelease(storeId, controller.signal);
       } else {
-        data = await getStorefrontRelease(
-          storeId,
-          releaseId,
-          controller.signal,
-        );
+        data = await getStorefrontRelease(releaseId, controller.signal);
       }
       try {
         if (data) {
@@ -28,26 +24,25 @@ const useStorefront = (storeId: string, releaseId?: string) => {
         } else {
           setRelease(() => null);
         }
-      } catch (e) {
-        if (e instanceof Error) {
-          if (e.name === 'AbortError' || controller.signal.aborted) {
-            console.log('Request was aborted');
-          } else if (e instanceof ApiError) {
-            console.error(
-              'Error loading storefront:',
-              e.message,
-              'Status code:',
-              e.status,
-            );
-          } else {
-            console.error('Error loading storefront:', e.message);
-          }
+      } catch (err) {
+        const isAbortError =
+          err instanceof DOMException && err.name === 'AbortError';
+        if (isAbortError || controller.signal.aborted) return;
+        if (err instanceof ApiError) {
+          console.error(
+            'Error loading storefront:',
+            err.message,
+            'Status code:',
+            err.status,
+          );
+        } else if (err instanceof Error) {
+          console.error('Error loading storefront:', err.message);
         }
       }
     };
 
     const timeoutId = setTimeout(() => {
-      loadStorefront();
+      void loadStorefront();
     }, 1000);
 
     return () => {

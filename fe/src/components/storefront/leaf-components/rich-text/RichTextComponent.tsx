@@ -1,53 +1,48 @@
-import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
-import { cn } from '@/lib/cn';
 import { RichTextLeafComponent } from '@/types/layout-component/leaf-component';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import { CanvasNodeWrapper } from '../../canvas/CanvasNodeWrapper';
+import { NodeRendererMode } from '../../NodeRenderer';
 import RichTextEditor from './RichTextEditor';
 
 type CompositeComponentProps = {
   component: RichTextLeafComponent;
-  sourceParentId: string;
-  sourceSlot: number;
+  sourceParentId?: string;
+  sourceSlot?: number;
+  mode: NodeRendererMode;
 };
 
 const RichTextComponent = ({
   component,
   sourceParentId,
   sourceSlot,
+  mode,
 }: CompositeComponentProps) => {
-  const {
-    id,
-    tabIndex,
-    baseClasses,
-    baseStyle,
-    ref,
-    isDragging,
-    isSelected,
-    handleKeyDown,
-    handleMouseDown,
-    handleFocus,
-  } = useLayoutComponent({ component, sourceParentId, sourceSlot });
-
   const [openEditor, setOpenEditor] = useState(false);
   const { updateConfig } = useStorefrontLayoutContext();
-  const lastClickTime = useRef(0);
-  const THRESHOLD_MS = 400;
+  // const lastClickTime = useRef(0);
+  // const THRESHOLD_MS = 400;
   const richTextBody =
     typeof component.config.content.body === 'string'
       ? component.config.content.body
       : '';
 
-  const handleClick = () => {
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTime.current;
+  // const handleClick = () => {
+  //   const now = Date.now();
+  //   const timeSinceLastClick = now - lastClickTime.current;
 
-    if (timeSinceLastClick < THRESHOLD_MS) {
-      lastClickTime.current = 0;
-      setOpenEditor(() => true);
-    } else {
-      lastClickTime.current = now;
-    }
+  //   if (timeSinceLastClick < THRESHOLD_MS) {
+  //     lastClickTime.current = 0;
+  //     setOpenEditor(() => true);
+  //   } else {
+  //     lastClickTime.current = now;
+  //   }
+  // };
+
+  const isEditor = mode === NodeRendererMode.Editor;
+
+  const handleDoubleClick = () => {
+    setOpenEditor(() => true);
   };
 
   const handleOnClose = () => {
@@ -59,42 +54,37 @@ const RichTextComponent = ({
     setOpenEditor(() => false);
   };
 
+  const editorProps = {
+    'aria-label': 'Rich Text Component. Double click to edit the content.',
+    'aria-expanded': openEditor,
+    onDoubleClick: handleDoubleClick,
+  };
+
   return (
-    <div
-      className={cn(baseClasses, 'wrap-break-word')}
-      id={id}
-      ref={ref}
-      role='button'
-      tabIndex={tabIndex}
-      data-layout-node='true'
-      data-source-parent-id={sourceParentId}
-      data-source-slot={sourceSlot}
-      aria-controls={sourceParentId}
-      aria-expanded={openEditor}
-      aria-label='Rich Text Component. Double click to edit the content.'
-      aria-busy={isDragging}
-      aria-pressed={isSelected || isDragging}
-      onKeyDown={handleKeyDown}
-      onMouseDown={handleMouseDown}
-      onFocus={handleFocus}
-      onClick={handleClick}
-      style={baseStyle}
+    <CanvasNodeWrapper
+      mode={mode}
+      component={component}
+      sourceParentId={sourceParentId}
+      sourceSlot={sourceSlot}
+      className='wrap-break-word'
+      {...editorProps}
     >
-      {openEditor ? (
+      {isEditor && openEditor && (
         <RichTextEditor
           isOpen={openEditor}
           content={richTextBody}
           onClose={handleOnClose}
           onSave={handleOnSave}
-        ></RichTextEditor>
-      ) : null}
+        />
+      )}
+
       <div
         className='max-h-full max-w-full wrap-break-word whitespace-pre-wrap overflow-hidden'
         dangerouslySetInnerHTML={{
-          __html: component.config.content.body,
+          __html: richTextBody,
         }}
-      ></div>
-    </div>
+      />
+    </CanvasNodeWrapper>
   );
 };
 

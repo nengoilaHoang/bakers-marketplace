@@ -40,7 +40,7 @@ export const CanvasIframe = ({
     // Write a basic HTML structure into the iframe document
     const htmlContent = `
 			<!DOCTYPE html>
-			<html class='overflow-hidden m-0 p-0'>
+			<html class='overflow-x-hidden scrollbar-none m-0 p-0'>
 				<head>
 					<meta charset="utf-8" />
 					<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -104,12 +104,17 @@ export const CanvasIframe = ({
     // Synchronize outer iframe height with inner content height
     const updateHeight = () => {
       if (freezeRef.current) return;
-      if (!iframeRef.current || !doc) return;
+      if (!iframeRef.current || !doc || !rootElement) return;
       // Measure the full scroll height of the inner document
       const contentHeight = Math.max(
-        doc.body.scrollHeight,
-        doc.documentElement.scrollHeight,
-        rootElement?.scrollHeight ?? 0,
+        rootElement.scrollHeight,
+        rootElement.getBoundingClientRect().height,
+      );
+
+      console.log('rootElement.scrollHeight', rootElement?.scrollHeight);
+      console.log(
+        'rootElement.getBoundingClientRect().height',
+        rootElement?.getBoundingClientRect().height,
       );
       const nextHeight = Math.max(800, Math.ceil(contentHeight));
       iframeRef.current.style.height = `${nextHeight}px`;
@@ -135,6 +140,7 @@ export const CanvasIframe = ({
 
   return (
     <iframe
+      id='canvas-iframe'
       ref={iframeRef}
       className={className}
       style={style}

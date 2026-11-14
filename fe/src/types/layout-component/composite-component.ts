@@ -2,9 +2,11 @@ import {
 	BaseLayoutComponent,
 	BaseLayoutComponentConfig,
 	CreateBaseLayoutComponent,
+	CreateLayoutComponent,
 	LayoutComponent,
 	ResponsiveProp,
 	UpdateBaseLayoutComponent,
+	UpdateLayoutComponent,
 } from '.';
 
 export interface BreakpointSlotMap {
@@ -33,7 +35,7 @@ export interface UpdateBaseCompositeComponent<
 > extends UpdateBaseLayoutComponent<TConfig> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: LayoutComponent[] | undefined;
+  children?: (UpdateLayoutComponent | CreateLayoutComponent)[] | undefined;
   slots?: CompositePutSlot | undefined;
 }
 
@@ -42,7 +44,7 @@ export interface CreateBaseCompositeComponent<
 > extends CreateBaseLayoutComponent<TConfig> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: LayoutComponent[] | undefined;
+  children?: (UpdateLayoutComponent | CreateLayoutComponent)[] | undefined;
   slots?: CompositePutSlot | undefined;
 }
 
@@ -62,8 +64,10 @@ export type RowHeightMode =
       minHeightPx: number;
     };
 
+export type GridLayoutMode = 'UNIFORM' | 'BENTO';
+
 export type GridCompositeComponentConfig = {
-  layout: 'BENTO' | 'UNIFORM';
+  layout: GridLayoutMode;
   rows?: ResponsiveProp<number> | undefined;
   cols: ResponsiveProp<number>;
   gap: ResponsiveProp<number>;

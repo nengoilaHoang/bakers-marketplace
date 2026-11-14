@@ -1,227 +1,195 @@
-import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
+// components/storefront/composite-components/GridComponent.tsx
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
-import { cn } from '@/lib/cn';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenCompositeComponent } from '@/utils/flattenLayout';
 import { CSSProperties, useMemo } from 'react';
-import ComponentRenderer from '../ComponentRenderer';
+import { CanvasNodeWrapper } from '../canvas/CanvasNodeWrapper';
 import DropZone from '../DropZone';
+import NodeRenderer, { NodeRendererMode } from '../NodeRenderer';
 
 type CompositeComponentProps = {
   component: FlattenCompositeComponent;
   sourceParentId?: string;
   sourceSlot?: number;
+  mode: NodeRendererMode;
 };
 
 const GridComponent = ({
   component,
   sourceParentId,
   sourceSlot,
+  mode,
 }: CompositeComponentProps) => {
-  const {
-    id,
-    tabIndex,
-    baseClasses,
-    baseStyle,
-    ref,
-    isDragging,
-    isSelected,
-    handleKeyDown,
-    handleMouseDown,
-    handleFocus,
-  } = useLayoutComponent({
-    component,
-    sourceParentId,
-    sourceSlot,
-  });
   const { state } = useStorefrontLayoutContext();
   const { components } = state;
-
   const config = component.config;
-  const { rows, cols, gap, rowHeight, layout } = config;
-
+  const { rows, cols, gap, rowHeight } = config;
   const { breakpoint: currentBp } = useStorefrontCanvasContext();
 
-  const gridStyles = useMemo<{ [K in DeviceBreakpoint]: CSSProperties }>(() => {
-    return (['desktop', 'tablet', 'mobile'] as const).reduce(
-      (acc, bp) => {
-        const colsValue = cols[bp] ?? cols['desktop']; // desktop bp is always present
-        const gapValue = gap[bp] ?? gap['desktop'];
-        const rowCfg = rowHeight[bp] ?? rowHeight['desktop'];
+  const bp: DeviceBreakpoint = currentBp === 'fluid' ? 'desktop' : currentBp;
+  const isRoot = component.id === state.rootId;
+  const isBento = config.layout === 'BENTO';
+  const activeCols = cols[bp] ?? cols.desktop ?? 1;
+  const currentSlotMap = useMemo(
+    () => component.slots?.[bp] ?? {},
+    [bp, component.slots],
+  );
 
-        // specified rows override the default rows based on rowHeight mode
-        let gridTemplateRows = 'auto';
-        if (rowCfg.mode === 'fixed') {
-          gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.baseHeightPx}px, auto))`;
-        } else if (rowCfg.mode === 'auto') {
-          gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.minHeightPx}px, auto))`;
+  // Compute CSS Grid specs for each breakpoint
+  const gridStyle = useMemo<CSSProperties>(() => {
+    const colsValue = cols[bp] ?? cols.desktop;
+    const gapValue = gap[bp] ?? gap.desktop;
+    const rowCfg = rowHeight[bp] ?? rowHeight.desktop;
+
+    let gridTemplateRows = 'auto';
+    if (rowCfg.mode === 'fixed') {
+      gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.baseHeightPx}px, auto))`;
+    } else if (rowCfg.mode === 'auto') {
+      gridTemplateRows = `repeat(${rows?.[bp] ?? rows?.desktop ?? 'auto-fill'}, minmax(${rowCfg.minHeightPx}px, auto))`;
+    }
+
+    return {
+      display: 'grid',
+      alignContent: 'start',
+      gap: `${gapValue}px`,
+      gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
+      gridTemplateRows,
+      gridAutoRows:
+        rowCfg.mode === 'fixed'
+          ? `minmax(${rowCfg.baseHeightPx}px, auto)`
+          : 'auto',
+      gridAutoFlow: config.densePacking ? 'row dense' : 'row',
+    };
+  }, [cols, gap, rowHeight, config.densePacking, rows, bp]);
+
+  // Compute all slots covered by multi-column / multi-row spans and required row count
+  // The maxSpannedRow is to ensure that if an item in the last configured row has rowSpan > 1,
+  // the grid still generates the uncovered dropzones alongside it on the newly expanded row.
+  const { coveredSlots, maxSpannedRow } = useMemo(() => {
+    const covered = new Set<number>();
+    let maxRow = 1;
+
+    if (!isBento) {
+      return { coveredSlots: covered, maxSpannedRow: maxRow };
+    }
+
+    for (const [slotKey, childId] of Object.entries(currentSlotMap)) {
+      const slot = Number(slotKey);
+      const child = childId ? components[childId] : null;
+      if (Number.isNaN(slot) || !child) continue;
+
+      const zeroBased = slot - 1;
+      const startCol = (zeroBased % activeCols) + 1;
+      const startRow = Math.floor(zeroBased / activeCols) + 1;
+
+      const rawColSpan =
+        typeof child.config.colSpan === 'number'
+          ? child.config.colSpan
+          : child.config.colSpan?.[bp];
+      const rawRowSpan =
+        typeof child.config.rowSpan === 'number'
+          ? child.config.rowSpan
+          : child.config.rowSpan?.[bp];
+
+      const colSpan = Math.min(
+        activeCols - startCol + 1,
+        Math.max(1, Number(rawColSpan) || 1),
+      );
+      const rowSpan = Math.max(1, Number(rawRowSpan) || 1);
+
+      maxRow = Math.max(maxRow, startRow + rowSpan - 1);
+
+      for (let r = startRow; r < startRow + rowSpan; r++) {
+        for (let c = startCol; c < startCol + colSpan; c++) {
+          if (r === startRow && c === startCol) continue; // Keep origin slot
+          covered.add((r - 1) * activeCols + c);
         }
+      }
+    }
 
-        const style: CSSProperties = {
-          display: 'grid',
-          gap: gapValue + 'px',
-          gridTemplateColumns: `repeat(${colsValue}, minmax(0, 1fr))`,
-          gridTemplateRows,
-          gridAutoRows:
-            rowCfg.mode === 'fixed'
-              ? `minmax(${rowCfg.baseHeightPx}px, auto)`
-              : 'auto',
-          gridAutoFlow: config.densePacking ? 'row dense' : 'row',
-          ...baseStyle,
-        };
+    return { coveredSlots: covered, maxSpannedRow: maxRow };
+  }, [isBento, currentSlotMap, components, activeCols, bp]);
 
-        acc[bp] = style;
-        return acc;
-      },
-      {} as {
-        [K in DeviceBreakpoint]: CSSProperties;
-      },
+  // Calculate total slots for this breakpoint
+  const totalSlots = useMemo(() => {
+    const slotKeys = Object.keys(currentSlotMap)
+      .map(Number)
+      .filter((num) => !Number.isNaN(num));
+    const maxSlot = slotKeys.length > 0 ? Math.max(...slotKeys) : 0;
+    const configuredRows = rows?.[bp] ?? rows?.desktop ?? 1;
+
+    const neededRows = Math.max(
+      configuredRows,
+      Math.ceil(maxSlot / activeCols),
+      maxSpannedRow,
     );
-  }, [cols, gap, rowHeight, config.densePacking, baseStyle, rows]);
+    return Math.max(activeCols * neededRows, slotKeys.length);
+  }, [activeCols, bp, currentSlotMap, rows, maxSpannedRow]);
 
-  // const gridStyle = useMemo(
-  //   () => ({
-  //     "--grid-cols-desktop": `repeat(${cols.desktop}, 1fr)`,
-  //     "--grid-cols-tablet": `repeat(${cols.tablet}, 1fr)`,
-  //     "--grid-cols-mobile": `repeat(${cols.mobile}, 1fr)`,
-  //     "--grid-rows-desktop": `repeat(${rows.desktop}, 1fr)`,
-  //     "--grid-rows-tablet": `repeat(${rows.tablet}, 1fr)`,
-  //     "--grid-rows-mobile": `repeat(${rows.mobile}, 1fr)`,
-  //     "--grid-gap-desktop": `${gap.desktop}px`,
-  //     "--grid-gap-tablet": `${gap.tablet}px`,
-  //     "--grid-gap-mobile": `${gap.mobile}px`,
-  //   }),
-  //   [cols, rows, gap],
-  // );
-
-  // Generate cell style for each breakpoint
-  const gridItems = useMemo(() => {
-    return (['desktop', 'tablet', 'mobile'] as const).reduce(
-      (acc, bp) => {
-        if (!component.slots) {
-          acc[bp] = [];
-          return acc;
-        }
-        const currentCols = cols[bp] ?? cols['desktop'];
-        const activeSlots = component.slots[bp] ?? component.slots['desktop'];
-
-        const maxOccupiedSlot = Math.max(
-          0,
-          ...Object.keys(activeSlots).map(Number),
-        );
-        const autoDerivedRows = Math.max(
-          2,
-          Math.ceil(maxOccupiedSlot / currentCols),
-        );
-        const currentRows = rows?.[bp] ?? rows?.['desktop'] ?? autoDerivedRows;
-
-        const totalSlots = currentCols * currentRows;
-        const coveredSlots = new Set<number>();
-
-        const cells = [];
-        for (let slot = 1; slot <= totalSlots; slot++) {
-          if (coveredSlots.has(slot)) continue;
-
-          const rowStart = Math.floor((slot - 1) / currentCols) + 1;
-          const colStart = ((slot - 1) % currentCols) + 1;
-
-          const childId = activeSlots[slot];
-          const child = childId ? components[childId] : undefined;
-
-          const isBento = layout === 'BENTO';
-          const colSpan =
-            isBento && child?.config.colSpan
-              ? Math.max(
-                  1,
-                  Math.min(child.config.colSpan, currentCols - colStart + 1),
-                )
-              : 1;
-          const rowSpan =
-            isBento && child?.config.rowSpan
-              ? Math.max(
-                  1,
-                  Math.min(child.config.rowSpan, currentRows - rowStart + 1),
-                )
-              : 1;
-
-          if (colSpan > 1 || rowSpan > 1) {
-            for (let r = 0; r < rowSpan; r++) {
-              for (let c = 0; c < colSpan; c++) {
-                const targetSlot =
-                  (rowStart - 1 + r) * currentCols + (colStart + c);
-                if (targetSlot !== slot) {
-                  coveredSlots.add(targetSlot);
-                }
-              }
-            }
-          }
-
-          const style = {
-            gridColumn: `${colStart} / span ${colSpan}`,
-            gridRow: `${rowStart} / span ${rowSpan}`,
-          };
-          cells.push({
-            slot,
-            childId,
-            style,
-          });
-        }
-
-        acc[bp] = cells;
-        return acc;
-      },
-      {} as {
-        [K in DeviceBreakpoint]: {
-          slot: number;
-          childId: string | undefined;
-          style: CSSProperties;
-        }[];
-      },
-    );
-  }, [cols, component.slots, components, layout, rows]);
+  const editorProps = {
+    'aria-label': 'Grid Component',
+  };
 
   return (
-    <div
-      className={cn('grid', baseClasses)}
-      style={{ ...gridStyles[currentBp === 'fluid' ? 'desktop' : currentBp] }}
-      id={id}
-      ref={ref}
-      tabIndex={tabIndex}
-      data-layout-node='true'
-      data-source-parent-id={sourceParentId}
-      data-source-slot={sourceSlot}
-      aria-pressed={isSelected || isDragging}
-      aria-controls={sourceParentId}
-      aria-busy={isDragging}
-      aria-label='Grid Component'
-      onKeyDown={handleKeyDown}
-      onMouseDown={handleMouseDown}
-      onFocus={handleFocus}
+    <CanvasNodeWrapper
+      mode={mode}
+      component={component}
+      sourceParentId={sourceParentId}
+      sourceSlot={sourceSlot}
+      style={gridStyle}
+      className={isRoot ? 'w-full h-auto' : 'w-full h-full'}
+      {...editorProps}
     >
-      {gridItems[currentBp === 'fluid' ? 'desktop' : currentBp].map(
-        ({ slot, childId, style }) => {
-          const child = childId ? components[childId] : undefined;
-          return (
-            <DropZone
-              key={`slot-${slot}`}
-              sourceParentId={id}
-              sourceSlot={Number(slot)}
-              extraStyle={style}
-            >
-              {child ? (
-                <ComponentRenderer
-                  key={childId}
-                  component={child}
-                  sourceParentId={id}
-                  sourceSlot={Number(slot)}
-                />
-              ) : undefined}
-            </DropZone>
-          );
-        },
-      )}
-    </div>
+      {Array.from({ length: totalSlots }).map((_, index) => {
+        const slot = index + 1; // Slot counting starts at 1, not 0
+
+        // Skip rendering DropZones overlapped by a preceding item's span
+        if (isBento && coveredSlots.has(slot)) {
+          return null;
+        }
+
+        const childId = currentSlotMap[slot];
+        const childComponent = childId ? components[childId] : null;
+        const childStartCol = (index % activeCols) + 1;
+        const childStartRow = Math.floor(index / activeCols) + 1;
+
+        const childColSpan =
+          isBento && childComponent
+            ? Math.max(1, childComponent.config.colSpan?.[bp] || 1)
+            : 1;
+        const childRowSpan =
+          isBento && childComponent
+            ? Math.max(1, childComponent.config.rowSpan?.[bp] || 1)
+            : 1;
+
+        return (
+          <DropZone
+            key={`${component.id}-slot-${slot}`}
+            sourceParentId={component.id}
+            sourceSlot={slot}
+            disabled={mode !== NodeRendererMode.Editor}
+            style={
+              isBento && childComponent
+                ? {
+                    gridColumn: `${childStartCol} / span ${childColSpan}`,
+                    gridRow: `${childStartRow} / span ${childRowSpan}`,
+                  }
+                : undefined
+            }
+          >
+            {childComponent && (
+              <NodeRenderer
+                component={childComponent}
+                sourceParentId={component.id}
+                sourceSlot={slot}
+                mode={mode}
+              />
+            )}
+          </DropZone>
+        );
+      })}
+    </CanvasNodeWrapper>
   );
 };
 

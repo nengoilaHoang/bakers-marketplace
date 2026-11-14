@@ -1,5 +1,5 @@
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StorefrontCanvasContext from './StorefrontCanvasContext';
 
 type StorefrontCanvasProviderProps = {
@@ -24,11 +24,7 @@ const StorefrontCanvasProvider = ({
     null,
   );
 
-  const containerRef = useRef(null);
-
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const updateBreakpoint = (entries: ResizeObserverEntry[]) => {
       if (breakpoint === 'fluid') return;
 
@@ -78,9 +74,7 @@ const StorefrontCanvasProvider = ({
 
   return (
     <StorefrontCanvasContext.Provider value={contextValue}>
-      <div ref={containerRef} className='relative'>
-        {children}
-      </div>
+      {children}
     </StorefrontCanvasContext.Provider>
   );
 };

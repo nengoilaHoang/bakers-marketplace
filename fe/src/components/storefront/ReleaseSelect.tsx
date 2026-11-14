@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import TypeableSelect from './config-sections/inputs/TypeableSelect';
 
 const ReleaseSelect = () => {
-  const { currentStorefront, currentRelease, setCurrentReleaseId } =
+  const { storefront, currentRelease, setCurrentReleaseId } =
     useVendorContext();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -14,15 +14,15 @@ const ReleaseSelect = () => {
   const releaseOptions = useMemo(
     () =>
       Object.fromEntries(
-        (currentStorefront?.releases || []).map((rel) => [
+        (storefront?.releases || []).map((rel) => [
           `v${rel.version} - ${rel.displayName}`,
           rel.id,
         ]),
       ),
-    [currentStorefront?.releases],
+    [storefront?.releases],
   );
 
-  if (!currentStorefront || !currentRelease) return null;
+  if (!storefront || !currentRelease) return null;
 
   return (
     <div className='flex items-center gap-2'>

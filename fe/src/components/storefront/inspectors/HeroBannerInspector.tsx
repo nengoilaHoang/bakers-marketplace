@@ -26,7 +26,7 @@ const HeroBannerInspector = ({
     <>
       <HeroBannerImageSection
         isOpen={Boolean(openSections['hero-banner-image'])}
-        toggleSection={toggleSection}
+        toggleSection={() => toggleSection('hero-banner-image')}
         banner={{
           desktopMediaUrl: config.desktopMediaUrl,
           mobileMediaUrl: config.mobileMediaUrl,
@@ -38,11 +38,11 @@ const HeroBannerInspector = ({
         onActiveSectionChange={(active) => {
           if (active) onActiveSectionChange('hero-banner-image');
         }}
-        zIndex={getSectionZIndex('hero-overlay')}
+        zIndex={getSectionZIndex('hero-banner-image')}
       />
       <HeroOverlaySection
         isOpen={Boolean(openSections['hero-overlay'])}
-        toggleSection={toggleSection}
+        toggleSection={() => toggleSection('hero-overlay')}
         overlay={config.overlay}
         onUpdate={onUpdate}
         onActiveSectionChange={(active) => {
@@ -52,7 +52,7 @@ const HeroBannerInspector = ({
       />
       <HeroContentSection
         isOpen={Boolean(openSections['hero-content'])}
-        toggleSection={toggleSection}
+        toggleSection={() => toggleSection('hero-content')}
         content={{
           title: config.title,
           subtitle: config.subtitle,

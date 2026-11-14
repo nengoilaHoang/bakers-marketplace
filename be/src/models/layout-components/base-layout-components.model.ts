@@ -132,8 +132,8 @@ export const ResponsiveProp = <T extends z.ZodType>(valueSchema: T) =>
   ]);
 
 export const BentoCellConfig = z.object({
-  colSpan: ResponsiveProp(z.uint32().min(1).max(50).default(1)),
-  rowSpan: ResponsiveProp(z.uint32().min(1).max(50).default(1)),
+  colSpan: ResponsiveProp(z.uint32().min(1).max(50)),
+  rowSpan: ResponsiveProp(z.uint32().min(1).max(50)),
 });
 
 /**
