@@ -1,7 +1,7 @@
-import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { useOptionalStorefrontLayoutContext } from '@/hooks/storefront/useStorefrontLayoutContext';
 import { RichTextLeafComponent } from '@/types/layout-component/leaf-component';
 import { useState } from 'react';
-import { CanvasNodeWrapper } from '../../canvas/CanvasNodeWrapper';
+import CanvasNodeWrapper from '../../canvas/CanvasNodeWrapper';
 import { NodeRendererMode } from '../../NodeRenderer';
 import RichTextEditor from './RichTextEditor';
 
@@ -19,7 +19,7 @@ const RichTextComponent = ({
   mode,
 }: CompositeComponentProps) => {
   const [openEditor, setOpenEditor] = useState(false);
-  const { updateConfig } = useStorefrontLayoutContext();
+  const layoutCtx = useOptionalStorefrontLayoutContext();
   // const lastClickTime = useRef(0);
   // const THRESHOLD_MS = 400;
   const richTextBody =
@@ -50,8 +50,8 @@ const RichTextComponent = ({
   };
 
   const handleOnSave = (newContent: string) => {
-    updateConfig(component.id, 'content.body', newContent);
-    setOpenEditor(() => false);
+    layoutCtx?.updateConfig(component.id, 'content.body', newContent);
+    setOpenEditor(false);
   };
 
   const editorProps = {
@@ -67,7 +67,7 @@ const RichTextComponent = ({
       sourceParentId={sourceParentId}
       sourceSlot={sourceSlot}
       className='wrap-break-word'
-      {...editorProps}
+      {...(isEditor && editorProps)}
     >
       {isEditor && openEditor && (
         <RichTextEditor

@@ -18,8 +18,8 @@ import {
 } from '@/utils/layoutClasses';
 import Image from 'next/image';
 import { CSSProperties, useMemo } from 'react';
-import { CanvasNodeWrapper } from '../canvas/CanvasNodeWrapper';
 import { NodeRendererMode } from '../NodeRenderer';
+import CanvasNodeWrapper from '../canvas/CanvasNodeWrapper';
 
 const getAspectRatio = (aspect: AspectRatioValue): string => {
   let aspectRatio = '';

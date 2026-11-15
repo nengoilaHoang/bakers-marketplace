@@ -2,6 +2,7 @@
 import useLayoutComponent from '@/hooks/storefront/useLayoutComponent';
 import { cn } from '@/lib/cn';
 import { FlattenComponent } from '@/utils/flattenLayout';
+import { getBaseLayoutClassesAndStyle } from '@/utils/layoutClasses';
 import React, { useMemo } from 'react';
 import { NodeRendererMode } from '../NodeRenderer';
 
@@ -13,7 +14,38 @@ export interface CanvasNodeWrapperProps extends React.HTMLAttributes<HTMLDivElem
   children: React.ReactNode;
 }
 
-export const CanvasNodeWrapper = ({
+const ActiveNodeWrapper = ({
+  component,
+  className,
+  style,
+  children,
+  ...restProps
+}: Omit<CanvasNodeWrapperProps, 'mode' | 'sourceParentId' | 'sourceSlot'>) => {
+  const { baseClasses, baseStyle } = useMemo(() => {
+    const result = getBaseLayoutClassesAndStyle(component.config);
+    if (!result) {
+      return { baseClasses: 'relative min-h-0 min-w-0', baseStyle: {} };
+    }
+    const [additionalClasses, additionalStyle] = result;
+    return {
+      baseClasses: `relative min-h-0 min-w-0 ${additionalClasses}`.trim(),
+      baseStyle: additionalStyle,
+    };
+  }, [component.config]);
+
+  return (
+    <div
+      id={component.id}
+      className={cn(baseClasses, className)}
+      style={{ ...baseStyle, ...style }}
+      {...restProps}
+    >
+      {children}
+    </div>
+  );
+};
+
+const EditorNodeWrapper = ({
   mode,
   component,
   sourceParentId,
@@ -46,35 +78,26 @@ export const CanvasNodeWrapper = ({
     isPreview,
   });
 
-  const editorOrPreviewProps = useMemo(
+  const props = useMemo(
     () => ({
       'data-layout-node': true,
       'aria-busy': isDragging,
-      'aria-pressed': isDragging,
-    }),
-    [isDragging],
-  );
-
-  const previewProps = useMemo(
-    () => ({
-      'data-preview': true,
-    }),
-    [],
-  );
-
-  const editorProps = useMemo(
-    () => ({
-      'data-source-parent-id': sourceParentId,
-      'data-source-slot': sourceSlot,
-      'aria-controls': sourceParentId,
-      'aria-label': `${component.name} (${component.componentType})`,
-      'aria-pressed': isSelected || isDragging,
-      tabIndex,
-      onKeyDown: handleKeyDown,
-      onMouseDown: handleMouseDown,
-      onFocus: handleFocus,
-      onClick,
-      onDoubleClick,
+      ...(isPreview ? { 'data-preview': true } : {}),
+      ...(isEditor
+        ? {
+            'data-source-parent-id': sourceParentId,
+            'data-source-slot': sourceSlot,
+            'aria-controls': sourceParentId,
+            'aria-label': `${component.name} (${component.componentType})`,
+            'aria-pressed': isSelected || isDragging,
+            tabIndex,
+            onKeyDown: handleKeyDown,
+            onMouseDown: handleMouseDown,
+            onFocus: handleFocus,
+            onClick,
+            onDoubleClick,
+          }
+        : {}),
     }),
     [
       component.componentType,
@@ -83,6 +106,8 @@ export const CanvasNodeWrapper = ({
       handleKeyDown,
       handleMouseDown,
       isDragging,
+      isEditor,
+      isPreview,
       isSelected,
       onClick,
       onDoubleClick,
@@ -90,15 +115,6 @@ export const CanvasNodeWrapper = ({
       sourceSlot,
       tabIndex,
     ],
-  );
-
-  const props = useMemo(
-    () => ({
-      ...(isEditor || isPreview ? editorOrPreviewProps : {}),
-      ...(isPreview ? previewProps : {}),
-      ...(isEditor ? editorProps : {}),
-    }),
-    [isEditor, isPreview, editorOrPreviewProps, previewProps, editorProps],
   );
 
   return (
@@ -118,3 +134,13 @@ export const CanvasNodeWrapper = ({
     </div>
   );
 };
+
+const CanvasNodeWrapper = (props: CanvasNodeWrapperProps) => {
+  if (props.mode === NodeRendererMode.Active) {
+    const { mode, sourceParentId, sourceSlot, ...rest } = props;
+    return <ActiveNodeWrapper {...rest} />;
+  }
+  return <EditorNodeWrapper {...props} />;
+};
+
+export default CanvasNodeWrapper;

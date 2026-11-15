@@ -26,6 +26,7 @@ type DropZoneProps = {
   sourceParentId: string;
   sourceSlot: number;
   disabled?: boolean;
+  className?: string;
   style?: CSSProperties;
 };
 
@@ -104,6 +105,7 @@ const DropZone = ({
   sourceParentId,
   sourceSlot,
   disabled = false,
+  className,
   style,
 }: DropZoneProps) => {
   const { depth } = useContext(DropZoneContext);
@@ -133,7 +135,8 @@ const DropZone = ({
   const isActiveDrop = !isDisabled && isDropTarget;
   const showOverlay = !isOccupied || isActiveDrop;
 
-  const className = cn(
+  const combinedClassName = cn(
+    className,
     // Base container
     'relative grid h-full w-full min-w-0',
     isOccupied ? 'min-h-0' : 'min-h-16',
@@ -162,7 +165,7 @@ const DropZone = ({
         aria-label={children ? 'Occupied' : 'Empty drop slot'}
         aria-controls={sourceParentId}
         data-slot={sourceSlot}
-        className={className}
+        className={combinedClassName}
         style={style}
         ref={dropRef}
       >
