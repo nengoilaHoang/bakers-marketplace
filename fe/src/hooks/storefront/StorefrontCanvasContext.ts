@@ -12,6 +12,8 @@ export type StorefrontCanvasContextValue = {
   setIsDragging: (isDragging: boolean) => void;
   isResizing: boolean;
   setIsResizing: (isResizing: boolean) => void;
+  currentPageId: string | null;
+  setCurrentPageId: (pageId: string | null) => void;
   selectedComponentId: string | null;
   selectComponent: (id: string | null) => void;
 };

@@ -1,6 +1,8 @@
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
-import { useEffect, useMemo, useState } from 'react';
-import StorefrontCanvasContext from './StorefrontCanvasContext';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import StorefrontCanvasContext, {
+  StorefrontCanvasContextValue,
+} from './StorefrontCanvasContext';
 
 type StorefrontCanvasProviderProps = {
   children: React.ReactNode;
@@ -20,9 +22,15 @@ const StorefrontCanvasProvider = ({
   const [isPreview, setIsPreview] = useState(initialIsPreview);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [currentPageId, setCurrentPageId] = useState<string | null>(null);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     null,
   );
+
+  const selectPage = useCallback((pageId: string | null) => {
+    setSelectedComponentId(null);
+    setCurrentPageId(pageId);
+  }, []);
 
   useEffect(() => {
     const updateBreakpoint = (entries: ResizeObserverEntry[]) => {
@@ -54,7 +62,7 @@ const StorefrontCanvasProvider = ({
     return () => observer.disconnect();
   }, [breakpoint]);
 
-  const contextValue = useMemo(
+  const contextValue: StorefrontCanvasContextValue = useMemo(
     () => ({
       zoom,
       setZoom,
@@ -66,10 +74,21 @@ const StorefrontCanvasProvider = ({
       setIsDragging,
       isResizing,
       setIsResizing,
+      currentPageId,
+      setCurrentPageId: selectPage,
       selectedComponentId,
       selectComponent: setSelectedComponentId,
     }),
-    [zoom, breakpoint, isPreview, isDragging, isResizing, selectedComponentId],
+    [
+      zoom,
+      breakpoint,
+      isPreview,
+      isDragging,
+      isResizing,
+      currentPageId,
+      selectPage,
+      selectedComponentId,
+    ],
   );
 
   return (

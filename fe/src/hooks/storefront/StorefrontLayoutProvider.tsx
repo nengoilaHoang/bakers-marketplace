@@ -1,6 +1,6 @@
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenComponent, NewFlattenComponent } from '@/utils/flattenLayout';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import StorefrontLayoutContext, {
   StorefrontLayoutContextValue,
 } from './StorefrontLayoutContext';
@@ -9,14 +9,20 @@ import useLayoutReducer, { LayoutState } from './useLayoutReducer';
 const StorefrontLayoutProvider = ({
   children,
   initialState,
+  updateLayout,
 }: {
   children:
     | React.ReactNode
     | React.ReactNode[]
     | ((props: { root: FlattenComponent }) => React.ReactNode);
   initialState: LayoutState;
+  updateLayout: (layout: LayoutState) => void;
 }) => {
   const { state, dispatch } = useLayoutReducer(initialState);
+
+  useEffect(() => {
+    updateLayout(state);
+  }, [state, updateLayout]);
 
   const addNewComponent = useCallback(
     (

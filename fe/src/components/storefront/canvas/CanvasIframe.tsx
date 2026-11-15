@@ -110,12 +110,6 @@ export const CanvasIframe = ({
         rootElement.scrollHeight,
         rootElement.getBoundingClientRect().height,
       );
-
-      console.log('rootElement.scrollHeight', rootElement?.scrollHeight);
-      console.log(
-        'rootElement.getBoundingClientRect().height',
-        rootElement?.getBoundingClientRect().height,
-      );
       const nextHeight = Math.max(800, Math.ceil(contentHeight));
       iframeRef.current.style.height = `${nextHeight}px`;
     };

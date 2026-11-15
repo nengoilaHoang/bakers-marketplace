@@ -1,35 +1,31 @@
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useState } from 'react';
 import TypeableSelect from '../config-sections/inputs/TypeableSelect';
 
 type PageSelectProps = {
   pages: Record<string, string>;
-  startPage?: string;
+  value: string;
+  onChange: (pageId: string) => void;
 };
 
-const PageSelect = ({ pages, startPage }: PageSelectProps) => {
-  const [selectedPage, setSelectedPage] = useState<string>(
-    startPage && pages[startPage] ? startPage : Object.keys(pages)[0],
-  );
+const PageSelect = ({ pages, value, onChange }: PageSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-  };
-  const handleValueChange = (value: string) => {
-    setSelectedPage(value);
-    setIsOpen(false);
-  };
+
   return (
     <TypeableSelect
       id='page-select'
       name='pageSelect'
       isOpen={isOpen}
-      onValueChange={handleValueChange}
-      currentValue={selectedPage}
+      onValueChange={(nextValue) => {
+        onChange(nextValue);
+        setIsOpen(false);
+      }}
+      currentValue={value}
       options={pages}
-      onOpenChange={handleOpenChange}
+      onOpenChange={setIsOpen}
       isTypeable={false}
       showKeyValue={false}
     />
@@ -44,7 +40,9 @@ const CanvasTopBar = () => {
     setZoom: onZoomChange,
     isPreview,
     setIsPreview: onTogglePreview,
+    currentPageId,
   } = useStorefrontCanvasContext();
+  const { pathname, query, replace } = useRouter();
   const { currentRelease } = useVendorContext();
   const [vpWidth, setVpWidth] = useState<number>(0);
 
@@ -57,14 +55,45 @@ const CanvasTopBar = () => {
     return () => observer.disconnect();
   }, []);
 
-  if (!currentRelease) return null;
-  const pages: Record<string, string> = currentRelease.layouts.reduce(
+  const handlePageChange = useCallback(
+    (pageId: string) => {
+      if (!currentRelease) return;
+      const nextPage = currentRelease.layouts
+        .find((l) => l.id === pageId)
+        ?.name.toLowerCase();
+      if (!nextPage) return;
+      void replace(
+        {
+          pathname,
+          query: {
+            ...query,
+            page: nextPage,
+          },
+        },
+        undefined,
+        {
+          shallow: true,
+        },
+      );
+    },
+    [currentRelease, pathname, query, replace],
+  );
+
+  const pages: Record<string, string> = (currentRelease?.layouts ?? []).reduce(
     (acc, page) => ({
       ...acc,
       [page.id]: page.name,
     }),
     {} as Record<string, string>,
   );
+
+  const activePageId =
+    (currentPageId && pages[currentPageId] ? currentPageId : null) ??
+    currentRelease?.layouts.find((l) => l.type === 'HOME')?.id ??
+    currentRelease?.layouts[0]?.id ??
+    '';
+
+  if (!currentRelease) return null;
 
   return (
     <div className='flex h-12 w-full shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 z-20 shadow-sx'>
@@ -86,7 +115,11 @@ const CanvasTopBar = () => {
 
       <div className='flex items-center gap-3'>
         {/* Page Select */}
-        <PageSelect pages={pages} />
+        <PageSelect
+          pages={pages}
+          value={activePageId}
+          onChange={handlePageChange}
+        />
         <div className='flex items-center gap-1 text-xs text-zinc-600'>
           <button
             type='button'

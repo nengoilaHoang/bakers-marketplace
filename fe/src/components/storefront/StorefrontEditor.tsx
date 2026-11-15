@@ -7,7 +7,7 @@ import { StorefrontRelease } from '@/types/storefront';
 import flattenLayout from '@/utils/flattenLayout';
 import { PointerActivationConstraints } from '@dnd-kit/dom';
 import { DragDropProvider, DragOverlay, PointerSensor } from '@dnd-kit/react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Icon from '../ui/Icon';
 import CanvasStage from './canvas/CanvasStage';
@@ -18,6 +18,7 @@ import NodeRenderer, { NodeRendererMode } from './NodeRenderer';
 
 type StorefrontEditorProps = {
   release: StorefrontRelease;
+  pageName?: string;
 };
 
 // components/storefront/StorefrontEditor.tsx
@@ -168,37 +169,69 @@ const DndContainer = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const StorefrontEditor = ({ release }: StorefrontEditorProps) => {
-  const layout = useMemo<LayoutState | undefined>(() => {
-    if (release.layouts.length === 0) return undefined;
+const StorefrontEditor = ({ release, pageName }: StorefrontEditorProps) => {
+  const { currentPageId, setCurrentPageId } = useStorefrontCanvasContext();
+  useEffect(() => {
+    if (pageName) {
+      const pageId = release.layouts.find(
+        (item) => item.name.toLowerCase() === pageName.toLowerCase(),
+      )?.id;
+      if (pageId) {
+        setCurrentPageId(pageId);
+      }
+    }
+  }, [pageName, release.layouts, setCurrentPageId]);
 
-    const flattenedLayouts = release.layouts.map((item) => {
-      const flattenedRoot = flattenLayout(item.root);
-      return {
+  const flattenLayouts = useMemo(
+    () =>
+      release.layouts.map((item) => ({
         id: item.id,
         type: item.type,
+        name: item.name.toLowerCase(),
         rootId: item.root.id,
-        components: flattenedRoot,
-      };
-    });
+        components: flattenLayout(item.root),
+      })),
+    [release.layouts],
+  );
 
-    const layoutStates = flattenedLayouts.map((item) => ({
+  const [layoutStates, setLayoutStates] = useState<LayoutState[]>(() =>
+    flattenLayouts.map((item) => ({
       id: item.id,
       type: item.type,
+      name: item.name,
       rootId: item.rootId,
       components: Object.fromEntries(item.components.map((c) => [c.id, c])),
       removedComponents: new Set<string>(),
       newComponents: new Set<string>(),
       dirtyComponents: new Set<string>(),
-    }));
+    })),
+  );
 
-    return layoutStates.find((item) => item.type === 'HOME') ?? layoutStates[0];
-  }, [release.layouts]);
+  const layout = useMemo<LayoutState | undefined>(() => {
+    if (layoutStates.length === 0) return undefined;
+    return (
+      layoutStates.find((item) => item.id === currentPageId) ??
+      layoutStates.find((item) => item.type === 'HOME') ??
+      layoutStates[0]
+    );
+  }, [currentPageId, layoutStates]);
+
+  const updateLayout = useCallback((nextLayout: LayoutState) => {
+    setLayoutStates((prev) =>
+      prev.some((item) => item.id === nextLayout.id && item === nextLayout)
+        ? prev
+        : prev.map((item) => (item.id === nextLayout.id ? nextLayout : item)),
+    );
+  }, []);
 
   if (!layout) return null;
 
   return (
-    <StorefrontLayoutProvider initialState={layout}>
+    <StorefrontLayoutProvider
+      key={layout.id}
+      initialState={layout}
+      updateLayout={updateLayout}
+    >
       {({ root }) => (
         <DndContainer>
           <ComponentLibraryContainer />
