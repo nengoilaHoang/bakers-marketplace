@@ -6,6 +6,7 @@ export type VendorContextValue = {
   setStorefront: (storefront: Storefront | null) => void;
   currentRelease: StorefrontRelease | null;
   setCurrentReleaseId: (releaseId: string | null) => void;
+  revalidateLayouts: () => Promise<void>;
 };
 
 const VendorContext = createContext<VendorContextValue | null>(null);

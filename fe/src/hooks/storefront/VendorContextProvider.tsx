@@ -5,7 +5,7 @@ import {
 } from '@/services/storefront';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useAuth from '../user/useAuthContext';
 import VendorContext, { VendorContextValue } from './VendorContext';
 
@@ -118,14 +118,33 @@ const VendorContextProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [currentReleaseId, storefront]);
 
+  const revalidateLayouts = useCallback(async () => {
+    if (!currentReleaseId) return;
+    const layouts = await getStorefrontReleaseLayouts(currentReleaseId);
+
+    setCurrentRelease((prev) =>
+      prev?.id === currentReleaseId ? { ...prev, layouts } : prev,
+    );
+    setStorefront((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        releases: prev.releases.map((r) =>
+          r.id === currentReleaseId ? { ...r, layouts } : r,
+        ),
+      };
+    });
+  }, [currentReleaseId]);
+
   const contextValue: VendorContextValue = useMemo(
     () => ({
       storefront,
       setStorefront,
       currentRelease,
       setCurrentReleaseId,
+      revalidateLayouts,
     }),
-    [currentRelease, setCurrentReleaseId, storefront],
+    [currentRelease, setCurrentReleaseId, storefront, revalidateLayouts],
   );
 
   return (

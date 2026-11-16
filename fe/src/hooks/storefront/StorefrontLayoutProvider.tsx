@@ -1,28 +1,80 @@
+// hooks/storefront/StorefrontLayoutProvider.tsx
+import { saveLayoutComponentsBatch } from '@/services/storefront';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenComponent, NewFlattenComponent } from '@/utils/flattenLayout';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import buildPageLayoutMutation from '@/utils/pageLayoutMutation';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import StorefrontLayoutContext, {
   StorefrontLayoutContextValue,
 } from './StorefrontLayoutContext';
 import useLayoutReducer, { LayoutState } from './useLayoutReducer';
+import { useOptionalStorefrontCanvasContext } from './useStorefrontCanvasContext';
 
 const StorefrontLayoutProvider = ({
   children,
   initialState,
-  updateLayout,
+  onLayoutUpdated,
+  onSaved,
 }: {
   children:
     | React.ReactNode
     | React.ReactNode[]
     | ((props: { root: FlattenComponent }) => React.ReactNode);
   initialState: LayoutState;
-  updateLayout: (layout: LayoutState) => void;
+  onLayoutUpdated: (layout: LayoutState) => void;
+  onSaved?: () => Promise<void> | void;
 }) => {
-  const { state, dispatch } = useLayoutReducer(initialState);
+  const { state, canUndo, canRedo, dispatch } = useLayoutReducer(initialState);
+  const canvasCtx = useOptionalStorefrontCanvasContext();
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    updateLayout(state);
-  }, [state, updateLayout]);
+    onLayoutUpdated(state);
+  }, [state, onLayoutUpdated]);
+
+  // Clear selection if an undo/redo removes the currently selected component
+  useEffect(() => {
+    if (
+      canvasCtx?.selectedComponentId &&
+      !state.components[canvasCtx.selectedComponentId]
+    ) {
+      canvasCtx.selectComponent(null);
+    }
+  }, [canvasCtx, state.components]);
+
+  const undo = useCallback(() => {
+    dispatch({ type: 'UNDO' });
+  }, [dispatch]);
+
+  const redo = useCallback(() => {
+    dispatch({ type: 'REDO' });
+  }, [dispatch]);
+
+  const registerLayoutHistory = canvasCtx?.registerLayoutHistory;
+  useEffect(() => {
+    registerLayoutHistory?.({ canUndo, canRedo, undo, redo });
+    return () => registerLayoutHistory?.(null);
+  }, [registerLayoutHistory, canUndo, canRedo, undo, redo]);
+
+  const hasUnsavedChanges = useMemo(
+    () =>
+      state.newComponents.size > 0 ||
+      state.dirtyComponents.size > 0 ||
+      state.removedComponents.size > 0,
+    [state.newComponents, state.dirtyComponents, state.removedComponents],
+  );
+
+  const saveLayout = useCallback(async () => {
+    if (isSaving || !hasUnsavedChanges) return;
+    setIsSaving(true);
+    try {
+      const payload = buildPageLayoutMutation(state);
+      await saveLayoutComponentsBatch(payload);
+      await onSaved?.();
+    } finally {
+      setIsSaving(false);
+    }
+  }, [hasUnsavedChanges, isSaving, onSaved, state]);
 
   const addNewComponent = useCallback(
     (
@@ -33,12 +85,7 @@ const StorefrontLayoutProvider = ({
     ) => {
       dispatch({
         type: 'NEW_COMPONENT',
-        payload: {
-          targetParentId,
-          newComponent,
-          breakpoint,
-          slot,
-        },
+        payload: { targetParentId, newComponent, breakpoint, slot },
       });
     },
     [dispatch],
@@ -104,19 +151,33 @@ const StorefrontLayoutProvider = ({
   const value: StorefrontLayoutContextValue = useMemo(
     () => ({
       state,
+      hasUnsavedChanges,
+      isSaving,
+      saveLayout,
       addNewComponent,
       updateConfig,
       moveComponent,
       removeComponent,
       removeComponentInBreakpoint,
+      canUndo,
+      canRedo,
+      undo,
+      redo,
     }),
     [
       state,
+      hasUnsavedChanges,
+      isSaving,
+      saveLayout,
       addNewComponent,
       updateConfig,
       moveComponent,
       removeComponent,
       removeComponentInBreakpoint,
+      canUndo,
+      canRedo,
+      undo,
+      redo,
     ],
   );
 
@@ -125,11 +186,10 @@ const StorefrontLayoutProvider = ({
   }
 
   const root = state.components[state.rootId];
-  const extraProps = { root };
 
   return (
     <StorefrontLayoutContext.Provider value={value}>
-      {typeof children === 'function' ? children(extraProps) : children}
+      {typeof children === 'function' ? children({ root }) : children}
     </StorefrontLayoutContext.Provider>
   );
 };

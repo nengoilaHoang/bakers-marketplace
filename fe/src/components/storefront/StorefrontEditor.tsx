@@ -15,11 +15,13 @@ import ComponentInspectorContainer from './ComponentInspectorContainer';
 import { COMPONENT_PREVIEWS } from './ComponentLibrary';
 import ComponentLibraryContainer from './ComponentLibraryContainer';
 import NodeRenderer, { NodeRendererMode } from './NodeRenderer';
+import SaveLayoutButton from './SaveLayoutButton';
 
 type StorefrontEditorProps = {
   layoutState: LayoutState | undefined;
   themeSettings: StorefrontRelease['themeSettings'];
   updateLayout: (nextLayout: LayoutState) => void;
+  onSaved?: () => Promise<void> | void;
 };
 
 // components/storefront/StorefrontEditor.tsx
@@ -174,6 +176,7 @@ const StorefrontEditor = ({
   layoutState,
   themeSettings,
   updateLayout,
+  onSaved,
 }: StorefrontEditorProps) => {
   const themeStyle = useMemo(
     () => buildThemeStyle(themeSettings),
@@ -184,16 +187,19 @@ const StorefrontEditor = ({
 
   return (
     <StorefrontLayoutProvider
-      key={layoutState.id}
+      key={`${layoutState.id}-${layoutState.revision}`}
       initialState={layoutState}
-      updateLayout={updateLayout}
+      onLayoutUpdated={updateLayout}
+      onSaved={onSaved}
     >
       {({ root }) => (
         <DndContainer>
+          <div className='fixed bottom-5 right-6 z-40 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur'>
+            <SaveLayoutButton />
+          </div>
           <div style={themeStyle} className='contents'>
             <ComponentLibraryContainer />
           </div>
-
           <CanvasStage>
             <div
               style={themeStyle}
@@ -202,7 +208,6 @@ const StorefrontEditor = ({
               <NodeRenderer component={root} mode={NodeRendererMode.Editor} />
             </div>
           </CanvasStage>
-
           <ComponentInspectorContainer />
         </DndContainer>
       )}

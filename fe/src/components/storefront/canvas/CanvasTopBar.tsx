@@ -1,4 +1,6 @@
+import Icon from '@/components/ui/Icon';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
+import { useOptionalStorefrontLayoutContext } from '@/hooks/storefront/useStorefrontLayoutContext';
 import useVendorContext from '@/hooks/storefront/useVendorContext';
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
 import { useRouter } from 'next/router';
@@ -33,6 +35,9 @@ const PageSelect = ({ pages, value, onChange }: PageSelectProps) => {
 };
 
 const CanvasTopBar = () => {
+  const canvasCtx = useStorefrontCanvasContext();
+  const layoutCtx = useOptionalStorefrontLayoutContext();
+
   const {
     breakpoint: currentBreakpoint,
     setBreakpoint: onBreakpointChange,
@@ -41,11 +46,18 @@ const CanvasTopBar = () => {
     isPreview,
     setIsPreview: onTogglePreview,
     currentPageId,
-  } = useStorefrontCanvasContext();
+  } = canvasCtx;
+
+  const canUndo = layoutCtx?.canUndo ?? canvasCtx.canUndo;
+  const canRedo = layoutCtx?.canRedo ?? canvasCtx.canRedo;
+  const undo = layoutCtx?.undo ?? canvasCtx.undo;
+  const redo = layoutCtx?.redo ?? canvasCtx.redo;
+
   const { pathname, query, replace } = useRouter();
   const { currentRelease } = useVendorContext();
   const [vpWidth, setVpWidth] = useState<number>(0);
 
+  // Observe viewport width
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       setVpWidth(entries[0].contentRect.width ?? window.innerWidth);
@@ -54,6 +66,45 @@ const CanvasTopBar = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  // Watch for keystrokes
+  useEffect(() => {
+    if (!isPreview) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const isMod = e.ctrlKey || e.metaKey;
+      if (!isMod) return;
+
+      if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        if (!canUndo) return;
+        e.preventDefault();
+        undo();
+      } else if (
+        (e.key.toLowerCase() === 'z' && e.shiftKey) ||
+        e.key.toLowerCase() === 'y'
+      ) {
+        if (!canRedo) return;
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [canRedo, canUndo, isPreview, redo, undo]);
 
   const handlePageChange = useCallback(
     (pageId: string) => {
@@ -114,6 +165,30 @@ const CanvasTopBar = () => {
       </div>
 
       <div className='flex items-center gap-3'>
+        {/* Undo / Redo */}
+        <div className='flex items-center gap-1'>
+          <button
+            type='button'
+            aria-label='Undo'
+            title='Undo (Ctrl+Z)'
+            disabled={!canUndo || isPreview}
+            onClick={undo}
+            className='inline-flex items-center justify-center rounded border border-zinc-200 p-1.5 text-zinc-700 transition-colors hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40'
+          >
+            <Icon name='rotate-ccw' className='size-3.5' />
+          </button>
+          <button
+            type='button'
+            aria-label='Redo'
+            title='Redo (Ctrl+Shift+Z)'
+            disabled={!canRedo || isPreview}
+            onClick={redo}
+            className='inline-flex items-center justify-center rounded border border-zinc-200 p-1.5 text-zinc-700 transition-colors hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40'
+          >
+            <Icon name='rotate-cw' className='size-3.5' />
+          </button>
+        </div>
+
         {/* Page Select */}
         <PageSelect
           pages={pages}

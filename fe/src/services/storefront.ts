@@ -5,6 +5,7 @@ import { LayoutComponent } from '@/types/layout-component';
 import { PageLayout } from '@/types/page-layout';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
 import { ThemeSettings } from '@/types/theme-settings';
+import { BatchLayoutComponentPayload } from '@/utils/pageLayoutMutation';
 
 const normalizeComponent = (value: unknown): value is LayoutComponent => {
   if (typeof value !== 'object' || value === null || Array.isArray(value))
@@ -98,6 +99,15 @@ export async function getStorefrontReleaseLayouts(
 
   layouts.forEach((layout) => normalizeComponent(layout.root));
   return layouts;
+}
+
+export async function saveLayoutComponentsBatch(
+  payload: BatchLayoutComponentPayload,
+): Promise<void> {
+  await request<void>('/layout-components/batch', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
 }
 
 export type PublicStorefrontPageResponse = {

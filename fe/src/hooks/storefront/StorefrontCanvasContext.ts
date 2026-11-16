@@ -1,5 +1,13 @@
+// hooks/storefront/StorefrontCanvasContext.ts
 import { DeviceBreakpointWithFluid } from '@/types/canvas';
 import { createContext } from 'react';
+
+export type LayoutHistoryControls = {
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+};
 
 export type StorefrontCanvasContextValue = {
   zoom: number;
@@ -16,6 +24,11 @@ export type StorefrontCanvasContextValue = {
   setCurrentPageId: (pageId: string | null) => void;
   selectedComponentId: string | null;
   selectComponent: (id: string | null) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+  registerLayoutHistory: (controls: LayoutHistoryControls | null) => void;
 };
 
 const StorefrontCanvasContext =

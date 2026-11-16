@@ -1,6 +1,7 @@
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import StorefrontCanvasContext, {
+  LayoutHistoryControls,
   StorefrontCanvasContextValue,
 } from './StorefrontCanvasContext';
 
@@ -26,6 +27,10 @@ const StorefrontCanvasProvider = ({
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     null,
   );
+  const [layoutHistory, setLayoutHistory] =
+    useState<LayoutHistoryControls | null>(null);
+
+  const noop = () => {};
 
   const selectPage = useCallback((pageId: string | null) => {
     setSelectedComponentId(null);
@@ -78,6 +83,11 @@ const StorefrontCanvasProvider = ({
       setCurrentPageId: selectPage,
       selectedComponentId,
       selectComponent: setSelectedComponentId,
+      canUndo: layoutHistory?.canUndo ?? false,
+      canRedo: layoutHistory?.canRedo ?? false,
+      undo: layoutHistory?.undo ?? noop,
+      redo: layoutHistory?.redo ?? noop,
+      registerLayoutHistory: setLayoutHistory,
     }),
     [
       zoom,
@@ -88,6 +98,10 @@ const StorefrontCanvasProvider = ({
       currentPageId,
       selectPage,
       selectedComponentId,
+      layoutHistory?.canUndo,
+      layoutHistory?.canRedo,
+      layoutHistory?.undo,
+      layoutHistory?.redo,
     ],
   );
 

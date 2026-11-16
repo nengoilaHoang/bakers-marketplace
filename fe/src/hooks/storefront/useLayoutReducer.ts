@@ -50,7 +50,17 @@ type LayoutAction =
         breakpoint: DeviceBreakpoint;
         slot: number;
       };
-    };
+    }
+  | { type: 'UNDO' }
+  | { type: 'REDO' };
+
+type LayoutHistoryState = {
+  past: LayoutState[];
+  present: LayoutState;
+  future: LayoutState[];
+};
+
+const MAX_HISTORY_STEPS = 50;
 
 export type LayoutState = {
   id: string;
@@ -60,6 +70,7 @@ export type LayoutState = {
   newComponents: Set<string>; // Created in FE, not yet in DB
   dirtyComponents: Set<string>; // Existing DB components modified in FE
   removedComponents: Set<string>; // Existing DB components deleted in FE
+  revision: number;
   // unplacedComponents: {
   //   desktop: Set<string>;
   //   tablet: Set<string>;
@@ -674,9 +685,56 @@ const layoutReducer = (
   }
 };
 
-const useLayoutReducer = (initialState: LayoutState) => {
-  const [state, dispatch] = useReducer(layoutReducer, initialState);
-  return { state, dispatch };
+const historyLayoutReducer = (
+  history: LayoutHistoryState,
+  action: LayoutAction,
+): LayoutHistoryState => {
+  switch (action.type) {
+    case 'UNDO': {
+      if (history.past.length === 0) return history;
+      const previous = history.past.at(-1) ?? history.present;
+      return {
+        past: history.past.slice(0, -1),
+        present: previous,
+        future: [history.present, ...history.future],
+      };
+    }
+    case 'REDO': {
+      if (history.future.length === 0) return history;
+      const [next, ...remainingFuture] = history.future;
+      return {
+        past: [...history.past, history.present],
+        present: next,
+        future: remainingFuture,
+      };
+    }
+    default: {
+      const nextPresent = layoutReducer(history.present, action);
+      if (nextPresent === history.present) return history;
+      return {
+        past: [
+          ...history.past.slice(-(MAX_HISTORY_STEPS - 1)),
+          history.present,
+        ],
+        present: nextPresent,
+        future: [],
+      };
+    }
+  }
 };
 
+const useLayoutReducer = (initialState: LayoutState) => {
+  const [history, dispatch] = useReducer(historyLayoutReducer, {
+    past: [],
+    present: initialState,
+    future: [],
+  });
+
+  return {
+    state: history.present,
+    canUndo: history.past.length > 0,
+    canRedo: history.future.length > 0,
+    dispatch,
+  };
+};
 export default useLayoutReducer;

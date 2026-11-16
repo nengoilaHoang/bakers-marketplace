@@ -1,3 +1,4 @@
+// hooks/storefront/StorefrontLayoutContext.ts
 import { DeviceBreakpoint } from '@/types/canvas';
 import { NewFlattenComponent } from '@/utils/flattenLayout';
 import { createContext } from 'react';
@@ -5,6 +6,9 @@ import { LayoutState } from './useLayoutReducer';
 
 export interface StorefrontLayoutContextValue {
   state: LayoutState;
+  hasUnsavedChanges: boolean;
+  isSaving: boolean;
+  saveLayout: () => Promise<void>;
   addNewComponent: (
     targetParentId: string,
     newComponent: NewFlattenComponent,
@@ -30,8 +34,13 @@ export interface StorefrontLayoutContextValue {
     breakpoint: DeviceBreakpoint,
     slot: number,
   ) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
 }
 
 const StorefrontLayoutContext =
   createContext<StorefrontLayoutContextValue | null>(null);
+
 export default StorefrontLayoutContext;

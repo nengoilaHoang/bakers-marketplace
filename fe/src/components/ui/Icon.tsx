@@ -41,6 +41,7 @@ import {
   Printer,
   Reply,
   RotateCcw,
+  RotateCw,
   Search,
   Share2,
   ShoppingCart,
@@ -140,6 +141,8 @@ const ICONS = {
   users: Users,
   utensils: Utensils,
   wheat: Wheat,
+  'rotate-ccw': RotateCcw,
+  'rotate-cw': RotateCw,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

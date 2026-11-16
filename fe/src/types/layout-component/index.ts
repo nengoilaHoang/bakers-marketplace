@@ -125,3 +125,5 @@ export type CreateLayoutComponent =
   | CreateLeafComponent
   | CreateRepeaterComponent
   | CreateCommerceComponent;
+
+export type PutLayoutComponent = CreateLayoutComponent | UpdateLayoutComponent;
