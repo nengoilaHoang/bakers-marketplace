@@ -4,10 +4,10 @@ import { LayoutState } from '@/hooks/storefront/useLayoutReducer';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { StorefrontRelease } from '@/types/storefront';
-import flattenLayout from '@/utils/flattenLayout';
+import { buildThemeStyle } from '@/utils/buildThemeStyle';
 import { PointerActivationConstraints } from '@dnd-kit/dom';
 import { DragDropProvider, DragOverlay, PointerSensor } from '@dnd-kit/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Icon from '../ui/Icon';
 import CanvasStage from './canvas/CanvasStage';
@@ -17,8 +17,9 @@ import ComponentLibraryContainer from './ComponentLibraryContainer';
 import NodeRenderer, { NodeRendererMode } from './NodeRenderer';
 
 type StorefrontEditorProps = {
-  release: StorefrontRelease;
-  pageName?: string;
+  layoutState: LayoutState | undefined;
+  themeSettings: StorefrontRelease['themeSettings'];
+  updateLayout: (nextLayout: LayoutState) => void;
 };
 
 // components/storefront/StorefrontEditor.tsx
@@ -169,75 +170,39 @@ const DndContainer = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const StorefrontEditor = ({ release, pageName }: StorefrontEditorProps) => {
-  const { currentPageId, setCurrentPageId } = useStorefrontCanvasContext();
-  useEffect(() => {
-    if (pageName) {
-      const pageId = release.layouts.find(
-        (item) => item.name.toLowerCase() === pageName.toLowerCase(),
-      )?.id;
-      if (pageId) {
-        setCurrentPageId(pageId);
-      }
-    }
-  }, [pageName, release.layouts, setCurrentPageId]);
-
-  const flattenLayouts = useMemo(
-    () =>
-      release.layouts.map((item) => ({
-        id: item.id,
-        type: item.type,
-        name: item.name.toLowerCase(),
-        rootId: item.root.id,
-        components: flattenLayout(item.root),
-      })),
-    [release.layouts],
+const StorefrontEditor = ({
+  layoutState,
+  themeSettings,
+  updateLayout,
+}: StorefrontEditorProps) => {
+  const themeStyle = useMemo(
+    () => buildThemeStyle(themeSettings),
+    [themeSettings],
   );
 
-  const [layoutStates, setLayoutStates] = useState<LayoutState[]>(() =>
-    flattenLayouts.map((item) => ({
-      id: item.id,
-      type: item.type,
-      name: item.name,
-      rootId: item.rootId,
-      components: Object.fromEntries(item.components.map((c) => [c.id, c])),
-      removedComponents: new Set<string>(),
-      newComponents: new Set<string>(),
-      dirtyComponents: new Set<string>(),
-    })),
-  );
-
-  const layout = useMemo<LayoutState | undefined>(() => {
-    if (layoutStates.length === 0) return undefined;
-    return (
-      layoutStates.find((item) => item.id === currentPageId) ??
-      layoutStates.find((item) => item.type === 'HOME') ??
-      layoutStates[0]
-    );
-  }, [currentPageId, layoutStates]);
-
-  const updateLayout = useCallback((nextLayout: LayoutState) => {
-    setLayoutStates((prev) =>
-      prev.some((item) => item.id === nextLayout.id && item === nextLayout)
-        ? prev
-        : prev.map((item) => (item.id === nextLayout.id ? nextLayout : item)),
-    );
-  }, []);
-
-  if (!layout) return null;
+  if (!layoutState) return null;
 
   return (
     <StorefrontLayoutProvider
-      key={layout.id}
-      initialState={layout}
+      key={layoutState.id}
+      initialState={layoutState}
       updateLayout={updateLayout}
     >
       {({ root }) => (
         <DndContainer>
-          <ComponentLibraryContainer />
+          <div style={themeStyle} className='contents'>
+            <ComponentLibraryContainer />
+          </div>
+
           <CanvasStage>
-            <NodeRenderer component={root} mode={NodeRendererMode.Editor} />
+            <div
+              style={themeStyle}
+              className='min-h-screen w-full bg-(--color-background,white) text-(--color-text-primary,#18181b)'
+            >
+              <NodeRenderer component={root} mode={NodeRendererMode.Editor} />
+            </div>
           </CanvasStage>
+
           <ComponentInspectorContainer />
         </DndContainer>
       )}

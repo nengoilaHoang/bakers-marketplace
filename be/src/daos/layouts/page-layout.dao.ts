@@ -22,6 +22,7 @@ export class PageLayoutDao {
       .select(
         'id',
         'type',
+        'name',
         this.knex.raw(`
           CASE 
             WHEN root_component_id IS NOT NULL 
@@ -55,6 +56,22 @@ export class PageLayoutDao {
 
       return rootId;
     });
+  };
+
+  public getNavPages = async (domain: string) => {
+    const rows = await this.knex('page_layouts as pl')
+      .join('storefront_releases as sr', 'sr.id', 'pl.storefrontReleaseId')
+      .join('storefronts as s', 's.id', 'sr.storefrontId')
+      .join('brands as b', 'b.id', 's.brandId')
+      .select('pl.id', 'pl.name', 'pl.type')
+      .where({ 'b.domain': domain, 'sr.isActive': true });
+
+    return rows.map((row) => ({
+      id: row.id as string,
+      name: row.name as string,
+      slug: row.type === 'HOME' ? '' : (row.name as string),
+      type: row.type as string,
+    }));
   };
 }
 

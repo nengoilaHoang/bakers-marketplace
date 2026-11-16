@@ -8,6 +8,7 @@ import pageLayoutsRouter from '#/routes/page-layouts.route.js';
 import postsRouter from '#/routes/posts.route.js';
 import productsRouter from '#/routes/products.route.js';
 import recipesRouter from '#/routes/recipes.route.js';
+import storeRouter from '#/routes/store.route.js';
 import storefrontsRouter from '#/routes/storefronts.route.js';
 import usersRouter from '#/routes/users.route.js';
 
@@ -16,6 +17,7 @@ const router = Router();
 router.use('/authen', authenRouter);
 router.use('/recipes', recipesRouter);
 router.use('/posts', postsRouter);
+router.use('/store', storeRouter);
 router.use('/storefronts', storefrontsRouter);
 router.use('/pages', pageLayoutsRouter);
 router.use('/layout-components', layoutComponentsRouter);

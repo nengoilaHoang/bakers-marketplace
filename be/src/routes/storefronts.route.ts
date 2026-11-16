@@ -1,12 +1,17 @@
 import pageLayoutController from '#/controllers/page-layouts.controller.js';
 import storefrontController from '#/controllers/storefronts.controller.js';
 import {
-    authenMiddleware,
-    validateRole,
+	authenMiddleware,
+	validateRole,
 } from '#/middlewares/authen.middleware.js';
 import e from 'express';
 
 const router = e.Router();
+
+router.get(
+  '/domain/:domain/page',
+  storefrontController.getPublicStorefrontPage,
+);
 
 router.use(authenMiddleware, validateRole(['VENDOR']));
 

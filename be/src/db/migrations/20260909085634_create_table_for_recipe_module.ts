@@ -1073,6 +1073,15 @@ export async function up(knex: Knex): Promise<void> {
       table.timestamps(true, true);
 
       table.boolean('is_active').notNullable().defaultTo(false);
+
+      table.unique(['storefront_id', 'version'], {
+        indexName: 'uq_storefront_releases_storefront_version',
+      });
+
+      table.unique(['storefront_id'], {
+        indexName: 'uq_storefront_releases_single_active',
+        predicate: knex.whereRaw('is_active = true'),
+      });
     })
 
     .createTable('layout_components', (table) => {

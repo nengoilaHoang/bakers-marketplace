@@ -1,13 +1,15 @@
 // components/storefront/composite-components/GridComponent.tsx
-import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
-import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
+import { useOptionalStorefrontCanvasContext } from '@/hooks/storefront/useStorefrontCanvasContext';
+import { useOptionalStorefrontLayoutContext } from '@/hooks/storefront/useStorefrontLayoutContext';
+import { useOptionalStorefrontRenderContext } from '@/hooks/storefront/useStorefrontRenderContext';
 import { cn } from '@/lib/cn';
+import { DeviceBreakpoint } from '@/types/canvas';
 import { RowHeightMode } from '@/types/layout-component/composite-component';
 import {
   FlattenComponent,
   FlattenCompositeComponent,
 } from '@/utils/flattenLayout';
-import { CSSProperties, useMemo } from 'react';
+import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import CanvasNodeWrapper from '../canvas/CanvasNodeWrapper';
 import DropZone from '../DropZone';
 import NodeRenderer, { NodeRendererMode } from '../NodeRenderer';
@@ -189,12 +191,37 @@ const GridComponent = ({
   sourceSlot,
   mode,
 }: GridComponentProps) => {
-  const { state } = useStorefrontLayoutContext();
-  const { breakpoint } = useStorefrontCanvasContext();
+  const layoutCtx = useOptionalStorefrontLayoutContext();
+  const renderCtx = useOptionalStorefrontRenderContext();
+  const canvasCtx = useOptionalStorefrontCanvasContext();
 
-  const isRoot = component.id === state.rootId;
+  const rootId = layoutCtx?.state.rootId ?? renderCtx?.rootId;
+  const components = layoutCtx?.state.components ?? renderCtx?.components ?? {};
+
+  const [viewportBp, setViewportBp] = useState<DeviceBreakpoint>('desktop');
+
+  useEffect(() => {
+    if (canvasCtx?.breakpoint) return;
+
+    const updateBreakpoint = () => {
+      const width = window.innerWidth;
+      if (width >= 1280) {
+        setViewportBp('desktop');
+      } else if (width >= 768) {
+        setViewportBp('tablet');
+      } else {
+        setViewportBp('mobile');
+      }
+    };
+
+    updateBreakpoint();
+    window.addEventListener('resize', updateBreakpoint);
+    return () => window.removeEventListener('resize', updateBreakpoint);
+  }, [canvasCtx?.breakpoint]);
+
+  const breakpoint = canvasCtx?.breakpoint ?? viewportBp;
+  const isRoot = component.id === rootId;
   const currentBp = breakpoint === 'fluid' ? 'desktop' : breakpoint;
-  const { components } = state;
   const { config } = component;
   const { rows, cols, gap, rowHeight } = config;
 

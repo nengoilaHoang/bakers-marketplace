@@ -1,4 +1,5 @@
 import database from '#/db/index.js';
+import { BrandPublicViewSchema } from '#/models/storefronts/brands.model.js';
 import { StorefrontReleaseSchema } from '#/models/storefronts/storefront-releases.model.js';
 import { Storefront } from '#/models/storefronts/storefronts.model.js';
 import { Knex } from 'knex';
@@ -75,6 +76,57 @@ export class StorefrontDao {
     }
 
     return StorefrontReleaseSchema.parse(rawData);
+  };
+
+  public getStorefrontPage = async (domain: string, slug?: string) => {
+    const rawData = await getReleasesQueryBuilder(this.knex, {
+      withLayouts: true,
+      withThemeSettings: true,
+    })
+      .leftJoin('storefronts as s', 's.id', 'sr.storefrontId')
+      .leftJoin('brands as b', 'b.id', 's.brandId')
+      .leftJoin('files as logo_file', 'logo_file.id', 'b.logo')
+      .leftJoin('files as favicon_file', 'favicon_file.id', 'b.favicon')
+      .select(
+        this.knex.raw(`
+          jsonb_build_object(
+            'id', b.id,
+            'name', b.name,
+            'vendorId', b.vendor_id,
+            'domain', b.domain,
+            'logoUrl', logo_file.url,
+            'faviconUrl', favicon_file.url
+          ) AS brand
+        `),
+      )
+      .groupBy('b.id', 'logo_file.url', 'favicon_file.url')
+      .where({ 'b.domain': domain, 'sr.isActive': true })
+      .modify((qb) => {
+        if (slug) {
+          qb.where('pl.name', slug);
+        } else {
+          qb.where('pl.type', 'HOME');
+        }
+      })
+      .first();
+
+    if (!rawData) {
+      return null;
+    }
+
+    const release = StorefrontReleaseSchema.parse(rawData);
+    const brand = BrandPublicViewSchema.parse(rawData.brand);
+    const layout = release.layouts[0] ?? null;
+
+    if (!layout) {
+      return null;
+    }
+
+    return {
+      brand,
+      themeSettings: release.themeSettings,
+      layout,
+    };
   };
 }
 

@@ -298,6 +298,17 @@
     color: var(--color-ink);
     font-family: var(--font-body);
   }
+
+	/* Hide root scrollbar on public storefront pages */
+  html:has([data-storefront-view]) {
+    overflow-x: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE / Edge */
+  }
+
+  html:has([data-storefront-view])::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 }
 
 @utility animate-scrolling-text {

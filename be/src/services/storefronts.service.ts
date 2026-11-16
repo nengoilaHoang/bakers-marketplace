@@ -1,3 +1,6 @@
+import pageLayoutDao, {
+	PageLayoutDao,
+} from '#/daos/layouts/page-layout.dao.js';
 import storefrontDao, {
 	StorefrontDao,
 } from '#/daos/storefronts/storefronts.dao.js';
@@ -6,7 +9,10 @@ import { Storefront } from '#/models/storefronts/storefronts.model.js';
 import { NotFoundError } from '#/utils/http-errors.js';
 
 export class StorefrontService {
-  constructor(private readonly storefrontDao: StorefrontDao) {}
+  constructor(
+    private readonly storefrontDao: StorefrontDao,
+    private readonly pageLayoutDao: PageLayoutDao,
+  ) {}
 
   public ensureExists = async (id: string): Promise<void> => {
     const exists = await this.storefrontDao.checkIfStoreExists(id);
@@ -15,11 +21,36 @@ export class StorefrontService {
     }
   };
 
+  public getPublicStorefrontPage = async (domain: string, slug?: string) => {
+    const splitSlugs = slug?.split('/').filter(Boolean);
+
+    const [pageData, navPages] = await Promise.all([
+      this.storefrontDao.getStorefrontPage(domain, splitSlugs?.[0]),
+      this.pageLayoutDao.getNavPages(domain),
+    ]);
+
+    if (!pageData) {
+      const slugMessage = slug ? ` and slug "${slug}"` : '';
+      throw new NotFoundError(
+        `Storefront page for domain "${domain}"${slugMessage} does not exist.`,
+      );
+    }
+
+    const routeParams =
+      splitSlugs && splitSlugs.length > 1 ? { id: splitSlugs[1] } : undefined;
+
+    return {
+      ...pageData,
+      navPages,
+      ...(routeParams ? { routeParams } : {}),
+    };
+  };
+
   public getVendorStorefront = async (
     vendorId: string,
     simple: boolean = false,
   ): Promise<Storefront | null> => {
-    return await storefrontDao.getVendorStorefront(vendorId, simple);
+    return await this.storefrontDao.getVendorStorefront(vendorId, simple);
   };
 
   public getActiveRelease = async (
@@ -39,5 +70,5 @@ export class StorefrontService {
   };
 }
 
-const storefrontService = new StorefrontService(storefrontDao);
+const storefrontService = new StorefrontService(storefrontDao, pageLayoutDao);
 export default storefrontService;

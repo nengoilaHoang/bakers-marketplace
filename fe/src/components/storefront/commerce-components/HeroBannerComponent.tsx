@@ -1,4 +1,3 @@
-import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { cn } from '@/lib/cn';
 import { ResponsiveProp } from '@/types/layout-component';
 import {
@@ -77,8 +76,6 @@ const HeroBannerComponent = ({
   sourceSlot,
   mode,
 }: HeroBannerProps) => {
-  const { breakpoint } = useStorefrontCanvasContext();
-
   const { config } = component;
   const {
     aspect,

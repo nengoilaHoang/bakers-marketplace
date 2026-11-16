@@ -3,6 +3,10 @@ import StorefrontCanvasContext, {
 	StorefrontCanvasContextValue,
 } from './StorefrontCanvasContext';
 
+export function useOptionalStorefrontCanvasContext(): StorefrontCanvasContextValue | null {
+  return useContext(StorefrontCanvasContext);
+}
+
 const useStorefrontCanvasContext = (): StorefrontCanvasContextValue => {
   const context = useContext(StorefrontCanvasContext);
   if (!context) {
@@ -10,7 +14,6 @@ const useStorefrontCanvasContext = (): StorefrontCanvasContextValue => {
       'useStorefrontCanvas must be used within a StorefrontCanvasProvider',
     );
   }
-
   return context;
 };
 

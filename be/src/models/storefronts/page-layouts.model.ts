@@ -20,6 +20,7 @@ export const PageLayoutSchema = z.object({
 
 export const PageLayoutTableSchema = z.object({
   id: z.uuidv4().readonly(),
+  storefrontReleaseId: z.uuidv4().readonly(),
   name: z.string().trim().min(1).max(255),
   type: PageLayoutTypeSchema,
   rootComponentId: z.uuidv4().nullable(),

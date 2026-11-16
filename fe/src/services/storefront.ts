@@ -1,7 +1,10 @@
+import { StorefrontNavPage } from '@/hooks/storefront/StorefrontRenderContext';
 import request from '@/lib/api';
+import { BrandPublicView } from '@/types/brand';
 import { LayoutComponent } from '@/types/layout-component';
 import { PageLayout } from '@/types/page-layout';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
+import { ThemeSettings } from '@/types/theme-settings';
 
 const normalizeComponent = (value: unknown): value is LayoutComponent => {
   if (typeof value !== 'object' || value === null || Array.isArray(value))
@@ -95,4 +98,29 @@ export async function getStorefrontReleaseLayouts(
 
   layouts.forEach((layout) => normalizeComponent(layout.root));
   return layouts;
+}
+
+export type PublicStorefrontPageResponse = {
+  brand: BrandPublicView;
+  themeSettings: ThemeSettings;
+  layout: PageLayout;
+  routeParams?: Record<string, string>;
+  navPages?: StorefrontNavPage[];
+};
+
+export async function getPublicStorefrontPage(
+  domain: string,
+  slug?: string,
+  abortSignal?: AbortSignal,
+): Promise<PublicStorefrontPageResponse> {
+  const { data } = await request<{ data: PublicStorefrontPageResponse }>(
+    `/storefronts/domain/${encodeURIComponent(domain)}/page`,
+    { signal: abortSignal },
+    slug ? { slug } : undefined,
+  );
+
+  if (data.layout?.root) {
+    normalizeComponent(data.layout.root);
+  }
+  return data;
 }

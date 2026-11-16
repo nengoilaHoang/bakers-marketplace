@@ -6,13 +6,32 @@ import storefrontService, {
 } from '#/services/storefronts.service.js';
 import { AuthenticatedRequest } from '#/types/request.types.js';
 import asyncHandler from '#/utils/asyncHandler.js';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 export class StorefrontController {
   constructor(
     private readonly storefrontService: StorefrontService,
     private readonly storefrontReleaseService: StorefrontReleaseService,
   ) {}
+
+  public getPublicStorefrontPage = asyncHandler(
+    async (
+      req: Request<{ domain: string }, unknown, unknown, { slug?: string }>,
+      res: Response,
+    ) => {
+      const { domain } = req.params;
+      const slug =
+        typeof req.query.slug === 'string' ? req.query.slug : undefined;
+
+      const data = await this.storefrontService.getPublicStorefrontPage(
+        domain,
+        slug,
+      );
+      return res.status(200).json({
+        data,
+      });
+    },
+  );
 
   public getMyStorefront = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {

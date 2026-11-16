@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
 
 interface ReleaseQueryOptions {
-  withLayouts: boolean;
-  withThemeSettings: boolean;
+  withLayouts?: boolean;
+  withThemeSettings?: boolean;
 }
 
 export const getReleasesQueryBuilder = (
