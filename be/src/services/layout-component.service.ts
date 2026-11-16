@@ -23,8 +23,10 @@ export class LayoutComponentService {
     }
     const { components, deleteIds } = result.data;
     await this.layoutComponentDao.withTransaction(async (trx) => {
-      await this.layoutComponentDao.upsertBatch(components, trx);
-      await this.layoutComponentDao.deleteComponents(deleteIds, trx);
+      components.length > 0 &&
+        (await this.layoutComponentDao.upsertBatch(components, trx));
+      deleteIds.length > 0 &&
+        (await this.layoutComponentDao.deleteComponents(deleteIds, trx));
     });
   };
 

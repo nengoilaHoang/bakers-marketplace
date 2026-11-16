@@ -17,6 +17,13 @@ type BuiltUpsertBatches = {
   updatables: ComponentBatches;
 };
 
+type CompositeChildRow = {
+  compositeId: string;
+  childId: string;
+  breakpoint: 'desktop' | 'tablet' | 'mobile';
+  sortOrder: number;
+};
+
 const emptyComponentBatches = (): ComponentBatches => ({
   base: [],
   leaf: [],
@@ -46,77 +53,128 @@ export class LayoutComponentDao {
     return this.knex.transaction(action);
   };
 
+  private readonly mergeBatches = (
+    components: PutLayoutComponent[],
+  ): BuiltUpsertBatches => {
+    return components.reduce<BuiltUpsertBatches>((combined, component) => {
+      const componentBatches = this.buildUpsertBatches(component);
+      for (const group of ['insertables', 'updatables'] as const) {
+        for (const key of [
+          'base',
+          'leaf',
+          'commerce',
+          'repeater',
+          'composite',
+          'children',
+        ] as const) {
+          combined[group][key].push(...componentBatches[group][key]);
+        }
+      }
+      return combined;
+    }, emptyBuiltUpsertBatches());
+  };
+
+  private readonly executeUpsertBatches = async (
+    t: Knex.Transaction,
+    batches: BuiltUpsertBatches,
+  ): Promise<void> => {
+    const baseRows = [...batches.insertables.base, ...batches.updatables.base];
+    const leafRows = [...batches.insertables.leaf, ...batches.updatables.leaf];
+    const commerceRows = [
+      ...batches.insertables.commerce,
+      ...batches.updatables.commerce,
+    ];
+    const repeaterRows = [
+      ...batches.insertables.repeater,
+      ...batches.updatables.repeater,
+    ];
+    const compositeRows = [
+      ...batches.insertables.composite,
+      ...batches.updatables.composite,
+    ];
+    const childrenRows = [
+      ...batches.insertables.children,
+      ...batches.updatables.children,
+    ] as CompositeChildRow[];
+
+    if (baseRows.length > 0) {
+      await t('layout_components').insert(baseRows).onConflict('id').merge();
+    }
+
+    await Promise.all([
+      leafRows.length > 0 &&
+        t('leaf_components').insert(leafRows).onConflict('id').merge(),
+      commerceRows.length > 0 &&
+        t('commerce_components').insert(commerceRows).onConflict('id').merge(),
+      repeaterRows.length > 0 &&
+        t('repeater_components').insert(repeaterRows).onConflict('id').merge(),
+      compositeRows.length > 0 &&
+        t('composite_components')
+          .insert(compositeRows)
+          .onConflict('id')
+          .merge(),
+    ]);
+
+    if (childrenRows.length > 0) {
+      // Update sortOrder for children already assigned to (compositeId, breakpoint)
+      await Promise.all(
+        childrenRows.map((row) => {
+          return t('composite_component_children')
+            .where({
+              compositeId: row.compositeId,
+              breakpoint: row.breakpoint,
+              childId: row.childId,
+            })
+            .update({ sortOrder: row.sortOrder });
+        }),
+      );
+
+      // Insert new assignments using the non-deferrable (composite_id, breakpoint, child_id) unique constraint
+      // (Temporary duplicate sort_order values are allowed until COMMIT because the PK is DEFERRABLE)
+      await t('composite_component_children')
+        .insert(childrenRows)
+        .onConflict(['compositeId', 'breakpoint', 'childId'])
+        .ignore();
+
+      // Remove replaced/stale slot rows after new rows exist so trg_cleanup_parent_component
+      // does not prematurely delete moved children from layout_components
+      const rowsByScope = new Map<string, CompositeChildRow[]>();
+      for (const row of childrenRows) {
+        const key = `${row.compositeId}:${row.breakpoint}`;
+        const group = rowsByScope.get(key) ?? [];
+        group.push(row);
+        rowsByScope.set(key, group);
+      }
+
+      await Promise.all(
+        Array.from(rowsByScope.values(), (group) => {
+          const { compositeId, breakpoint } = group[0];
+          const validChildIds = group.map((r) => r.childId);
+          return t('composite_component_children')
+            .where({ compositeId, breakpoint })
+            .whereNotIn('childId', validChildIds)
+            .del();
+        }),
+      );
+    }
+  };
+
   public upsertBatch = async (
     components: PutLayoutComponent[],
     trx?: Knex.Transaction,
-  ) => {
-    const execute = async (t: Knex.Transaction) => {
-      const batches = components.reduce<BuiltUpsertBatches>(
-        (combined, component) => {
-          const componentBatches = this.buildUpsertBatches(component);
-          for (const group of ['insertables', 'updatables'] as const) {
-            for (const key of [
-              'base',
-              'leaf',
-              'commerce',
-              'repeater',
-              'composite',
-              'children',
-            ] as const) {
-              combined[group][key].push(...componentBatches[group][key]);
-            }
-          }
-          return combined;
-        },
-        emptyBuiltUpsertBatches(),
-      );
+  ): Promise<void> => {
+    if (components.length === 0) {
+      return;
+    }
 
-      await t('layout_components')
-        .insert([...batches.insertables.base, ...batches.updatables.base])
-        .onConflict('id')
-        .merge();
-
-      await Promise.all([
-        t('leaf_components')
-          .insert([...batches.insertables.leaf, ...batches.updatables.leaf])
-          .onConflict('id')
-          .merge(),
-        t('commerce_components')
-          .insert([
-            ...batches.insertables.commerce,
-            ...batches.updatables.commerce,
-          ])
-          .onConflict('id')
-          .merge(),
-        t('repeater_components')
-          .insert([
-            ...batches.insertables.repeater,
-            ...batches.updatables.repeater,
-          ])
-          .onConflict('id')
-          .merge(),
-        t('composite_components')
-          .insert([
-            ...batches.insertables.composite,
-            ...batches.updatables.composite,
-          ])
-          .onConflict('id')
-          .merge(),
-      ]);
-
-      await t('composite_component_children')
-        .insert([
-          ...batches.insertables.children,
-          ...batches.updatables.children,
-        ])
-        .onConflict(['compositeId', 'breakpoint', 'sortOrder'])
-        .merge();
-    };
-
-    return await this.withTransaction(execute, trx);
+    const batches = this.mergeBatches(components);
+    await this.withTransaction(
+      (t) => this.executeUpsertBatches(t, batches),
+      trx,
+    );
   };
 
-  public buildUpsertBatches = (
+  private readonly buildUpsertBatches = (
     component: PutLayoutComponent,
   ): BuiltUpsertBatches => {
     const batches = emptyBuiltUpsertBatches();
@@ -214,8 +272,8 @@ export class LayoutComponentDao {
             // Capture the generated or existing child ID
             const childId =
               (child as PutLayoutComponent).id ??
-              (childBatches.updatables.base[0].id as string | undefined) ??
-              (childBatches.insertables.base[0].id as string | undefined);
+              (childBatches.updatables.base[0]?.id as string | undefined) ??
+              (childBatches.insertables.base[0]?.id as string | undefined);
 
             if (childId) childIds.push(childId);
 
@@ -253,7 +311,7 @@ export class LayoutComponentDao {
               }
               if (typeof childIdOrIndex === 'string') {
                 batches.updatables.children.push({
-                  componentId,
+                  compositeId: componentId,
                   childId: childIdOrIndex,
                   breakpoint,
                   sortOrder: Number.parseInt(orderStr, 10),
@@ -262,7 +320,7 @@ export class LayoutComponentDao {
                 const resolvedId = childIds[childIdOrIndex];
                 if (resolvedId) {
                   batches.insertables.children.push({
-                    componentId,
+                    compositeId: componentId,
                     childId: resolvedId,
                     breakpoint,
                     sortOrder: Number.parseInt(orderStr, 10),
@@ -286,53 +344,19 @@ export class LayoutComponentDao {
   public upsertLayoutComponent = async (
     component: PutLayoutComponent,
     trx?: Knex.Transaction,
-  ) => {
-    const execute = async (t: Knex.Transaction) => {
-      const batches = this.buildUpsertBatches(component);
+  ): Promise<string> => {
+    const batches = this.buildUpsertBatches(component);
+    const rootId =
+      component.id ??
+      (batches.insertables.base[0]?.id as string | undefined) ??
+      (batches.updatables.base[0]?.id as string);
 
-      await t('layout_components')
-        .insert([...batches.insertables.base, ...batches.updatables.base])
-        .onConflict('id')
-        .merge();
+    await this.withTransaction(
+      (t) => this.executeUpsertBatches(t, batches),
+      trx,
+    );
 
-      await Promise.all([
-        t('leaf_components')
-          .insert([...batches.insertables.leaf, ...batches.updatables.leaf])
-          .onConflict('id')
-          .merge(),
-        t('commerce_components')
-          .insert([
-            ...batches.insertables.commerce,
-            ...batches.updatables.commerce,
-          ])
-          .onConflict('id')
-          .merge(),
-        t('repeater_components')
-          .insert([
-            ...batches.insertables.repeater,
-            ...batches.updatables.repeater,
-          ])
-          .onConflict('id')
-          .merge(),
-        t('composite_components')
-          .insert([
-            ...batches.insertables.composite,
-            ...batches.updatables.composite,
-          ])
-          .onConflict('id')
-          .merge(),
-      ]);
-
-      await t('composite_component_children')
-        .insert([
-          ...batches.insertables.children,
-          ...batches.updatables.children,
-        ])
-        .onConflict(['compositeId', 'breakpoint', 'sortOrder'])
-        .merge();
-    };
-
-    return await this.withTransaction(execute, trx);
+    return rootId;
   };
 
   public deleteComponents = async (ids: string[], trx?: Knex.Transaction) => {

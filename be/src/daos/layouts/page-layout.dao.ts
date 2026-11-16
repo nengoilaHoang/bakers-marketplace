@@ -43,19 +43,19 @@ export class PageLayoutDao {
     root: PutLayoutComponent,
     trx?: Knex.Transaction,
   ) => {
-    return await this.knex.transaction(async (trx) => {
+    return await this.layoutComponentDao.withTransaction(async (t) => {
       const rootId = await this.layoutComponentDao.upsertLayoutComponent(
         root,
-        trx,
+        t,
       );
 
       // Attach root component to the page layout
-      await trx('page_layouts')
+      await t('page_layouts')
         .where({ id: pageId })
         .update({ rootComponentId: rootId });
 
       return rootId;
-    });
+    }, trx);
   };
 
   public getNavPages = async (domain: string) => {
