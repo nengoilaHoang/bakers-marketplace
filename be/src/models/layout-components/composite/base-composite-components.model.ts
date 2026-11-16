@@ -136,18 +136,23 @@ export const CompositePutSlotSchema = z.object({
     .optional(),
 });
 
+const UpdateCompositeChildrenSchema = z.preprocess(
+  (val) => (Array.isArray(val) ? val.filter(Boolean) : val),
+  z
+    .array(
+      z.lazy(
+        (): z.ZodType =>
+          z.union([UpdateLayoutComponentSchema, CreateLayoutComponentSchema]),
+      ),
+    )
+    .optional(),
+);
+
 export const UpdateBaseCompositeComponentSchema =
   UpdateBaseLayoutComponentSchema.extend({
     type: z.literal(ComponentTypeSchema.enum.COMPOSITE).readonly(),
     componentType: CompositeComponentTypeSchema.readonly(),
-    children: z
-      .array(
-        z.lazy(
-          (): z.ZodType =>
-            z.union([UpdateLayoutComponentSchema, CreateLayoutComponentSchema]),
-        ),
-      )
-      .optional(),
+    children: UpdateCompositeChildrenSchema,
     slots: CompositePutSlotSchema.optional(),
   });
 
@@ -155,17 +160,10 @@ export const CreateBaseCompositeComponentSchema =
   CreateBaseLayoutComponentSchema.extend({
     type: z.literal(ComponentTypeSchema.enum.COMPOSITE).readonly(),
     componentType: CompositeComponentTypeSchema.readonly(),
-    children: z
-      .array(
-        z.lazy(
-          (): z.ZodType =>
-            z.union([UpdateLayoutComponentSchema, CreateLayoutComponentSchema]),
-        ),
-      )
-      .default([]),
+    children: UpdateCompositeChildrenSchema,
     slots: CompositePutSlotSchema.optional(),
   }).superRefine((data, ctx) => {
-    if (!data.slots) return;
+    if (!data.children || !data.slots) return;
     const maxIndex = data.children.length - 1;
 
     for (const bp of ['desktop', 'tablet', 'mobile'] as const) {
