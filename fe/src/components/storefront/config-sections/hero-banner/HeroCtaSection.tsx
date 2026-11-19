@@ -13,6 +13,7 @@ import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
 import PositionConfig from '../PositionConfig';
+import UrlPicker from '../inputs/UrlPicker';
 
 const CTA_STYLE_OPTIONS: Record<HeroBannerCtaStyle, string> = {
   solid: 'Solid',
@@ -105,10 +106,9 @@ const CtaConfigGroup = ({
       {/* URL */}
       <div className='flex flex-col gap-1.5'>
         <ConfigLabel label='URL' forId={`${fieldPrefix}-url`} />
-        <ConfigInput
+        <UrlPicker
           id={`${fieldPrefix}-url`}
           name={`${fieldPrefix}.url`}
-          inputType='text'
           currentValue={current.url}
           onValueChange={(val) => onUpdate(`${fieldPrefix}.url`, val)}
         />

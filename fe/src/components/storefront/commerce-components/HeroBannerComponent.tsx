@@ -180,8 +180,11 @@ const HeroBannerCtaButton = ({
       onClickCapture={handleClickCapture}
       onAuxClickCapture={handleClickCapture}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-md font-medium whitespace-nowrap transition-all duration-150 select-none',
+        'inline-flex shrink-0 items-center justify-center rounded-md font-medium whitespace-nowrap select-none',
         'outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900',
+        isEditor
+          ? 'transition-[top,right,bottom,left,opacity,background-color] duration-150 ease-in-out'
+          : 'transition-all duration-150 ease-in-out',
         CTA_STYLE_CLASSES[style],
         getCtaColorScheme(colorScheme, style),
         ctaSizeClasses,

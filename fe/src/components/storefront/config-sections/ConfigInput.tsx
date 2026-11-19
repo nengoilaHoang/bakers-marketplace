@@ -57,7 +57,13 @@ type NumberInputProps = {
   max?: number;
   step: number;
   currentValue: number;
+  suffix?: string;
   onValueChange: (value: number) => void;
+};
+
+type ReadonlyInputProps = {
+  inputType: 'readonly';
+  currentValue: string | number;
 };
 
 /**
@@ -67,6 +73,7 @@ type NumberInputProps = {
  * @param min This value is meant to set the minimum value of a number input only when `inputType` is of type **`'number'`**.
  * @param max This value is meant to set the maximum value of a number input only when `inputType` is of type **`'number'`**.
  * @param step This value is meant to set the step value of a number input only when `inputType` is of type **`'number'`**.
+ * @param suffix This value is meant to set the suffix of a number input only when `inputType` is of type **`'number'`**.
  */
 export type ConfigInputProps = BaseConfigInputProps &
   (
@@ -77,17 +84,11 @@ export type ConfigInputProps = BaseConfigInputProps &
     | RadioInputProps
     | FileInputProps
     | NumberInputProps
+    | ReadonlyInputProps
   );
 
 const ConfigInput = (props: ConfigInputProps) => {
-  const {
-    id,
-    name,
-    inputType,
-    currentValue,
-    onValueChange,
-    onOpenStateChange,
-  } = props;
+  const { id, name, inputType, currentValue, onOpenStateChange } = props;
   const value = 'value' in props ? props.value : undefined;
   const presets = 'presets' in props ? props.presets : undefined;
   const selectOptions =
@@ -95,6 +96,7 @@ const ConfigInput = (props: ConfigInputProps) => {
   const min = 'min' in props ? props.min : undefined;
   const max = 'max' in props ? props.max : undefined;
   const step = 'step' in props ? props.step : undefined;
+  const suffix = 'suffix' in props ? props.suffix : undefined;
   const { ref, isOpen, toggle } = useDropdown();
 
   const handleOpenChange = (state: boolean) => {
@@ -125,7 +127,7 @@ const ConfigInput = (props: ConfigInputProps) => {
                 type='checkbox'
                 value={String(value)}
                 checked={currentValue === value}
-                onChange={(event) => onValueChange(event.target.checked)}
+                onChange={(event) => props.onValueChange(event.target.checked)}
               />
             );
           }
@@ -157,13 +159,14 @@ const ConfigInput = (props: ConfigInputProps) => {
               );
             }
             const handleValueChange = (value: string) => {
+              if (typeof value !== 'string') return;
               const trimmed = value.trim();
               const num = Number(trimmed);
               if (trimmed !== '' && !Number.isNaN(num)) {
-                onValueChange(num);
+                props.onValueChange(num);
                 return;
               }
-              onValueChange(value);
+              props.onValueChange(value);
             };
             return (
               <TypeableSelect
@@ -190,7 +193,7 @@ const ConfigInput = (props: ConfigInputProps) => {
                 name={name}
                 presets={presets as ReadonlyArray<string> | undefined}
                 currentValue={currentValue}
-                onValueChange={(value) => onValueChange(value)}
+                onValueChange={(value) => props.onValueChange(value)}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               />
@@ -221,7 +224,7 @@ const ConfigInput = (props: ConfigInputProps) => {
                 name={name}
                 currentValue={currentValue}
                 value={value}
-                onValueChange={onValueChange}
+                onValueChange={(val) => props.onValueChange(val)}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               />
@@ -234,7 +237,7 @@ const ConfigInput = (props: ConfigInputProps) => {
                 type='text'
                 name={name}
                 value={String(currentValue)}
-                onChange={(e) => onValueChange(e.target.value)}
+                onChange={(e) => props.onValueChange(e.target.value)}
                 className='min-w-0 w-full rounded-md border border-zinc-200 bg-zinc-50/50 px-2.5 py-1.5 text-xs text-zinc-800 placeholder-zinc-400 transition hover:bg-white focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950'
               />
             );
@@ -246,7 +249,7 @@ const ConfigInput = (props: ConfigInputProps) => {
                 id={id}
                 name={name}
                 currentValue={value}
-                onValueChange={(value) => onValueChange(value)}
+                onValueChange={(value) => props.onValueChange(value)}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
               ></FilePicker>
@@ -266,8 +269,23 @@ const ConfigInput = (props: ConfigInputProps) => {
                 max={max}
                 step={step}
                 currentValue={currentValue}
-                onValueChange={(value) => onValueChange(value)}
+                suffix={suffix}
+                onValueChange={(value) => props.onValueChange(value)}
                 onOpenChange={handleOpenChange}
+              />
+            );
+          }
+          case 'readonly': {
+            return (
+              <input
+                id={id}
+                type='text'
+                name={name}
+                readOnly
+                value={String(currentValue)}
+                onClick={() => handleOpenChange(!isOpen)}
+                aria-expanded={isOpen}
+                className='min-w-0 w-full cursor-pointer select-none rounded-md border border-zinc-200 bg-zinc-50/50 px-2.5 py-1.5 text-xs text-zinc-800 transition hover:bg-white focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950'
               />
             );
           }

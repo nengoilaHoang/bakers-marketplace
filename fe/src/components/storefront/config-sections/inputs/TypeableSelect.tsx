@@ -37,7 +37,7 @@ const TypeableSelect = ({
   id,
   name,
   options,
-  currentValue,
+  currentValue: currentKey,
   onValueChange,
   isOpen,
   onOpenChange,
@@ -56,6 +56,8 @@ const TypeableSelect = ({
   const [overflowingOptions, setOverflowingOptions] = useState<Set<number>>(
     new Set(),
   );
+  const [selectableOptions, setSelectableOptions] =
+    useState<Record<string, string>>(options);
 
   const enumKeys = useMemo(
     () => (options ? Object.keys(options) : []),
@@ -65,6 +67,14 @@ const TypeableSelect = ({
     () => (options ? Object.values(options) : []),
     [options],
   );
+
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    if (!isOpen) {
+      input.value = options[currentKey];
+    }
+  }, [currentKey, isOpen, options]);
 
   useLayoutEffect(() => {
     const updateOverflowingOptions = () => {
@@ -99,14 +109,14 @@ const TypeableSelect = ({
   }, [enumValues.length, showKeyValue]);
 
   const [inputValue, setInputValue] = useState(
-    options[currentValue] ?? currentValue ?? '',
+    options[currentKey] ?? currentKey ?? '',
   );
 
   useEffect(() => {
     queueMicrotask(() =>
-      setInputValue(options[currentValue] ?? currentValue ?? ''),
+      setInputValue(options[currentKey] ?? currentKey ?? ''),
     );
-  }, [currentValue, options]);
+  }, [currentKey, options]);
 
   useLayoutEffect(() => {
     if (inputRef.current) {
@@ -151,35 +161,66 @@ const TypeableSelect = ({
     onOpenChange(!isOpen);
   }, [updateView, onOpenChange, isOpen]);
 
+  useEffect(() => {
+    queueMicrotask(() => setSelectableOptions(options));
+  }, [options]);
+
   const handleChange = useCallback(
     (rawInput: string) => {
       const query = rawInput.trim().toLowerCase();
-      if (!query) return;
+      optionTextRefs.current = {};
 
-      let matchedOptionIndex = enumKeys.findIndex((key) => {
-        if (typeof key === 'string') {
-          return key.toLowerCase().startsWith(query);
-        }
-        return false;
-      });
-
-      if (matchedOptionIndex === -1) {
-        matchedOptionIndex = enumValues.findIndex((val) =>
-          val.toLowerCase().startsWith(query),
-        );
-      }
-
-      if (matchedOptionIndex !== -1) {
-        const matchedKey = enumKeys[matchedOptionIndex];
-        if (matchedKey !== undefined) {
-          onValueChange(matchedKey);
-        }
+      if (!query) {
+        setSelectableOptions(options);
         return;
       }
 
-      const formattedNumber = Number(query);
-      if (!Number.isNaN(formattedNumber)) {
-        onValueChange(String(formattedNumber));
+      const newOptions = Object.fromEntries(
+        Object.entries(options).filter(
+          ([key, value]) =>
+            key.toLowerCase().includes(query) ||
+            value.toLowerCase().includes(query),
+        ),
+      );
+
+      setSelectableOptions((prev) => (prev === newOptions ? prev : newOptions));
+    },
+    [options],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        const rawValue = (e.target as HTMLInputElement).value
+          .trim()
+          .toLocaleLowerCase();
+        if (!rawValue) return;
+
+        let matchedOptionIndex = enumKeys.findIndex((key) => {
+          if (typeof key === 'string') {
+            return key.toLowerCase().startsWith(rawValue);
+          }
+          return false;
+        });
+
+        if (matchedOptionIndex === -1) {
+          matchedOptionIndex = enumValues.findIndex((val) =>
+            val.toLowerCase().startsWith(rawValue),
+          );
+        }
+
+        if (matchedOptionIndex !== -1) {
+          const matchedKey = enumKeys[matchedOptionIndex];
+          if (matchedKey !== undefined) {
+            onValueChange(matchedKey);
+          }
+          return;
+        }
+
+        const formattedNumber = Number(rawValue);
+        if (!Number.isNaN(formattedNumber)) {
+          onValueChange(String(formattedNumber));
+        }
       }
     },
     [enumKeys, enumValues, onValueChange],
@@ -229,6 +270,7 @@ const TypeableSelect = ({
             autoComplete='off'
             readOnly={!isTypeable}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             value={inputValue}
           ></input>
           <Icon
@@ -255,13 +297,13 @@ const TypeableSelect = ({
           className='min-h-0 min-w-0 overflow-y-auto scrollbar-none'
           ref={contentRef}
         >
-          {enumValues.map((val, idx) => {
+          {Object.entries(selectableOptions).map(([key, value], idx) => {
             return (
               <button
-                key={`${String(val)}-${idx}`}
+                key={key}
                 onClick={(e) => {
                   e.preventDefault();
-                  handleSelectOption(enumKeys[idx]);
+                  handleSelectOption(key);
                 }}
                 className='appearance-none flex min-h-0 w-full items-center justify-between px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
               >
@@ -275,11 +317,11 @@ const TypeableSelect = ({
                       : ''
                   }`}
                 >
-                  {val}
+                  {value}
                 </span>
                 {showKeyValue && (
                   <span className='ml-auto font-mono text-[10px] text-zinc-400'>
-                    {enumKeys[idx]}
+                    {key}
                   </span>
                 )}
               </button>
