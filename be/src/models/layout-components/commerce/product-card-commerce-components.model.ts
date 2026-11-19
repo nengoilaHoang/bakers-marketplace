@@ -111,7 +111,7 @@ export const UpdateProductCardRepeaterComponentSchema =
     componentType: z
       .literal(CommerceComponentTypeSchema.enum.PRODUCT_CARD)
       .readonly(),
-    config: ProductCardConfigSchema.partial().optional(),
+    config: ProductCardConfigSchema.optional(),
   });
 
 // Create Schemas

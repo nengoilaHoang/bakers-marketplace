@@ -101,6 +101,7 @@ const BaseLayoutSections = ({
             onActiveSectionChange(active ? 'bento' : null)
           }
           zIndex={getSectionZIndex('bento')}
+          currentBp={currentBp}
         />
       )}
     </>

@@ -34,21 +34,23 @@ const ComponentInspector = ({
   const isBentoItem =
     'colSpan' in component.config && 'rowSpan' in component.config;
 
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+  const [openSections, setOpenSections] = useState<Record<SectionId, boolean>>({
     dimensions: true,
     alignment: true,
     padding: true,
-    'surface-theme': true,
-    ...(isBentoItem && { bento: true }),
+    theme: true,
     ...(component.componentType === 'HERO_BANNER' && {
       'hero-overlay': true,
       'hero-content': true,
+      'hero-cta': true,
+      'hero-banner-image': true,
     }),
     ...(component.componentType === 'GRID' && {
       'grid-layout': true,
       'grid-tracks': true,
     }),
-  });
+    ...(isBentoItem && { bento: true }),
+  } as Record<SectionId, boolean>);
 
   const [activeSectionId, setActiveSectionId] = useState<SectionId | null>(
     null,
@@ -64,10 +66,14 @@ const ComponentInspector = ({
         'dimensions',
         'alignment',
         'padding',
-        'surface-theme',
-        'bento',
+        'theme',
+        'hero-banner-image',
         'hero-overlay',
         'hero-content',
+        'hero-cta',
+        'grid-layout',
+        'grid-tracks',
+        'bento',
       ].filter((id) => id in openSections) as SectionId[],
     [openSections],
   );

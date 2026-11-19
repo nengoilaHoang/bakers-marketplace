@@ -32,8 +32,6 @@ type TypeableSelectProps = {
  * @template T - The type of the options (string, number, or boolean).
  * @param {TypeableSelectProps<T>} props - The props for the component.
  * @returns {JSX.Element} The rendered TypeableSelect component.
- *
- * @
  */
 const TypeableSelect = ({
   id,
@@ -158,17 +156,24 @@ const TypeableSelect = ({
       const query = rawInput.trim().toLowerCase();
       if (!query) return;
 
-      const matchedOptionIndex =
-        enumKeys.findIndex((key) => {
-          if (typeof key === 'string') {
-            return key.toLowerCase().startsWith(query);
-          }
-          return false;
-        }) ??
-        enumValues.findIndex((val) => val.toLowerCase().startsWith(query));
+      let matchedOptionIndex = enumKeys.findIndex((key) => {
+        if (typeof key === 'string') {
+          return key.toLowerCase().startsWith(query);
+        }
+        return false;
+      });
 
-      if (matchedOptionIndex) {
-        onValueChange(enumKeys[matchedOptionIndex]);
+      if (matchedOptionIndex === -1) {
+        matchedOptionIndex = enumValues.findIndex((val) =>
+          val.toLowerCase().startsWith(query),
+        );
+      }
+
+      if (matchedOptionIndex !== -1) {
+        const matchedKey = enumKeys[matchedOptionIndex];
+        if (matchedKey !== undefined) {
+          onValueChange(matchedKey);
+        }
         return;
       }
 
@@ -192,6 +197,7 @@ const TypeableSelect = ({
   );
 
   const handleSelectOption = (key: string) => {
+    if (!(key in options)) return;
     const value = options[key];
     setInputValue(value);
     onValueChange(key);
@@ -211,7 +217,7 @@ const TypeableSelect = ({
         onClick={handleContainerClick}
         className={`block relative z-20 w-full rounded-md border border-zinc-200 text-xs text-zinc-800 transition ${
           isOpen ? 'bg-white border-zinc-950' : 'bg-zinc-50/50 hover:bg-white'
-        }	focus-within:bg-white focus-within:border-zinc-950 focus-within:outline-none focus-within:ring-1 focus-within:ring-zinc-950`}
+        } focus-within:bg-white focus-within:border-zinc-950 focus-within:outline-none focus-within:ring-1 focus-within:ring-zinc-950`}
       >
         <div className='relative flex items-center w-full min-w-0'>
           <input

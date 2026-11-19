@@ -77,6 +77,8 @@ export type UpdateFlattenComponent =
   | UpdateLeafComponent
   | UpdateCommerceComponent;
 
+export type PutFlattenComponent = UpdateFlattenComponent | NewFlattenComponent;
+
 const flattenLayout = (component: LayoutComponent): FlattenComponent[] => {
   const flattenComponents: FlattenComponent[] = [];
   switch (component.type) {

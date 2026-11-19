@@ -10,7 +10,7 @@ import { PageLayout } from '@/types/page-layout';
 import { StorefrontRelease } from '@/types/storefront';
 import flattenLayout from '@/utils/flattenLayout';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 function buildLayoutState(layout: PageLayout, revision: number): LayoutState {
   const flatComponents = flattenLayout(layout.root);
@@ -35,24 +35,13 @@ function StorefrontReleaseEditorSession({
   const { currentPageId, selectComponent } = useStorefrontCanvasContext();
   const { revalidateLayouts } = useVendorContext();
 
-  const [layoutStates, setLayoutStates] = useState<LayoutState[]>(() =>
-    release.layouts.map((item) => buildLayoutState(item, 0)),
-  );
+  const [revision, setRevision] = useState(0);
 
   // Recalculate layoutStates whenever release.layouts is replaced by revalidateLayouts()
-  const prevLayoutsRef = useRef(release.layouts);
-  useEffect(() => {
-    if (prevLayoutsRef.current === release.layouts) return;
-    prevLayoutsRef.current = release.layouts;
-
-    setLayoutStates((prev) =>
-      release.layouts.map((item) => {
-        const existing = prev.find((state) => state.id === item.id);
-        const nextRevision = (existing?.revision ?? -1) + 1;
-        return buildLayoutState(item, nextRevision);
-      }),
-    );
-  }, [release.layouts]);
+  const layoutStates = useMemo(
+    () => release.layouts.map((item) => buildLayoutState(item, revision)),
+    [release.layouts, revision],
+  );
 
   const layout = useMemo<LayoutState | undefined>(() => {
     if (layoutStates.length === 0) return undefined;
@@ -63,21 +52,10 @@ function StorefrontReleaseEditorSession({
     );
   }, [currentPageId, layoutStates]);
 
-  const updateLayout = useCallback((nextLayout: LayoutState) => {
-    setLayoutStates((prev) =>
-      prev.some((item) => item.id === nextLayout.id && item === nextLayout)
-        ? prev
-        : prev.map((item) =>
-            item.id === nextLayout.id
-              ? { ...nextLayout, revision: item.revision }
-              : item,
-          ),
-    );
-  }, []);
-
   const handleSaved = useCallback(async () => {
     selectComponent(null);
     await revalidateLayouts();
+    setRevision((r) => r + 1);
   }, [revalidateLayouts, selectComponent]);
 
   return (
@@ -86,7 +64,6 @@ function StorefrontReleaseEditorSession({
         <StorefrontEditor
           layoutState={layout}
           themeSettings={release.themeSettings}
-          updateLayout={updateLayout}
           onSaved={handleSaved}
         />
       </div>

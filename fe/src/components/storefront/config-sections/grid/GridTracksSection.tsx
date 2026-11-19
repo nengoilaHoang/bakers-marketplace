@@ -2,6 +2,7 @@ import { DeviceBreakpoint } from '@/types/canvas';
 import { ResponsiveProp } from '@/types/layout-component';
 import { RowHeightMode } from '@/types/layout-component/composite-component';
 import { SectionId } from '../../ComponentInspector';
+import BreakpointContainer from '../BreakpointContainer';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
@@ -81,16 +82,7 @@ const GridTrackSection = ({
     >
       <div className='flex flex-col gap-3'>
         {/* Row Height Group */}
-        <div className='flex flex-col gap-2.5 rounded-lg border border-zinc-200 bg-zinc-50/60 p-3'>
-          <div className='flex items-center justify-between'>
-            <span className='text-xs font-semibold uppercase tracking-wide text-zinc-800'>
-              Row Height
-            </span>
-            <span className='rounded bg-white px-1.5 py-0.5 font-mono text-[10px] uppercase text-zinc-500 border border-zinc-200/80'>
-              {currentBp}
-            </span>
-          </div>
-
+        <BreakpointContainer label='Row Height' breakpoint={currentBp}>
           {/* Row Height Mode */}
           <div className='flex flex-col gap-1.5'>
             <ConfigLabel label='Sizing Mode' forId='grid-row-height-mode' />
@@ -128,11 +120,11 @@ const GridTrackSection = ({
               </span>
             </div>
           </div>
-        </div>
+        </BreakpointContainer>
 
         {/* Gap */}
         <div className='flex flex-row justify-between items-center gap-1.5'>
-          <ConfigLabel label={`Gap (${currentBp})`} forId='grid-gap' />
+          <ConfigLabel label='Gap' forId='grid-gap' breakpoint={currentBp} />
           <div className='relative flex items-center'>
             <ConfigInput
               id='grid-gap'

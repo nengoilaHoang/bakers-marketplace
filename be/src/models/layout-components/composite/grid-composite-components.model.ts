@@ -72,12 +72,7 @@ export const GridCompositeComponentSchema =
 export const UpdateGridCompositeComponentSchema =
   UpdateBaseCompositeComponentSchema.extend({
     componentType: z.literal(CompositeComponentTypeSchema.enum.GRID).readonly(),
-    config: z
-      .union([
-        UniformGridConfigSchema.partial(),
-        BentoGridConfigSchema.partial(),
-      ])
-      .optional(),
+    config: GridConfigSchema.optional(),
   });
 
 // Create Schemas

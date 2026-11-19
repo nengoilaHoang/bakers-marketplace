@@ -46,8 +46,9 @@ export default async function request<T>(
   const targetUrl =
     typeof window === 'undefined' ? url.toString() : url.pathname + url.search;
 
+  const isFormData = init?.body instanceof FormData;
   const requestInit: RequestInit = {
-    headers: { 'Content-Type': 'application/json' },
+    ...(isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }),
     credentials: init?.credentials ?? 'include',
     ...init,
   };

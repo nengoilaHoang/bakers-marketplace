@@ -3,6 +3,7 @@ import { DeviceBreakpoint } from '@/types/canvas';
 import { ResponsiveProp } from '@/types/layout-component';
 import { GridLayoutMode } from '@/types/layout-component/composite-component';
 import { SectionId } from '../../ComponentInspector';
+import BreakpointContainer from '../BreakpointContainer';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
@@ -75,14 +76,7 @@ const GridLayoutSection = ({
         </div>
 
         {/* Responsive Columns & Rows */}
-        <div className='flex flex-col gap-1.5'>
-          <div className='flex items-center justify-between'>
-            <span className='text-[11px] font-medium text-ink'>Tracks</span>
-            <span className='rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] uppercase text-zinc-500'>
-              {currentBp}
-            </span>
-          </div>
-
+        <BreakpointContainer label='Columns & Rows' breakpoint={currentBp}>
           <div className='grid grid-cols-2 gap-2'>
             <div className='flex flex-col gap-1.5'>
               <ConfigLabel label='Columns' forId='grid-cols' />
@@ -126,7 +120,7 @@ const GridLayoutSection = ({
               />
             </div>
           </div>
-        </div>
+        </BreakpointContainer>
 
         {/* Dense Packing */}
         <label

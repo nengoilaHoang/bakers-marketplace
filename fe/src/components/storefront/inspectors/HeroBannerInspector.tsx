@@ -1,13 +1,15 @@
 import { HeroBannerCommerceComponent } from '@/types/layout-component/commerce-component';
 import HeroBannerImageSection from '../config-sections/hero-banner/HeroBannerImageSection';
 import HeroContentSection from '../config-sections/hero-banner/HeroContentSection';
+import HeroCtaSection from '../config-sections/hero-banner/HeroCtaSection';
 import HeroOverlaySection from '../config-sections/hero-banner/HeroOverlaySection';
 import { InspectorProps } from './registry';
 
 export type HeroBannerSectionId =
   | 'hero-banner-image'
   | 'hero-overlay'
-  | 'hero-content';
+  | 'hero-content'
+  | 'hero-cta';
 
 type HeroBannerInspectorProps = InspectorProps<HeroBannerCommerceComponent>;
 
@@ -65,6 +67,19 @@ const HeroBannerInspector = ({
           if (active) onActiveSectionChange('hero-content');
         }}
         zIndex={getSectionZIndex('hero-content')}
+        currentBp={currentBp}
+      />
+      <HeroCtaSection
+        isOpen={Boolean(openSections['hero-cta'])}
+        toggleSection={() => toggleSection('hero-cta')}
+        ctaPosition={config.ctaPosition}
+        primaryCta={config.primaryCta}
+        secondaryCta={config.secondaryCta}
+        onUpdate={onUpdate}
+        onActiveSectionChange={(active) => {
+          if (active) onActiveSectionChange('hero-cta');
+        }}
+        zIndex={getSectionZIndex('hero-cta')}
         currentBp={currentBp}
       />
     </>

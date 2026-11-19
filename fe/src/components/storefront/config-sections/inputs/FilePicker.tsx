@@ -1,4 +1,8 @@
 import Icon from '@/components/ui/Icon';
+import {
+  registerBlobFile,
+  unregisterBlobFile,
+} from '@/utils/blobFileRegistry';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -42,6 +46,7 @@ const FilePicker = ({
     if (!input?.files || input.files.length === 0) return;
     const selectedFile = input.files[0];
     const fileUrl = URL.createObjectURL(selectedFile);
+    registerBlobFile(fileUrl, selectedFile);
     setBlobUrl(fileUrl);
     setBlob(selectedFile);
     setMimeType(selectedFile.type);
@@ -53,6 +58,7 @@ const FilePicker = ({
       e.stopPropagation();
 
       if (blobUrl) {
+        unregisterBlobFile(blobUrl);
         URL.revokeObjectURL(blobUrl);
       }
 
@@ -81,8 +87,7 @@ const FilePicker = ({
       .then((res) => res.blob())
       .then((blob) => {
         setBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setBlobUrl(url);
+        setBlobUrl(currentValue);
         setMimeType(blob.type);
       })
       .catch(() => {

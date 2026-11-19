@@ -3,12 +3,24 @@ import { z } from 'zod';
 export const HexColorSchema = z
   .string()
   .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
-export const ColorSchema = z.union([z.string(), HexColorSchema]);
+export const PaletteColorTokenSchema = z.enum([
+  'colorBackground',
+  'colorSurface',
+  'colorBorder',
+  'colorTextPrimary',
+  'colorTextSecondary',
+  'colorPrimary',
+  'colorPrimaryForeground',
+  'colorSecondary',
+  'colorSecondaryForeground',
+  'colorAccent',
+  'colorAccentForeground',
+]);
+export const ColorSchema = z.union([PaletteColorTokenSchema, HexColorSchema]);
 const TextAlignmentTypeSchema = z.enum(['left', 'center', 'right', 'justify']);
 export const TextConfigSchema = z.object({
   textAlign: TextAlignmentTypeSchema.default('left'),
-  decoration: z.enum(['strikethrough', 'underline']),
-
+  decoration: z.enum(['strikethrough', 'underline', 'none']).default('none'),
   textColor: ColorSchema,
   fontWeight: z
     .union([
@@ -153,23 +165,25 @@ export const SlotPlacementConfigSchema = BasePlacementConfigSchema.extend({
   h: DimensionTypeSchema.default('auto'),
 });
 
+export const PaddingSchema = z
+  .object({
+    top: PaddingTypeSchema.default('none'),
+    bottom: PaddingTypeSchema.default('none'),
+    left: PaddingTypeSchema.default('none'),
+    right: PaddingTypeSchema.default('none'),
+  })
+  .default({
+    top: 'none',
+    bottom: 'none',
+    left: 'none',
+    right: 'none',
+  });
+
 /**
  * A box style config for components with padding and surface theme control (e.g., grids, dividers)
  */
 export const BoxStyleConfigSchema = z.object({
-  padding: z
-    .object({
-      top: PaddingTypeSchema.default('none'),
-      bottom: PaddingTypeSchema.default('none'),
-      left: PaddingTypeSchema.default('none'),
-      right: PaddingTypeSchema.default('none'),
-    })
-    .default({
-      top: 'none',
-      bottom: 'none',
-      left: 'none',
-      right: 'none',
-    }),
+  padding: PaddingSchema,
   surfaceTheme: SurfaceThemeSchema.default('default'),
 });
 

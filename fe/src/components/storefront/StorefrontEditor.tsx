@@ -5,6 +5,7 @@ import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasCo
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { StorefrontRelease } from '@/types/storefront';
 import { buildThemeStyle } from '@/utils/buildThemeStyle';
+import { NewFlattenComponent } from '@/utils/flattenLayout';
 import { PointerActivationConstraints } from '@dnd-kit/dom';
 import { DragDropProvider, DragOverlay, PointerSensor } from '@dnd-kit/react';
 import { useMemo, useState } from 'react';
@@ -20,7 +21,6 @@ import SaveLayoutButton from './SaveLayoutButton';
 type StorefrontEditorProps = {
   layoutState: LayoutState | undefined;
   themeSettings: StorefrontRelease['themeSettings'];
-  updateLayout: (nextLayout: LayoutState) => void;
   onSaved?: () => Promise<void> | void;
 };
 
@@ -105,7 +105,7 @@ const DndContainer = ({ children }: { children: React.ReactNode }) => {
 
           addComponent(
             targetParentId,
-            blueprint,
+            blueprint as NewFlattenComponent,
             breakpoint === 'fluid' ? 'desktop' : breakpoint,
             targetSlot,
           );
@@ -175,7 +175,6 @@ const DndContainer = ({ children }: { children: React.ReactNode }) => {
 const StorefrontEditor = ({
   layoutState,
   themeSettings,
-  updateLayout,
   onSaved,
 }: StorefrontEditorProps) => {
   const themeStyle = useMemo(
@@ -189,7 +188,6 @@ const StorefrontEditor = ({
     <StorefrontLayoutProvider
       key={`${layoutState.id}-${layoutState.revision}`}
       initialState={layoutState}
-      onLayoutUpdated={updateLayout}
       onSaved={onSaved}
     >
       {({ root }) => (

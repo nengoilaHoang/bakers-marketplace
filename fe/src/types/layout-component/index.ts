@@ -22,10 +22,22 @@ import {
 
 export type ResponsiveProp<T> = {
   desktop: T;
-  mobile: T | undefined;
-  tablet: T | undefined;
+  mobile?: T | undefined;
+  tablet?: T | undefined;
 };
-
+export type PaletteColorTokenType =
+  | 'colorBackground'
+  | 'colorSurface'
+  | 'colorBorder'
+  | 'colorTextPrimary'
+  | 'colorTextSecondary'
+  | 'colorPrimary'
+  | 'colorPrimaryForeground'
+  | 'colorSecondary'
+  | 'colorSecondaryForeground'
+  | 'colorAccent'
+  | 'colorAccentForeground';
+export type ColorType = PaletteColorTokenType | (string & {});
 export type TextAlignmentType = 'center' | 'justify' | 'left' | 'right';
 export type DimensionType = number | 'auto' | 'full' | 'lg' | 'md' | 'sm';
 export type PaddingType = number | 'lg' | 'md' | 'none' | 'sm';
@@ -40,7 +52,7 @@ export type SurfaceTheme =
 export type TextConfig = {
   textAlign: TextAlignmentType;
   decoration: 'strikethrough' | 'underline' | 'none';
-  textColor: string;
+  textColor: ColorType;
   fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
   fontStyle: 'italic' | 'normal' | 'oblique';
 };
@@ -58,13 +70,15 @@ export type BasePlacementConfig = {
 
 export type SlotPlacementConfig = BasePlacementConfig & { h: DimensionType };
 
+export type PaddingConfig = {
+  top: PaddingType;
+  bottom: PaddingType;
+  left: PaddingType;
+  right: PaddingType;
+};
+
 type BoxStyleConfig = {
-  padding: {
-    top: PaddingType;
-    bottom: PaddingType;
-    left: PaddingType;
-    right: PaddingType;
-  };
+  padding: PaddingConfig;
   surfaceTheme: SurfaceTheme;
 };
 
@@ -76,9 +90,8 @@ export type BaseLayoutComponentConfig<TConfig = unknown> = WithBase<
     [K in keyof TConfig]: TConfig[K];
   };
 
-export type UpdateBaseLayoutComponentConfig<TConfig = unknown> = Partial<
-  BaseLayoutComponentConfig<TConfig>
->;
+export type UpdateBaseLayoutComponentConfig<TConfig = unknown> =
+  BaseLayoutComponentConfig<TConfig>;
 
 export type BaseLayoutComponent<TConfig = BaseLayoutComponentConfig<unknown>> =
   {
@@ -96,7 +109,7 @@ export type UpdateBaseLayoutComponent<
   name?: string;
   type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
   componentType: string;
-  config?: Partial<TConfig>;
+  config?: TConfig;
 };
 
 export type CreateBaseLayoutComponent<

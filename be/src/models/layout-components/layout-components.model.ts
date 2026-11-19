@@ -52,8 +52,8 @@ export const PutLayoutComponentSchema = z.union([
 export type PutLayoutComponent = z.infer<typeof PutLayoutComponentSchema>;
 
 export const BatchLayoutComponentPayloadSchema = z.object({
-  components: z.array(PutLayoutComponentSchema).default([]),
-  deleteIds: z.array(z.uuidv4()).default([]),
+  components: z.array(PutLayoutComponentSchema).optional(),
+  deleteIds: z.array(z.uuidv4()).optional(),
 });
 
 export type BatchLayoutComponentPayload = z.infer<

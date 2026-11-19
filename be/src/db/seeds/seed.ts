@@ -1317,6 +1317,7 @@ export async function seed(knex: Knex): Promise<void> {
         description: 'Top hero banner highlighting bakery daily specialties',
         config: JSON.stringify({
           w: 'full',
+          padding: { top: 'lg', bottom: 'lg', left: 'lg', right: 'lg' },
           aspect: '16:9',
           fit: 'cover',
           alignSelfX: 'stretch',
@@ -1366,6 +1367,7 @@ export async function seed(knex: Knex): Promise<void> {
             label: 'Explore Our Collection',
             url: 'https://hoasen-bakery.vn/collections',
             style: 'solid',
+            colorScheme: 'primary',
             size: 'lg',
             target: '_self',
           },

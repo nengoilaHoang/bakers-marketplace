@@ -59,12 +59,7 @@ export const UpdateCollectionGridSchema =
     componentType: z
       .literal(RepeaterComponentTypeSchema.enum.COLLECTION_GRID)
       .readonly(),
-    config: z
-      .union([
-        InfiniteScrollCollectionGridConfigSchema.partial(),
-        PaginationCollectionGridConfigSchema.partial(),
-      ])
-      .optional(),
+    config: CollectionGridConfigSchema.optional(),
   });
 
 // Create Schemas

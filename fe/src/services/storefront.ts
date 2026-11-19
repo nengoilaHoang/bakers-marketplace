@@ -101,12 +101,51 @@ export async function getStorefrontReleaseLayouts(
   return layouts;
 }
 
+function buildLayoutBatchFormData(
+  payload: BatchLayoutComponentPayload,
+): FormData {
+  const formData = new FormData();
+
+  const extractBlobs = (value: unknown, path: string): unknown => {
+    if (value instanceof Blob) {
+      const ext = value.type.split('/')[1] || 'bin';
+      const filename = value instanceof File ? value.name : `${path}.${ext}`;
+      formData.append(path, value, filename);
+      return undefined; // so that qs doesn't merge the filename and File into an array
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item, idx) => extractBlobs(item, `${path}.${idx}`));
+    }
+
+    if (value !== null && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value).map(([k, v]) => [
+          k,
+          extractBlobs(v, path ? `${path}.${k}` : k),
+        ]),
+      );
+    }
+
+    return value;
+  };
+
+  const serializedComponents = extractBlobs(payload.components, 'components');
+  formData.append('components', JSON.stringify(serializedComponents));
+  if (payload.deleteIds.length > 0) {
+    formData.append('deleteIds', JSON.stringify(payload.deleteIds));
+  }
+
+  return formData;
+}
+
 export async function saveLayoutComponentsBatch(
   payload: BatchLayoutComponentPayload,
 ): Promise<void> {
+  const formData = buildLayoutBatchFormData(payload);
   await request<void>('/layout-components/batch', {
     method: 'PUT',
-    body: JSON.stringify(payload),
+    body: formData,
   });
 }
 

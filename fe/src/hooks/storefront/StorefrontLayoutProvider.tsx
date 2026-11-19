@@ -2,8 +2,14 @@
 import { saveLayoutComponentsBatch } from '@/services/storefront';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { FlattenComponent, NewFlattenComponent } from '@/utils/flattenLayout';
-import buildPageLayoutMutation from '@/utils/pageLayoutMutation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { buildPageLayoutMutationWithUrls } from '@/utils/pageLayoutMutation';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import StorefrontLayoutContext, {
   StorefrontLayoutContextValue,
 } from './StorefrontLayoutContext';
@@ -13,7 +19,6 @@ import { useOptionalStorefrontCanvasContext } from './useStorefrontCanvasContext
 const StorefrontLayoutProvider = ({
   children,
   initialState,
-  onLayoutUpdated,
   onSaved,
 }: {
   children:
@@ -21,16 +26,12 @@ const StorefrontLayoutProvider = ({
     | React.ReactNode[]
     | ((props: { root: FlattenComponent }) => React.ReactNode);
   initialState: LayoutState;
-  onLayoutUpdated: (layout: LayoutState) => void;
   onSaved?: () => Promise<void> | void;
 }) => {
+  const baselineStateRef = useRef<LayoutState>(initialState);
   const { state, canUndo, canRedo, dispatch } = useLayoutReducer(initialState);
   const canvasCtx = useOptionalStorefrontCanvasContext();
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    onLayoutUpdated(state);
-  }, [state, onLayoutUpdated]);
 
   // Clear selection if an undo/redo removes the currently selected component
   useEffect(() => {
@@ -68,7 +69,10 @@ const StorefrontLayoutProvider = ({
     if (isSaving || !hasUnsavedChanges) return;
     setIsSaving(true);
     try {
-      const payload = buildPageLayoutMutation(state);
+      const payload = await buildPageLayoutMutationWithUrls(
+        state,
+        baselineStateRef.current,
+      );
       await saveLayoutComponentsBatch(payload);
       await onSaved?.();
     } finally {
