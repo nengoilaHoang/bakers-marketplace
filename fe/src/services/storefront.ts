@@ -4,7 +4,11 @@ import { BrandPublicView } from '@/types/brand';
 import { LayoutComponent } from '@/types/layout-component';
 import { PageLayout } from '@/types/page-layout';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
-import { ThemeSettings } from '@/types/theme-settings';
+import {
+  ColorPalette,
+  ThemeSettings,
+  Typography,
+} from '@/types/theme-settings';
 import { BatchLayoutComponentPayload } from '@/utils/pageLayoutMutation';
 
 const normalizeComponent = (value: unknown): value is LayoutComponent => {
@@ -171,5 +175,24 @@ export async function getPublicStorefrontPage(
   if (data.layout?.root) {
     normalizeComponent(data.layout.root);
   }
+  return data;
+}
+
+export type UpdateThemeSettingsPayload = {
+  typography?: Partial<Omit<Typography, 'id'>>;
+  colorPalette?: Partial<Omit<ColorPalette, 'id'>>;
+};
+
+export async function updateReleaseThemeSettings(
+  releaseId: string,
+  payload: UpdateThemeSettingsPayload,
+): Promise<ThemeSettings> {
+  const { data } = await request<{ data: ThemeSettings }>(
+    `/storefronts/releases/${releaseId}/theme-settings`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    },
+  );
   return data;
 }

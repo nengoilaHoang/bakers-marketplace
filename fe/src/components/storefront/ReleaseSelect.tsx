@@ -1,10 +1,10 @@
-import useVendorContext from '@/hooks/storefront/useVendorContext';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import { useMemo, useState } from 'react';
 import TypeableSelect from './config-sections/inputs/TypeableSelect';
 
 const ReleaseSelect = () => {
   const { storefront, currentRelease, setCurrentReleaseId } =
-    useVendorContext();
+    useVendorStorefrontContext();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (value: string) => {
@@ -15,8 +15,8 @@ const ReleaseSelect = () => {
     () =>
       Object.fromEntries(
         (storefront?.releases || []).map((rel) => [
-          `v${rel.version} - ${rel.displayName}`,
           rel.id,
+          `v${rel.version} - ${rel.displayName}`,
         ]),
       ),
     [storefront?.releases],

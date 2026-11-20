@@ -6,7 +6,14 @@ import storefrontDao, {
 } from '#/daos/storefronts/storefronts.dao.js';
 import { StorefrontRelease } from '#/models/storefronts/storefront-releases.model.js';
 import { Storefront } from '#/models/storefronts/storefronts.model.js';
-import { NotFoundError } from '#/utils/http-errors.js';
+import {
+  ThemeSettings,
+  UpdateThemeSettingsSchema,
+} from '#/models/storefronts/theme-settings.js';
+import {
+  NotFoundError,
+  UnprocessableEntityError,
+} from '#/utils/http-errors.js';
 
 export class StorefrontService {
   constructor(
@@ -67,6 +74,29 @@ export class StorefrontService {
       );
     }
     return await this.storefrontDao.getActiveRelease(storefrontId);
+  };
+
+  public updateThemeSettings = async (
+    releaseId: string,
+    vendorId: string,
+    payload: unknown,
+  ): Promise<ThemeSettings> => {
+    const parsed = UpdateThemeSettingsSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new UnprocessableEntityError(
+        `Invalid theme settings payload: ${parsed.error}`,
+      );
+    }
+
+    const isOwner = await this.storefrontDao.checkReleaseOwnership(
+      releaseId,
+      vendorId,
+    );
+    if (!isOwner) {
+      throw new NotFoundError(`Release with ${releaseId} does not exist.`);
+    }
+
+    return await this.storefrontDao.updateThemeSettings(releaseId, parsed.data);
   };
 }
 

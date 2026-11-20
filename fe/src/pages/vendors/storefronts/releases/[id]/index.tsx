@@ -1,6 +1,6 @@
 import StorefrontEditLayout from '@/components/layout/StorefrontEditLayout';
 import VendorScope from '@/components/layout/VendorScope';
-import useVendorContext from '@/hooks/storefront/useVendorContext';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import { NextPageWithLayout } from '@/pages/_app';
 import { useRouter } from 'next/router';
 
@@ -8,7 +8,7 @@ import React from 'react';
 
 const StorefrontReleasePage: NextPageWithLayout = () => {
   const router = useRouter();
-  const { currentRelease } = useVendorContext();
+  const { currentRelease } = useVendorStorefrontContext();
 
   if (!router.isReady || !currentRelease) return null;
 

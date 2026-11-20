@@ -2,6 +2,11 @@ import database from '#/db/index.js';
 import { BrandPublicViewSchema } from '#/models/storefronts/brands.model.js';
 import { StorefrontReleaseSchema } from '#/models/storefronts/storefront-releases.model.js';
 import { Storefront } from '#/models/storefronts/storefronts.model.js';
+import {
+  ThemeSettings,
+  ThemeSettingsSchema,
+  UpdateThemeSettings,
+} from '#/models/storefronts/theme-settings.js';
 import { Knex } from 'knex';
 import z from 'zod';
 import { getReleasesQueryBuilder } from './queryBuiler.js';
@@ -36,6 +41,50 @@ export class StorefrontDao {
       .first();
 
     return Boolean(record);
+  };
+
+  public checkReleaseOwnership = async (
+    releaseId: string,
+    vendorId: string,
+  ): Promise<boolean> => {
+    const record = await this.knex('storefront_releases as sr')
+      .join('storefronts as s', 's.id', 'sr.storefrontId')
+      .join('brands as b', 'b.id', 's.brandId')
+      .select('sr.id')
+      .where({
+        'sr.id': releaseId,
+        'b.vendorId': vendorId,
+      })
+      .first();
+
+    return Boolean(record);
+  };
+
+  public updateThemeSettings = async (
+    releaseId: string,
+    payload: UpdateThemeSettings,
+  ): Promise<ThemeSettings> => {
+    await this.knex.transaction(async (trx) => {
+      if (payload.colorPalette && Object.keys(payload.colorPalette).length > 0) {
+        await trx('color_palettes')
+          .where({ id: releaseId })
+          .update(payload.colorPalette);
+      }
+
+      if (payload.typography && Object.keys(payload.typography).length > 0) {
+        await trx('typography')
+          .where({ id: releaseId })
+          .update(payload.typography);
+      }
+    });
+
+    const release = await getReleasesQueryBuilder(this.knex, {
+      withThemeSettings: true,
+    })
+      .where('sr.id', releaseId)
+      .first();
+
+    return ThemeSettingsSchema.parse(release?.themeSettings);
   };
 
   public getVendorStorefront = async (

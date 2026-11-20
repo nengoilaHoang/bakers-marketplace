@@ -312,16 +312,15 @@
 }
 
 @utility animate-scrolling-text {
-  animation: scrolling-text 20s linear infinite;
+  animation: scrolling-text var(--tw-duration, 2.5s) ease-in-out infinite alternate;
 }
 
 @keyframes scrolling-text {
-  from {
+  0%, 15% {
     transform: translateX(0);
   }
-
-  to {
-    transform: translateX(-100%);
+  85%, 100% {
+    transform: translateX(var(--scroll-offset, 0px));
   }
 }
 

@@ -13,6 +13,7 @@ export type SiteLayoutProps = Readonly<{
   header?: ReactNode;
   hideFooter?: boolean;
   mainClassName?: string;
+  className?: string;
   theme?: 'dashboard' | 'default';
 }>;
 
@@ -23,10 +24,14 @@ export default function SiteLayout({
   header,
   hideFooter = false,
   mainClassName,
+  className,
   theme,
 }: SiteLayoutProps) {
   return (
-    <ThemeRoot theme={theme} className='flex min-h-screen flex-col'>
+    <ThemeRoot
+      theme={theme}
+      className={cn('flex min-h-screen flex-col', className)}
+    >
       {title && (
         <Head>
           <title>{`${title} — ${BRAND.name}`}</title>

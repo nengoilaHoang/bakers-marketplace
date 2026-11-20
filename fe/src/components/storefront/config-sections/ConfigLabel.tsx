@@ -25,7 +25,7 @@ const ConfigLabel = ({
   className,
 }: ConfigLabelProps) => {
   return (
-    <div className='flex w-full min-w-0 items-center justify-between gap-1.5'>
+    <div className='flex min-w-0 items-center justify-between gap-1.5'>
       <label
         className={cn(
           'min-w-0 shrink-0 capitalize',

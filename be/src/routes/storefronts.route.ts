@@ -20,6 +20,10 @@ router.get(
   '/releases/:releaseId/layouts',
   pageLayoutController.getReleaseLayouts,
 );
+router.put(
+  '/releases/:releaseId/theme-settings',
+  storefrontController.updateThemeSettings,
+);
 router.get('/:id/releases/active', storefrontController.getActiveRelease);
 router.get('/:storeId/releases/:releaseId', storefrontController.getRelease);
 

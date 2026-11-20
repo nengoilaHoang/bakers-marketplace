@@ -156,7 +156,6 @@ const StorefrontLayoutProvider = ({
     () => ({
       state,
       hasUnsavedChanges,
-      isSaving,
       saveLayout,
       addNewComponent,
       updateConfig,
@@ -171,7 +170,6 @@ const StorefrontLayoutProvider = ({
     [
       state,
       hasUnsavedChanges,
-      isSaving,
       saveLayout,
       addNewComponent,
       updateConfig,

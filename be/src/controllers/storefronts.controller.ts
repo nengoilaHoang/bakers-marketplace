@@ -75,6 +75,26 @@ export class StorefrontController {
       });
     },
   );
+
+  public updateThemeSettings = asyncHandler(
+    async (
+      req: AuthenticatedRequest<{ releaseId: string }>,
+      res: Response,
+    ) => {
+      const { releaseId } = req.params;
+      const vendorId = req.user.id;
+
+      const data = await this.storefrontService.updateThemeSettings(
+        releaseId,
+        vendorId,
+        req.body,
+      );
+
+      return res.status(200).json({
+        data,
+      });
+    },
+  );
 }
 
 const storefrontController = new StorefrontController(

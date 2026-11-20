@@ -1,7 +1,7 @@
 import Icon from '@/components/ui/Icon';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import { useOptionalStorefrontLayoutContext } from '@/hooks/storefront/useStorefrontLayoutContext';
-import useVendorContext from '@/hooks/storefront/useVendorContext';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -54,7 +54,7 @@ const CanvasTopBar = () => {
   const redo = layoutCtx?.redo ?? canvasCtx.redo;
 
   const { pathname, query, replace } = useRouter();
-  const { currentRelease } = useVendorContext();
+  const { currentRelease } = useVendorStorefrontContext();
   const [vpWidth, setVpWidth] = useState<number>(0);
 
   // Observe viewport width

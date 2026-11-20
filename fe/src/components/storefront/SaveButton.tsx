@@ -1,14 +1,17 @@
 // components/storefront/SaveLayoutButton.tsx
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
-import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { ApiError } from '@/lib/api';
 import { useEffect, useState } from 'react';
 
-const SaveLayoutButton = () => {
-  const { hasUnsavedChanges, isSaving, saveLayout } =
-    useStorefrontLayoutContext();
+type SaveButtonProps = {
+  onSave: () => void | Promise<void>;
+  disabled: boolean;
+};
+
+const SaveButton = ({ onSave, disabled }: SaveButtonProps) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [saveDone, setSaveDone] = useState(true);
 
@@ -24,8 +27,8 @@ const SaveLayoutButton = () => {
 
   if (isSaving) {
     saveButtonLabel = 'Saving...';
-  } else if (hasUnsavedChanges) {
-    saveButtonLabel = 'Save changes';
+  } else if (!disabled) {
+    saveButtonLabel = 'Save';
   }
 
   const handleSave = async () => {
@@ -33,13 +36,16 @@ const SaveLayoutButton = () => {
     setSaveDone(false);
 
     try {
-      await saveLayout();
+      setIsSaving(true);
+      await onSave();
     } catch (err) {
       setErrorMessage(
         err instanceof ApiError || err instanceof Error
           ? err.message
           : 'Failed to save layout changes.',
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -54,7 +60,7 @@ const SaveLayoutButton = () => {
         type='button'
         size='sm'
         variant='primary'
-        disabled={!hasUnsavedChanges || isSaving}
+        disabled={disabled || isSaving}
         onClick={() => void handleSave()}
       >
         {!saveDone && (
@@ -69,4 +75,4 @@ const SaveLayoutButton = () => {
   );
 };
 
-export default SaveLayoutButton;
+export default SaveButton;

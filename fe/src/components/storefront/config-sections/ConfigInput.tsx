@@ -1,4 +1,5 @@
 import { useDropdown } from '@/hooks/useDropdown';
+import { cn } from '@/lib/cn';
 import ColorPicker from './inputs/ColorPicker';
 import FilePicker from './inputs/FilePicker';
 import NumberInput from './inputs/NumberInput';
@@ -107,7 +108,10 @@ const ConfigInput = (props: ConfigInputProps) => {
   return (
     <div
       ref={ref}
-      className='relative min-w-0 w-full'
+      className={cn(
+        'relative min-w-0 max-w-full',
+        inputType === 'file' && 'w-full',
+      )}
       style={{
         zIndex: isOpen ? 100 : 'auto',
       }}

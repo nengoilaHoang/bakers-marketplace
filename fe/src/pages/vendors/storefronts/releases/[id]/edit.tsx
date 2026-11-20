@@ -3,7 +3,7 @@ import VendorScope from '@/components/layout/VendorScope';
 import StorefrontEditor from '@/components/storefront/StorefrontEditor';
 import { LayoutState } from '@/hooks/storefront/useLayoutReducer';
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
-import useVendorContext from '@/hooks/storefront/useVendorContext';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import { readString } from '@/hooks/useUrlFilters';
 import { NextPageWithLayout } from '@/pages/_app';
 import { PageLayout } from '@/types/page-layout';
@@ -33,7 +33,7 @@ function StorefrontReleaseEditorSession({
   release: StorefrontRelease;
 }>) {
   const { currentPageId, selectComponent } = useStorefrontCanvasContext();
-  const { revalidateLayouts } = useVendorContext();
+  const { revalidateLayouts } = useVendorStorefrontContext();
 
   const [revision, setRevision] = useState(0);
 
@@ -74,7 +74,7 @@ function StorefrontReleaseEditorSession({
 const StorefrontReleaseEditPage: NextPageWithLayout = () => {
   const router = useRouter();
   const { storefront, currentRelease, setCurrentReleaseId } =
-    useVendorContext();
+    useVendorStorefrontContext();
   const { setCurrentPageId } = useStorefrontCanvasContext();
   const { isReady, pathname, query, replace } = router;
   const releaseId = readString(query.id);

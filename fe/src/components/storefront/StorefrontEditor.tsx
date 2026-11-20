@@ -16,7 +16,7 @@ import ComponentInspectorContainer from './ComponentInspectorContainer';
 import { COMPONENT_PREVIEWS } from './ComponentLibrary';
 import ComponentLibraryContainer from './ComponentLibraryContainer';
 import NodeRenderer, { NodeRendererMode } from './NodeRenderer';
-import SaveLayoutButton from './SaveLayoutButton';
+import SaveButton from './SaveButton';
 
 type StorefrontEditorProps = {
   layoutState: LayoutState | undefined;
@@ -172,6 +172,36 @@ const DndContainer = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+const StorefrontEditorContent = ({
+  root,
+  themeStyle,
+}: {
+  root: React.ComponentProps<typeof NodeRenderer>['component'];
+  themeStyle: React.CSSProperties;
+}) => {
+  const { hasUnsavedChanges, saveLayout } = useStorefrontLayoutContext();
+
+  return (
+    <DndContainer>
+      <div className='fixed bottom-5 right-6 z-40 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur'>
+        <SaveButton onSave={saveLayout} disabled={!hasUnsavedChanges} />
+      </div>
+      <div style={themeStyle} className='contents'>
+        <ComponentLibraryContainer />
+      </div>
+      <CanvasStage>
+        <div
+          style={themeStyle}
+          className='min-h-screen w-full bg-(--color-background,white) text-(--color-text-primary,#18181b)'
+        >
+          <NodeRenderer component={root} mode={NodeRendererMode.Editor} />
+        </div>
+      </CanvasStage>
+      <ComponentInspectorContainer />
+    </DndContainer>
+  );
+};
+
 const StorefrontEditor = ({
   layoutState,
   themeSettings,
@@ -191,23 +221,7 @@ const StorefrontEditor = ({
       onSaved={onSaved}
     >
       {({ root }) => (
-        <DndContainer>
-          <div className='fixed bottom-5 right-6 z-40 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur'>
-            <SaveLayoutButton />
-          </div>
-          <div style={themeStyle} className='contents'>
-            <ComponentLibraryContainer />
-          </div>
-          <CanvasStage>
-            <div
-              style={themeStyle}
-              className='min-h-screen w-full bg-(--color-background,white) text-(--color-text-primary,#18181b)'
-            >
-              <NodeRenderer component={root} mode={NodeRendererMode.Editor} />
-            </div>
-          </CanvasStage>
-          <ComponentInspectorContainer />
-        </DndContainer>
+        <StorefrontEditorContent root={root} themeStyle={themeStyle} />
       )}
     </StorefrontLayoutProvider>
   );

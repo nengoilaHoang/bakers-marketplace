@@ -7,7 +7,6 @@ import { LayoutState } from './useLayoutReducer';
 export interface StorefrontLayoutContextValue {
   state: LayoutState;
   hasUnsavedChanges: boolean;
-  isSaving: boolean;
   saveLayout: () => Promise<void>;
   addNewComponent: (
     targetParentId: string,
