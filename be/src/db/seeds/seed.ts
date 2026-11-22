@@ -321,6 +321,226 @@ const products: SeedProduct[] = [
     collectionSlugs: ['hang-moi-ve'],
     alerts: [{ alertType: 'MINIMUM', threshold: 12 }],
   },
+  {
+    title: 'Bánh Bông Lan Trứng Muối',
+    slug: 'banh-bong-lan-trung-muoi',
+    description: 'Bông lan mềm xốp, phủ sốt phô mai và trứng muối, chà bông.',
+    unitPrice: 65000,
+    unitCost: 38000,
+    unit: 'hộp',
+    stock: 40,
+    brandIndex: 0,
+    tags: ['bong-lan', 'trung-muoi'],
+    notes: ['Bảo quản ngăn mát, dùng trong 3 ngày.'],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [],
+  },
+  {
+    // Out of stock on purpose: the product page and checkout must refuse it
+    title: 'Bánh Mì Hoa Cúc',
+    slug: 'banh-mi-hoa-cuc',
+    description: 'Brioche hoa cúc kiểu Pháp, thơm bơ và mật ong.',
+    unitPrice: 120000,
+    unitCost: 70000,
+    unit: 'ổ',
+    stock: 0,
+    brandIndex: 0,
+    tags: ['brioche', 'an-sang'],
+    notes: [],
+    collectionSlugs: [],
+    alerts: [],
+  },
+  {
+    title: 'Tart Trứng Bồ Đào Nha',
+    slug: 'tart-trung-bo-dao-nha',
+    description: 'Vỏ ngàn lớp giòn rụm, nhân trứng sữa xém mặt.',
+    unitPrice: 25000,
+    unitCost: 12000,
+    unit: 'cái',
+    stock: 80,
+    brandIndex: 1,
+    tags: ['tart', 'an-vat'],
+    notes: ['Hâm nóng 3 phút ở 180°C trước khi dùng.'],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [],
+  },
+  {
+    title: 'Bánh Su Kem',
+    slug: 'banh-su-kem',
+    description: 'Vỏ su mỏng, nhân kem vani mát lạnh.',
+    unitPrice: 8000,
+    unitCost: 3500,
+    unit: 'cái',
+    stock: 150,
+    brandIndex: 1,
+    tags: ['su-kem', 'an-vat'],
+    notes: [],
+    collectionSlugs: [],
+    alerts: [],
+  },
+];
+
+// ==========================================================
+// ORDERS CONFIG
+// ==========================================================
+type SeedOrderStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'CANCELLED' | 'COMPLETED';
+type SeedShipmentStatus =
+  | 'LABEL_CREATED'
+  | 'PICKED_UP'
+  | 'IN_TRANSIT'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED';
+
+// What a vendor decided about its items in an order
+type SeedDecision = 'PENDING' | 'APPROVED' | { declined: string };
+
+type SeedOrder = {
+  customerEmail: string;
+  status: SeedOrderStatus;
+  // Per brand name; brands not listed follow the order status
+  // (PENDING/CANCELLED: undecided, APPROVED/COMPLETED: approved, DECLINED: declined with closingNote)
+  vendorDecisions?: Record<string, SeedDecision>;
+  placedHoursAgo: number;
+  items: Array<{
+    slug: string;
+    quantity: number;
+    note?: string;
+    rating?: { stars: number; comment: string };
+  }>;
+  // Why the order was cancelled (by the customer) or declined
+  closingNote?: string;
+  shipment?: { carrier: string; trackingNumber: string; status: SeedShipmentStatus };
+};
+
+const customerAddresses: Record<
+  string,
+  { recipientName: string; phone: string; streetAddress: string; ward: string; province: string }
+> = {
+  'minhanh@example.com': {
+    recipientName: 'Nguyễn Minh Anh',
+    phone: '0901234567',
+    streetAddress: '12 Lê Lợi',
+    ward: 'Phường Sài Gòn',
+    province: 'Thành phố Hồ Chí Minh',
+  },
+  'baongoc@example.com': {
+    recipientName: 'Trần Bảo Ngọc',
+    phone: '0912345678',
+    streetAddress: '45 Hàng Bài',
+    ward: 'Phường Hoàn Kiếm',
+    province: 'Thành phố Hà Nội',
+  },
+  'hoangnam@example.com': {
+    recipientName: 'Lê Hoàng Nam',
+    phone: '0987654321',
+    streetAddress: '88 Nguyễn Văn Linh',
+    ward: 'Phường Hải Châu',
+    province: 'Thành phố Đà Nẵng',
+  },
+};
+
+// Every order status appears at least once; some orders mix both vendors, with each
+// vendor deciding its own items (one waits on a vendor, one had a vendor decline its part).
+const orders: SeedOrder[] = [
+  {
+    // Sunrise approved its part, Hoa Sen has not answered yet
+    customerEmail: 'minhanh@example.com',
+    status: 'PENDING',
+    placedHoursAgo: 3,
+    vendorDecisions: { 'Sunrise Patisserie': 'APPROVED' },
+    items: [
+      { slug: 'croissant-bo-phap', quantity: 4 },
+      { slug: 'banh-bong-lan-trung-muoi', quantity: 1, note: 'Ít sốt giúp mình' },
+    ],
+  },
+  {
+    // Neither vendor has answered yet
+    customerEmail: 'baongoc@example.com',
+    status: 'PENDING',
+    placedHoursAgo: 5,
+    items: [
+      { slug: 'banh-trung-thu-thap-cam', quantity: 2 },
+      { slug: 'banh-su-kem', quantity: 6 },
+    ],
+  },
+  {
+    customerEmail: 'minhanh@example.com',
+    status: 'APPROVED',
+    placedHoursAgo: 48,
+    items: [{ slug: 'banh-trung-thu-thap-cam', quantity: 6 }],
+    shipment: { carrier: 'Giao Hàng Nhanh', trackingNumber: 'GHN5X8K2LQ', status: 'IN_TRANSIT' },
+  },
+  {
+    customerEmail: 'minhanh@example.com',
+    status: 'COMPLETED',
+    placedHoursAgo: 240,
+    items: [
+      {
+        slug: 'croissant-bo-phap',
+        quantity: 2,
+        rating: { stars: 5, comment: 'Croissant giòn, thơm bơ, sẽ mua lại.' },
+      },
+      { slug: 'tart-trung-bo-dao-nha', quantity: 6 },
+    ],
+    shipment: { carrier: 'Giao Hàng Tiết Kiệm', trackingNumber: 'GHTK8812734', status: 'DELIVERED' },
+  },
+  {
+    customerEmail: 'minhanh@example.com',
+    status: 'CANCELLED',
+    placedHoursAgo: 120,
+    items: [{ slug: 'banh-su-kem', quantity: 3 }],
+    closingNote: 'Đặt nhầm số lượng',
+  },
+  {
+    customerEmail: 'baongoc@example.com',
+    status: 'COMPLETED',
+    placedHoursAgo: 360,
+    items: [
+      {
+        slug: 'banh-trung-thu-thap-cam',
+        quantity: 4,
+        rating: { stars: 4, comment: 'Nhân đậm vị, hơi ngọt một chút.' },
+      },
+      {
+        slug: 'banh-su-kem',
+        quantity: 10,
+        rating: { stars: 5, comment: 'Kem mát, vỏ mỏng, cả nhà đều thích.' },
+      },
+    ],
+    shipment: { carrier: 'Viettel Post', trackingNumber: 'VTP1029384756', status: 'DELIVERED' },
+  },
+  {
+    customerEmail: 'baongoc@example.com',
+    status: 'DECLINED',
+    placedHoursAgo: 72,
+    items: [{ slug: 'banh-trung-thu-thap-cam', quantity: 10 }],
+    closingNote: 'Tiệm tạm hết nhân thập cẩm, xin lỗi bạn',
+  },
+  {
+    // Hoa Sen declined its item, so only Sunrise's tarts are on the way
+    customerEmail: 'hoangnam@example.com',
+    status: 'APPROVED',
+    placedHoursAgo: 30,
+    vendorDecisions: { 'Hoa Sen Bakery': { declined: 'Tiệm hết trứng muối hôm nay, xin lỗi bạn' } },
+    items: [
+      { slug: 'tart-trung-bo-dao-nha', quantity: 12 },
+      { slug: 'banh-bong-lan-trung-muoi', quantity: 2 },
+    ],
+    shipment: { carrier: 'Giao Hàng Nhanh', trackingNumber: 'GHN9Q4M7TZ', status: 'OUT_FOR_DELIVERY' },
+  },
+];
+
+// Tracking events of a shipment, in order; a shipment at status X has every event up to X
+const trackingTemplate: Array<{
+  status: SeedShipmentStatus;
+  locationName: string;
+  description: string;
+}> = [
+  { status: 'LABEL_CREATED', locationName: 'Tiệm bánh', description: 'Đã tạo vận đơn' },
+  { status: 'PICKED_UP', locationName: 'Tiệm bánh', description: 'Đơn vị vận chuyển đã lấy hàng' },
+  { status: 'IN_TRANSIT', locationName: 'Kho trung chuyển', description: 'Đang trung chuyển' },
+  { status: 'OUT_FOR_DELIVERY', locationName: 'Bưu cục gần bạn', description: 'Shipper đang giao hàng' },
+  { status: 'DELIVERED', locationName: 'Địa chỉ nhận hàng', description: 'Giao hàng thành công' },
 ];
 
 // ==========================================================
@@ -675,6 +895,16 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('storefronts').del();
     await trx('social_links').del();
 
+    // Orders Module
+    await trx('rating_images').del();
+    await trx('order_ratings').del();
+    await trx('ratings').del();
+    await trx('tracking_events').del();
+    await trx('shipments').del();
+    await trx('order_status_histories').del();
+    await trx('order_items').del();
+    await trx('orders').del();
+
     // Products Module
     await trx('product_collections').del();
     await trx('stock_alerts').del();
@@ -975,6 +1205,11 @@ export async function seed(knex: Knex): Promise<void> {
       )
       .returning(['id']);
 
+    const productBySlug = new Map<
+      string,
+      { id: string; vendorId: string; seed: SeedProduct }
+    >();
+
     for (let index = 0; index < products.length; index += 1) {
       const product = products[index];
       const [createdProduct] = await trx('products')
@@ -993,6 +1228,11 @@ export async function seed(knex: Knex): Promise<void> {
         .returning(['id']);
 
       const productId = createdProduct.id;
+      productBySlug.set(product.slug, {
+        id: productId,
+        vendorId: vendorRows[product.brandIndex].id,
+        seed: product,
+      });
 
       await trx('product_stocks').insert({
         id: productId,
@@ -2084,5 +2324,192 @@ export async function seed(knex: Knex): Promise<void> {
         note: 'Đã kiểm tra, tài khoản thật',
       },
     });
+
+    // =========================================================================
+    // 10. SEED ORDERS, SHIPMENTS & ORDER RATINGS
+    // =========================================================================
+    // Stock above is the stock left after these orders, so it is not decremented here.
+    for (const order of orders) {
+      const customerId = getUserId(order.customerEmail);
+      const address = customerAddresses[order.customerEmail];
+      const lines = order.items.map((item) => {
+        const product = productBySlug.get(item.slug);
+        if (!product) throw new Error(`Seed product ${item.slug} not found`);
+        return { ...item, product };
+      });
+      const placed = order.placedHoursAgo;
+
+      // Group the lines by vendor (brand), in the order they appear
+      const defaultDecision: SeedDecision =
+        order.status === 'APPROVED' || order.status === 'COMPLETED'
+          ? 'APPROVED'
+          : order.status === 'DECLINED'
+            ? { declined: order.closingNote ?? 'Tiệm không nhận đơn' }
+            : 'PENDING';
+      const groups = new Map<string, { vendorId: string; decision: SeedDecision; count: number }>();
+      for (const line of lines) {
+        const brand = brands[line.product.seed.brandIndex].name;
+        const group = groups.get(brand) ?? {
+          vendorId: line.product.vendorId,
+          decision: order.vendorDecisions?.[brand] ?? defaultDecision,
+          count: 0,
+        };
+        group.count += 1;
+        groups.set(brand, group);
+      }
+      const decisionOf = (line: (typeof lines)[number]) =>
+        groups.get(brands[line.product.seed.brandIndex].name)!.decision;
+      const itemStatus = (decision: SeedDecision) =>
+        typeof decision === 'string' ? decision : 'DECLINED';
+
+      // Declined items stay in the order but no longer count in its total
+      const subtotal = lines
+        .filter((line) => itemStatus(decisionOf(line)) !== 'DECLINED')
+        .reduce((sum, line) => sum + line.product.seed.unitPrice * line.quantity, 0);
+
+      const [createdOrder] = await trx('orders')
+        .insert({
+          ordered_by: customerId,
+          shipping_recipient_name: address.recipientName,
+          shipping_phone: address.phone,
+          shipping_street_address: address.streetAddress,
+          shipping_ward: address.ward,
+          shipping_province: address.province,
+          subtotal,
+          total_amount: subtotal,
+          currency: 'VND',
+          current_status: order.status,
+          placed_at: hoursAgo(trx, placed),
+          updated_at: hoursAgo(trx, placed),
+        })
+        .returning(['id']);
+      const orderId: string = createdOrder.id;
+
+      const itemRows = await trx('order_items')
+        .insert(
+          lines.map((line) => ({
+            order_id: orderId,
+            product_id: line.product.id,
+            product_title: line.product.seed.title,
+            unit_price: line.product.seed.unitPrice,
+            unit_cost: line.product.seed.unitCost,
+            unit: line.product.seed.unit,
+            quantity: line.quantity,
+            note: line.note ?? null,
+            status: itemStatus(decisionOf(line)),
+            decline_reason: (() => {
+              const decision = decisionOf(line);
+              return typeof decision === 'string' ? null : decision.declined;
+            })(),
+          })),
+        )
+        .returning(['id']);
+
+      // Status history: PENDING, then each vendor's answer; the answer that settles the
+      // last undecided items also moves the order to APPROVED (or DECLINED if nothing is left)
+      const history: Array<{ status: string; actorId: string | null; note?: string; hoursAgo: number }> = [
+        { status: 'PENDING', actorId: customerId, hoursAgo: placed },
+      ];
+      const decided = [...groups.entries()].filter(([, group]) => group.decision !== 'PENDING');
+      const allDecided = decided.length === groups.size;
+      const anyApproved = [...groups.values()].some((group) => group.decision === 'APPROVED');
+      const settledStatus = anyApproved ? 'APPROVED' : 'DECLINED';
+      const expected = !allDecided ? ['PENDING', 'CANCELLED'] : anyApproved ? ['APPROVED', 'COMPLETED'] : ['DECLINED'];
+      if (!expected.includes(order.status)) {
+        throw new Error(`Seed order status ${order.status} does not match its vendor decisions`);
+      }
+      decided.forEach(([brand, group], index) => {
+        const isLast = allDecided && index === decided.length - 1;
+        history.push({
+          status: isLast ? settledStatus : 'PENDING',
+          actorId: group.vendorId,
+          note:
+            group.decision === 'APPROVED'
+              ? `${brand} đã duyệt ${group.count} món`
+              : `${brand} từ chối ${group.count} món: ${(group.decision as { declined: string }).declined}`,
+          hoursAgo: placed - 1 - index * 0.5,
+        });
+      });
+      if (order.status === 'CANCELLED') {
+        history.push({ status: 'CANCELLED', actorId: customerId, note: order.closingNote, hoursAgo: placed - 2 });
+      }
+
+      if (order.shipment) {
+        const reached = trackingTemplate.findIndex(
+          (event) => event.status === order.shipment!.status,
+        );
+        // One event every 6 hours, starting an hour after the approval
+        const eventHoursAgo = (index: number) => placed - 3 - index * 6;
+
+        const [shipment] = await trx('shipments')
+          .insert({
+            order_id: orderId,
+            carrier: order.shipment.carrier,
+            tracking_number: order.shipment.trackingNumber,
+            current_status: order.shipment.status,
+            // Delivered: the delivery time; still on the way: tomorrow
+            estimated_delivery: hoursAgo(
+              trx,
+              order.shipment.status === 'DELIVERED' ? eventHoursAgo(reached) : -24,
+            ),
+            created_at: hoursAgo(trx, eventHoursAgo(0)),
+            updated_at: hoursAgo(trx, eventHoursAgo(reached)),
+          })
+          .returning(['id']);
+
+        await trx('tracking_events').insert(
+          trackingTemplate.slice(0, reached + 1).map((event, index) => ({
+            shipment_id: shipment.id,
+            status: event.status,
+            location_name: event.locationName,
+            description: event.description,
+            timestamp: hoursAgo(trx, eventHoursAgo(index)),
+          })),
+        );
+
+        if (order.status === 'COMPLETED') {
+          history.push({
+            status: 'COMPLETED',
+            actorId: null,
+            note: 'Đã giao hàng thành công',
+            hoursAgo: eventHoursAgo(reached),
+          });
+        }
+      }
+
+      await trx('order_status_histories').insert(
+        history.map((entry) => ({
+          order_id: orderId,
+          status: entry.status,
+          actor_id: entry.actorId,
+          note: entry.note ?? null,
+          timestamp: hoursAgo(trx, entry.hoursAgo),
+        })),
+      );
+
+      const last = history[history.length - 1];
+      await trx('orders')
+        .where('id', orderId)
+        .update({ updated_at: hoursAgo(trx, last.hoursAgo) });
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const rating = lines[index].rating;
+        // Only items that were delivered (approved) can be rated
+        if (!rating || itemStatus(decisionOf(lines[index])) !== 'APPROVED') continue;
+
+        const [ratingRow] = await trx('ratings')
+          .insert({
+            rater_id: customerId,
+            rating: rating.stars,
+            comment: rating.comment,
+            rated_at: hoursAgo(trx, Math.max(last.hoursAgo - 12, 1)),
+          })
+          .returning(['id']);
+        await trx('order_ratings').insert({
+          id: ratingRow.id,
+          order_item_id: itemRows[index].id,
+        });
+      }
+    }
   });
 }

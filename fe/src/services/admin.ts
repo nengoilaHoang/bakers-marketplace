@@ -11,8 +11,10 @@ import type {
 	AdminUserQuery,
 	AdminVendor,
 	AdminVendorQuery,
+	PageQuery,
 	Paginated,
 } from '@/types/admin';
+import type { AdminShipment, AdminShipmentView } from '@/types/order';
 
 export type * from '@/types/admin';
 
@@ -134,4 +136,18 @@ export function getAdminVendors(
 	{ signal }: Options = {},
 ): Promise<Paginated<AdminVendor>> {
 	return request<Paginated<AdminVendor>>('/admin/vendors', { signal }, query);
+}
+
+// ---------- giao hàng ----------
+
+export function getAdminShipments(
+	query: PageQuery & { view?: AdminShipmentView },
+	{ signal }: Options = {},
+): Promise<Paginated<AdminShipment>> {
+	return request<Paginated<AdminShipment>>('/admin/shipments', { signal }, query);
+}
+
+/** Chuyển vận đơn sang bước tiếp theo; bước cuối (đã giao) hoàn thành đơn. */
+export function advanceShipment(id: string): Promise<void> {
+	return post(`/admin/shipments/${id}/advance`);
 }

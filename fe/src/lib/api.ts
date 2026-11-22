@@ -16,11 +16,14 @@ type QueryValue =
 export class ApiError extends Error {
   public readonly status: number;
   public readonly details: unknown;
+  // Mã lỗi nghiệp vụ BE trả kèm (ví dụ 'INSUFFICIENT_STOCK'), để FE hiện câu tiếng Việt phù hợp.
+  public readonly code?: string;
 
-  constructor(status: number, message: string, details?: unknown) {
+  constructor(status: number, message: string, details?: unknown, code?: string) {
     super(message);
     this.status = status;
     this.details = details;
+    this.code = code;
   }
 }
 
@@ -73,6 +76,7 @@ export default async function request<T>(
       res.status,
       body?.message ?? `Request failed (${res.status})`,
       body?.errors,
+      body?.code,
     );
   }
 

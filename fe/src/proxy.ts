@@ -12,6 +12,8 @@ const PUBLIC_ROUTES = new Set([
   '/recipes',
   '/recipes/search',
   '/vendors/products/search',
+  '/products',
+  '/cart',
   '/authen/google/callback',
   '/authen/google/callbackRegister',
 ]);
@@ -22,20 +24,23 @@ const PUBLIC_ROUTE_PREFIXES = ['/authen/verify/', '/authen/reset-password/'];
 // không khớp /posts/new, /recipes/new, /<...>/<uuid>/edit
 const PUBLIC_DETAIL_PATTERN = /^\/(posts|recipes)\/[0-9a-f-]{36}$/i;
 
+// Trang chi tiết sản phẩm /products/<slug>
+const PRODUCT_DETAIL_PATTERN = /^\/products\/[a-z0-9-]+$/i;
+
 function isPublicRoute(pathname: string): boolean {
   return (
     PUBLIC_ROUTES.has(pathname) ||
     PUBLIC_DETAIL_PATTERN.test(pathname) ||
+    PRODUCT_DETAIL_PATTERN.test(pathname) ||
     PUBLIC_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   );
 }
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const hasAccessToken = request.cookies.has('accessToken');
-  const hasRefreshToken = request.cookies.has('refreshToken');
-  const hasActiveSession = hasAccessToken && hasRefreshToken;
-  const canAccessProtectedRoutes = hasActiveSession;
+  // Access token chỉ sống 15 phút; còn refresh token là còn phiên đăng nhập,
+  // lần gọi API đầu tiên trên trang sẽ tự lấy access token mới (lib/api.ts).
+  const canAccessProtectedRoutes = request.cookies.has('refreshToken');
   const isGuestRoute = GUEST_ROUTES.has(pathname);
 
   if (isGuestRoute && canAccessProtectedRoutes) {

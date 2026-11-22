@@ -29,6 +29,8 @@ import Input, { PasswordInput, Textarea } from '@/components/ui/Input';
 import Logo, { LogoMark } from '@/components/ui/Logo';
 import PillTabs from '@/components/ui/PillTabs';
 import PlusCircle from '@/components/ui/PlusCircle';
+import ProductCard from '@/components/ui/ProductCard';
+import QuantityStepper from '@/components/ui/QuantityStepper';
 import RatingStars, { RatingInput } from '@/components/ui/RatingStars';
 import RecipeCard from '@/components/ui/RecipeCard';
 import RecipeGrid from '@/components/ui/RecipeGrid';
@@ -175,6 +177,17 @@ function ModalDemo() {
           Đóng bằng Esc, nút X hoặc bấm ra ngoài.
         </p>
       </Modal>
+    </>
+  );
+}
+
+function QuantityStepperDemo() {
+  const [value, setValue] = useState(2);
+
+  return (
+    <>
+      <QuantityStepper label='Croissant' value={value} max={5} onChange={setValue} />
+      <QuantityStepper label='Croissant (nhỏ)' size='sm' value={value} max={5} onChange={setValue} />
     </>
   );
 }
@@ -547,6 +560,20 @@ export default function MockupIndexPage() {
                 <ImagePlaceholder iconSize='sm' className='aspect-4/3 rounded-media' />
                 <ImagePlaceholder tone='primary-soft' className='aspect-4/3 rounded-media' />
                 <ImagePlaceholder tone='primary' iconSize='lg' className='aspect-4/3 rounded-media' />
+              </div>
+            </div>
+            <div className='flex flex-col gap-3'>
+              <p className='text-meta font-medium text-ink-subtle uppercase'>ProductCard (còn hàng / hết hàng) + QuantityStepper md / sm</p>
+              <div className='grid gap-7.5 sm:grid-cols-2 lg:grid-cols-4'>
+                <ProductCard
+                  product={{ title: 'Croissant Bơ Pháp', href: '#', imageUrl: null, unitPrice: 35000, currency: 'VND', unit: 'cái', stock: 12, description: 'Croissant ngàn lớp, thơm mùi bơ.' }}
+                />
+                <ProductCard
+                  product={{ title: 'Bánh Mì Hoa Cúc', href: '#', imageUrl: null, unitPrice: 120000, currency: 'VND', unit: 'ổ', stock: 0 }}
+                />
+              </div>
+              <div className='flex flex-wrap items-center gap-4'>
+                <QuantityStepperDemo />
               </div>
             </div>
             <ArticleCard article={ARTICLES[0]} className='max-w-200' />

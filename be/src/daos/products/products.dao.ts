@@ -4,6 +4,7 @@ import db from '#/db/index.js';
 import type { Image } from '#/models/files/images.model.js';
 import type {
 	Product,
+	ProductBrandSummary,
 	ProductCollectionSummary,
 	ProductNoteRow,
 	ProductRow,
@@ -176,6 +177,19 @@ class ProductDAO {
 			.del();
 
 		return product;
+	}
+
+	/** Unfinished orders (pending or approved) holding this product, declined items aside. */
+	public async countActiveOrders(productId: string): Promise<number> {
+		const row = await this.db.instance('order_items as oi')
+			.join('orders as o', 'o.id', 'oi.orderId')
+			.where('oi.productId', productId)
+			.whereNot('oi.status', 'DECLINED')
+			.whereIn('o.currentStatus', ['PENDING', 'APPROVED'])
+			.countDistinct({ total: 'o.id' })
+			.first();
+
+		return Number(row?.total ?? 0);
 	}
 
 	public async existsById(id: string): Promise<boolean> {
@@ -436,22 +450,34 @@ class ProductDAO {
 
 		const ids = rows.map((row) => row.id);
 
-		const [media, notes, tags, stocks, collections] = await Promise.all([
+		const [media, notes, tags, stocks, collections, brands] = await Promise.all([
 			this.loadMedia(ids),
 			this.loadNotes(ids),
 			this.loadTags(ids),
 			this.loadStocks(ids),
 			this.loadCollections(ids),
+			this.loadBrands(rows.map((row) => row.brandId)),
 		]);
 
 		return rows.map((row) => ({
 			...row,
+			brand: brands.get(row.brandId) ?? null,
 			media: media.get(row.id) ?? [],
 			notes: notes.get(row.id) ?? [],
 			tags: tags.get(row.id) ?? [],
 			stock: stocks.get(row.id) ?? null,
 			collections: collections.get(row.id) ?? [],
 		}));
+	}
+
+	private async loadBrands(
+		brandIds: string[],
+	): Promise<Map<string, ProductBrandSummary>> {
+		const rows: ProductBrandSummary[] = await this.db.instance('brands')
+			.select('id', 'name')
+			.whereIn('id', [...new Set(brandIds)]);
+
+		return new Map(rows.map((brand) => [brand.id, brand]));
 	}
 
 	private async loadCollections(
@@ -499,7 +525,8 @@ class ProductDAO {
 			.whereIn('product_images.product_id', productIds)
 			.orderBy('product_images.sort_order', 'asc');
 
-		return this.groupBy(rows, 'product_id');
+		// Rows come back camelCased, so the column is productId here
+		return this.groupBy(rows, 'productId');
 	}
 
 	private async loadNotes(

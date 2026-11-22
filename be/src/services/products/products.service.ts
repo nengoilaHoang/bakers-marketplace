@@ -84,7 +84,20 @@ class ProductService {
 		return this.productDAO.update(id, input);
 	}
 
+	/**
+	 * Order items find their vendor through the product, so a product still in an
+	 * unfinished order (pending or approved, not declined) cannot be deleted.
+	 */
 	public async delete(id: string): Promise<Product | null> {
+		const activeOrders = await this.productDAO.countActiveOrders(id);
+
+		if (activeOrders > 0) {
+			throw new ConflictError(
+				`Product is in ${activeOrders} unfinished order(s)`,
+				'PRODUCT_IN_ACTIVE_ORDERS',
+			);
+		}
+
 		return this.productDAO.delete(id);
 	}
 

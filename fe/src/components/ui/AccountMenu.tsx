@@ -21,7 +21,7 @@ export default function AccountMenu() {
   if (!isAuthenticated || !account) {
     return (
       <ButtonLink href='/authen/login' size='sm' className='uppercase'>
-        Đăng nhập / Đăng ký
+        Đăng nhập<span className='hidden sm:inline'>/ Đăng ký</span>
       </ButtonLink>
     );
   }
@@ -67,9 +67,14 @@ export default function AccountMenu() {
               Quản lý cửa hàng
             </Link>
           ) : (
-            <Link href='/me' className={MENU_ITEM_CLASSES}>
-              Trang cá nhân
-            </Link>
+            <>
+              <Link href='/me' className={MENU_ITEM_CLASSES}>
+                Trang cá nhân
+              </Link>
+              <Link href='/orders' className={MENU_ITEM_CLASSES} onClick={close}>
+                Đơn hàng của tôi
+              </Link>
+            </>
           )}
           <Link href='/settings' className={MENU_ITEM_CLASSES} onClick={close}>
             Cài đặt

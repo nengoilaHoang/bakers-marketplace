@@ -14,7 +14,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { ButtonLink } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
-import { useAdminData } from '@/hooks/useAdminData';
+import { useApiData } from '@/hooks/useApiData';
 import { readString } from '@/hooks/useUrlFilters';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { getAdminRecipe } from '@/services/admin';
@@ -24,7 +24,7 @@ import { formatDateTime } from '@/utils/format';
 const AdminRecipeDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = readString(router.query.id);
-  const { data, isLoading, error, reload } = useAdminData(
+  const { data, isLoading, error, reload } = useApiData(
     (signal) => getAdminRecipe(id!, { signal }).then((response) => response.data),
     id ?? '',
     Boolean(id),

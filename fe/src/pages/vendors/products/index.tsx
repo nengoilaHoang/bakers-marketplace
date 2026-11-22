@@ -13,6 +13,7 @@ import { PanelSkeleton } from '@/components/dashboard/Panel';
 import DashboardPage from '@/components/dashboard/DashboardPage';
 import { useVendorStocks } from '@/hooks/useVendorStocks';
 import type { NextPageWithLayout } from '@/pages/_app';
+import { ApiError } from '@/lib/api';
 import { productApi } from '@/services/products';
 import type { Product } from '@/types/product';
 
@@ -49,7 +50,14 @@ const ProductListPage: NextPageWithLayout = () => {
       setNotice({ tone: 'success', text: `Đã xoá "${product.title}".` });
       reload();
     } catch (deleteError) {
-      setNotice({ tone: 'danger', text: (deleteError as Error).message });
+      setNotice({
+        tone: 'danger',
+        // Món trong đơn tìm ra tiệm qua sản phẩm, nên BE chặn xoá khi sản phẩm còn trong đơn chưa xong.
+        text:
+          deleteError instanceof ApiError && deleteError.code === 'PRODUCT_IN_ACTIVE_ORDERS'
+            ? `Không thể xoá "${product.title}" vì vẫn còn đơn hàng chưa hoàn tất có sản phẩm này. Hãy xử lý xong các đơn đó (duyệt, từ chối hoặc chờ giao xong) rồi xoá lại.`
+            : (deleteError as Error).message,
+      });
     } finally {
       setDeletingId(null);
     }

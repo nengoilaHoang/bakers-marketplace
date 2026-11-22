@@ -8,7 +8,7 @@ import Icon from '@/components/ui/Icon';
 import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
 import StatCard from '@/components/dashboard/StatCard';
 import DashboardPage from '@/components/dashboard/DashboardPage';
-import { useAdminData } from '@/hooks/useAdminData';
+import { useApiData } from '@/hooks/useApiData';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { getAdminPosts, getAdminUsers } from '@/services/admin';
 
@@ -26,7 +26,7 @@ async function loadOverview(signal: AbortSignal) {
 }
 
 const AdminHomePage: NextPageWithLayout = () => {
-  const { data, isLoading, error, reload } = useAdminData(loadOverview, 'overview');
+  const { data, isLoading, error, reload } = useApiData(loadOverview, 'overview');
 
   return (
     <DashboardPage

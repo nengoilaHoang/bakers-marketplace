@@ -25,7 +25,7 @@ export default function Select({
       <select
         className={cn(
           tone === 'field'
-            ? cn(fieldClasses(), 'h-12 cursor-pointer appearance-none pr-10')
+            ? cn(fieldClasses(), 'h-12 cursor-pointer appearance-none pr-10 disabled:cursor-not-allowed disabled:opacity-60')
             : cn(
                 'h-11 w-full cursor-pointer appearance-none rounded-control bg-field pr-9 pl-3 text-lead font-medium text-ink outline-none',
                 'focus-visible:ring-2 focus-visible:ring-accent/50',

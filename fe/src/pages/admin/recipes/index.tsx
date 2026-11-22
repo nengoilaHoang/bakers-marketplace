@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import KeywordSearch from '@/components/admin/KeywordSearch';
-import Pagination from '@/components/admin/Pagination';
+import Pagination from '@/components/ui/Pagination';
 import { PanelSkeleton } from '@/components/dashboard/Panel';
 import DashboardPage from '@/components/dashboard/DashboardPage';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -10,7 +10,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import Icon from '@/components/ui/Icon';
 import Table, { Td, Th } from '@/components/ui/Table';
-import { useAdminData } from '@/hooks/useAdminData';
+import { useApiData } from '@/hooks/useApiData';
 import { readPage, readString, useUrlFilters } from '@/hooks/useUrlFilters';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { getAdminRecipes } from '@/services/admin';
@@ -21,7 +21,7 @@ const AdminRecipesPage: NextPageWithLayout = () => {
   const keyword = readString(query.keyword);
   const page = readPage(query.page);
 
-  const { data, isLoading, error, reload } = useAdminData(
+  const { data, isLoading, error, reload } = useApiData(
     (signal) => getAdminRecipes({ keyword, page }, { signal }),
     `${keyword}|${page}`,
     isReady,

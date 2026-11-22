@@ -4,6 +4,7 @@ import type { DashboardNavItem } from '@/components/dashboard/DashboardSidebar';
 import VendorSiteHeader from '../vendor/VendorSiteHeader';
 
 const VENDOR_NAV: DashboardNavItem[] = [
+  { label: 'Đơn hàng', href: '/vendors/orders', icon: 'notebook' },
   { label: 'Sản phẩm', href: '/vendors/products', icon: 'cart' },
   { label: 'Tồn kho', href: '/vendors/stocks', icon: 'summary' },
   { label: 'Bộ sưu tập', href: '/vendors/collections', icon: 'hand-platter' },

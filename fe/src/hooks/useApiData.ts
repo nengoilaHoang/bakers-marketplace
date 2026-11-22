@@ -6,10 +6,10 @@ function getErrorMessage(error: unknown): string {
     : 'Không thể tải dữ liệu. Vui lòng thử lại.';
 }
 
-// Tải dữ liệu cho một trang quản trị. `key` đổi (bộ lọc, trang, id) thì tải lại.
+// Tải dữ liệu cho một trang (admin, cửa hàng, đơn hàng…). `key` đổi (bộ lọc, trang, id) thì tải lại.
 // `load` có thể đổi giữa các lần render; hook luôn gọi bản mới nhất.
 // `enabled` = false: chờ (ví dụ router chưa có query), chưa gọi API.
-export function useAdminData<T>(
+export function useApiData<T>(
   load: (signal: AbortSignal) => Promise<T>,
   key: string,
   enabled = true,

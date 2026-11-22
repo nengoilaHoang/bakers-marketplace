@@ -13,6 +13,9 @@ export async function up(knex: Knex): Promise<void> {
     );
   `);
 
+  // Feeds orders.order_number (BM + yymmdd + 6 digits, e.g. BM261111000042)
+  await knex.raw('CREATE SEQUENCE order_number_seq;');
+
   await knex.schema
 		.createTable('files', (table) => {
       table
@@ -1204,6 +1207,394 @@ export async function up(knex: Knex): Promise<void> {
       });
     })
 
+    // An order may hold products of several vendors and has one status for the whole order.
+    // The shipping address is copied into the order (shipping_*), so later edits never change past orders.
+    .createTable('orders', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .string('order_number', 20)
+        .notNullable()
+        .unique()
+        .defaultTo(
+          knex.raw(
+            "'BM' || to_char(now() AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYMMDD') || lpad(nextval('order_number_seq')::text, 6, '0')",
+          ),
+        );
+
+      table
+        .uuid('ordered_by')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .string('shipping_recipient_name', 255)
+        .notNullable();
+
+      table
+        .string('shipping_phone', 15)
+        .notNullable();
+
+      table
+        .string('shipping_street_address', 500)
+        .notNullable();
+
+      table
+        .string('shipping_ward', 255)
+        .notNullable();
+
+      table
+        .string('shipping_province', 255)
+        .notNullable();
+
+      table
+        .text('shipping_note')
+        .nullable();
+
+      table
+        .decimal('subtotal', 20, 2)
+        .notNullable();
+
+      // Fees, tax and commission are not charged yet, so they stay 0 and total_amount = subtotal
+      table
+        .decimal('delivery_fee', 20, 2)
+        .notNullable()
+        .defaultTo(0);
+
+      table
+        .decimal('tax_percentage', 5, 2)
+        .notNullable()
+        .defaultTo(0);
+
+      table
+        .decimal('commission_rate', 5, 2)
+        .notNullable()
+        .defaultTo(0);
+
+      table
+        .decimal('total_amount', 20, 2)
+        .notNullable();
+
+      table
+        .specificType('currency', 'char(3)')
+        .notNullable()
+        .defaultTo('VND');
+
+      table
+        .enum(
+          'current_status',
+          ['PENDING', 'APPROVED', 'DECLINED', 'CANCELLED', 'COMPLETED', 'REFUNDED'],
+          { useNative: true, enumName: 'order_status' },
+        )
+        .notNullable()
+        .defaultTo('PENDING');
+
+      table
+        .timestamp('cancellation_cut_off_time', { useTz: true })
+        .nullable();
+
+      table
+        .timestamp('placed_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table
+        .timestamp('updated_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.check(
+        'subtotal >= 0 AND delivery_fee >= 0 AND total_amount >= 0',
+        [],
+        'chk_orders_amounts_non_negative',
+      );
+
+      table.check(
+        'tax_percentage BETWEEN 0 AND 100 AND commission_rate BETWEEN 0 AND 100',
+        [],
+        'chk_orders_rates_percentage',
+      );
+
+      table.index(['ordered_by', 'placed_at'], 'idx_orders_ordered_by_placed_at');
+    })
+
+    // Title, price and unit are copied at order time; product_id is cleared if the product is deleted
+    .createTable('order_items', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('order_id')
+        .notNullable()
+        .references('id')
+        .inTable('orders')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('product_id')
+        .references('id')
+        .inTable('products')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .string('product_title', 255)
+        .notNullable();
+
+      table
+        .decimal('unit_price', 20, 2)
+        .notNullable();
+
+      table
+        .decimal('unit_cost', 20, 2)
+        .notNullable();
+
+      table
+        .string('unit', 255)
+        .notNullable();
+
+      table
+        .integer('quantity')
+        .notNullable();
+
+      table
+        .text('note')
+        .nullable();
+
+      // Each vendor approves or declines its own items; a declined item stays in the order
+      table
+        .enum('status', ['PENDING', 'APPROVED', 'DECLINED'], {
+          useNative: true,
+          enumName: 'order_item_status',
+        })
+        .notNullable()
+        .defaultTo('PENDING');
+
+      table
+        .text('decline_reason')
+        .nullable();
+
+      table.check(
+        'quantity > 0',
+        [],
+        'chk_order_items_quantity_positive',
+      );
+
+      table.check(
+        'unit_price >= 0 AND unit_cost >= 0',
+        [],
+        'chk_order_items_prices_non_negative',
+      );
+
+      table.index(['order_id'], 'idx_order_items_order_id');
+      table.index(['product_id'], 'idx_order_items_product_id');
+    })
+
+    .createTable('order_status_histories', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('order_id')
+        .notNullable()
+        .references('id')
+        .inTable('orders')
+        .onDelete('CASCADE');
+
+      table
+        .specificType('status', 'order_status')
+        .notNullable();
+
+      // Who changed the status; null when it was the system
+      table
+        .uuid('actor_id')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .text('note')
+        .nullable();
+
+      table
+        .timestamp('timestamp', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['order_id', 'timestamp'], 'idx_order_status_histories_order_time');
+    })
+
+    .createTable('shipments', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      // An order has at most one shipment
+      table
+        .uuid('order_id')
+        .notNullable()
+        .unique()
+        .references('id')
+        .inTable('orders')
+        .onDelete('CASCADE');
+
+      table
+        .string('carrier', 100)
+        .notNullable();
+
+      table
+        .string('tracking_number', 100)
+        .nullable();
+
+      table
+        .timestamp('estimated_delivery', { useTz: true })
+        .nullable();
+
+      table
+        .enum(
+          'current_status',
+          ['LABEL_CREATED', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'],
+          { useNative: true, enumName: 'shipment_status' },
+        )
+        .notNullable()
+        .defaultTo('LABEL_CREATED');
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table
+        .timestamp('updated_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+    })
+
+    .createTable('tracking_events', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('shipment_id')
+        .notNullable()
+        .references('id')
+        .inTable('shipments')
+        .onDelete('CASCADE');
+
+      table
+        .specificType('status', 'shipment_status')
+        .notNullable();
+
+      table
+        .string('location_name', 255)
+        .nullable();
+
+      table
+        .text('description')
+        .nullable();
+
+      table
+        .timestamp('timestamp', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['shipment_id', 'timestamp'], 'idx_tracking_events_shipment_time');
+    })
+
+    // Columns shared by every kind of rating; order_ratings adds the target (recipe ratings later)
+    .createTable('ratings', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('rater_id')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .smallint('rating')
+        .notNullable();
+
+      table
+        .text('comment')
+        .nullable();
+
+      table
+        .timestamp('rated_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.check(
+        'rating BETWEEN 1 AND 5',
+        [],
+        'chk_ratings_rating_range',
+      );
+
+      table.index(['rater_id'], 'idx_ratings_rater_id');
+    })
+
+    // Each order item can be rated once
+    .createTable('order_ratings', (table) => {
+      table
+        .uuid('id')
+        .references('id')
+        .inTable('ratings')
+        .primary()
+        .onDelete('CASCADE');
+
+      table
+        .uuid('order_item_id')
+        .notNullable()
+        .unique()
+        .references('id')
+        .inTable('order_items')
+        .onDelete('CASCADE');
+    })
+
+    .createTable('rating_images', (table) => {
+      table
+        .uuid('rating_id')
+        .notNullable()
+        .references('id')
+        .inTable('ratings')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('image_id')
+        .notNullable()
+        .references('id')
+        .inTable('images')
+        .onDelete('CASCADE');
+
+      table
+        .integer('sort_order')
+        .notNullable()
+        .checkPositive('chk_rating_images_sort_order_positive');
+
+      table.primary(['rating_id', 'sort_order']);
+
+      table.unique(['rating_id', 'image_id'], {
+        indexName: 'uq_rating_images_rating_image',
+      });
+    })
+
     .createTable('collections', (table) => {
       table
         .uuid('id')
@@ -1947,6 +2338,14 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('storefronts')
     .dropTableIfExists('product_collections')
     .dropTableIfExists('collections')
+    .dropTableIfExists('rating_images')
+    .dropTableIfExists('order_ratings')
+    .dropTableIfExists('ratings')
+    .dropTableIfExists('tracking_events')
+    .dropTableIfExists('shipments')
+    .dropTableIfExists('order_status_histories')
+    .dropTableIfExists('order_items')
+    .dropTableIfExists('orders')
     .dropTableIfExists('stock_alerts')
     .dropTableIfExists('product_stocks')
     .dropTableIfExists('product_tags')
@@ -1991,6 +2390,10 @@ export async function down(knex: Knex): Promise<void> {
     DROP TYPE IF EXISTS breakpoint_type;
     DROP TYPE IF EXISTS page_type;
     DROP TYPE IF EXISTS stock_alert_type;
+    DROP TYPE IF EXISTS shipment_status;
+    DROP TYPE IF EXISTS order_item_status;
+    DROP TYPE IF EXISTS order_status;
+    DROP SEQUENCE IF EXISTS order_number_seq;
     DROP TYPE IF EXISTS report_status;
     DROP TYPE IF EXISTS post_status;
     DROP TYPE IF EXISTS company_entity_type;

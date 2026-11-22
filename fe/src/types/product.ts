@@ -39,6 +39,8 @@ export type CollectionSummary = {
 export type Product = {
 	id: string;
 	brandId: string;
+	// Tiệm (thương hiệu) bán sản phẩm.
+	brand: { id: string; name: string } | null;
 	vendorId: string | null;
 	title: string;
 	description: string | null;
