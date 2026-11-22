@@ -10,7 +10,7 @@ import type {
 } from '#/models/orders/orders.model.js';
 import { paginate } from '#/utils/pagination.js';
 
-/** The steps of a delivery, in order, with the tracking text each step records. */
+/** The steps of a delivery, in order, with the tracking text suggested for each step. */
 export const SHIPMENT_STEPS: { status: ShipmentStatus; locationName: string; description: string }[] = [
 	{ status: 'LABEL_CREATED', locationName: 'Bakers Marketplace', description: 'Đã tạo vận đơn' },
 	{ status: 'PICKED_UP', locationName: 'Tiệm bánh', description: 'Đơn vị vận chuyển đã lấy hàng' },
@@ -76,9 +76,24 @@ class ShipmentDAO {
 		return row ?? null;
 	}
 
+	/** The order a shipment belongs to, with its buyer. */
+	public async getOrderRef(
+		shipmentId: string,
+	): Promise<{ orderId: string; orderedBy: string | null; customerDisplayName: string | null } | null> {
+		const row = await this.db.instance(`${this.tableName} as s`)
+			.select('s.orderId', 'o.orderedBy', 'customer.displayname as customerDisplayName')
+			.join('orders as o', 'o.id', 's.orderId')
+			.leftJoin('users as customer', 'customer.id', 'o.orderedBy')
+			.where('s.id', shipmentId)
+			.first();
+
+		return row ?? null;
+	}
+
+	/** Moves the shipment to a step and records the tracking event the admin entered. */
 	public async moveTo(
 		shipmentId: string,
-		step: (typeof SHIPMENT_STEPS)[number],
+		step: { status: ShipmentStatus; locationName: string; description: string },
 		trx: Knex.Transaction,
 	): Promise<void> {
 		await trx(this.tableName)
@@ -128,8 +143,8 @@ class ShipmentDAO {
 					)
 					.join('orders as o', 'o.id', 's.orderId')
 					.leftJoin('users as customer', 'customer.id', 'o.orderedBy')
-					// Oldest updates first: those have waited longest for the next step
-					.orderBy('s.updatedAt', query.view === 'delivered' ? 'desc' : 'asc')
+					// Newest orders first
+					.orderBy('o.placedAt', 'desc')
 					.orderBy('s.id'),
 			query,
 			({ orderedBy, customerDisplayName, totalAmount, ...row }) => ({

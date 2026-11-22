@@ -16,6 +16,7 @@ type VendorOrderRow = OrderRow & {
 	customerDisplayName: string | null;
 	myPendingCount: number;
 	myApprovedCount: number;
+	myExpiredCount: number;
 	myItemCount: number;
 	mySubtotal: string | number;
 };
@@ -70,10 +71,11 @@ class VendorOrderDAO {
 			return null;
 		}
 
-		const [items, statusHistory, shipment, otherRow] = await Promise.all([
+		const [items, statusHistory, shipment, preOrder, otherRow] = await Promise.all([
 			orderDAO.getItems([orderId], vendorId),
 			orderDAO.getHistory(orderId),
 			orderDAO.getShipment(orderId),
+			orderDAO.getPreOrderRef(orderId),
 			this.db.instance('order_items').count({ total: '*' }).where('orderId', orderId).first(),
 		]);
 
@@ -91,21 +93,52 @@ class VendorOrderDAO {
 			otherVendorItemCount: Number(otherRow?.total ?? 0) - row.myItemCount,
 			statusHistory,
 			shipment,
+			preOrder,
 		};
 	}
 
-	/** Locks the order row so vendors' answers and the buyer's cancel are applied one at a time. */
+	/**
+	 * Locks the order row so vendors' answers, the buyer's cancel and the expiry job are
+	 * applied one at a time. `overdue`: the approval deadline has passed.
+	 */
 	public async lockOrder(
 		orderId: string,
 		trx: Knex.Transaction,
-	): Promise<{ currentStatus: OrderStatus } | null> {
+	): Promise<{ currentStatus: OrderStatus; overdue: boolean } | null> {
 		const row = await trx(this.tableName)
-			.select('currentStatus')
+			.select('currentStatus', trx.raw('coalesce(approval_deadline <= now(), false) AS overdue'))
 			.where('id', orderId)
 			.forUpdate()
 			.first();
 
 		return row ?? null;
+	}
+
+	/** Pending orders whose approval deadline has passed, oldest first. */
+	public async getOverdueOrderIds(limit: number): Promise<string[]> {
+		const rows: { id: string }[] = await this.db.instance(this.tableName)
+			.select('id')
+			.where('currentStatus', 'PENDING')
+			.whereRaw('approval_deadline <= now()')
+			.orderBy('approvalDeadline')
+			.limit(limit);
+
+		return rows.map((row) => row.id);
+	}
+
+	/** Moves every still-pending item of the order to EXPIRED; returns what it changed. */
+	public async expirePendingItems(
+		orderId: string,
+		trx: Knex.Transaction,
+	): Promise<{ id: string; productId: string; quantity: number }[]> {
+		const result = await trx.raw(
+			`UPDATE order_items SET status = 'EXPIRED'
+			WHERE order_id = ? AND status = 'PENDING'
+			RETURNING id, product_id, quantity`,
+			[orderId],
+		);
+
+		return result.rows as { id: string; productId: string; quantity: number }[];
 	}
 
 	/** Moves this vendor's still-pending items to APPROVED / DECLINED; returns what it changed. */
@@ -147,7 +180,9 @@ class VendorOrderDAO {
 			.select(
 				trx.raw(`count(*) FILTER (WHERE status = 'PENDING')::int AS pending`),
 				trx.raw(`count(*) FILTER (WHERE status = 'APPROVED')::int AS approved`),
-				trx.raw(`coalesce(sum(unit_price * quantity) FILTER (WHERE status <> 'DECLINED'), 0) AS subtotal`),
+				trx.raw(
+					`coalesce(sum(unit_price * quantity) FILTER (WHERE status IN ('PENDING', 'APPROVED')), 0) AS subtotal`,
+				),
 			)
 			.first();
 
@@ -177,6 +212,17 @@ class VendorOrderDAO {
 		return rows.map((row) => row.name);
 	}
 
+	/** Brand names of the given order items (products deleted since are skipped). */
+	public async getBrandNamesOfItems(itemIds: string[], trx: Knex.Transaction): Promise<string[]> {
+		const rows: { name: string }[] = await trx('order_items as oi')
+			.distinct('b.name')
+			.join('products as p', 'p.id', 'oi.productId')
+			.join('brands as b', 'b.id', 'p.brandId')
+			.whereIn('oi.id', itemIds);
+
+		return rows.map((row) => row.name);
+	}
+
 	private withVendorColumns(query: Knex.QueryBuilder, vendorId: string): Knex.QueryBuilder {
 		const knex = this.db.instance;
 
@@ -187,8 +233,10 @@ class VendorOrderDAO {
 				knex.raw(`(SELECT count(*) ${MY_ITEMS_SQL})::int AS my_item_count`, [vendorId]),
 				knex.raw(`(SELECT count(*) ${MY_ITEMS_SQL} AND oi.status = 'PENDING')::int AS my_pending_count`, [vendorId]),
 				knex.raw(`(SELECT count(*) ${MY_ITEMS_SQL} AND oi.status = 'APPROVED')::int AS my_approved_count`, [vendorId]),
+				knex.raw(`(SELECT count(*) ${MY_ITEMS_SQL} AND oi.status = 'EXPIRED')::int AS my_expired_count`, [vendorId]),
 				knex.raw(
-					`(SELECT coalesce(sum(oi.unit_price * oi.quantity), 0) ${MY_ITEMS_SQL} AND oi.status <> 'DECLINED') AS my_subtotal`,
+					`(SELECT coalesce(sum(oi.unit_price * oi.quantity), 0) ${MY_ITEMS_SQL}
+					AND oi.status IN ('PENDING', 'APPROVED')) AS my_subtotal`,
 					[vendorId],
 				),
 			)
@@ -197,7 +245,13 @@ class VendorOrderDAO {
 
 	private toListItem(row: VendorOrderRow): VendorOrderListItem {
 		const myStatus: VendorPartStatus =
-			row.myPendingCount > 0 ? 'PENDING' : row.myApprovedCount > 0 ? 'APPROVED' : 'DECLINED';
+			row.myPendingCount > 0
+				? 'PENDING'
+				: row.myApprovedCount > 0
+					? 'APPROVED'
+					: row.myExpiredCount > 0
+						? 'EXPIRED'
+						: 'DECLINED';
 
 		return {
 			...orderDAO.toSummary(row),

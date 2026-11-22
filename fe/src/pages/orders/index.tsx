@@ -13,7 +13,7 @@ import { readEnum, readPage, useUrlFilters } from '@/hooks/useUrlFilters';
 import { getMyOrders, type OrderStatus } from '@/services/orders';
 
 // REFUNDED gắn với thanh toán, chưa dùng nên không có tab riêng.
-const FILTERS: OrderStatus[] = ['PENDING', 'APPROVED', 'COMPLETED', 'CANCELLED', 'DECLINED'];
+const FILTERS: OrderStatus[] = ['PENDING', 'APPROVED', 'COMPLETED', 'CANCELLED', 'DECLINED', 'EXPIRED'];
 const PAGE_SIZE = 10;
 
 export default function MyOrdersPage() {

@@ -15,6 +15,7 @@ import type {
 	OrderRatingCreate,
 	ReorderResult,
 } from '#/models/orders/orders.model.js';
+import { ORDER_APPROVAL_WINDOW_MINUTES } from '#/models/orders/orders.model.js';
 
 class OrderService {
 	private orderDAO = orderDAO;
@@ -29,7 +30,7 @@ class OrderService {
 			const products = await this.orderDAO.lockProducts(productIds, trx);
 			const productById = new Map(products.map((product) => [product.id, product]));
 
-			const items: NewOrderItem[] = payload.items.map((item) => {
+			const items: (NewOrderItem & { productId: string })[] = payload.items.map((item) => {
 				const product = productById.get(item.productId);
 
 				if (!product) {
@@ -78,6 +79,7 @@ class OrderService {
 					subtotal,
 					totalAmount: subtotal,
 					currency: [...currencies][0],
+					approvalWindowMinutes: ORDER_APPROVAL_WINDOW_MINUTES,
 				},
 				items,
 				trx,

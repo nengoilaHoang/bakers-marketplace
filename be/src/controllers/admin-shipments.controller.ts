@@ -6,7 +6,7 @@ import asyncHandler from '#/utils/asyncHandler.js';
 
 import adminShipmentService from '#/services/admin/admin-shipments.service.js';
 
-import { AdminShipmentQuerySchema } from '#/models/orders/orders.model.js';
+import { AdminShipmentQuerySchema, ShipmentAdvanceSchema } from '#/models/orders/orders.model.js';
 import { AuthenticatedRequest } from '#/types/request.types.js';
 
 const IdParamsSchema = z.object({
@@ -26,13 +26,24 @@ class AdminShipmentController {
 		},
 	);
 
-	public advance = asyncHandler(
+	public getDetail = asyncHandler(
 		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 			const { id } = IdParamsSchema.parse(req.params);
 
-			await this.adminShipmentService.advance(req.user.id, id);
+			const shipment = await this.adminShipmentService.getDetail(id);
 
-			res.status(204).end();
+			res.status(200).json({ data: shipment });
+		},
+	);
+
+	public advance = asyncHandler(
+		async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+			const { id } = IdParamsSchema.parse(req.params);
+			const input = ShipmentAdvanceSchema.parse(req.body);
+
+			const shipment = await this.adminShipmentService.advance(req.user.id, id, input);
+
+			res.status(200).json({ data: shipment });
 		},
 	);
 }

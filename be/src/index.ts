@@ -7,6 +7,8 @@ import cookieParser from 'cookie-parser';
 import router from './routes/index.route.js';
 import { errorMiddleware } from '#/middlewares/error.middleware.js';
 import { connectRedis, disconnectRedis } from './redis.js';
+import orderExpiryService from '#/services/orders/order-expiry.service.js';
+import preOrderSchedulerService from '#/services/pre-orders/pre-order-scheduler.service.js';
 
 const app = express();
 const PORT = 4000;
@@ -68,7 +70,14 @@ async function bootstrap(): Promise<void> {
       console.log(`Server is running on http://localhost:${PORT}/health`);
     });
 
+    // Settles pending orders the vendors did not answer before the deadline
+    orderExpiryService.start();
+    // Expires, starts and completes pre-orders; creates each cycle's order when its day comes
+    preOrderSchedulerService.start();
+
     const shutdown = async () => {
+      orderExpiryService.stop();
+      preOrderSchedulerService.stop();
       server.close(async () => {
         await disconnectRedis();
         process.exit(0);

@@ -1288,14 +1288,15 @@ export async function up(knex: Knex): Promise<void> {
       table
         .enum(
           'current_status',
-          ['PENDING', 'APPROVED', 'DECLINED', 'CANCELLED', 'COMPLETED', 'REFUNDED'],
+          ['PENDING', 'APPROVED', 'DECLINED', 'EXPIRED', 'CANCELLED', 'COMPLETED', 'REFUNDED'],
           { useNative: true, enumName: 'order_status' },
         )
         .notNullable()
         .defaultTo('PENDING');
 
+      // Vendors must answer before this; items still pending then become EXPIRED
       table
-        .timestamp('cancellation_cut_off_time', { useTz: true })
+        .timestamp('approval_deadline', { useTz: true })
         .nullable();
 
       table
@@ -1368,9 +1369,10 @@ export async function up(knex: Knex): Promise<void> {
         .text('note')
         .nullable();
 
-      // Each vendor approves or declines its own items; a declined item stays in the order
+      // Each vendor approves or declines its own items; a declined item stays in the order.
+      // EXPIRED: the vendor did not answer before the order's approval deadline.
       table
-        .enum('status', ['PENDING', 'APPROVED', 'DECLINED'], {
+        .enum('status', ['PENDING', 'APPROVED', 'DECLINED', 'EXPIRED'], {
           useNative: true,
           enumName: 'order_item_status',
         })
@@ -1593,6 +1595,283 @@ export async function up(knex: Knex): Promise<void> {
       table.unique(['rating_id', 'image_id'], {
         indexName: 'uq_rating_images_rating_image',
       });
+    })
+
+    // A baker's recurring order: the vendors approve it once, then the system creates an
+    // already approved order on every cycle. The address is copied like orders do.
+    .createTable('pre_order_requests', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('issuer_id')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .enum(
+          'current_status',
+          ['PENDING', 'APPROVED', 'DECLINED', 'EXPIRED', 'ACTIVE', 'CANCELLED', 'COMPLETED'],
+          { useNative: true, enumName: 'pre_order_status' },
+        )
+        .notNullable()
+        .defaultTo('PENDING');
+
+      table
+        .smallint('duration_months')
+        .notNullable();
+
+      table
+        .enum('frequency', ['MONTHLY', 'BIWEEKLY'], {
+          useNative: true,
+          enumName: 'recurrence_frequency',
+        })
+        .notNullable();
+
+      table
+        .date('start_date')
+        .notNullable();
+
+      table
+        .date('end_date')
+        .notNullable();
+
+      // Vendors must answer the whole request before this; items still pending then expire
+      table
+        .timestamp('approval_deadline', { useTz: true })
+        .nullable();
+
+      // Payment is not built yet: stored for later, no logic reads them
+      table
+        .enum('billing_preference', ['PREPAID', 'PER_DELIVERY'], {
+          useNative: true,
+          enumName: 'billing_type',
+        })
+        .notNullable()
+        .defaultTo('PER_DELIVERY');
+
+      table
+        .enum('default_payment_method', ['CASH', 'CREDIT_DEBIT_CARD', 'DOMESTIC_CARD', 'VIETQR'], {
+          useNative: true,
+          enumName: 'payment_method',
+        })
+        .notNullable()
+        .defaultTo('CASH');
+
+      table
+        .string('shipping_recipient_name', 255)
+        .notNullable();
+
+      table
+        .string('shipping_phone', 15)
+        .notNullable();
+
+      table
+        .string('shipping_street_address', 500)
+        .notNullable();
+
+      table
+        .string('shipping_ward', 255)
+        .notNullable();
+
+      table
+        .string('shipping_province', 255)
+        .notNullable();
+
+      table
+        .text('shipping_note')
+        .nullable();
+
+      table
+        .specificType('currency', 'char(3)')
+        .notNullable()
+        .defaultTo('VND');
+
+      table
+        .timestamp('requested_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table
+        .timestamp('updated_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.check(
+        'duration_months BETWEEN 1 AND 12',
+        [],
+        'chk_pre_order_requests_duration',
+      );
+
+      table.check(
+        'end_date >= start_date',
+        [],
+        'chk_pre_order_requests_dates',
+      );
+
+      table.index(['issuer_id', 'requested_at'], 'idx_pre_order_requests_issuer_requested_at');
+    })
+
+    // Same columns as order_items (PreOrderItem extends OrderItem); each vendor answers its own
+    // items once for the whole request. Price, title and unit are locked for every cycle.
+    .createTable('pre_order_items', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('pre_order_request_id')
+        .notNullable()
+        .references('id')
+        .inTable('pre_order_requests')
+        .onDelete('CASCADE');
+
+      table
+        .uuid('product_id')
+        .references('id')
+        .inTable('products')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .string('product_title', 255)
+        .notNullable();
+
+      table
+        .decimal('unit_price', 20, 2)
+        .notNullable();
+
+      table
+        .decimal('unit_cost', 20, 2)
+        .notNullable();
+
+      table
+        .string('unit', 255)
+        .notNullable();
+
+      table
+        .integer('quantity')
+        .notNullable();
+
+      table
+        .text('note')
+        .nullable();
+
+      table
+        .specificType('status', 'order_item_status')
+        .notNullable()
+        .defaultTo('PENDING');
+
+      table
+        .text('decline_reason')
+        .nullable();
+
+      table.check(
+        'quantity > 0',
+        [],
+        'chk_pre_order_items_quantity_positive',
+      );
+
+      table.check(
+        'unit_price >= 0 AND unit_cost >= 0',
+        [],
+        'chk_pre_order_items_prices_non_negative',
+      );
+
+      table.index(['pre_order_request_id'], 'idx_pre_order_items_request_id');
+      table.index(['product_id'], 'idx_pre_order_items_product_id');
+    })
+
+    // One delivery of a request. At scheduled_at the system creates its order (generated_order_id).
+    .createTable('pre_order_cycles', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('pre_order_request_id')
+        .notNullable()
+        .references('id')
+        .inTable('pre_order_requests')
+        .onDelete('CASCADE');
+
+      table
+        .smallint('cycle_number')
+        .notNullable();
+
+      table
+        .enum('current_status', ['SCHEDULED', 'ORDER_CREATED', 'SKIPPED', 'CANCELLED'], {
+          useNative: true,
+          enumName: 'cycle_status',
+        })
+        .notNullable()
+        .defaultTo('SCHEDULED');
+
+      table
+        .uuid('generated_order_id')
+        .references('id')
+        .inTable('orders')
+        .nullable()
+        .unique()
+        .onDelete('SET NULL');
+
+      table
+        .timestamp('scheduled_at', { useTz: true })
+        .notNullable();
+
+      table
+        .timestamp('created_at', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.unique(['pre_order_request_id', 'cycle_number'], {
+        indexName: 'uq_pre_order_cycles_request_number',
+      });
+
+      table.index(['current_status', 'scheduled_at'], 'idx_pre_order_cycles_status_scheduled');
+    })
+
+    .createTable('pre_order_status_histories', (table) => {
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(knex.raw('gen_random_uuid()'));
+
+      table
+        .uuid('pre_order_request_id')
+        .notNullable()
+        .references('id')
+        .inTable('pre_order_requests')
+        .onDelete('CASCADE');
+
+      table
+        .specificType('status', 'pre_order_status')
+        .notNullable();
+
+      // Who changed it; null when it was the system
+      table
+        .uuid('actor_id')
+        .references('id')
+        .inTable('users')
+        .nullable()
+        .onDelete('SET NULL');
+
+      table
+        .text('note')
+        .nullable();
+
+      table
+        .timestamp('timestamp', { useTz: true })
+        .notNullable()
+        .defaultTo(knex.fn.now());
+
+      table.index(['pre_order_request_id', 'timestamp'], 'idx_pre_order_status_histories_request_time');
     })
 
     .createTable('collections', (table) => {
@@ -2338,6 +2617,10 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('storefronts')
     .dropTableIfExists('product_collections')
     .dropTableIfExists('collections')
+    .dropTableIfExists('pre_order_status_histories')
+    .dropTableIfExists('pre_order_cycles')
+    .dropTableIfExists('pre_order_items')
+    .dropTableIfExists('pre_order_requests')
     .dropTableIfExists('rating_images')
     .dropTableIfExists('order_ratings')
     .dropTableIfExists('ratings')
@@ -2390,6 +2673,11 @@ export async function down(knex: Knex): Promise<void> {
     DROP TYPE IF EXISTS breakpoint_type;
     DROP TYPE IF EXISTS page_type;
     DROP TYPE IF EXISTS stock_alert_type;
+    DROP TYPE IF EXISTS payment_method;
+    DROP TYPE IF EXISTS billing_type;
+    DROP TYPE IF EXISTS cycle_status;
+    DROP TYPE IF EXISTS recurrence_frequency;
+    DROP TYPE IF EXISTS pre_order_status;
     DROP TYPE IF EXISTS shipment_status;
     DROP TYPE IF EXISTS order_item_status;
     DROP TYPE IF EXISTS order_status;

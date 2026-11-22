@@ -55,7 +55,7 @@ const ProductListPage: NextPageWithLayout = () => {
         // Món trong đơn tìm ra tiệm qua sản phẩm, nên BE chặn xoá khi sản phẩm còn trong đơn chưa xong.
         text:
           deleteError instanceof ApiError && deleteError.code === 'PRODUCT_IN_ACTIVE_ORDERS'
-            ? `Không thể xoá "${product.title}" vì vẫn còn đơn hàng chưa hoàn tất có sản phẩm này. Hãy xử lý xong các đơn đó (duyệt, từ chối hoặc chờ giao xong) rồi xoá lại.`
+            ? `Không thể xoá "${product.title}" vì vẫn còn đơn hàng hoặc đặt định kỳ chưa xong có sản phẩm này. Hãy xử lý xong (duyệt, từ chối hoặc chờ giao xong) rồi xoá lại.`
             : (deleteError as Error).message,
       });
     } finally {

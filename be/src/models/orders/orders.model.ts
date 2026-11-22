@@ -1,19 +1,28 @@
 import { z } from 'zod';
 
 import { PageQuerySchema } from '#/models/admin/admin.model.js';
+import type { OrderPreOrderRef } from '#/models/pre-orders/pre-orders.model.js';
 import type { ReportPerson } from '#/models/reports/reports.model.js';
+
+/**
+ * How long the vendors of an order have to answer it. Items still pending after that expire.
+ * 1 minute for testing; set to 24 * 60 for real use.
+ */
+export const ORDER_APPROVAL_WINDOW_MINUTES = 5;
 
 export const OrderStatusSchema = z.enum([
 	'PENDING',
 	'APPROVED',
 	'DECLINED',
+	// No item was approved before the approval deadline
+	'EXPIRED',
 	'CANCELLED',
 	'COMPLETED',
 	'REFUNDED',
 ]);
 
-/** Each vendor approves or declines its own items of an order. */
-export const OrderItemStatusSchema = z.enum(['PENDING', 'APPROVED', 'DECLINED']);
+/** Each vendor approves or declines its own items of an order; unanswered ones expire at the deadline. */
+export const OrderItemStatusSchema = z.enum(['PENDING', 'APPROVED', 'DECLINED', 'EXPIRED']);
 
 export const ShipmentStatusSchema = z.enum([
 	'LABEL_CREATED',
@@ -74,7 +83,14 @@ export const VendorOrderQuerySchema = PageQuerySchema.extend({
 
 /** Admin shipping board: in progress (default), delivered, or every shipment. */
 export const AdminShipmentQuerySchema = PageQuerySchema.extend({
-	view: z.enum(['active', 'delivered', 'all']).default('active'),
+	view: z.enum(['active', 'delivered', 'all']).default('all'),
+});
+
+/** The next step of a delivery as the admin records it (status = the step expected next). */
+export const ShipmentAdvanceSchema = z.object({
+	status: ShipmentStatusSchema,
+	locationName: z.string().trim().min(1).max(255),
+	description: z.string().trim().min(1).max(500),
 });
 
 export const VendorOrderDeclineSchema = z.object({
@@ -90,6 +106,7 @@ export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 export type OrderItemStatus = z.infer<typeof OrderItemStatusSchema>;
 export type VendorOrderQuery = z.infer<typeof VendorOrderQuerySchema>;
 export type AdminShipmentQuery = z.infer<typeof AdminShipmentQuerySchema>;
+export type ShipmentAdvance = z.infer<typeof ShipmentAdvanceSchema>;
 export type ShipmentStatus = z.infer<typeof ShipmentStatusSchema>;
 export type ShippingAddress = z.infer<typeof ShippingAddressSchema>;
 export type OrderCreate = z.infer<typeof OrderCreateSchema>;
@@ -154,6 +171,8 @@ export type OrderSummary = {
 	taxPercentage: number;
 	totalAmount: number;
 	currency: string;
+	// Vendors must answer before this, or their pending items expire
+	approvalDeadline: Date | null;
 	placedAt: Date;
 	updatedAt: Date;
 };
@@ -167,6 +186,8 @@ export type OrderDetail = OrderSummary & {
 	items: OrderItemView[];
 	statusHistory: OrderStatusHistoryView[];
 	shipment: ShipmentView | null;
+	// Set when the system created this order for a cycle of a pre-order request
+	preOrder: OrderPreOrderRef | null;
 };
 
 /** One line of a reorder: the product as it is sold now. */
@@ -190,7 +211,7 @@ export type ReorderResult = {
 	skipped: { productTitle: string; reason: 'DELETED' | 'OUT_OF_STOCK' }[];
 };
 
-/** How the vendor's own items in an order stand: still to answer, approved, or all declined. */
+/** How the vendor's own items in an order stand: still to answer, approved, expired, or all declined. */
 export type VendorPartStatus = OrderItemStatus;
 
 export type VendorOrderListItem = OrderSummary & {
@@ -210,6 +231,7 @@ export type VendorOrderDetail = OrderSummary & {
 	otherVendorItemCount: number;
 	statusHistory: OrderStatusHistoryView[];
 	shipment: ShipmentView | null;
+	preOrder: OrderPreOrderRef | null;
 };
 
 /** One delivery on the admin shipping board. */
@@ -226,4 +248,12 @@ export type AdminShipmentRow = {
 	trackingNumber: string | null;
 	currentStatus: ShipmentStatus;
 	updatedAt: Date;
+};
+
+/** One delivery as the admin sees it: the order, its tracking, and the step that comes next. */
+export type AdminShipmentDetail = OrderDetail & {
+	customer: ReportPerson | null;
+	shipment: ShipmentView;
+	// Suggested text for the next tracking event; null once delivered
+	nextStep: { status: ShipmentStatus; locationName: string; description: string } | null;
 };

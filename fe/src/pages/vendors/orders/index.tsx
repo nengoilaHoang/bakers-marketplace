@@ -18,7 +18,7 @@ import type { NextPageWithLayout } from '@/pages/_app';
 import { getVendorOrders, type VendorOrderQuery } from '@/services/orders';
 import { formatDateTime, formatMoney } from '@/utils/format';
 
-const VIEWS = ['all', 'awaiting', 'APPROVED', 'COMPLETED', 'DECLINED', 'CANCELLED'] as const;
+const VIEWS = ['all', 'awaiting', 'APPROVED', 'COMPLETED', 'DECLINED', 'EXPIRED', 'CANCELLED'] as const;
 type View = (typeof VIEWS)[number];
 
 const VIEW_LABELS: Record<View, string> = {
@@ -27,6 +27,7 @@ const VIEW_LABELS: Record<View, string> = {
   APPROVED: 'Đã xác nhận',
   COMPLETED: 'Hoàn thành',
   DECLINED: 'Bị từ chối',
+  EXPIRED: 'Quá hạn duyệt',
   CANCELLED: 'Khách đã huỷ',
 };
 
@@ -104,6 +105,9 @@ const VendorOrdersPage: NextPageWithLayout = () => {
                       <StatusBadge style={VENDOR_PART_STATUS[order.myStatus]} />
                       <span className='text-ink-muted'>{order.myItemCount} món</span>
                     </span>
+                    {order.currentStatus === 'PENDING' && order.myStatus === 'PENDING' && order.approvalDeadline && (
+                      <p className='mt-1 text-ink-muted'>Hạn duyệt: {formatDateTime(order.approvalDeadline)}</p>
+                    )}
                   </Td>
                   <Td>
                     <OrderStatusBadge status={order.currentStatus} />

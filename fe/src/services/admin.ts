@@ -14,7 +14,12 @@ import type {
 	PageQuery,
 	Paginated,
 } from '@/types/admin';
-import type { AdminShipment, AdminShipmentView } from '@/types/order';
+import type {
+	AdminShipment,
+	AdminShipmentDetail,
+	AdminShipmentView,
+	ShipmentAdvance,
+} from '@/types/order';
 
 export type * from '@/types/admin';
 
@@ -147,7 +152,18 @@ export function getAdminShipments(
 	return request<Paginated<AdminShipment>>('/admin/shipments', { signal }, query);
 }
 
-/** Chuyển vận đơn sang bước tiếp theo; bước cuối (đã giao) hoàn thành đơn. */
-export function advanceShipment(id: string): Promise<void> {
-	return post(`/admin/shipments/${id}/advance`);
+export function getAdminShipment(
+	id: string,
+	{ signal }: Options = {},
+): Promise<{ data: AdminShipmentDetail }> {
+	return request<{ data: AdminShipmentDetail }>(`/admin/shipments/${id}`, { signal });
+}
+
+/**
+ * Chuyển vận đơn sang bước tiếp theo và ghi một mốc theo dõi (địa điểm, mô tả admin nhập).
+ * `status` là bước kế tiếp admin đang thấy; vận đơn đã đổi bước thì BE trả 409 STEP_CHANGED.
+ * Bước cuối (đã giao) hoàn thành đơn.
+ */
+export function advanceShipment(id: string, input: ShipmentAdvance): Promise<{ data: AdminShipmentDetail }> {
+	return post(`/admin/shipments/${id}/advance`, input);
 }

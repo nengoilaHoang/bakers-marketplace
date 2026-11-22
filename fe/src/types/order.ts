@@ -6,12 +6,15 @@ export type OrderStatus =
 	| 'PENDING'
 	| 'APPROVED'
 	| 'DECLINED'
+	// Hết hạn duyệt mà không còn món nào được tiệm duyệt
+	| 'EXPIRED'
 	| 'CANCELLED'
 	| 'COMPLETED'
 	| 'REFUNDED';
 
 // Mỗi tiệm duyệt / từ chối các món của mình; món bị từ chối vẫn nằm trong đơn nhưng không tính tiền.
-export type OrderItemStatus = 'PENDING' | 'APPROVED' | 'DECLINED';
+// EXPIRED: tiệm không trả lời trước hạn duyệt, món cũng bị bỏ khỏi đơn như món bị từ chối.
+export type OrderItemStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'EXPIRED';
 
 export type ShipmentStatus =
 	| 'LABEL_CREATED'
@@ -88,6 +91,8 @@ type OrderBase = {
 	taxPercentage: number;
 	totalAmount: number;
 	currency: string;
+	// Các tiệm phải trả lời trước mốc này, quá hạn thì món còn chờ bị bỏ (EXPIRED).
+	approvalDeadline: string | null;
 	placedAt: string;
 	updatedAt: string;
 };
@@ -102,6 +107,14 @@ export type OrderDetail = OrderBase & {
 	// Cũ nhất trước.
 	statusHistory: OrderStatusHistory[];
 	shipment: Shipment | null;
+	// Có khi hệ thống tạo đơn này cho một kỳ của đặt định kỳ.
+	preOrder: OrderPreOrderRef | null;
+};
+
+export type OrderPreOrderRef = {
+	requestId: string;
+	cycleNumber: number;
+	cycleCount: number;
 };
 
 export type OrderQuery = PageQuery & {
@@ -150,6 +163,7 @@ export type VendorOrderDetail = VendorOrderListItem & {
 	otherVendorItemCount: number;
 	statusHistory: OrderStatusHistory[];
 	shipment: Shipment | null;
+	preOrder: OrderPreOrderRef | null;
 };
 
 export type VendorOrderQuery = PageQuery & {
@@ -174,3 +188,17 @@ export type AdminShipment = {
 };
 
 export type AdminShipmentView = 'active' | 'delivered' | 'all';
+
+// Một mốc giao hàng admin ghi: bước kế tiếp + nơi kiện hàng đang ở + chuyện gì xảy ra.
+export type ShipmentAdvance = {
+	status: ShipmentStatus;
+	locationName: string;
+	description: string;
+};
+
+export type AdminShipmentDetail = OrderDetail & {
+	customer: PersonRef | null;
+	shipment: Shipment;
+	// Gợi ý điền sẵn cho bước kế tiếp; null khi đã giao xong.
+	nextStep: ShipmentAdvance | null;
+};

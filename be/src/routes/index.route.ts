@@ -11,6 +11,8 @@ import usersRouter from '#/routes/users.route.js';
 import adminRouter from '#/routes/admin.route.js';
 import ordersRouter from '#/routes/orders.route.js';
 import vendorOrdersRouter from '#/routes/vendor-orders.route.js';
+import preOrdersRouter from '#/routes/pre-orders.route.js';
+import vendorPreOrdersRouter from '#/routes/vendor-pre-orders.route.js';
 
 const router = Router();
 
@@ -25,5 +27,7 @@ router.use('/users', usersRouter);
 router.use('/admin', adminRouter);
 router.use('/orders', ordersRouter);
 router.use('/vendor/orders', vendorOrdersRouter);
+router.use('/pre-orders', preOrdersRouter);
+router.use('/vendor/pre-orders', vendorPreOrdersRouter);
 
 export default router;

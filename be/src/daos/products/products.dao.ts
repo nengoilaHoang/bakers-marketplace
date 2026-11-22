@@ -179,17 +179,26 @@ class ProductDAO {
 		return product;
 	}
 
-	/** Unfinished orders (pending or approved) holding this product, declined items aside. */
+	/** Unfinished orders and running pre-orders holding this product, declined and expired items aside. */
 	public async countActiveOrders(productId: string): Promise<number> {
 		const row = await this.db.instance('order_items as oi')
 			.join('orders as o', 'o.id', 'oi.orderId')
 			.where('oi.productId', productId)
-			.whereNot('oi.status', 'DECLINED')
+			.whereIn('oi.status', ['PENDING', 'APPROVED'])
 			.whereIn('o.currentStatus', ['PENDING', 'APPROVED'])
 			.countDistinct({ total: 'o.id' })
 			.first();
 
-		return Number(row?.total ?? 0);
+		// Pre-order requests still running also reach their vendor through the product
+		const preOrderRow = await this.db.instance('pre_order_items as i')
+			.join('pre_order_requests as r', 'r.id', 'i.preOrderRequestId')
+			.where('i.productId', productId)
+			.whereIn('i.status', ['PENDING', 'APPROVED'])
+			.whereIn('r.currentStatus', ['PENDING', 'APPROVED', 'ACTIVE'])
+			.countDistinct({ total: 'r.id' })
+			.first();
+
+		return Number(row?.total ?? 0) + Number(preOrderRow?.total ?? 0);
 	}
 
 	public async existsById(id: string): Promise<boolean> {

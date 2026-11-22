@@ -14,6 +14,7 @@ import type {
 /**
  * A vendor answers for its own items of an order. The order stays PENDING until every
  * vendor in it has answered; then it becomes APPROVED, or DECLINED when no item is left.
+ * Vendors that do not answer before the deadline are handled by the expiry job.
  */
 class VendorOrderService {
 	private vendorOrderDAO = vendorOrderDAO;
@@ -61,6 +62,11 @@ class VendorOrderService {
 
 			if (order?.currentStatus !== 'PENDING') {
 				throw new ConflictError('Only a pending order can be answered', 'ORDER_NOT_PENDING');
+			}
+
+			// Past the deadline the expiry job settles the order within seconds
+			if (order.overdue) {
+				throw new ConflictError('The approval deadline of this order has passed', 'APPROVAL_EXPIRED');
 			}
 
 			const decided = await this.vendorOrderDAO.decidePendingItems(

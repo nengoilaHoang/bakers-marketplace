@@ -1,8 +1,7 @@
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
-import Alert from '@/components/ui/Alert';
 import Badge from '@/components/ui/Badge';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button, { ButtonLink } from '@/components/ui/Button';
@@ -52,6 +51,13 @@ export default function ProductDetailPage() {
   const { items } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+
+  // Badge "Đã thêm" nổi trên nút "Thêm vào giỏ" thoáng qua rồi ẩn
+  useEffect(() => {
+    if (!added) return;
+    const timer = window.setTimeout(() => setAdded(false), 1200);
+    return () => window.clearTimeout(timer);
+  }, [added]);
 
   const stock = product ? productStock(product) : 0;
   const inCart = product ? (items.find((item) => item.productId === product.id)?.quantity ?? 0) : 0;
@@ -141,19 +147,6 @@ export default function ProductDetailPage() {
                 </p>
               )}
 
-              {added && (
-                <Alert
-                  tone='success'
-                  action={
-                    <ButtonLink href='/cart' variant='outline' size='sm'>
-                      Xem giỏ hàng
-                    </ButtonLink>
-                  }
-                >
-                  Đã thêm vào giỏ hàng.
-                </Alert>
-              )}
-
               {stock > 0 && (
                 <div className='flex flex-col gap-3'>
                   <div className='flex flex-wrap items-center gap-3'>
@@ -167,9 +160,23 @@ export default function ProductDetailPage() {
                         setAdded(false);
                       }}
                     />
-                    <Button size='lg' disabled={canAdd === 0} onClick={() => add(false)} className='uppercase'>
-                      Thêm vào giỏ
-                    </Button>
+                    {/* Badge đặt tuyệt đối trên góc nút nên không đẩy phần tử nào */}
+                    <span className='relative inline-flex'>
+                      <Button size='lg' disabled={canAdd === 0} onClick={() => add(false)} className='uppercase'>
+                        Thêm vào giỏ
+                      </Button>
+                      {added && (
+                        <span aria-hidden className='pointer-events-none absolute -top-3 right-3 rounded-full shadow-soft'>
+                          <Badge tone='success'>
+                            <Icon name='check' className='mr-1 size-3' />
+                            Đã thêm
+                          </Badge>
+                        </span>
+                      )}
+                    </span>
+                    <span role='status' className='sr-only'>
+                      {added ? 'Đã thêm vào giỏ hàng' : ''}
+                    </span>
                     <Button
                       size='lg'
                       variant='outline'

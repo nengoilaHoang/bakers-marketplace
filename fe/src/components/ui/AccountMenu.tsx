@@ -74,6 +74,11 @@ export default function AccountMenu() {
               <Link href='/orders' className={MENU_ITEM_CLASSES} onClick={close}>
                 Đơn hàng của tôi
               </Link>
+              {account.role === 'BAKER' && (
+                <Link href='/pre-orders' className={MENU_ITEM_CLASSES} onClick={close}>
+                  Đặt định kỳ
+                </Link>
+              )}
             </>
           )}
           <Link href='/settings' className={MENU_ITEM_CLASSES} onClick={close}>

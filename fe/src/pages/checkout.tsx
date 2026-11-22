@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
 import OrderTotals from '@/components/orders/OrderTotals';
+import { countCycles, FREQUENCY_LABELS, vnDateInput } from '@/components/pre-orders/PreOrderStatus';
 import Alert from '@/components/ui/Alert';
 import Button, { ButtonLink } from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
@@ -16,13 +17,20 @@ import Select from '@/components/ui/Select';
 import { groupByBrand, removeFromCart, useCart, type CartItem } from '@/hooks/useCart';
 import useAuth from '@/hooks/user/useAuthContext';
 import { ApiError } from '@/lib/api';
+import { cn } from '@/lib/cn';
 import { placeOrder, type ShippingAddress } from '@/services/orders';
+import { createPreOrder, type RecurrenceFrequency } from '@/services/preOrders';
 import { formatMoney } from '@/utils/format';
 import { loadWards, VN_PROVINCES, type VnWard } from '@/utils/vnAddress';
 
 // Địa chỉ lần đặt trước, để điền sẵn lần sau (chỉ lưu trên trình duyệt này).
 const ADDRESS_STORAGE_KEY = 'bakers-shipping-address';
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/;
+// Ngày bắt đầu đặt định kỳ: từ hôm nay tới 60 ngày sau (BE kiểm tra lại).
+const PRE_ORDER_MAX_START_DAYS = 60;
+const DURATION_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1);
+
+type OrderMode = 'once' | 'recurring';
 
 type AddressField = keyof ShippingAddress;
 type FieldErrors = Partial<Record<AddressField, string>>;
@@ -72,6 +80,9 @@ function getOrderErrorMessage(error: unknown): string {
     if (error.code === 'PRODUCT_NOT_FOUND') {
       return 'Một số món đã ngừng bán. Hãy quay lại giỏ hàng để cập nhật.';
     }
+    if (error.code === 'INVALID_START_DATE') {
+      return `Ngày bắt đầu phải từ hôm nay tới ${PRE_ORDER_MAX_START_DAYS} ngày sau.`;
+    }
     if (error.status === 403) return 'Tài khoản này không thể đặt hàng.';
   }
 
@@ -111,6 +122,14 @@ function CheckoutForm({ items, subtotal }: { items: CartItem[]; subtotal: number
 
   const canOrder = !account || account.role === 'CUSTOMER' || account.role === 'BAKER';
   const currency = items[0]?.currency ?? 'VND';
+  // Đặt định kỳ chỉ dành cho tài khoản Baker
+  const canPreOrder = account?.role === 'BAKER';
+  const [mode, setMode] = useState<OrderMode>('once');
+  const isRecurring = canPreOrder && mode === 'recurring';
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>('MONTHLY');
+  const [durationMonths, setDurationMonths] = useState(3);
+  const [startDate, setStartDate] = useState(() => vnDateInput(1));
+  const cycleCount = countCycles(frequency, durationMonths);
 
   function setField(name: AddressField, value: string) {
     if (name === 'recipientName') setIsNameEdited(true);
@@ -137,15 +156,17 @@ function CheckoutForm({ items, subtotal }: { items: CartItem[]; subtotal: number
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const orderItems = items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      ...(item.note?.trim() ? { note: item.note.trim() } : {}),
+    }));
+
     try {
-      const { data } = await placeOrder({
-        shippingAddress,
-        items: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          ...(item.note?.trim() ? { note: item.note.trim() } : {}),
-        })),
-      });
+      // Đặt định kỳ thì sang trang yêu cầu, mua một lần thì sang trang đơn
+      const target = isRecurring
+        ? `/pre-orders/${(await createPreOrder({ shippingAddress, items: orderItems, frequency, durationMonths, startDate })).data.id}?placed=1`
+        : `/orders/${(await placeOrder({ shippingAddress, items: orderItems })).data.id}?placed=1`;
 
       try {
         // Ghi chú chỉ dành cho đơn này, không lưu để điền sẵn.
@@ -158,7 +179,7 @@ function CheckoutForm({ items, subtotal }: { items: CartItem[]; subtotal: number
       }
 
       // Chuyển trang trước rồi mới bỏ các món đã đặt khỏi giỏ, để không loé lên trạng thái "giỏ trống".
-      await router.replace(`/orders/${data.id}?placed=1`);
+      await router.replace(target);
       removeFromCart(items.map((item) => item.productId));
     } catch (error) {
       setSubmitError(getOrderErrorMessage(error));
@@ -201,83 +222,177 @@ function CheckoutForm({ items, subtotal }: { items: CartItem[]; subtotal: number
 
   return (
     <form onSubmit={(event) => void handleSubmit(event)} noValidate className='mt-8 grid items-start gap-8 lg:grid-cols-3'>
-      <div className='flex flex-col gap-5 rounded-panel bg-surface px-5 py-6 sm:px-8 lg:col-span-2'>
-        <h2 className='text-h4 font-semibold text-ink'>Địa chỉ giao hàng</h2>
-        <div className='grid gap-5 sm:grid-cols-2'>
-          {TEXT_FIELDS.slice(0, 2).map(renderTextField)}
-          <Field
-            label='Tỉnh / thành phố'
-            htmlFor='checkout-province'
-            required
-            size='sm'
-            error={errors.province}
-          >
-            <Select
-              id='checkout-province'
-              tone='field'
-              wrapperClassName='w-full'
-              value={values.province}
-              aria-invalid={Boolean(errors.province)}
-              onChange={(event) => {
-                // Đổi tỉnh thì chọn lại phường
-                setField('province', event.target.value);
-                setField('ward', '');
-              }}
-            >
-              <option value=''>Chọn tỉnh / thành phố</option>
-              {VN_PROVINCES.map((province) => (
-                <option key={province.code} value={province.name}>
-                  {province.name}
-                </option>
+      <div className='flex flex-col gap-8 lg:col-span-2'>
+        {canPreOrder && (
+          <fieldset className='flex flex-col gap-5 rounded-panel bg-surface px-5 py-6 sm:px-8'>
+            <legend className='sr-only'>Cách đặt</legend>
+            <h2 className='text-h4 font-semibold text-ink'>Cách đặt</h2>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              {(
+                [
+                  { value: 'once', icon: 'cart', title: 'Mua một lần', hint: 'Đặt một đơn như bình thường.' },
+                  {
+                    value: 'recurring',
+                    icon: 'repeat',
+                    title: 'Đặt định kỳ',
+                    hint: 'Các tiệm duyệt một lần, mỗi kỳ hệ thống tự tạo đơn.',
+                  },
+                ] as const
+              ).map((option) => (
+                <label
+                  key={option.value}
+                  className={cn(
+                    'flex cursor-pointer gap-3 rounded-box border px-4 py-3 transition-colors focus-within:ring-2 focus-within:ring-accent',
+                    mode === option.value ? 'border-primary bg-primary-soft' : 'border-line bg-page hover:border-accent',
+                  )}
+                >
+                  <input
+                    type='radio'
+                    name='order-mode'
+                    value={option.value}
+                    checked={mode === option.value}
+                    onChange={() => setMode(option.value)}
+                    className='sr-only'
+                  />
+                  <Icon name={option.icon} className='mt-0.5 size-5 shrink-0 text-ink' />
+                  <span className='flex flex-col gap-0.5'>
+                    <span className='font-medium text-ink'>{option.title}</span>
+                    <span className='text-body-sm font-light text-ink-muted'>{option.hint}</span>
+                  </span>
+                </label>
               ))}
-            </Select>
-          </Field>
-          <Field
-            label='Phường / xã'
-            htmlFor='checkout-ward'
-            required
-            size='sm'
-            error={errors.ward}
-          >
-            <Select
-              id='checkout-ward'
-              tone='field'
-              wrapperClassName='w-full'
-              value={values.ward}
-              disabled={!provinceCode || !wards}
-              aria-invalid={Boolean(errors.ward)}
-              onChange={(event) => setField('ward', event.target.value)}
+            </div>
+            {isRecurring && (
+              <div className='grid gap-5 sm:grid-cols-3'>
+                <Field label='Tần suất' htmlFor='preorder-frequency' size='sm'>
+                  <Select
+                    id='preorder-frequency'
+                    tone='field'
+                    wrapperClassName='w-full'
+                    value={frequency}
+                    onChange={(event) => setFrequency(event.target.value as RecurrenceFrequency)}
+                  >
+                    {(Object.keys(FREQUENCY_LABELS) as RecurrenceFrequency[]).map((value) => (
+                      <option key={value} value={value}>
+                        {FREQUENCY_LABELS[value]}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label='Trong' htmlFor='preorder-duration' size='sm'>
+                  <Select
+                    id='preorder-duration'
+                    tone='field'
+                    wrapperClassName='w-full'
+                    value={durationMonths}
+                    onChange={(event) => setDurationMonths(Number(event.target.value))}
+                  >
+                    {DURATION_OPTIONS.map((months) => (
+                      <option key={months} value={months}>
+                        {months} tháng
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label='Ngày giao kỳ đầu' htmlFor='preorder-start' size='sm'>
+                  <Input
+                    id='preorder-start'
+                    type='date'
+                    required
+                    value={startDate}
+                    min={vnDateInput()}
+                    max={vnDateInput(PRE_ORDER_MAX_START_DAYS)}
+                    onChange={(event) => setStartDate(event.target.value)}
+                  />
+                </Field>
+                <p className='text-body-sm font-light text-ink-muted sm:col-span-3'>
+                  {cycleCount} kỳ, giá giữ như hôm nay. Mỗi kỳ đơn được tạo lúc 00:00 ngày giao; bạn có thể bỏ qua
+                  từng kỳ trước ngày đó hoặc huỷ cả đặt định kỳ.
+                </p>
+              </div>
+            )}
+          </fieldset>
+        )}
+        <div className='flex flex-col gap-5 rounded-panel bg-surface px-5 py-6 sm:px-8'>
+          <h2 className='text-h4 font-semibold text-ink'>Địa chỉ giao hàng</h2>
+          <div className='grid gap-5 sm:grid-cols-2'>
+            {TEXT_FIELDS.slice(0, 2).map(renderTextField)}
+            <Field
+              label='Tỉnh / thành phố'
+              htmlFor='checkout-province'
+              required
+              size='sm'
+              error={errors.province}
             >
-              <option value=''>
-                {!provinceCode
-                  ? 'Chọn tỉnh / thành phố trước'
-                  : !wards
-                    ? 'Đang tải danh sách...'
-                    : 'Chọn phường / xã'}
-              </option>
-              {wardOptions.map((option) => (
-                <option key={option.code} value={option.name}>
-                  {option.name}
+              <Select
+                id='checkout-province'
+                tone='field'
+                wrapperClassName='w-full'
+                value={values.province}
+                aria-invalid={Boolean(errors.province)}
+                onChange={(event) => {
+                  // Đổi tỉnh thì chọn lại phường
+                  setField('province', event.target.value);
+                  setField('ward', '');
+                }}
+              >
+                <option value=''>Chọn tỉnh / thành phố</option>
+                {VN_PROVINCES.map((province) => (
+                  <option key={province.code} value={province.name}>
+                    {province.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field
+              label='Phường / xã'
+              htmlFor='checkout-ward'
+              required
+              size='sm'
+              error={errors.ward}
+            >
+              <Select
+                id='checkout-ward'
+                tone='field'
+                wrapperClassName='w-full'
+                value={values.ward}
+                disabled={!provinceCode || !wards}
+                aria-invalid={Boolean(errors.ward)}
+                onChange={(event) => setField('ward', event.target.value)}
+              >
+                <option value=''>
+                  {!provinceCode
+                    ? 'Chọn tỉnh / thành phố trước'
+                    : !wards
+                      ? 'Đang tải danh sách...'
+                      : 'Chọn phường / xã'}
                 </option>
-              ))}
-            </Select>
-          </Field>
-          {renderTextField(TEXT_FIELDS[2])}
-          <Field label='Ghi chú giao hàng' htmlFor='checkout-note' size='sm' className='sm:col-span-2'>
-            <Textarea
-              id='checkout-note'
-              rows={3}
-              maxLength={500}
-              placeholder='Ví dụ: giao giờ hành chính, gọi trước khi đến'
-              value={address.note ?? ''}
-              onChange={(event) => setField('note', event.target.value)}
-            />
-          </Field>
+                {wardOptions.map((option) => (
+                  <option key={option.code} value={option.name}>
+                    {option.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {renderTextField(TEXT_FIELDS[2])}
+            <Field label='Ghi chú giao hàng' htmlFor='checkout-note' size='sm' className='sm:col-span-2'>
+              <Textarea
+                id='checkout-note'
+                rows={3}
+                maxLength={500}
+                placeholder='Ví dụ: giao giờ hành chính, gọi trước khi đến'
+                value={address.note ?? ''}
+                onChange={(event) => setField('note', event.target.value)}
+              />
+            </Field>
+          </div>
         </div>
       </div>
 
       <aside className='flex flex-col gap-4'>
-        <h2 className='text-h4 font-semibold text-ink'>Đơn hàng ({items.length} món)</h2>
+        <h2 className='text-h4 font-semibold text-ink'>
+          {isRecurring ? 'Mỗi kỳ' : 'Đơn hàng'} ({items.length} món)
+        </h2>
         {groupByBrand(items).map((group) => (
           <div key={group.brandId ?? 'unknown'} className='flex flex-col gap-2 text-body-sm'>
             <h3 className='flex items-center gap-2 text-meta font-medium text-ink-muted uppercase'>
@@ -299,8 +414,22 @@ function CheckoutForm({ items, subtotal }: { items: CartItem[]; subtotal: number
           </div>
         ))}
         <OrderTotals subtotal={subtotal} deliveryFee={0} totalAmount={subtotal} currency={currency} />
+        {isRecurring && (
+          <dl className='flex flex-col gap-2 rounded-panel bg-highlight-soft px-5 py-4 text-body-sm'>
+            <div className='flex justify-between gap-3'>
+              <dt className='text-ink-muted'>Số kỳ</dt>
+              <dd className='font-medium text-ink'>{cycleCount} kỳ</dd>
+            </div>
+            <div className='flex justify-between gap-3'>
+              <dt className='text-ink-muted'>Dự kiến cả đợt</dt>
+              <dd className='font-semibold text-ink'>{formatMoney(subtotal * cycleCount, currency)}</dd>
+            </div>
+          </dl>
+        )}
         <p className='text-caption font-light text-ink-muted'>
-          Chưa cần thanh toán lúc này. Đơn được gửi tới các tiệm để xác nhận.
+          {isRecurring
+            ? 'Chưa cần thanh toán lúc này (thanh toán khi nhận mỗi kỳ). Yêu cầu được gửi tới các tiệm để duyệt một lần.'
+            : 'Chưa cần thanh toán lúc này. Đơn được gửi tới các tiệm để xác nhận.'}
         </p>
         {submitError && (
           <Alert
@@ -315,7 +444,7 @@ function CheckoutForm({ items, subtotal }: { items: CartItem[]; subtotal: number
           </Alert>
         )}
         <Button type='submit' size='lg' block disabled={isSubmitting} className='uppercase'>
-          {isSubmitting ? 'Đang đặt hàng...' : 'Đặt hàng'}
+          {isSubmitting ? 'Đang gửi...' : isRecurring ? 'Gửi đặt định kỳ' : 'Đặt hàng'}
         </Button>
         <Link href='/cart' className='text-center text-body-sm text-ink-muted hover:text-ink hover:underline'>
           Sửa giỏ hàng

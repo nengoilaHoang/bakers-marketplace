@@ -415,7 +415,14 @@ class AuthenController {
 					'REFRESH_TOKEN_REQUIRED',
 				);
 			}
-			await jwtService.refreshToken(refreshToken, res);
+			try {
+				await jwtService.refreshToken(refreshToken, res);
+			} catch (error) {
+				// A dead refresh token (session gone, banned...) must not linger as a cookie
+				cookieService.clearTokenCookie(res, 'access');
+				cookieService.clearTokenCookie(res, 'refresh');
+				throw error;
+			}
 
 			res.status(200).json({
 				message: 'Token refreshed successfully',

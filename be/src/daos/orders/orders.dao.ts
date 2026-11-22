@@ -14,6 +14,7 @@ import type {
 	ShippingAddress,
 	TrackingEventView,
 } from '#/models/orders/orders.model.js';
+import type { OrderPreOrderRef } from '#/models/pre-orders/pre-orders.model.js';
 import { paginate } from '#/utils/pagination.js';
 
 /** Numeric columns come back from pg as strings. */
@@ -35,6 +36,7 @@ export type OrderRow = {
 	shippingWard: string;
 	shippingProvince: string;
 	shippingNote: string | null;
+	approvalDeadline: Date | null;
 	placedAt: Date;
 	updatedAt: Date;
 };
@@ -70,16 +72,23 @@ export type NewOrder = {
 	subtotal: number;
 	totalAmount: number;
 	currency: string;
+	// Minutes from now the vendors have to answer; null for an order created already approved
+	approvalWindowMinutes: number | null;
+	// PENDING unless given (pre-order cycles create their orders already settled)
+	currentStatus?: OrderStatus;
 };
 
 export type NewOrderItem = {
-	productId: string;
+	// Null when the product was deleted since (pre-order cycles keep the copied title)
+	productId: string | null;
 	productTitle: string;
 	unitPrice: Money;
 	unitCost: Money;
 	unit: string;
 	quantity: number;
 	note?: string;
+	status?: OrderItemStatus;
+	declineReason?: string;
 };
 
 // First image of the product an order item points at
@@ -131,13 +140,13 @@ class OrderDAO {
 
 	/**
 	 * Gives back the stock an order still holds (products deleted since are skipped).
-	 * Declined items already gave theirs back when the vendor declined them.
+	 * Declined and expired items already gave theirs back when they were dropped.
 	 */
 	public async restoreStock(orderId: string, trx: Knex.Transaction): Promise<void> {
 		await trx.raw(
 			`UPDATE product_stocks s SET stock = s.stock + oi.quantity
 			FROM order_items oi
-			WHERE oi.order_id = ? AND oi.product_id = s.id AND oi.status <> 'DECLINED'`,
+			WHERE oi.order_id = ? AND oi.product_id = s.id AND oi.status IN ('PENDING', 'APPROVED')`,
 			[orderId],
 		);
 	}
@@ -147,10 +156,14 @@ class OrderDAO {
 		items: NewOrderItem[],
 		trx: Knex.Transaction,
 	): Promise<string> {
-		const { shippingAddress: address, ...rest } = order;
+		const { shippingAddress: address, approvalWindowMinutes, ...rest } = order;
 		const [created] = await trx(this.tableName)
 			.insert({
 				...rest,
+				approvalDeadline:
+					approvalWindowMinutes === null
+						? null
+						: trx.raw('now() + make_interval(mins => ?)', [approvalWindowMinutes]),
 				shippingRecipientName: address.recipientName,
 				shippingPhone: address.phone,
 				shippingStreetAddress: address.streetAddress,
@@ -161,7 +174,12 @@ class OrderDAO {
 			.returning('id');
 
 		await trx('order_items').insert(
-			items.map((item) => ({ ...item, note: item.note ?? null, orderId: created.id })),
+			items.map((item) => ({
+				...item,
+				note: item.note ?? null,
+				declineReason: item.declineReason ?? null,
+				orderId: created.id,
+			})),
 		);
 
 		return created.id;
@@ -242,10 +260,11 @@ class OrderDAO {
 			return null;
 		}
 
-		const [items, statusHistory, shipment] = await Promise.all([
+		const [items, statusHistory, shipment, preOrder] = await Promise.all([
 			this.getItems([id]),
 			this.getHistory(id),
 			this.getShipment(id),
+			this.getPreOrderRef(id),
 		]);
 
 		return {
@@ -261,7 +280,24 @@ class OrderDAO {
 			items: items.get(id) ?? [],
 			statusHistory,
 			shipment,
+			preOrder,
 		};
+	}
+
+	/** The pre-order cycle that created this order, if any. */
+	public async getPreOrderRef(orderId: string): Promise<OrderPreOrderRef | null> {
+		const row = await this.db.instance('pre_order_cycles as c')
+			.select(
+				'c.preOrderRequestId as requestId',
+				'c.cycleNumber',
+				this.db.instance.raw(
+					'(SELECT count(*) FROM pre_order_cycles all_c WHERE all_c.pre_order_request_id = c.pre_order_request_id)::int AS cycle_count',
+				),
+			)
+			.where('c.generatedOrderId', orderId)
+			.first();
+
+		return row ?? null;
 	}
 
 	public async getItem(
@@ -419,6 +455,7 @@ class OrderDAO {
 			taxPercentage: Number(row.taxPercentage),
 			totalAmount: Number(row.totalAmount),
 			currency: row.currency,
+			approvalDeadline: row.approvalDeadline,
 			placedAt: row.placedAt,
 			updatedAt: row.updatedAt,
 		};

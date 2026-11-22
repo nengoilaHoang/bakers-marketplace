@@ -7,6 +7,7 @@ import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
 import ReasonForm from '@/components/dashboard/ReasonForm';
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorScope from '@/components/layout/VendorScope';
+import ApprovalCountdown from '@/components/orders/ApprovalCountdown';
 import OrderItemRow from '@/components/orders/OrderItemRow';
 import {
   ORDER_STATUS,
@@ -16,8 +17,9 @@ import {
   VENDOR_PART_STATUS,
 } from '@/components/orders/OrderStatus';
 import Timeline from '@/components/orders/Timeline';
+import { preOrderCode } from '@/components/pre-orders/PreOrderStatus';
 import Alert from '@/components/ui/Alert';
-import Button from '@/components/ui/Button';
+import Button, { ButtonLink } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useApiData } from '@/hooks/useApiData';
 import { readString } from '@/hooks/useUrlFilters';
@@ -29,6 +31,9 @@ import { formatDateTime, formatMoney } from '@/utils/format';
 function getActionError(error: unknown): unknown {
   if (error instanceof ApiError && error.code === 'ORDER_NOT_PENDING') {
     return new Error('Đơn không còn chờ duyệt (khách đã huỷ hoặc đơn đã được chốt).');
+  }
+  if (error instanceof ApiError && error.code === 'APPROVAL_EXPIRED') {
+    return new Error('Đã quá hạn duyệt đơn này. Các món chưa duyệt sẽ được bỏ khỏi đơn.');
   }
   if (error instanceof ApiError && error.code === 'ALREADY_ANSWERED') {
     return new Error('Tiệm đã trả lời đơn này rồi.');
@@ -101,6 +106,19 @@ const VendorOrderDetailPage: NextPageWithLayout = () => {
       description={`Đặt lúc ${formatDateTime(data.placedAt)} · ${data.customer?.displayName ?? 'Tài khoản đã xoá'}`}
       breadcrumb={breadcrumb}
     >
+      {data.preOrder && (
+        <Alert
+          tone='info'
+          action={
+            <ButtonLink href={`/vendors/pre-orders/${data.preOrder.requestId}`} variant='outline' size='sm'>
+              Xem đặt định kỳ
+            </ButtonLink>
+          }
+        >
+          Đơn tạo tự động cho kỳ {data.preOrder.cycleNumber}/{data.preOrder.cycleCount} của đặt định kỳ{' '}
+          {preOrderCode(data.preOrder.requestId)}, tiệm đã duyệt từ đầu nên không cần duyệt lại.
+        </Alert>
+      )}
       {notice && <Alert tone='success'>{notice}</Alert>}
       {actionError !== null && <ApiErrorAlert error={actionError} />}
 
@@ -172,6 +190,14 @@ const VendorOrderDetailPage: NextPageWithLayout = () => {
                 title='Duyệt đơn'
                 description='Nhận làm các món của tiệm trong đơn. Khi mọi tiệm đã trả lời, đơn được xác nhận.'
               >
+                {data.approvalDeadline && (
+                  <ApprovalCountdown
+                    deadline={data.approvalDeadline}
+                    onExpire={reload}
+                    hint='Quá hạn thì các món của tiệm bị bỏ khỏi đơn.'
+                    className='mb-4'
+                  />
+                )}
                 <Button block disabled={isApproving} onClick={() => void approve()}>
                   {isApproving ? 'Đang duyệt...' : 'Duyệt các món của tiệm'}
                 </Button>
@@ -196,6 +222,8 @@ const VendorOrderDetailPage: NextPageWithLayout = () => {
                 }}
               />
             </>
+          ) : data.myStatus === 'EXPIRED' ? (
+            <Alert tone='warning'>Tiệm không duyệt trước hạn nên các món của tiệm đã bị bỏ khỏi đơn.</Alert>
           ) : (
             data.currentStatus === 'PENDING' && (
               <Alert tone='info'>Tiệm đã trả lời. Đơn đang chờ các tiệm khác.</Alert>

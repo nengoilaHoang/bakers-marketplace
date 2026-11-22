@@ -39,8 +39,10 @@ router.post('/reports/:id/dismiss', adminUserController.dismissReport);
 router.get('/vendors', adminUserController.getVendorPage);
 
 // shipments (?view=active|delivered|all&page=&pageSize=): created when an order is approved;
-// each call moves one shipment to its next step, and the last step completes the order
+// advance { status, locationName, description } moves one shipment to its next step and
+// records that tracking event; the last step completes the order
 router.get('/shipments', adminShipmentController.getPage);
+router.get('/shipments/:id', adminShipmentController.getDetail);
 router.post('/shipments/:id/advance', adminShipmentController.advance);
 
 

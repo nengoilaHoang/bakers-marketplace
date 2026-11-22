@@ -2,12 +2,15 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 
 import AppLayout from '@/components/layout/AppLayout';
+import ApprovalCountdown from '@/components/orders/ApprovalCountdown';
 import CancelOrderModal from '@/components/orders/CancelOrderModal';
 import OrderItemRow from '@/components/orders/OrderItemRow';
 import { ORDER_STATUS, OrderStatusBadge, SHIPMENT_STATUS_LABELS } from '@/components/orders/OrderStatus';
 import OrderTotals from '@/components/orders/OrderTotals';
 import RateItemModal from '@/components/orders/RateItemModal';
+import ShipmentStepper from '@/components/orders/ShipmentStepper';
 import Timeline from '@/components/orders/Timeline';
+import { preOrderCode } from '@/components/pre-orders/PreOrderStatus';
 import Alert from '@/components/ui/Alert';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button, { ButtonLink } from '@/components/ui/Button';
@@ -156,9 +159,34 @@ export default function OrderDetailPage() {
             </div>
 
             <div className='mt-6 flex flex-col gap-3'>
+              {canCancel && order.approvalDeadline && (
+                <ApprovalCountdown
+                  deadline={order.approvalDeadline}
+                  onExpire={reload}
+                  hint='Hết giờ mà tiệm nào chưa duyệt thì món của tiệm đó bị bỏ khỏi đơn.'
+                />
+              )}
+              {order.preOrder && (
+                <Alert
+                  tone='info'
+                  action={
+                    <ButtonLink href={`/pre-orders/${order.preOrder.requestId}`} variant='outline' size='sm'>
+                      Xem đặt định kỳ
+                    </ButtonLink>
+                  }
+                >
+                  Đơn tạo tự động cho kỳ {order.preOrder.cycleNumber}/{order.preOrder.cycleCount} của đặt định kỳ{' '}
+                  {preOrderCode(order.preOrder.requestId)}.
+                </Alert>
+              )}
               {justPlaced && !notice && (
                 <Alert tone='success' title='Đặt hàng thành công!'>
                   Đơn đang chờ các tiệm xác nhận. Bạn có thể huỷ khi đơn còn ở trạng thái chờ xác nhận.
+                </Alert>
+              )}
+              {order.currentStatus === 'EXPIRED' && (
+                <Alert tone='warning'>
+                  Các tiệm không duyệt đơn trước hạn nên đơn đã hết hạn. Bạn có thể bấm Đặt lại để đặt đơn mới.
                 </Alert>
               )}
               {notice && (
@@ -200,6 +228,11 @@ export default function OrderDetailPage() {
                 {order.shipment ? (
                   <Section title='Theo dõi giao hàng'>
                     <div className='flex flex-col gap-5 rounded-panel border border-line px-5 py-5 sm:px-6'>
+                      <ShipmentStepper
+                        currentStatus={order.shipment.currentStatus}
+                        events={order.shipment.events}
+                        className='border-b border-line pb-5'
+                      />
                       <dl className='grid gap-3 text-body-sm sm:grid-cols-2'>
                         <div>
                           <dt className='text-ink-muted'>Đơn vị vận chuyển</dt>

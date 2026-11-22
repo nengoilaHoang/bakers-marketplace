@@ -13,7 +13,7 @@ import { ORDER_ITEM_STATUS, StatusBadge } from './OrderStatus';
 type OrderItemRowProps = Readonly<{
   item: OrderItem;
   currency: string;
-  // Hiện nhãn chờ duyệt / đã duyệt (khi đơn còn chờ các tiệm trả lời). Món bị từ chối luôn hiện nhãn.
+  // Hiện nhãn chờ duyệt / đã duyệt (khi đơn còn chờ các tiệm trả lời). Món bị bỏ luôn hiện nhãn.
   showDecision?: boolean;
   // Có nút "Đánh giá" (người mua, đơn đã hoàn thành, món chưa đánh giá).
   onRate?: () => void;
@@ -29,7 +29,8 @@ export default function OrderItemRow({
   onRate,
   linkToProduct = false,
 }: OrderItemRowProps) {
-  const isDeclined = item.status === 'DECLINED';
+  // Món bị tiệm từ chối hoặc quá hạn duyệt: vẫn hiện trong đơn nhưng không tính tiền
+  const isDropped = item.status === 'DECLINED' || item.status === 'EXPIRED';
 
   return (
     <li className='flex gap-4 py-5'>
@@ -38,7 +39,7 @@ export default function OrderItemRow({
         alt={`Ảnh ${item.productTitle}`}
         sizes='80px'
         iconSize='sm'
-        className={cn('size-16 shrink-0 rounded-media sm:size-20', isDeclined && 'opacity-50')}
+        className={cn('size-16 shrink-0 rounded-media sm:size-20', isDropped && 'opacity-50')}
       />
       <div className='flex min-w-0 flex-1 flex-col gap-2'>
         <div className='flex flex-wrap items-start justify-between gap-x-4 gap-y-1'>
@@ -57,19 +58,22 @@ export default function OrderItemRow({
               {formatMoney(item.unitPrice, currency)} / {item.unit} × {item.quantity}
             </p>
           </div>
-          {/* Món bị từ chối không tính tiền: gạch giá */}
-          <p className={cn('font-semibold', isDeclined ? 'text-ink-muted line-through' : 'text-ink')}>
+          {/* Món bị bỏ không tính tiền: gạch giá */}
+          <p className={cn('font-semibold', isDropped ? 'text-ink-muted line-through' : 'text-ink')}>
             {formatMoney(item.unitPrice * item.quantity, currency)}
           </p>
         </div>
 
-        {(isDeclined || showDecision) && (
+        {(isDropped || showDecision) && (
           <div className='flex flex-col gap-1'>
             <span>
               <StatusBadge style={ORDER_ITEM_STATUS[item.status]} />
             </span>
-            {isDeclined && item.declineReason && (
+            {item.status === 'DECLINED' && item.declineReason && (
               <p className='text-body-sm text-ink-muted'>Lý do: {item.declineReason}</p>
+            )}
+            {item.status === 'EXPIRED' && (
+              <p className='text-body-sm text-ink-muted'>Tiệm không duyệt trước hạn nên món này bị bỏ khỏi đơn.</p>
             )}
           </div>
         )}
