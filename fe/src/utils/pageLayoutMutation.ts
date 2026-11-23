@@ -33,11 +33,10 @@ async function resolveChangedUrlsInConfig<T>(
         const fieldPath = `${path}.${key}`;
         const prevVal = oldObj[key];
 
-        // Leaf field whose name ends with "Url" / "url" and whose string value changed
+        // Leaf field whose value contain the `blob:` prefix
         if (isBlobUrl(val) && val !== prevVal) {
           const fetchedValue =
-            getBlobFile(val) ??
-            (await fetch(val).then((res) => res.blob()));
+            getBlobFile(val) ?? (await fetch(val).then((res) => res.blob()));
           const newKey = key.replace(/url$/i, '') || key;
           return [newKey, fetchedValue] as const;
         }

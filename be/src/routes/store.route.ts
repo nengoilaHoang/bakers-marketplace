@@ -7,5 +7,9 @@ router.get(
   '/domain/:domain/page',
   storefrontController.getPublicStorefrontPage,
 );
+router.get(
+  '/domain/:domain/nav-pages',
+  storefrontController.getNavPages,
+);
 
 export default router;

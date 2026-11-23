@@ -21,17 +21,17 @@ type TypeableSelectProps = {
   isTypeable?: boolean;
   showKeyValue?: boolean;
   containerClassName?: string;
+  footer?: React.ReactNode;
 };
 
 /**
-- A select component that allows users to type in a value to filter the options.
-- It supports string, number, and boolean types for the options.
+ * A select component that allows users to type in a value to filter the options.
+ * It supports string, number, and boolean types for the options.
  *
-- > **Note:** Open state is handled by the parent
+ * > **Note:** Open state is handled by the parent (externally)
  *
-- @template T - The type of the options (string, number, or boolean).
-- @param {TypeableSelectProps<T>} props - The props for the component.
-- @returns {JSX.Element} The rendered TypeableSelect component.
+ * @param {TypeableSelectProps} props - The props for the component.
+ * @returns {JSX.Element} The rendered TypeableSelect component.
  */
 const TypeableSelect = ({
   id,
@@ -44,9 +44,10 @@ const TypeableSelect = ({
   isTypeable = true,
   showKeyValue = true,
   containerClassName,
+  footer,
 }: TypeableSelectProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const inputOverlayTextRef = useRef<HTMLSpanElement>(null);
+  const inputTextRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -56,8 +57,8 @@ const TypeableSelect = ({
   const [inputValue, setInputValue] = useState(
     options[currentKey] ?? currentKey ?? '',
   );
-  const [inputScrollOffset, setInputScrollOffset] = useState(0);
-
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [inputOverflowOffset, setInputOverflowOffset] = useState(0);
   const [isNearBottom, setIsNearBottom] = useState(false);
   const [overflowOffsets, setOverflowOffsets] = useState<
     Record<number, number>
@@ -93,25 +94,37 @@ const TypeableSelect = ({
   }, []);
 
   useLayoutEffect(() => {
-    if (isOpen) return;
-    const element = inputOverlayTextRef.current;
+    if (isOpen || isInputFocused) {
+      queueMicrotask(() => setInputOverflowOffset(0));
+      return;
+    }
+
+    const element = inputTextRef.current;
     const parent = element?.parentElement;
     if (!element || !parent) return;
 
     const updateInputOverflow = () => {
-      if (element.scrollWidth > parent.clientWidth) {
-        setInputScrollOffset(parent.clientWidth - element.scrollWidth);
-      } else {
-        setInputScrollOffset(0);
-      }
+      const nextOffset =
+        element.scrollWidth > parent.clientWidth
+          ? parent.clientWidth - element.scrollWidth
+          : 0;
+
+      setInputOverflowOffset((current) =>
+        current === nextOffset ? current : nextOffset,
+      );
     };
 
     updateInputOverflow();
     const resizeObserver = new ResizeObserver(updateInputOverflow);
     resizeObserver.observe(parent);
+    resizeObserver.observe(element);
+    window.addEventListener('resize', updateInputOverflow);
 
-    return () => resizeObserver.disconnect();
-  }, [inputValue, isOpen]);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateInputOverflow);
+    };
+  }, [inputValue, isOpen, isInputFocused]);
 
   useLayoutEffect(() => {
     const updateOverflowingOptions = () => {
@@ -182,7 +195,11 @@ const TypeableSelect = ({
 
   const handleContainerClick = useCallback(() => {
     if (inputRef.current) {
-      inputRef.current.focus();
+      if (!isOpen) {
+        inputRef.current.focus();
+      } else {
+        inputRef.current.blur();
+      }
     }
     updateView();
     onOpenChange(!isOpen);
@@ -266,12 +283,15 @@ const TypeableSelect = ({
     setInputValue(value);
     onValueChange(key);
     onOpenChange(false);
+    inputRef.current?.blur();
   };
 
   let arrowRotation = '';
   if (isOpen) {
     arrowRotation = isNearBottom ? 'rotate-90' : '-rotate-90';
   }
+
+  const showInputOverlay = !isOpen && !isInputFocused;
 
   return (
     <div className={cn('relative block w-full', containerClassName)}>
@@ -284,52 +304,62 @@ const TypeableSelect = ({
         } focus-within:bg-white focus-within:border-zinc-950 focus-within:outline-none focus-within:ring-1 focus-within:ring-zinc-950`}
       >
         <div className='relative flex items-center w-full min-w-0'>
-          <input
-            id={id}
-            name={name}
-            ref={inputRef}
-            className={cn(
-              'flex-1 min-w-0 px-2.5 py-1.5 bg-transparent focus:outline-none focus:border-none',
-              !isOpen && 'text-transparent select-none',
-            )}
-            type='text'
-            autoComplete='off'
-            readOnly={!isTypeable}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            value={inputValue}
-          />
-          {!isOpen && (
-            <div className='pointer-events-none absolute inset-y-0 left-0 right-6 flex items-center px-2.5'>
-              <div className='min-w-0 flex-1 overflow-hidden text-left'>
-                <span
-                  ref={inputOverlayTextRef}
-                  style={
-                    inputScrollOffset
-                      ? ({
-                          '--scroll-offset': `${inputScrollOffset}px`,
-                        } as React.CSSProperties)
-                      : undefined
-                  }
-                  className={cn(
-                    'inline-block whitespace-nowrap',
-                    inputScrollOffset
-                      ? 'group-hover:animate-scrolling-text'
-                      : 'truncate max-w-full',
-                  )}
-                >
-                  {inputValue}
-                </span>
+          <div className='relative flex-1 min-w-0'>
+            <input
+              id={id}
+              name={name}
+              ref={inputRef}
+              className={cn(
+                'block w-full px-2.5 py-1.5 bg-transparent focus:outline-none focus:border-none',
+                showInputOverlay && 'text-transparent selection:bg-transparent',
+              )}
+              type='text'
+              autoComplete='off'
+              readOnly={!isTypeable}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              value={inputValue}
+            />
+
+            {showInputOverlay && (
+              <div
+                aria-hidden='true'
+                className='pointer-events-none absolute inset-0 flex items-center px-2.5'
+              >
+                <div className='min-w-0 flex-1 overflow-hidden text-left'>
+                  <span
+                    ref={inputTextRef}
+                    style={
+                      inputOverflowOffset < 0
+                        ? ({
+                            '--scroll-offset': `${inputOverflowOffset}px`,
+                          } as React.CSSProperties)
+                        : undefined
+                    }
+                    className={cn(
+                      'block whitespace-nowrap',
+                      inputOverflowOffset < 0
+                        ? 'w-max group-hover:animate-scrolling-text'
+                        : 'truncate',
+                    )}
+                  >
+                    {inputValue}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
           <Icon
             name='chevron-left'
             label={`Arrow icon indicating the dropdown is ${isOpen ? 'open' : 'closed'}`}
             className={`pointer-events-none mr-1 inset-y-0 right-0 flex items-center transition-transform duration-200 ease-in-out ${arrowRotation}`}
-          ></Icon>
+          />
         </div>
       </button>
+
       <div
         className={`grid transition-all duration-200 ease-out absolute ${isNearBottom ? 'bottom-0' : 'top-0'} left-0 w-full min-w-0 max-h-37.5 rounded-md border text-xs text-zinc-800 z-10 overflow-hidden scrollbar-none ${
           isOpen
@@ -372,10 +402,10 @@ const TypeableSelect = ({
                         : undefined
                     }
                     className={cn(
-                      'inline-block whitespace-nowrap',
+                      'block whitespace-nowrap',
                       scrollOffset
-                        ? 'group-hover:animate-scrolling-text'
-                        : 'truncate max-w-full',
+                        ? 'w-max group-hover:animate-scrolling-text'
+                        : 'truncate',
                     )}
                   >
                     {value}
@@ -389,6 +419,10 @@ const TypeableSelect = ({
               </button>
             );
           })}
+
+          {footer && (
+            <div className='border-t border-zinc-200 bg-white'>{footer}</div>
+          )}
         </div>
       </div>
     </div>

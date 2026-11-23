@@ -13,5 +13,6 @@ export type PageLayout = {
   id: string;
   type: PageLayoutType;
   name: string;
+  slug: string;
   root: CompositeComponent;
 };

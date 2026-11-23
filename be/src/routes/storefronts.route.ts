@@ -1,4 +1,3 @@
-import pageLayoutController from '#/controllers/page-layouts.controller.js';
 import storefrontController from '#/controllers/storefronts.controller.js';
 import {
 	authenMiddleware,
@@ -12,13 +11,21 @@ router.get(
   '/domain/:domain/page',
   storefrontController.getPublicStorefrontPage,
 );
+router.get(
+  '/domain/:domain/nav-pages',
+  storefrontController.getNavPages,
+);
 
 router.use(authenMiddleware, validateRole(['VENDOR']));
 
 router.get('/mine', storefrontController.getMyStorefront);
 router.get(
   '/releases/:releaseId/layouts',
-  pageLayoutController.getReleaseLayouts,
+  storefrontController.getReleaseLayouts,
+);
+router.post(
+  '/releases/:releaseId/layouts',
+  storefrontController.createReleasePage,
 );
 router.put(
   '/releases/:releaseId/theme-settings',

@@ -77,7 +77,8 @@ export class LayoutComponentDao {
   private readonly executeUpsertBatches = async (
     t: Knex.Transaction,
     batches: BuiltUpsertBatches,
-  ): Promise<void> => {
+  ): Promise<string[]> => {
+    const upsertIds = new Set<string>();
     const baseRows = [...batches.insertables.base, ...batches.updatables.base];
     const leafRows = [...batches.insertables.leaf, ...batches.updatables.leaf];
     const commerceRows = [
@@ -98,7 +99,12 @@ export class LayoutComponentDao {
     ] as CompositeChildRow[];
 
     if (baseRows.length > 0) {
-      await t('layout_components').insert(baseRows).onConflict('id').merge();
+      const ids = await t('layout_components')
+        .insert(baseRows)
+        .onConflict('id')
+        .merge()
+        .returning('id');
+      ids.forEach(({ id }) => upsertIds.add(id));
     }
 
     await Promise.all([
@@ -157,18 +163,20 @@ export class LayoutComponentDao {
         }),
       );
     }
+
+    return [...upsertIds.keys()];
   };
 
   public upsertBatch = async (
     components: PutLayoutComponent[],
     trx?: Knex.Transaction,
-  ): Promise<void> => {
+  ): Promise<string[]> => {
     if (components.length === 0) {
-      return;
+      return [];
     }
 
     const batches = this.mergeBatches(components);
-    await this.withTransaction(
+    return this.withTransaction(
       (t) => this.executeUpsertBatches(t, batches),
       trx,
     );

@@ -5,59 +5,79 @@ import type { Product } from '@/types/product';
 export type * from '@/types/collection';
 
 export async function getCollections(
-	onlyActive = false,
+  onlyActive = false,
 ): Promise<{ data: Collection[] }> {
-	return request<{ data: Collection[] }>(
-		`/collections${onlyActive ? '?active=true' : ''}`,
-	);
+  return request<{ data: Collection[] }>(
+    `/collections${onlyActive ? '?active=true' : ''}`,
+  );
 }
 
 export async function getCollectionById(
-	id: string,
+  id: string,
 ): Promise<{ data: Collection }> {
-	return request<{ data: Collection }>(`/collections/${id}`);
+  return request<{ data: Collection }>(`/collections/${id}`);
 }
 
 export async function getCollectionProducts(
-	id: string,
+  id: string,
+  filters?: {
+    tag?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
+    inStockOnly?: boolean;
+  },
+  limit = 0,
+  page = 1,
+  signal?: AbortSignal,
 ): Promise<{ data: Product[] }> {
-	return request<{ data: Product[] }>(`/collections/${id}/products`);
+  return request<{ data: Product[] }>(
+    `/collections/${id}/products`,
+    {
+      signal,
+    },
+    {
+      ...filters,
+      limit,
+      page,
+    },
+  );
 }
 
 export async function createCollection(
-	input: CollectionInput,
+  input: CollectionInput,
 ): Promise<{ data: Collection }> {
-	return request<{ data: Collection }>('/collections', {
-		method: 'POST',
-		body: JSON.stringify(input),
-	});
+  return request<{ data: Collection }>('/collections', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }
 
 export async function updateCollection(
-	id: string,
-	input: Partial<CollectionInput>,
+  id: string,
+  input: Partial<CollectionInput>,
 ): Promise<{ data: Collection }> {
-	return request<{ data: Collection }>(`/collections/${id}`, {
-		method: 'PATCH',
-		body: JSON.stringify(input),
-	});
+  return request<{ data: Collection }>(`/collections/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
 }
 
 export async function deleteCollection(
-	id: string,
+  id: string,
 ): Promise<{ data: Collection }> {
-	return request<{ data: Collection }>(`/collections/${id}`, {
-		method: 'DELETE',
-	});
+  return request<{ data: Collection }>(`/collections/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 export const collectionApi = {
-	getAll: getCollections,
-	getById: getCollectionById,
-	getProducts: getCollectionProducts,
-	create: createCollection,
-	update: updateCollection,
-	remove: deleteCollection,
+  getAll: getCollections,
+  getById: getCollectionById,
+  getProducts: getCollectionProducts,
+  create: createCollection,
+  update: updateCollection,
+  remove: deleteCollection,
 };
 
 export default collectionApi;

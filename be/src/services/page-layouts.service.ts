@@ -1,14 +1,20 @@
+import layoutComponentDao, {
+	LayoutComponentDao,
+} from '#/daos/layouts/layout-components.dao.js';
 import pageLayoutDao, {
 	PageLayoutDao,
 } from '#/daos/layouts/page-layout.dao.js';
+import { PutCompositeComponentSchema } from '#/models/layout-components/composite/composite-components.model.js';
 import {
-	PutLayoutComponent,
-	PutLayoutComponentSchema,
+	PutLayoutComponent
 } from '#/models/layout-components/layout-components.model.js';
 import { UnprocessableEntityError } from '#/utils/http-errors.js';
 
 export class PageLayoutService {
-  constructor(private readonly pageLayoutDao: PageLayoutDao) {}
+  constructor(
+    private readonly pageLayoutDao: PageLayoutDao,
+    private readonly layoutComponentDao: LayoutComponentDao,
+  ) {}
 
   public ensurePageExists = async (pageId: string) => {
     // Skip for now
@@ -18,20 +24,30 @@ export class PageLayoutService {
     return await this.pageLayoutDao.getReleaseLayouts(releaseId);
   };
 
-  public updatePageLayout = async (
-    pageId: string,
-    root: PutLayoutComponent,
-  ) => {
-    const result = PutLayoutComponentSchema.safeParse(root);
+  public updatePage = async (pageId: string, root: PutLayoutComponent) => {
+    const result = PutCompositeComponentSchema.safeParse(root);
     if (!result.success) {
       throw new UnprocessableEntityError(
         `Invalid layout component schema: ${result.error}`,
       );
     }
 
-    await this.pageLayoutDao.updatePageLayout(pageId, result.data);
+    return await this.pageLayoutDao.withTransaction(async (t) => {
+      const [rootId] = await this.layoutComponentDao.upsertBatch(
+        [result.data],
+        t,
+      );
+      return await this.pageLayoutDao.updatePage(
+        pageId,
+        { rootComponentId: rootId },
+        t,
+      );
+    });
   };
 }
 
-const pageLayoutService = new PageLayoutService(pageLayoutDao);
+const pageLayoutService = new PageLayoutService(
+  pageLayoutDao,
+  layoutComponentDao,
+);
 export default pageLayoutService;

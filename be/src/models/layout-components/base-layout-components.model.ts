@@ -50,7 +50,7 @@ const VerticalAlignTypeSchema = z.enum(['top', 'center', 'bottom', 'stretch']);
 export const DeviceBreakpoint = z.enum(['desktop', 'tablet', 'mobile']);
 
 const DYNAMIC_PLACEHOLDER_REGEX = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
-const TOKEN_ALLOWLIST_REGEX = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/;
+const TOKEN_ALLOWLIST_REGEX = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/; // Allow only alphanumeric characters and dots
 const CONTAINS_URL_REGEX =
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 const FORBIDDEN_WORDS = new Set(['__proto__', 'constructor', 'prototype']);

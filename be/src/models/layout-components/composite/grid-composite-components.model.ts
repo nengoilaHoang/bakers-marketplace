@@ -41,11 +41,12 @@ export const BaseGridConfigSchema = BaseLayoutComponentConfigSchema.extend({
   }),
   densePacking: z.boolean().default(true), // grid-auto-flow: dense
   gap: ResponsiveProp(z.uint32().min(0)), // in px
-  borderRadius: z.union([
-    z.undefined(),
-    z.uint32(), // in px
-    z.string().regex(/^\d+(\.\d+)?%/), // in %
-  ]),
+  borderRadius: z
+    .union([
+      z.uint32(), // in px
+      z.string().regex(/^\d+(\.\d+)?%/), // in %
+    ])
+    .optional(),
 });
 
 export const UniformGridConfigSchema = BaseGridConfigSchema.extend({

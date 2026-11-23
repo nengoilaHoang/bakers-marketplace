@@ -78,7 +78,7 @@ const StorefrontReleaseEditPage: NextPageWithLayout = () => {
   const { setCurrentPageId } = useStorefrontCanvasContext();
   const { isReady, pathname, query, replace } = router;
   const releaseId = readString(query.id);
-  const pageName = readString(query.page);
+  const pageSlug = readString(query.page);
 
   useEffect(() => {
     if (releaseId) {
@@ -89,27 +89,27 @@ const StorefrontReleaseEditPage: NextPageWithLayout = () => {
   useEffect(() => {
     if (!currentRelease || currentRelease.layouts.length === 0) return;
 
-    if (!pageName) {
+    if (!pageSlug) {
       const defaultLayout =
         currentRelease.layouts.find((l) => l.type === 'HOME') ??
         currentRelease.layouts[0];
       void replace(
         {
           pathname,
-          query: { ...query, page: defaultLayout.name.toLowerCase() },
+          query: { ...query, page: defaultLayout.slug },
         },
         undefined,
         { shallow: true },
       );
     } else {
       const pageId = currentRelease.layouts.find(
-        (item) => item.name.toLowerCase() === pageName.toLowerCase(),
+        (item) => item.slug === pageSlug,
       )?.id;
       if (pageId) {
         setCurrentPageId(pageId);
       }
     }
-  }, [currentRelease, pageName, pathname, query, replace, setCurrentPageId]);
+  }, [currentRelease, pageSlug, pathname, query, replace, setCurrentPageId]);
 
   if (
     !isReady ||

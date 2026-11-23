@@ -32,3 +32,4 @@ export const BrandPublicViewSchema = BrandTableSchema.omit({
 
 export type BrandRow = z.infer<typeof BrandTableSchema>;
 export type Brand = z.infer<typeof BrandPublicViewSchema>;
+export type BrandPublicView = z.infer<typeof BrandPublicViewSchema>;

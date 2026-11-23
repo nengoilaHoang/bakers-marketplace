@@ -1163,40 +1163,36 @@ export async function seed(knex: Knex): Promise<void> {
           w: 'full',
           alignSelfX: 'left',
           alignSelfY: 'top',
+          padding: { top: 'sm', bottom: 'sm', left: 'sm', right: 'sm' },
+          surfaceTheme: 'surface',
           thumbnail: {
             url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff',
             ratio: '1:1',
-            scale: 'cover',
+            fit: 'cover',
           },
           content: {
             layout: 'simple',
             header: {
               title: {
                 value: '{{ product.title }}',
-                style: {
-                  textAlign: 'left',
-                  decoration: 'underline',
-                  textColor: '#0f172a',
-                  fontWeight: 'bold',
-                  fontStyle: 'normal',
-                },
+                textAlign: 'left',
+                decoration: 'underline',
+                textColor: '#0f172a',
+                fontWeight: 'bold',
+                fontStyle: 'normal',
               },
               subtitle: {
-                display: true,
                 value: '{{ product.slug }}',
-                style: {
-                  textAlign: 'left',
-                  decoration: 'underline',
-                  textColor: '#64748b',
-                  fontWeight: 400,
-                  fontStyle: 'normal',
-                },
+                textAlign: 'left',
+                decoration: 'underline',
+                textColor: '#64748b',
+                fontWeight: 400,
+                fontStyle: 'normal',
               },
             },
             body: [
               {
                 type: 'description',
-                display: true,
                 value: '{{ product.description }}',
                 style: {
                   textAlign: 'left',
@@ -1208,7 +1204,6 @@ export async function seed(knex: Knex): Promise<void> {
               },
               {
                 type: 'priceTag',
-                display: true,
                 value: '{{ product.unitPrice }}',
                 currency: 'VND',
                 unit: 'piece',
@@ -1241,6 +1236,12 @@ export async function seed(knex: Knex): Promise<void> {
           alignSelfY: 'top',
           padding: { top: 'md', bottom: 'md', left: 'none', right: 'none' },
           surfaceTheme: 'default',
+          cols: { desktop: 4, tablet: 2, mobile: 1 },
+          gap: { desktop: 16, tablet: 16, mobile: 12 },
+          dataSource: {
+            type: 'route',
+            mode: 'route_query',
+          },
           layout: 'pagination',
           pageSize: 8,
         }),
@@ -1274,6 +1275,7 @@ export async function seed(knex: Knex): Promise<void> {
       storefront_release_id: release.id,
       type: 'COLLECTION',
       name: 'Collection Page',
+      slug: 'collection',
       root_component_id: collectionRootGrid.id,
     });
 
@@ -1486,6 +1488,7 @@ export async function seed(knex: Knex): Promise<void> {
       storefront_release_id: release.id,
       type: 'HOME',
       name: 'Home Page',
+      slug: 'home',
       root_component_id: homeRootGrid.id,
     });
 
@@ -1701,6 +1704,7 @@ export async function seed(knex: Knex): Promise<void> {
       storefront_release_id: mattroiRelease.id,
       type: 'HOME',
       name: 'Sunrise Home Page',
+      slug: 'home',
       root_component_id: mattroiHomeBentoGrid.id,
     });
 

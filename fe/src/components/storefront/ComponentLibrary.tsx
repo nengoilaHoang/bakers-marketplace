@@ -144,37 +144,31 @@ export const DEFAULT_PRODUCT_CARD_PREVIEW: ProductCardCommerceComponent = {
     thumbnail: {
       url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&q=80',
       ratio: '1:1',
-      scale: 'cover',
+      fit: 'cover',
     },
     content: {
       layout: 'simple',
       header: {
         title: {
           value: 'Classic Butter Croissant',
-          style: {
-            textColor: '#18181B',
-            textAlign: 'left',
-            fontWeight: 'bold',
-            fontStyle: 'normal',
-            decoration: 'none',
-          },
+          textColor: '#18181B',
+          textAlign: 'left',
+          fontWeight: 'bold',
+          fontStyle: 'normal',
+          decoration: 'none',
         },
         subtitle: {
-          display: true,
           value: 'Flaky layers with French butter',
-          style: {
-            textColor: '#71717A',
-            textAlign: 'left',
-            fontWeight: 400,
-            fontStyle: 'normal',
-            decoration: 'none',
-          },
+          textColor: '#71717A',
+          textAlign: 'left',
+          fontWeight: 400,
+          fontStyle: 'normal',
+          decoration: 'none',
         },
       },
       body: [
         {
           type: 'priceTag',
-          display: true,
           value: '45.000',
           currency: 'VND',
           unit: 'cái',
@@ -186,16 +180,9 @@ export const DEFAULT_PRODUCT_CARD_PREVIEW: ProductCardCommerceComponent = {
         },
         {
           type: 'ratings',
-          display: true,
           value: '4.9',
-          style: {
-            textColor: '#EAB308',
-            textAlign: 'left',
-            fontWeight: 'semi-bold',
-            fontStyle: 'normal',
-            decoration: 'none',
-          },
           ratingType: 'stars',
+          color: '#EAB308',
         },
       ],
     },
@@ -234,6 +221,12 @@ export const DEFAULT_COLLECTION_GRID_PREVIEW: FlattenRepeaterComponent = {
     alignSelfY: 'stretch',
     padding: { top: 'none', bottom: 'none', left: 'none', right: 'none' },
     surfaceTheme: 'default',
+    cols: { desktop: 4, tablet: 2, mobile: 1 },
+    gap: { desktop: 16, tablet: 16, mobile: 12 },
+    dataSource: {
+      type: 'preset',
+      preset: 'best_sellers',
+    },
     layout: 'pagination',
     pageSize: 8,
   },
@@ -242,9 +235,9 @@ export const DEFAULT_COLLECTION_GRID_PREVIEW: FlattenRepeaterComponent = {
 export const COMPONENT_PREVIEWS: FlattenComponent[] = [
   DEFAULT_GRID_PREVIEW,
   DEFAULT_HERO_BANNER_PREVIEW,
-  // DEFAULT_PRODUCT_CARD_PREVIEW,
+  DEFAULT_PRODUCT_CARD_PREVIEW,
   DEFAULT_RICH_TEXT_PREVIEW,
-  // DEFAULT_COLLECTION_GRID_PREVIEW,
+  DEFAULT_COLLECTION_GRID_PREVIEW,
 ];
 
 const COMPONENT_META: Record<string, ComponentPreviewMeta> = {

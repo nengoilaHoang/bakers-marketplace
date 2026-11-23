@@ -5,9 +5,9 @@ import {
 	UpdateCommerceComponent,
 } from '@/types/layout-component/commerce-component/commerce-component';
 import {
-	CompositeComponent,
-	CreateCompositeComponent,
-	UpdateCompositeComponent,
+	CreateGridCompositeComponent,
+	GridCompositeComponent,
+	UpdateGridCompositeComponent,
 } from '@/types/layout-component/composite-component';
 import {
 	CreateLeafComponent,
@@ -15,49 +15,67 @@ import {
 	UpdateLeafComponent,
 } from '@/types/layout-component/leaf-component';
 import {
-	CreateRepeaterComponent,
-	RepeaterComponent,
-	UpdateRepeaterComponent,
+	CollectionGridRepeaterComponent,
+	CreateCollectionGridRepeaterComponent,
+	UpdateCollectionGridRepeaterComponent,
 } from '@/types/layout-component/repeater-component';
 
-export type FlattenCompositeComponent = Omit<CompositeComponent, 'children'> & {
+export type FlattenGridCompositeComponent = Omit<
+  GridCompositeComponent,
+  'children'
+> & {
   children: string[] | undefined;
 };
 
-export type NewFlattenCompositeComponent = Omit<
-  CreateCompositeComponent,
+export type NewFlattenGridCompositeComponent = Omit<
+  CreateGridCompositeComponent,
   'children'
 > & {
   children?: string[] | undefined;
 };
 
-export type UpdateFlattenCompositeComponent = Omit<
-  UpdateCompositeComponent,
+export type UpdateFlattenGridCompositeComponent = Omit<
+  UpdateGridCompositeComponent,
   'children'
 > & {
   children?: string[] | undefined;
 };
 
-export type FlattenRepeaterComponent = Omit<
-  RepeaterComponent,
+export type FlattenCompositeComponent = FlattenGridCompositeComponent;
+
+export type NewFlattenCompositeComponent = NewFlattenGridCompositeComponent;
+
+export type UpdateFlattenCompositeComponent =
+  UpdateFlattenGridCompositeComponent;
+
+export type FlattenCollectionGridRepeaterComponent = Omit<
+  CollectionGridRepeaterComponent,
   'itemTemplate'
 > & {
   itemTemplate: string | null;
 };
 
-export type NewFlattenRepeaterComponent = Omit<
-  CreateRepeaterComponent,
+export type NewFlattenCollectionGridRepeaterComponent = Omit<
+  CreateCollectionGridRepeaterComponent,
   'itemTemplate'
 > & {
   itemTemplate?: string | null;
 };
 
-export type UpdateFlattenRepeaterComponent = Omit<
-  UpdateRepeaterComponent,
+export type UpdateFlattenCollectionGridRepeaterComponent = Omit<
+  UpdateCollectionGridRepeaterComponent,
   'itemTemplate'
 > & {
   itemTemplate?: string | null;
 };
+
+export type FlattenRepeaterComponent = FlattenCollectionGridRepeaterComponent;
+
+export type NewFlattenRepeaterComponent =
+  NewFlattenCollectionGridRepeaterComponent;
+
+export type UpdateFlattenRepeaterComponent =
+  UpdateFlattenCollectionGridRepeaterComponent;
 
 export type FlattenComponent =
   | FlattenCompositeComponent

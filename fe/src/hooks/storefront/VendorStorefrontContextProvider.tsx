@@ -56,7 +56,9 @@ const VendorStorefrontContextProvider = ({
         if (!fetchedStorefront) return;
         setStorefront(fetchedStorefront);
         setCurrentReleaseId(
-          fetchedStorefront.releases.find((r) => r.isActive)?.id ?? null,
+          fetchedStorefront.releases.find((r) => r.isActive)?.id ??
+            fetchedStorefront.releases[0]?.id ??
+            null,
         );
       } catch (err: unknown) {
         const isAbortError =

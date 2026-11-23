@@ -1,24 +1,27 @@
 import { WithBase } from '@/utils/tsHelper';
 import {
-	CommerceComponent,
-	CreateCommerceComponent,
-	UpdateCommerceComponent,
+  CommerceComponent,
+  CreateCommerceComponent,
+  UpdateCommerceComponent,
 } from './commerce-component/commerce-component';
 import {
-	CompositeComponent,
-	CreateCompositeComponent,
-	UpdateCompositeComponent,
+  CompositeComponent,
+  CreateCompositeComponent,
+  UpdateCompositeComponent,
 } from './composite-component';
 import {
-	CreateLeafComponent,
-	LeafComponent,
-	UpdateLeafComponent,
+  CreateLeafComponent,
+  LeafComponent,
+  UpdateLeafComponent,
 } from './leaf-component';
 import {
-	CreateRepeaterComponent,
-	RepeaterComponent,
-	UpdateRepeaterComponent,
+  CreateRepeaterComponent,
+  RepeaterComponent,
+  UpdateRepeaterComponent,
 } from './repeater-component';
+
+export const DYNAMIC_PLACEHOLDER_REGEX = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
+export const TOKEN_ALLOW_LIST = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/;
 
 export type ResponsiveProp<T> = {
   desktop: T;
@@ -38,6 +41,7 @@ export type PaletteColorTokenType =
   | 'colorAccent'
   | 'colorAccentForeground';
 export type ColorType = PaletteColorTokenType | (string & {});
+export type ImageScaleType = 'none' | 'fill' | 'contain' | 'cover';
 export type TextAlignmentType = 'center' | 'justify' | 'left' | 'right';
 export type DimensionType = number | 'auto' | 'full' | 'lg' | 'md' | 'sm';
 export type PaddingType = number | 'lg' | 'md' | 'none' | 'sm';
@@ -77,7 +81,7 @@ export type PaddingConfig = {
   right: PaddingType;
 };
 
-type BoxStyleConfig = {
+export type BoxStyleConfig = {
   padding: PaddingConfig;
   surfaceTheme: SurfaceTheme;
 };

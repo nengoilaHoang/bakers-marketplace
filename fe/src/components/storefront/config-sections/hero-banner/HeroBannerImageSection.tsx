@@ -9,6 +9,14 @@ import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
 
+const FIT_OPTIONS: Record<MediaFit, string> = {
+  cover: 'Cover',
+  contain: 'Contain',
+  fill: 'Fill',
+  none: 'None',
+  'scale-down': 'Scale Down',
+};
+
 type HeroBannerImageSectionProps = {
   isOpen: boolean;
   toggleSection: () => void;
@@ -73,6 +81,20 @@ const HeroBannerImageSection = ({
           inputType='file'
           currentValue={banner.mobileMediaUrl ?? null}
           onValueChange={(val) => onUpdate('mobileMediaUrl', val)}
+          onOpenStateChange={onActiveSectionChange}
+        />
+      </div>
+
+      {/* 3. Image Scale */}
+      <div className='flex flex-col gap-2'>
+        <ConfigLabel label='Image Scale' forId='banner-fit' />
+        <ConfigInput
+          id='banner-fit'
+          name='fit'
+          inputType='select'
+          selectOptions={FIT_OPTIONS}
+          currentValue={banner.fit}
+          onValueChange={(val) => onUpdate('fit', val)}
           onOpenStateChange={onActiveSectionChange}
         />
       </div>

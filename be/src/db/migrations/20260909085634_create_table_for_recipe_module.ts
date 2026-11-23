@@ -1276,6 +1276,7 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
 
       table.string('name', 255).notNullable();
+      table.string('slug', 255).notNullable();
 
       table
         .uuid('root_component_id')

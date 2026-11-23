@@ -32,6 +32,7 @@ export const getReleasesQueryBuilder = (
 									'id', pl.id,
 									'type', pl.type,
 									'name', pl.name,
+									'slug', pl.slug,
 									'root', CASE
 										WHEN pl.root_component_id IS NOT NULL 
 										THEN get_layout_tree_json(pl.root_component_id)

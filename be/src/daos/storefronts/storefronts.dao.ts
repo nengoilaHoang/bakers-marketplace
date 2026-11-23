@@ -1,11 +1,14 @@
 import database from '#/db/index.js';
 import { BrandPublicViewSchema } from '#/models/storefronts/brands.model.js';
 import { StorefrontReleaseSchema } from '#/models/storefronts/storefront-releases.model.js';
-import { Storefront } from '#/models/storefronts/storefronts.model.js';
 import {
-  ThemeSettings,
-  ThemeSettingsSchema,
-  UpdateThemeSettings,
+	StorefrontWithBrandPublicView,
+	StorefrontWithBrandPublicViewSchema,
+} from '#/models/storefronts/storefronts.model.js';
+import {
+	ThemeSettings,
+	ThemeSettingsSchema,
+	UpdateThemeSettings,
 } from '#/models/storefronts/theme-settings.js';
 import { Knex } from 'knex';
 import z from 'zod';
@@ -65,7 +68,10 @@ export class StorefrontDao {
     payload: UpdateThemeSettings,
   ): Promise<ThemeSettings> => {
     await this.knex.transaction(async (trx) => {
-      if (payload.colorPalette && Object.keys(payload.colorPalette).length > 0) {
+      if (
+        payload.colorPalette &&
+        Object.keys(payload.colorPalette).length > 0
+      ) {
         await trx('color_palettes')
           .where({ id: releaseId })
           .update(payload.colorPalette);
@@ -90,12 +96,27 @@ export class StorefrontDao {
   public getVendorStorefront = async (
     vendorId: string,
     simple: boolean = false,
-  ): Promise<Storefront | null> => {
-    const [storefront] = await this.knex
-      .from({ s: 'storefronts', b: 'brands' })
-      .where('s.brandId', this.knex.ref('b.id'))
+  ): Promise<StorefrontWithBrandPublicView | null> => {
+    const storefront = await this.knex('storefronts as s')
+      .join('brands as b', 'b.id', 's.brandId')
+      .leftJoin('files as logo_file', 'logo_file.id', 'b.logo')
+      .leftJoin('files as favicon_file', 'favicon_file.id', 'b.favicon')
       .where({ 'b.vendorId': vendorId })
-      .select('s.*');
+      .select(
+        's.id',
+        's.createdAt',
+        this.knex.raw(`
+          jsonb_build_object(
+            'id', b.id,
+            'name', b.name,
+            'vendorId', b.vendor_id,
+            'domain', b.domain,
+            'logoUrl', logo_file.url,
+            'faviconUrl', favicon_file.url
+          ) AS brand
+        `),
+      )
+      .first();
 
     if (!storefront) return null;
 
@@ -106,10 +127,12 @@ export class StorefrontDao {
 
     const formattedReleases = z.array(StorefrontReleaseSchema).parse(releases);
 
-    return {
-      ...storefront,
+    return StorefrontWithBrandPublicViewSchema.parse({
+      id: storefront.id,
+      createdAt: storefront.createdAt,
+      brand: storefront.brand,
       releases: formattedReleases ?? [],
-    };
+    });
   };
 
   public getActiveRelease = async (storeId: string) => {
@@ -152,7 +175,7 @@ export class StorefrontDao {
       .where({ 'b.domain': domain, 'sr.isActive': true })
       .modify((qb) => {
         if (slug) {
-          qb.where('pl.name', slug);
+          qb.where('pl.slug', slug);
         } else {
           qb.where('pl.type', 'HOME');
         }

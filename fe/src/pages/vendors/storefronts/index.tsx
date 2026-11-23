@@ -3,6 +3,7 @@ import VendorScope from '@/components/layout/VendorScope';
 import ConfigInput from '@/components/storefront/config-sections/ConfigInput';
 import ConfigLabel from '@/components/storefront/config-sections/ConfigLabel';
 import SaveButton from '@/components/storefront/SaveButton';
+import StorefrontReleasePreview from '@/components/storefront/StorefrontReleasePreview';
 import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import { NextPageWithLayout } from '@/pages/_app';
 import { ColorPalette, FontType, Typography } from '@/types/theme-settings';
@@ -173,6 +174,7 @@ const COLOR_PAIR_FIELDS: Array<{
 const StorefrontPage: NextPageWithLayout = () => {
   const {
     currentRelease,
+    storefront,
     updateColorPalette,
     updateTypography,
     saveThemeSettings,
@@ -202,106 +204,19 @@ const StorefrontPage: NextPageWithLayout = () => {
     updateTypography(key, value);
   };
 
+  const pageSlug = 'home';
+
   return (
     <div className='grid min-h-full grid-cols-1 lg:grid-cols-[1fr_400px]'>
       {/* Main content: live theme preview */}
       <div className='p-6 lg:p-10'>
-        {/* <div
-          className='mx-auto max-w-3xl rounded-xl border p-8 shadow-xs transition-colors'
-          style={{
-            backgroundColor: colorPalette.colorBackground,
-            borderColor: colorPalette.colorBorder,
-            color: colorPalette.colorTextPrimary,
-            fontFamily: typography.bodyFont,
-            fontWeight: typography.bodyWeight,
-            lineHeight: typography.bodyLineHeight,
-            letterSpacing: `${typography.bodyLetterSpacing}em`,
-          }}
-        >
-          <p
-            className='mb-2 text-xs font-semibold uppercase tracking-widest'
-            style={{ color: colorPalette.colorAccent }}
-          >
-            Theme Preview
-          </p>
-          <h1
-            className='text-3xl'
-            style={{
-              fontFamily: typography.headingFont,
-              fontWeight: typography.headingWeight,
-              lineHeight: typography.headingLineHeight,
-              letterSpacing: `${typography.headingLetterSpacing}em`,
-            }}
-          >
-            Warm Loaves, Sweet Moments
-          </h1>
-          <p
-            className='mt-3 text-sm'
-            style={{ color: colorPalette.colorTextSecondary }}
-          >
-            Handcrafted pastries, natural levain breads, and seasonal bakes made
-            fresh every morning.
-          </p>
-
-          <div
-            className='mt-6 rounded-lg border p-5'
-            style={{
-              backgroundColor: colorPalette.colorSurface,
-              borderColor: colorPalette.colorBorder,
-            }}
-          >
-            <h2
-              className='text-lg'
-              style={{
-                fontFamily: typography.headingFont,
-                fontWeight: typography.headingWeight,
-                lineHeight: typography.headingLineHeight,
-                letterSpacing: `${typography.headingLetterSpacing}em`,
-              }}
-            >
-              Surface Card &amp; Action Buttons
-            </h2>
-            <p
-              className='mt-1.5 text-sm'
-              style={{ color: colorPalette.colorTextSecondary }}
-            >
-              Preview how your surface, border, and button contrast pairs look
-              together.
-            </p>
-            <div className='mt-4 flex flex-wrap gap-2.5'>
-              <button
-                type='button'
-                className='rounded-md px-4 py-2 text-xs font-medium'
-                style={{
-                  backgroundColor: colorPalette.colorPrimary,
-                  color: colorPalette.colorPrimaryForeground,
-                }}
-              >
-                Primary Action
-              </button>
-              <button
-                type='button'
-                className='rounded-md px-4 py-2 text-xs font-medium'
-                style={{
-                  backgroundColor: colorPalette.colorSecondary,
-                  color: colorPalette.colorSecondaryForeground,
-                }}
-              >
-                Secondary Action
-              </button>
-              <button
-                type='button'
-                className='rounded-md px-4 py-2 text-xs font-medium'
-                style={{
-                  backgroundColor: colorPalette.colorAccent,
-                  color: colorPalette.colorAccentForeground,
-                }}
-              >
-                Accent Action
-              </button>
-            </div>
-          </div>
-        </div> */}
+        {storefront && currentRelease ? (
+          <StorefrontReleasePreview
+            currentRelease={currentRelease}
+            brand={storefront.brand}
+            pageSlug={pageSlug}
+          />
+        ) : null}
       </div>
 
       {/* Right sidebar: Color Palette & Typography */}

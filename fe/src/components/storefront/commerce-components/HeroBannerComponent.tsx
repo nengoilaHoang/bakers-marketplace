@@ -2,12 +2,6 @@ import { cn } from '@/lib/cn';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { ResponsiveProp } from '@/types/layout-component';
 import {
-  ASPECT_RATIO_REGEX,
-  AspectRatioValue,
-  MediaFit,
-  STANDARD_ASPECT_RATIOS,
-} from '@/types/layout-component/aspect-ratio';
-import {
   HeroBannerCommerceComponent,
   HeroBannerContentPosition,
   HeroBannerCta,
@@ -16,6 +10,8 @@ import {
   HeroBannerCtaStyle,
 } from '@/types/layout-component/commerce-component';
 import {
+  getAspectRatio,
+  getImageScaleClass,
   getTextStyle,
   HERO_POSITION_CLASSES,
   HERO_TYPOGRAPHY_PRESETS,
@@ -25,39 +21,6 @@ import Link from 'next/link';
 import { CSSProperties, useCallback, useMemo } from 'react';
 import { NodeRendererMode } from '../NodeRenderer';
 import CanvasNodeWrapper from '../canvas/CanvasNodeWrapper';
-
-const getAspectRatio = (aspect: AspectRatioValue): string => {
-  let aspectRatio = '';
-  if (typeof aspect === 'number') {
-    aspectRatio = `${aspect}`;
-  }
-
-  if (typeof aspect === 'string') {
-    if (
-      STANDARD_ASPECT_RATIOS.some(
-        (standardAspect) => standardAspect === aspect,
-      ) ||
-      ASPECT_RATIO_REGEX.test(aspect)
-    ) {
-      // Convert "16:9" -> "16 / 9" for valid CSS syntax
-      aspectRatio = aspect.replace(':', ' / ');
-    }
-  }
-
-  return aspectRatio;
-};
-
-const FIT_CLASSES: Record<MediaFit, string> = {
-  cover: 'object-cover',
-  contain: 'object-contain',
-  fill: 'object-fill',
-  none: 'object-none',
-  'scale-down': 'object-scale-down',
-};
-
-const getFitClass = (fit: MediaFit): string => {
-  return FIT_CLASSES[fit] || '';
-};
 
 const getFocalPointStyle = (focalPoint: {
   x: number;
@@ -262,6 +225,15 @@ const HeroBannerComponent = ({
     return getHeroBannerCtaPositionClasses(ctaPosition);
   }, [ctaPosition]);
 
+  const containerClassName = useMemo(
+    () =>
+      cn(
+        'relative flex overflow-hidden',
+        'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
+      ),
+    [],
+  );
+
   const containerStyle = useMemo(() => {
     const focalPointStyle = focalPoint ? getFocalPointStyle(focalPoint) : {};
 
@@ -288,15 +260,6 @@ const HeroBannerComponent = ({
       ...aspectStyles,
     };
   }, [aspect, focalPoint]);
-
-  const containerClassName = useMemo(() => {
-    const fitClass = fit ? getFitClass(fit) : '';
-    return cn(
-      'relative flex overflow-hidden',
-      'aspect-(--aspect-ratio-mobile) md:aspect-(--aspect-ratio-tablet) lg:aspect-(--aspect-ratio-desktop)',
-      fitClass,
-    );
-  }, [fit]);
 
   const editorProps = {
     'aria-label': 'Hero Banner',
@@ -325,7 +288,7 @@ const HeroBannerComponent = ({
               preload
               sizes='100vw'
               className={cn(
-                'object-cover',
+                getImageScaleClass(fit),
                 // Show on mobile, hide on md/desktop
                 desktopMediaUrl ? 'block md:hidden' : 'block',
               )}
@@ -341,7 +304,7 @@ const HeroBannerComponent = ({
               preload
               sizes='100vw'
               className={cn(
-                'object-cover',
+                getImageScaleClass(fit),
                 // Hide on mobile, show on md/desktop
                 mobileMediaUrl ? 'hidden md:block' : 'block',
               )}

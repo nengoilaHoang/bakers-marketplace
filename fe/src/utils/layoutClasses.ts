@@ -7,6 +7,12 @@ import {
 	VerticalAlignType,
 } from '@/types/layout-component';
 import {
+	ASPECT_RATIO_REGEX,
+	AspectRatioValue,
+	MediaFit,
+	STANDARD_ASPECT_RATIOS,
+} from '@/types/layout-component/aspect-ratio';
+import {
 	HeroBannerContentPosition,
 	HeroBannerContentSize,
 } from '@/types/layout-component/commerce-component';
@@ -122,6 +128,25 @@ export const PADDING_MAP: Record<
   l: { none: 'pl-0', sm: 'pl-2', md: 'pl-4', lg: 'pl-8' },
   r: { none: 'pr-0', sm: 'pr-2', md: 'pr-4', lg: 'pr-8' },
   b: { none: 'pb-0', sm: 'pb-2', md: 'pb-4', lg: 'pb-8' },
+};
+
+export const getAspectRatio = (aspect: AspectRatioValue): string => {
+  let aspectRatio = '';
+  if (typeof aspect === 'number') {
+    aspectRatio = `${aspect}`;
+  }
+
+  if (typeof aspect === 'string') {
+    if (
+      (STANDARD_ASPECT_RATIOS as readonly string[]).includes(aspect) ||
+      ASPECT_RATIO_REGEX.test(aspect)
+    ) {
+      // Convert "16:9" -> "16 / 9" for valid CSS syntax
+      aspectRatio = aspect.replace(':', ' / ');
+    }
+  }
+
+  return aspectRatio;
 };
 
 function getPaddingClass(
@@ -286,4 +311,16 @@ export function getBaseLayoutClassesAndStyle(
   });
 
   return [classes.filter(Boolean).join(' ').trim(), style];
+}
+
+const IMAGE_SCALE_CLASSES: Record<MediaFit, string> = {
+  cover: 'object-cover',
+  contain: 'object-contain',
+  fill: 'object-fill',
+  none: 'object-none',
+  'scale-down': 'object-scale-down',
+};
+
+export function getImageScaleClass(scale: MediaFit): string {
+  return IMAGE_SCALE_CLASSES[scale] ?? '';
 }

@@ -11,13 +11,21 @@ export type StorefrontNavPage = {
   type: PageLayoutType;
 };
 
+export type StorefrontPageContext =
+  | { kind: 'home' }
+  | { kind: 'collection'; collectionSlug: string }
+  | { kind: 'products_query' }
+  | { kind: 'product'; productSlug: string }
+  | { kind: 'custom' };
+
 export type StorefrontRenderContextValue = {
   brand: BrandPublicView;
   layout: PageLayout;
   rootId: string;
   components: Record<string, FlattenComponent>;
   basePath: string;
-  routeParams?: Record<string, string>;
+  pageContext?: StorefrontPageContext;
+  query?: Record<string, string | string[] | undefined>;
   navPages?: StorefrontNavPage[];
 };
 

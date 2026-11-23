@@ -33,6 +33,17 @@ export class StorefrontController {
     },
   );
 
+  public getNavPages = asyncHandler(
+    async (req: Request<{ domain: string }>, res: Response) => {
+      const { domain } = req.params;
+
+      const data = await this.storefrontService.getNavPages(domain);
+      return res.status(200).json({
+        data,
+      });
+    },
+  );
+
   public getMyStorefront = asyncHandler(
     async (req: AuthenticatedRequest, res: Response) => {
       const userId = req.user.id;
@@ -77,10 +88,7 @@ export class StorefrontController {
   );
 
   public updateThemeSettings = asyncHandler(
-    async (
-      req: AuthenticatedRequest<{ releaseId: string }>,
-      res: Response,
-    ) => {
+    async (req: AuthenticatedRequest<{ releaseId: string }>, res: Response) => {
       const { releaseId } = req.params;
       const vendorId = req.user.id;
 
@@ -89,6 +97,42 @@ export class StorefrontController {
         vendorId,
         req.body,
       );
+
+      return res.status(200).json({
+        data,
+      });
+    },
+  );
+
+  public createReleasePage = asyncHandler(
+    async (
+      req: AuthenticatedRequest<{ releaseId: string }, {}>,
+      res: Response,
+    ) => {
+      const { releaseId } = req.params;
+      const payload = req.body;
+      const vendorId = req.user.id;
+
+      const [, data] = await Promise.all([
+        this.storefrontService.checkReleaseOwnership(releaseId, vendorId),
+        this.storefrontService.createReleasePage(releaseId, payload),
+      ]);
+
+      return res.status(200).json({
+        data,
+      });
+    },
+  );
+
+  public getReleaseLayouts = asyncHandler(
+    async (req: AuthenticatedRequest<{ releaseId: string }>, res: Response) => {
+      const { releaseId } = req.params;
+      const vendorId = req.user.id;
+
+      const [, data] = await Promise.all([
+        this.storefrontService.checkReleaseOwnership(releaseId, vendorId),
+        this.storefrontService.getReleaseLayouts(releaseId),
+      ]);
 
       return res.status(200).json({
         data,

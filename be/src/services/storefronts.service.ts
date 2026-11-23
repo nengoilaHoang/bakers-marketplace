@@ -1,24 +1,32 @@
+import layoutComponentDao, {
+	LayoutComponentDao,
+} from '#/daos/layouts/layout-components.dao.js';
 import pageLayoutDao, {
 	PageLayoutDao,
 } from '#/daos/layouts/page-layout.dao.js';
 import storefrontDao, {
 	StorefrontDao,
 } from '#/daos/storefronts/storefronts.dao.js';
-import { StorefrontRelease } from '#/models/storefronts/storefront-releases.model.js';
-import { Storefront } from '#/models/storefronts/storefronts.model.js';
 import {
-  ThemeSettings,
-  UpdateThemeSettingsSchema,
+	CreatePageLayout,
+	CreatePageLayoutSchema,
+} from '#/models/storefronts/page-layouts.model.js';
+import { StorefrontRelease } from '#/models/storefronts/storefront-releases.model.js';
+import { StorefrontWithBrandPublicView } from '#/models/storefronts/storefronts.model.js';
+import {
+	ThemeSettings,
+	UpdateThemeSettingsSchema,
 } from '#/models/storefronts/theme-settings.js';
 import {
-  NotFoundError,
-  UnprocessableEntityError,
+	NotFoundError,
+	UnprocessableEntityError,
 } from '#/utils/http-errors.js';
 
 export class StorefrontService {
   constructor(
     private readonly storefrontDao: StorefrontDao,
     private readonly pageLayoutDao: PageLayoutDao,
+    private readonly layoutComponentDao: LayoutComponentDao,
   ) {}
 
   public ensureExists = async (id: string): Promise<void> => {
@@ -43,6 +51,7 @@ export class StorefrontService {
       );
     }
 
+    // The id of the product or the collection (eg. page?slug=)
     const routeParams =
       splitSlugs && splitSlugs.length > 1 ? { id: splitSlugs[1] } : undefined;
 
@@ -53,10 +62,14 @@ export class StorefrontService {
     };
   };
 
+  public getNavPages = async (domain: string) => {
+    return await this.pageLayoutDao.getNavPages(domain);
+  };
+
   public getVendorStorefront = async (
     vendorId: string,
     simple: boolean = false,
-  ): Promise<Storefront | null> => {
+  ): Promise<StorefrontWithBrandPublicView | null> => {
     return await this.storefrontDao.getVendorStorefront(vendorId, simple);
   };
 
@@ -98,7 +111,55 @@ export class StorefrontService {
 
     return await this.storefrontDao.updateThemeSettings(releaseId, parsed.data);
   };
+
+  public checkReleaseOwnership = async (
+    releaseId: string,
+    vendorId: string,
+  ) => {
+    const isOwner = await this.storefrontDao.checkReleaseOwnership(
+      releaseId,
+      vendorId,
+    );
+    if (!isOwner) {
+      throw new NotFoundError(`Release with ${releaseId} does not exist.`);
+    }
+  };
+
+  public getReleaseLayouts = async (releaseId: string) => {
+    return await this.pageLayoutDao.getReleaseLayouts(releaseId);
+  };
+
+  public createReleasePage = async (
+    releaseId: string,
+    payload: CreatePageLayout,
+  ) => {
+    const parsedPayload = CreatePageLayoutSchema.safeParse(payload);
+    if (!parsedPayload.success) {
+      throw new UnprocessableEntityError(
+        `Invalid theme settings payload: ${parsedPayload.error}`,
+      );
+    }
+
+    const data = parsedPayload.data;
+    return this.pageLayoutDao.withTransaction(async (t) => {
+      const [rootId] = await this.layoutComponentDao.upsertBatch([data.root]);
+      return await this.pageLayoutDao.createPage(
+        {
+          storefrontReleaseId: releaseId,
+          rootComponentId: rootId,
+          name: data.name,
+          slug: data.slug,
+          type: data.type,
+        },
+        t,
+      );
+    });
+  };
 }
 
-const storefrontService = new StorefrontService(storefrontDao, pageLayoutDao);
+const storefrontService = new StorefrontService(
+  storefrontDao,
+  pageLayoutDao,
+  layoutComponentDao,
+);
 export default storefrontService;

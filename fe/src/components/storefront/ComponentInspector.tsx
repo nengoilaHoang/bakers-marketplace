@@ -3,8 +3,10 @@ import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasCo
 import { FlattenComponent } from '@/utils/flattenLayout';
 import { useMemo, useState } from 'react';
 import BaseLayoutSections from './config-sections/BaseLayoutSections';
+import { CollectionGridSectionId } from './inspectors/CollectionGridInspector';
 import { GridSectionId } from './inspectors/GridInspector';
 import { HeroBannerSectionId } from './inspectors/HeroBannerInspector';
+import { ProductCardSectionId } from './inspectors/ProductCardInspector';
 import { COMPONENT_INSPECTORS } from './inspectors/registry';
 
 export type SectionId =
@@ -14,7 +16,9 @@ export type SectionId =
   | 'theme'
   | 'bento'
   | HeroBannerSectionId
-  | GridSectionId;
+  | GridSectionId
+  | CollectionGridSectionId
+  | ProductCardSectionId;
 
 type ComponentInspectorProps = {
   isOpen: boolean;
@@ -49,6 +53,15 @@ const ComponentInspector = ({
       'grid-layout': true,
       'grid-tracks': true,
     }),
+    ...(component.componentType === 'COLLECTION_GRID' && {
+      'collection-grid-data-source': true,
+      'collection-grid-layout': true,
+    }),
+    ...(component.componentType === 'PRODUCT_CARD' && {
+      'product-card-thumbnail': true,
+      'product-card-header': true,
+      'product-card-body': true,
+    }),
     ...(isBentoItem && { bento: true }),
   } as Record<SectionId, boolean>);
 
@@ -73,6 +86,11 @@ const ComponentInspector = ({
         'hero-cta',
         'grid-layout',
         'grid-tracks',
+        'collection-grid-data-source',
+        'collection-grid-layout',
+        'product-card-thumbnail',
+        'product-card-header',
+        'product-card-body',
         'bento',
       ].filter((id) => id in openSections) as SectionId[],
     [openSections],

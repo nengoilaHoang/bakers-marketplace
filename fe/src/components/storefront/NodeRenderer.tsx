@@ -1,7 +1,9 @@
 import { FlattenComponent } from '@/utils/flattenLayout';
 import HeroBannerComponent from './commerce-components/HeroBannerComponent';
+import ProductCardComponent from './commerce-components/ProductCardComponent';
 import GridComponent from './composite-components/GridComponent';
 import RichTextComponent from './leaf-components/rich-text/RichTextComponent';
+import CollectionGridComponent from './repeater-components/CollectionGridComponent';
 
 export const NodeRendererMode = {
   Preview: 'PREVIEW',
@@ -44,6 +46,34 @@ const NodeRenderer = ({
   ) {
     return (
       <HeroBannerComponent
+        component={component}
+        sourceParentId={resolvedSourceParentId}
+        sourceSlot={resolvedSourceSlot}
+        mode={mode}
+      />
+    );
+  }
+
+  if (
+    component.type === 'COMMERCE' &&
+    component.componentType === 'PRODUCT_CARD'
+  ) {
+    return (
+      <ProductCardComponent
+        component={component}
+        sourceParentId={resolvedSourceParentId}
+        sourceSlot={resolvedSourceSlot}
+        mode={mode}
+      />
+    );
+  }
+
+  if (
+    component.type === 'REPEATER' &&
+    component.componentType === 'COLLECTION_GRID'
+  ) {
+    return (
+      <CollectionGridComponent
         component={component}
         sourceParentId={resolvedSourceParentId}
         sourceSlot={resolvedSourceSlot}

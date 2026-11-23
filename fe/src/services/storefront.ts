@@ -2,12 +2,13 @@ import { StorefrontNavPage } from '@/hooks/storefront/StorefrontRenderContext';
 import request from '@/lib/api';
 import { BrandPublicView } from '@/types/brand';
 import { LayoutComponent } from '@/types/layout-component';
-import { PageLayout } from '@/types/page-layout';
+import { PageLayout, PageLayoutType } from '@/types/page-layout';
+import { CreateCompositeComponent } from '@/types/layout-component/composite-component';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
 import {
-  ColorPalette,
-  ThemeSettings,
-  Typography,
+	ColorPalette,
+	ThemeSettings,
+	Typography,
 } from '@/types/theme-settings';
 import { BatchLayoutComponentPayload } from '@/utils/pageLayoutMutation';
 
@@ -105,6 +106,30 @@ export async function getStorefrontReleaseLayouts(
   return layouts;
 }
 
+export type CreatePagePayload = {
+  name: string;
+  slug: string;
+  type: PageLayoutType;
+  root?: CreateCompositeComponent | null;
+};
+
+export async function createStorefrontReleasePage(
+  releaseId: string,
+  payload: CreatePagePayload,
+): Promise<PageLayout> {
+  const { data } = await request<{ data: PageLayout }>(
+    `/storefronts/releases/${releaseId}/layouts`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  );
+  if (data?.root) {
+    normalizeComponent(data.root);
+  }
+  return data;
+}
+
 function buildLayoutBatchFormData(
   payload: BatchLayoutComponentPayload,
 ): FormData {
@@ -175,6 +200,17 @@ export async function getPublicStorefrontPage(
   if (data.layout?.root) {
     normalizeComponent(data.layout.root);
   }
+  return data;
+}
+
+export async function getPublicStorefrontNavPages(
+  domain: string,
+  abortSignal?: AbortSignal,
+): Promise<StorefrontNavPage[]> {
+  const { data } = await request<{ data: StorefrontNavPage[] }>(
+    `/storefronts/domain/${encodeURIComponent(domain)}/nav-pages`,
+    { signal: abortSignal },
+  );
   return data;
 }
 
