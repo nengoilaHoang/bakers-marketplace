@@ -206,10 +206,10 @@ export async function getPublicStorefrontPage(
   slug?: string,
   abortSignal?: AbortSignal,
 ): Promise<PublicStorefrontPageResponse> {
+  const targetSlug = slug?.replace(/^\/+|\/+$/g, '') || 'home';
   const { data } = await request<{ data: PublicStorefrontPageResponse }>(
-    `/storefronts/domain/${encodeURIComponent(domain)}/page`,
+    `/storefronts/domain/${encodeURIComponent(domain)}/pages/${encodeURIComponent(targetSlug)}`,
     { signal: abortSignal },
-    slug ? { slug } : undefined,
   );
 
   if (data.layout?.root) {

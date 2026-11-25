@@ -1857,7 +1857,7 @@ export async function seed(knex: Knex): Promise<void> {
           },
           primaryCta: {
             label: 'Explore Our Collection',
-            url: 'https://hoasen-bakery.vn/collections',
+            url: '/products',
             style: 'solid',
             colorScheme: 'primary',
             size: 'lg',
