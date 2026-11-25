@@ -31,8 +31,8 @@ export type CompositePutSlot = ResponsiveProp<
 >;
 
 export interface UpdateBaseCompositeComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends UpdateBaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends UpdateBaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
   children?: (UpdateLayoutComponent | CreateLayoutComponent)[] | undefined;
@@ -40,8 +40,8 @@ export interface UpdateBaseCompositeComponent<
 }
 
 export interface CreateBaseCompositeComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends CreateBaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends CreateBaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
   children?: (UpdateLayoutComponent | CreateLayoutComponent)[] | undefined;

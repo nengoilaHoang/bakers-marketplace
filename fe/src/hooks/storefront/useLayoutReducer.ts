@@ -175,10 +175,7 @@ const layoutReducer = (
       const { config } = components[targetComponentId];
       const keys = pathname.split('.');
 
-      const update = (
-        current: Record<string, unknown>,
-        index: number,
-      ): unknown => {
+      const update = (current: unknown, index: number): unknown => {
         if (index === keys.length) {
           // If a breakpoint is specified, we want to update the value for that specific breakpoint.
           if (bp) {
@@ -195,11 +192,22 @@ const layoutReducer = (
         }
 
         const key = keys[index];
-        const nextCurrent =
-          current && typeof current === 'object' ? current[key] : {};
+        if (Array.isArray(current)) {
+          const itemIndex = Number(key);
+          const nextCurrent = current[itemIndex] ?? {};
+          const nextArr = [...current];
+          nextArr[itemIndex] = update(nextCurrent, index + 1);
+          return nextArr;
+        }
+
+        const currentObj =
+          current && typeof current === 'object'
+            ? (current as Record<string, unknown>)
+            : {};
+        const nextCurrent = currentObj[key] ?? {};
         return {
-          ...current,
-          [key]: update(nextCurrent as Record<string, unknown>, index + 1),
+          ...currentObj,
+          [key]: update(nextCurrent, index + 1),
         };
       };
 

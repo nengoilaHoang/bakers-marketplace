@@ -58,7 +58,7 @@ function classifyStorefrontRoute(segments: string[]): ClassifiedRoute | null {
     return {
       targetPageSlug: 'collections', // Tells backend to return the release's COLLECTION layout
       requiresNavMatch: false,
-      pageContext: { kind: 'collection', collectionSlug: second },
+      pageContext: { kind: 'products_query' },
     };
   }
 
@@ -102,8 +102,8 @@ export const getServerSideProps: GetServerSideProps<
 
   const pageAbortController = new AbortController();
   try {
-    // GET /storefronts/domain/:domain/page?slug=:slug
-    // GET /storefronts/domain/:domain/nav-pages
+    // GET /storefronts/domain/:domain/pages/:slug
+    // GET /storefronts/domain/:domain/pages
     const [data, navPages] = await Promise.all([
       getPublicStorefrontPage(
         domain,
@@ -147,6 +147,9 @@ export const getServerSideProps: GetServerSideProps<
         pageContext: route.pageContext,
         query: {
           ...query,
+          ...(segments[0] === 'collections' && segments[1]
+            ? { collection: segments[1] }
+            : {}),
         },
         navPages,
       },

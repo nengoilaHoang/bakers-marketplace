@@ -31,6 +31,10 @@ export const PageLayoutSchema = z.object({
   root: CompositeComponentSchema.nullable(),
 });
 
+export const PageLayoutSummarySchema = PageLayoutSchema.omit({
+  root: true,
+});
+
 export const DEFAULT_ROOT_COMPOSITE_COMPONENT: z.output<
   typeof CreateCompositeComponentSchema
 > = {
@@ -89,6 +93,7 @@ export const UpdatePageLayoutRecordSchema =
   InsertPageLayoutRecordSchema.partial();
 
 export type PageLayout = z.infer<typeof PageLayoutSchema>;
+export type PageLayoutSummary = z.infer<typeof PageLayoutSummarySchema>;
 export type PageLayoutRow = z.infer<typeof PageLayoutTableSchema>;
 
 export type CreatePageLayout = z.infer<typeof CreatePageLayoutSchema>;

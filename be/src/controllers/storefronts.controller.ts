@@ -16,12 +16,10 @@ export class StorefrontController {
 
   public getPublicStorefrontPage = asyncHandler(
     async (
-      req: Request<{ domain: string }, unknown, unknown, { slug?: string }>,
+      req: Request<{ domain: string; slug: string }, unknown, unknown, unknown>,
       res: Response,
     ) => {
-      const { domain } = req.params;
-      const slug =
-        typeof req.query.slug === 'string' ? req.query.slug : undefined;
+      const { domain, slug } = req.params;
 
       const data = await this.storefrontService.getPublicStorefrontPage(
         domain,
@@ -124,14 +122,30 @@ export class StorefrontController {
     },
   );
 
-  public getReleaseLayouts = asyncHandler(
+  public getReleasePages = asyncHandler(
     async (req: AuthenticatedRequest<{ releaseId: string }>, res: Response) => {
       const { releaseId } = req.params;
       const vendorId = req.user.id;
 
       const [, data] = await Promise.all([
         this.storefrontService.checkReleaseOwnership(releaseId, vendorId),
-        this.storefrontService.getReleaseLayouts(releaseId),
+        this.storefrontService.getReleasePages(releaseId),
+      ]);
+
+      return res.status(200).json({
+        data,
+      });
+    },
+  );
+
+  public getReleaseSummaryPages = asyncHandler(
+    async (req: AuthenticatedRequest<{ releaseId: string }>, res: Response) => {
+      const { releaseId } = req.params;
+      const vendorId = req.user.id;
+
+      const [, data] = await Promise.all([
+        this.storefrontService.checkReleaseOwnership(releaseId, vendorId),
+        this.storefrontService.getReleaseSummaryPages(releaseId),
       ]);
 
       return res.status(200).json({

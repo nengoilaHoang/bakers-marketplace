@@ -1,3 +1,4 @@
+import { ProductFilters } from '@/services/products';
 import { CollectionDataSource } from '@/types/layout-component/repeater-component';
 import type { Product } from '@/types/product';
 import { useMemo } from 'react';
@@ -43,6 +44,7 @@ type UseCollectionDataSourceProps = {
   dataSource: CollectionDataSource;
   limit?: number;
   page?: number;
+  cursor?: string;
   isEditor?: boolean;
 };
 
@@ -50,6 +52,7 @@ const useCollectionDataSource = ({
   dataSource,
   limit = 0,
   page = 1,
+  cursor,
   isEditor = false,
 }: UseCollectionDataSourceProps) => {
   const renderCtx = useOptionalStorefrontRenderContext();
@@ -58,7 +61,12 @@ const useCollectionDataSource = ({
   const isMockMode = isEditor || dataSource.type === 'preset';
 
   // Build fetch params unconditionally so useFetchStorefrontProducts is always called in the same order
-  const fetchParams = useMemo(() => {
+  const fetchParams: {
+    filters?: ProductFilters;
+    limit?: number;
+    page?: number;
+    cursor?: string;
+  } | null = useMemo(() => {
     if (isMockMode) return null;
 
     switch (dataSource.type) {
@@ -67,20 +75,21 @@ const useCollectionDataSource = ({
           dataSource.mode === 'route_query' &&
           pageContext?.kind === 'products_query'
         ) {
-          return { filters: renderCtx?.query, limit, page };
+          return { filters: renderCtx?.query, limit, page, cursor };
         }
         return null;
 
       case 'collection':
         return {
-          collectionSlug: dataSource.collectionSlug,
+          filters: { collection: dataSource.collectionSlug },
           limit,
           page,
+          cursor,
         };
 
       case 'query': {
         const { type: _type, ...filters } = dataSource;
-        return { filters, limit, page };
+        return { filters, limit, page, cursor };
       }
 
       default:
@@ -90,20 +99,22 @@ const useCollectionDataSource = ({
     isMockMode,
     dataSource,
     pageContext?.kind,
-    renderCtx?.query,
     limit,
     page,
+    cursor,
+    renderCtx?.query,
   ]);
 
   // If your fetch hook supports an `enabled` option, pass `enabled: Boolean(fetchParams)`.
   // Otherwise, pass `fetchParams` so it stays unconditional.
   const {
     products: fetchedProducts,
+    nextCursor,
+    hasNextPage,
+    fetchedPage,
     isFetching,
     error,
-  } = useFetchStorefrontProducts(
-    fetchParams ?? { filters: undefined, limit: undefined, page: undefined },
-  );
+  } = useFetchStorefrontProducts(fetchParams);
 
   const products = useMemo(() => {
     if (isMockMode) {
@@ -117,6 +128,9 @@ const useCollectionDataSource = ({
 
   return {
     products,
+    nextCursor,
+    fetchedPage: isMockMode ? page : fetchedPage,
+    hasNextPage: isMockMode ? true : hasNextPage,
     isLoading: isMockMode ? false : isFetching,
     error: isMockMode ? null : error,
   };

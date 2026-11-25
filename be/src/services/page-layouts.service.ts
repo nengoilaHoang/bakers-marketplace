@@ -1,13 +1,11 @@
 import layoutComponentDao, {
-	LayoutComponentDao,
+    LayoutComponentDao,
 } from '#/daos/layouts/layout-components.dao.js';
 import pageLayoutDao, {
-	PageLayoutDao,
+    PageLayoutDao,
 } from '#/daos/layouts/page-layout.dao.js';
 import { PutCompositeComponentSchema } from '#/models/layout-components/composite/composite-components.model.js';
-import {
-	PutLayoutComponent
-} from '#/models/layout-components/layout-components.model.js';
+import { PutLayoutComponent } from '#/models/layout-components/layout-components.model.js';
 import { UnprocessableEntityError } from '#/utils/http-errors.js';
 
 export class PageLayoutService {
@@ -21,7 +19,7 @@ export class PageLayoutService {
   };
 
   public getReleaseLayouts = async (releaseId: string) => {
-    return await this.pageLayoutDao.getReleaseLayouts(releaseId);
+    return await this.pageLayoutDao.getReleasePages(releaseId);
   };
 
   public updatePage = async (pageId: string, root: PutLayoutComponent) => {

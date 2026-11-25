@@ -8,20 +8,18 @@ import e from 'express';
 const router = e.Router();
 
 router.get(
-  '/domain/:domain/page',
+  '/domain/:domain/pages/:slug',
   storefrontController.getPublicStorefrontPage,
 );
-router.get(
-  '/domain/:domain/nav-pages',
-  storefrontController.getNavPages,
-);
+router.get('/domain/:domain/pages', storefrontController.getNavPages); // Give the pages of the active release
 
 router.use(authenMiddleware, validateRole(['VENDOR']));
 
 router.get('/mine', storefrontController.getMyStorefront);
+router.get('/releases/:releaseId/pages', storefrontController.getReleasePages);
 router.get(
-  '/releases/:releaseId/layouts',
-  storefrontController.getReleaseLayouts,
+  '/releases/:releaseId/pages/summary',
+  storefrontController.getReleaseSummaryPages,
 );
 router.post(
   '/releases/:releaseId/layouts',

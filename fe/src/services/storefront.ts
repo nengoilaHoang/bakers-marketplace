@@ -2,8 +2,12 @@ import { StorefrontNavPage } from '@/hooks/storefront/StorefrontRenderContext';
 import request from '@/lib/api';
 import { BrandPublicView } from '@/types/brand';
 import { LayoutComponent } from '@/types/layout-component';
-import { PageLayout, PageLayoutType } from '@/types/page-layout';
 import { CreateCompositeComponent } from '@/types/layout-component/composite-component';
+import {
+	PageLayout,
+	PageLayoutSummary,
+	PageLayoutType,
+} from '@/types/page-layout';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
 import {
 	ColorPalette,
@@ -93,17 +97,28 @@ export async function getStorefrontRelease(
   return release;
 }
 
-export async function getStorefrontReleaseLayouts(
+export async function getStorefrontReleasePages(
   releaseId: string,
   abortSignal?: AbortSignal,
 ) {
   const { data: layouts } = await request<{ data: PageLayout[] }>(
-    `/storefronts/releases/${releaseId}/layouts`,
+    `/storefronts/releases/${releaseId}/pages`,
     { signal: abortSignal },
   );
 
   layouts.forEach((layout) => normalizeComponent(layout.root));
   return layouts;
+}
+
+export async function getStorefrontReleaseSummaryPages(
+  releaseId: string,
+  abortSignal?: AbortSignal,
+): Promise<PageLayoutSummary[]> {
+  const { data } = await request<{ data: PageLayoutSummary[] }>(
+    `/storefronts/releases/${releaseId}/pages/summary`,
+    { signal: abortSignal },
+  );
+  return data;
 }
 
 export type CreatePagePayload = {
@@ -118,7 +133,7 @@ export async function createStorefrontReleasePage(
   payload: CreatePagePayload,
 ): Promise<PageLayout> {
   const { data } = await request<{ data: PageLayout }>(
-    `/storefronts/releases/${releaseId}/layouts`,
+    `/storefronts/releases/${releaseId}/pages`,
     {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -208,7 +223,7 @@ export async function getPublicStorefrontNavPages(
   abortSignal?: AbortSignal,
 ): Promise<StorefrontNavPage[]> {
   const { data } = await request<{ data: StorefrontNavPage[] }>(
-    `/storefronts/domain/${encodeURIComponent(domain)}/nav-pages`,
+    `/storefronts/domain/${encodeURIComponent(domain)}/pages`,
     { signal: abortSignal },
   );
   return data;

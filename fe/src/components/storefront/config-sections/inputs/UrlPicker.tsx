@@ -1,6 +1,13 @@
 import Modal from '@/components/ui/Modal';
+import useReleaseSummaryPages from '@/hooks/storefront/useReleaseSummaryPages';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
+import useFetchStorefrontProducts from '@/hooks/useFetchStorefrontProduct';
+import useVendorCollections from '@/hooks/useVendorCollections';
 import { cn } from '@/lib/cn';
-import { useMemo, useState } from 'react';
+import type { Collection } from '@/types/collection';
+import type { PageLayoutSummary } from '@/types/page-layout';
+import { Product } from '@/types/product';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 
@@ -13,26 +20,6 @@ type UrlPickerProps = {
   currentValue: string;
   onValueChange: (value: string) => void;
   onOpenStateChange?: (isOpen: boolean) => void;
-};
-
-// Placeholder options until API fetching is wired up
-const PAGE_OPTIONS: Record<string, string> = {
-  '/': 'Home Page (/)',
-  '/about': 'About Us (/about)',
-  '/collections': 'All Collections (/collections)',
-  '/contact': 'Contact (/contact)',
-};
-
-const COLLECTION_OPTIONS: Record<string, string> = {
-  '/collections/artisan-breads': 'Artisan Breads',
-  '/collections/morning-pastries': 'Morning Pastries',
-  '/collections/seasonal-cakes': 'Seasonal Cakes',
-};
-
-const PRODUCT_OPTIONS: Record<string, string> = {
-  '/products/country-levain-loaf': 'Country Levain Loaf',
-  '/products/french-butter-croissant': 'French Butter Croissant',
-  '/products/cinnamon-brioche': 'Cinnamon Brioche',
 };
 
 const CATEGORY_OPTIONS: Record<string, string> = {
@@ -56,19 +43,36 @@ const UrlPicker = ({
   onValueChange,
   onOpenStateChange,
 }: UrlPickerProps) => {
+  const { storefront, currentRelease } = useVendorStorefrontContext();
+  const {
+    collections,
+    isLoading: isLoadingCollections,
+    error: collectionsError,
+  } = useVendorCollections(true);
+  const {
+    pages,
+    isLoading: isLoadingPages,
+    error: pagesError,
+  } = useReleaseSummaryPages(currentRelease?.id);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [productOptions, setProductOptions] = useState<Product[]>([]);
+  const [collectionOptions, setCollectionOptions] = useState<Collection[]>([]);
+  const [pageOptions, setPageOptions] = useState<PageLayoutSummary[]>([]);
+
+  const [productPage, setProductPage] = useState(1);
+  const [productCursor, setProductCursor] = useState('');
+
+  const productsSentinelRef = useRef<HTMLDivElement>(null);
 
   const [urlType, setUrlType] = useState<UrlTargetType>('page');
   const [selectedPage, setSelectedPage] = useState('/');
-  const [selectedCollection, setSelectedCollection] = useState(
-    '/collections/artisan-breads',
-  );
+  const [selectedCollection, setSelectedCollection] = useState('');
 
   const [productTargetType, setProductTargetType] =
     useState<ProductTargetType>('direct');
-  const [selectedProduct, setSelectedProduct] = useState(
-    '/products/country-levain-loaf',
-  );
+  const [selectedProduct, setSelectedProduct] = useState('');
 
   const [filterCategory, setFilterCategory] = useState('');
   const [filterMinPrice, setFilterMinPrice] = useState('');
@@ -117,6 +121,123 @@ const UrlPicker = ({
     onValueChange(builtUrl);
     closeModal();
   };
+
+  const {
+    products: fetchedProducts,
+    nextCursor,
+    hasNextPage,
+    fetchedPage: fetchedProductPage,
+    isFetching: isFetchingProducts,
+    error,
+  } = useFetchStorefrontProducts({
+    filters: {
+      brand: storefront?.brand.domain,
+    },
+    page: productPage,
+    limit: 10,
+    cursor: productCursor,
+  });
+
+  useEffect(() => {
+    if (
+      !fetchedProducts.length ||
+      isFetchingProducts ||
+      fetchedProductPage !== productPage ||
+      error
+    )
+      return;
+
+    queueMicrotask(() => {
+      setProductOptions((prev) => {
+        const seen = new Set(prev.map((p) => p.id ?? p.slug));
+        const next = fetchedProducts.filter((p) => !seen.has(p.id ?? p.slug));
+        return next.length ? [...prev, ...next] : prev;
+      });
+    });
+  }, [
+    error,
+    fetchedProductPage,
+    fetchedProducts,
+    isFetchingProducts,
+    productPage,
+  ]);
+
+  const loadProductNextPage = useCallback(() => {
+    if (isFetchingProducts || !hasNextPage) return;
+    setProductCursor(nextCursor ?? '');
+    setProductPage((p) => p + 1);
+  }, [hasNextPage, isFetchingProducts, nextCursor]);
+
+  useEffect(() => {
+    if (!collections.length || isLoadingCollections || collectionsError) return;
+
+    queueMicrotask(() => {
+      setCollectionOptions((prev) => {
+        const seen = new Set(prev.map((c) => c.id ?? c.slug));
+        const next = collections.filter((c) => !seen.has(c.id ?? c.slug));
+        return next.length ? [...prev, ...next] : prev;
+      });
+    });
+  }, [collections, collectionsError, isLoadingCollections]);
+
+  useEffect(() => {
+    if (!pages.length || isLoadingPages || pagesError) return;
+
+    queueMicrotask(() => {
+      setPageOptions((prev) => {
+        const seen = new Set(prev.map((p) => p.id ?? p.slug));
+        const next = pages.filter((p) => !seen.has(p.id ?? p.slug));
+        return next.length ? [...prev, ...next] : prev;
+      });
+    });
+  }, [isLoadingPages, pages, pagesError]);
+
+  useEffect(() => {
+    if (isFetchingProducts || !hasNextPage) return;
+
+    const sentinel = productsSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadProductNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingProducts, loadProductNextPage]);
+
+  const productSelectableOptions = useMemo(
+    () =>
+      Object.fromEntries(
+        productOptions.map((p) => [`/products/${p.slug}`, p.title]),
+      ),
+    [productOptions],
+  );
+
+  const collectionSelectableOptions = useMemo(
+    () =>
+      Object.fromEntries(
+        collectionOptions.map((c) => [`/collections/${c.slug}`, c.name]),
+      ),
+    [collectionOptions],
+  );
+
+  const pageSelectableOptions = useMemo(
+    () =>
+      Object.fromEntries(
+        pageOptions.map((p) => {
+          const href =
+            p.type === 'HOME' ? '/' : `/${p.slug.replace(/^\/+/, '')}`;
+          return [href, `${p.name} (${href})`];
+        }),
+      ),
+    [pageOptions],
+  );
 
   return (
     <>
@@ -171,7 +292,7 @@ const UrlPicker = ({
                 id={`${id}-page-select`}
                 name={`${name}.page`}
                 inputType='select'
-                selectOptions={PAGE_OPTIONS}
+                selectOptions={pageSelectableOptions}
                 currentValue={selectedPage}
                 onValueChange={(val) => setSelectedPage(String(val))}
               />
@@ -190,7 +311,7 @@ const UrlPicker = ({
                 id={`${id}-collection-select`}
                 name={`${name}.collection`}
                 inputType='select'
-                selectOptions={COLLECTION_OPTIONS}
+                selectOptions={collectionSelectableOptions}
                 currentValue={selectedCollection}
                 onValueChange={(val) => setSelectedCollection(String(val))}
               />
@@ -237,9 +358,18 @@ const UrlPicker = ({
                     id={`${id}-product-select`}
                     name={`${name}.product`}
                     inputType='select'
-                    selectOptions={PRODUCT_OPTIONS}
+                    selectOptions={productSelectableOptions}
                     currentValue={selectedProduct}
                     onValueChange={(val) => setSelectedProduct(String(val))}
+                    footer={
+                      hasNextPage && (
+                        <div
+                          ref={productsSentinelRef}
+                          className='h-1 w-full'
+                          aria-hidden='true'
+                        />
+                      )
+                    }
                   />
                 </div>
               ) : (
@@ -272,7 +402,7 @@ const UrlPicker = ({
                       inputType='number'
                       min={0}
                       step={1_000}
-                      suffix='₫'
+                      suffix='VND'
                       currentValue={Number(filterMinPrice) || 0}
                       onValueChange={(val) =>
                         setFilterMinPrice(val > 0 ? String(val) : '')
@@ -293,7 +423,7 @@ const UrlPicker = ({
                       min={0}
                       step={1_000}
                       currentValue={Number(filterMaxPrice) || 0}
-                      suffix='₫'
+                      suffix='VND'
                       onValueChange={(val) =>
                         setFilterMaxPrice(val > 0 ? String(val) : '')
                       }

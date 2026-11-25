@@ -16,3 +16,5 @@ export type PageLayout = {
   slug: string;
   root: CompositeComponent;
 };
+
+export type PageLayoutSummary = Omit<PageLayout, 'root'>;

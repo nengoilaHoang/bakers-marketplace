@@ -1,5 +1,6 @@
 import { useDropdown } from '@/hooks/useDropdown';
 import { cn } from '@/lib/cn';
+import type { ReactNode } from 'react';
 import ColorPicker from './inputs/ColorPicker';
 import FilePicker from './inputs/FilePicker';
 import NumberInput from './inputs/NumberInput';
@@ -30,6 +31,7 @@ type SelectInputProps = {
   currentValue: string | number;
   selectOptions: Readonly<Record<string | number, string>>;
   onValueChange: (value: string | number) => void;
+  footer?: ReactNode;
 };
 
 type ColorInputProps = {
@@ -98,6 +100,7 @@ const ConfigInput = (props: ConfigInputProps) => {
   const max = 'max' in props ? props.max : undefined;
   const step = 'step' in props ? props.step : undefined;
   const suffix = 'suffix' in props ? props.suffix : undefined;
+  const footer = 'footer' in props ? props.footer : undefined;
   const { ref, isOpen, toggle } = useDropdown();
 
   const handleOpenChange = (state: boolean) => {
@@ -181,6 +184,7 @@ const ConfigInput = (props: ConfigInputProps) => {
                 onValueChange={handleValueChange}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
+                footer={footer}
               />
             );
           }

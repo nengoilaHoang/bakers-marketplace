@@ -93,7 +93,7 @@ export const ProductCardBodySchema = z.discriminatedUnion('layout', [
 export const ProductCardConfigSchema = BaseLayoutComponentConfigSchema.extend({
   ...BoxStyleConfigSchema.shape,
   thumbnail: z.object({
-    url: z.url(),
+    url: z.union([z.url(), InterpolatedStringSchema]),
     ratio: ProductCardThumbnailRatioSchema,
     fit: ProductCardThumbnailScaleSchema,
   }),

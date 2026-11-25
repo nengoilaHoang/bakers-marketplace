@@ -3,6 +3,7 @@ import type { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm;');
+  await knex.raw('CREATE EXTENSION IF NOT EXISTS unaccent;');
 
   await knex.raw(`
     CREATE TYPE user_role AS ENUM (
@@ -844,12 +845,57 @@ export async function up(knex: Knex): Promise<void> {
         [],
         'chk_products_unit_price_non_negative',
       );
-
       table.check('unit_cost >= 0', [], 'chk_products_unit_cost_non_negative');
 
-      table.index(['brand_id'], 'idx_products_brand_id');
-      table.index(['vendor_id'], 'idx_products_vendor_id');
+      table.index(
+        ['brand_id', knex.raw('created_at DESC'), knex.raw('id DESC')],
+        'idx_products_brand_created_id',
+      );
+
+      table.index(
+        ['vendor_id', knex.raw('created_at DESC'), knex.raw('id DESC')],
+        'idx_products_vendor_created_id',
+      );
+
+      table.index(
+        [knex.raw('unit_price ASC'), knex.raw('id ASC')],
+        'idx_products_unit_price_id',
+      );
+
+      table.index(
+        [knex.raw('created_at DESC'), knex.raw('id DESC')],
+        'idx_products_created_id',
+      );
     })
+
+    .raw(
+      `
+			CREATE FUNCTION public.f_normalize(text)
+			RETURNS text
+			LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT AS
+			$func$
+				SELECT lower(public.unaccent('public.unaccent', $1))
+			$func$
+			`,
+    )
+
+    .createMaterializedView('products_search_words', (view) => {
+      view.columns(['word']);
+      view.as(
+        knex
+          .select('word')
+          .from(
+            knex.raw(
+              `ts_stat('SELECT to_tsvector(''simple'', unaccent(COALESCE(title, ''''))) FROM products')`,
+            ),
+          ),
+      );
+    })
+    .raw(
+      `
+			CREATE INDEX idx_products_search_words_trgm ON products_search_words USING GIN (word gin_trgm_ops)
+			`,
+    )
 
     .createTable('product_images', (table) => {
       table
@@ -936,6 +982,10 @@ export async function up(knex: Knex): Promise<void> {
         .defaultTo(knex.fn.now());
 
       table.check('stock >= 0', [], 'chk_product_stocks_stock_non_negative');
+
+      table.index(['id'], 'idx_active_stock', {
+        predicate: knex.whereRaw('stock > 0'),
+      });
     })
 
     .createTable('stock_alerts', (table) => {
@@ -1645,8 +1695,8 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   await knex.raw(`
-    CREATE INDEX idx_products_title_trgm
-    ON products USING gin (title gin_trgm_ops);
+		CREATE INDEX idx_products_title_trgm
+		ON products USING GIN (public.f_normalize(title) gin_trgm_ops)
   `);
 
   await knex.raw(`
@@ -1656,9 +1706,17 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex.raw(
+    'DROP TRIGGER IF EXISTS trg_cleanup_parent_component ON composite_component_children;',
+  );
+  await knex.raw('DROP FUNCTION IF EXISTS delete_orphaned_component();');
   await knex.raw('DROP FUNCTION IF EXISTS get_layout_tree_json(uuid);');
 
   await knex.schema
+    .dropTableIfExists('company_vendor_applications')
+    .dropTableIfExists('individual_vendor_applications')
+    .dropTableIfExists('vendor_application_contact_infos')
+    .dropTableIfExists('vendor_applications')
     .dropTableIfExists('typography')
     .dropTableIfExists('color_palettes')
     .dropTableIfExists('theme_settings')
@@ -1711,6 +1769,7 @@ export async function down(knex: Knex): Promise<void> {
     .dropTableIfExists('users');
 
   await knex.raw(`
+    DROP TYPE IF EXISTS vendor_application_status;
     DROP TYPE IF EXISTS composite_component_type;
     DROP TYPE IF EXISTS repeater_component_type;
     DROP TYPE IF EXISTS leaf_component_type;

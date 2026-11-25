@@ -4,6 +4,7 @@ import TextConfigGroup, {
   DEFAULT_TEXT_CONFIG,
   TextConfigItem,
 } from '../TextConfigGroup';
+import { SAMPLE_PRODUCT_SOURCE } from './sampleProductSource';
 
 const AddConfigButton = ({
   onClick,
@@ -64,17 +65,19 @@ const ProductCardHeaderSection = ({
     >
       <TextConfigGroup
         label='Title'
-        fieldPrefix='title'
+        fieldPrefix='content.header.title'
         item={title}
         defaultColor='#71717A'
+        dataSource={SAMPLE_PRODUCT_SOURCE}
         onUpdate={onUpdate}
         onActiveSectionChange={onActiveSectionChange}
       />
       {subtitle ? (
         <TextConfigGroup
           label='Subtitle'
-          fieldPrefix='subtitle'
+          fieldPrefix='content.header.subtitle'
           item={subtitle}
+          dataSource={SAMPLE_PRODUCT_SOURCE}
           onUpdate={onUpdate}
           onActiveSectionChange={onActiveSectionChange}
         />

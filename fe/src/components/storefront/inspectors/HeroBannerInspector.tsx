@@ -41,6 +41,7 @@ const HeroBannerInspector = ({
           if (active) onActiveSectionChange('hero-banner-image');
         }}
         zIndex={getSectionZIndex('hero-banner-image')}
+        currentBp={currentBp}
       />
       <HeroOverlaySection
         isOpen={Boolean(openSections['hero-overlay'])}

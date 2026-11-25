@@ -3,7 +3,9 @@ import { SectionId } from '../../ComponentInspector';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
+import DataPlaceholderPicker from '../inputs/DataPlaceholderPicker';
 import TextConfigGroup, { DEFAULT_TEXT_CONFIG } from '../TextConfigGroup';
+import { SAMPLE_PRODUCT_SOURCE } from './sampleProductSource';
 
 const RATING_TYPE_OPTIONS = {
   stars: 'Stars',
@@ -48,8 +50,8 @@ const DEFAULT_BODY_ITEMS: Record<
   priceTag: {
     type: 'priceTag',
     value: '{{ product.unitPrice }}',
-    currency: 'VND',
-    unit: 'cái',
+    currency: '{{ product.currency }}',
+    unit: '{{ product.unit }}',
     format: {
       showCurrency: true,
       showUnit: true,
@@ -131,6 +133,7 @@ const ProductCardBodySection = ({
                   fieldPrefix={`body-desc-${index}`}
                   item={{ value: item.value, ...item.style }}
                   defaultColor='#52525B'
+                  dataSource={SAMPLE_PRODUCT_SOURCE}
                   onUpdate={makeStyleProxyUpdate(index)}
                   onActiveSectionChange={onActiveSectionChange}
                 />
@@ -162,14 +165,15 @@ const ProductCardBodySection = ({
                     label='Value'
                     forId={`pc-ratings-value-${index}`}
                   />
-                  <ConfigInput
+                  <DataPlaceholderPicker
                     id={`pc-ratings-value-${index}`}
                     name={`content.body.${index}.value`}
-                    inputType='text'
                     currentValue={item.value}
+                    source={SAMPLE_PRODUCT_SOURCE}
                     onValueChange={(val) =>
                       onUpdate(`content.body.${index}.value`, val)
                     }
+                    onOpenStateChange={onActiveSectionChange}
                   />
                 </div>
 
@@ -230,6 +234,7 @@ const ProductCardBodySection = ({
                     label='Numeral Style'
                     fieldPrefix={`body-ratings-${index}`}
                     item={{ value: item.value, ...item.style }}
+                    dataSource={SAMPLE_PRODUCT_SOURCE}
                     onUpdate={makeStyleProxyUpdate(index)}
                     onActiveSectionChange={onActiveSectionChange}
                   />
@@ -262,14 +267,15 @@ const ProductCardBodySection = ({
                     label='Price Value'
                     forId={`pc-price-value-${index}`}
                   />
-                  <ConfigInput
+                  <DataPlaceholderPicker
                     id={`pc-price-value-${index}`}
                     name={`content.body.${index}.value`}
-                    inputType='text'
                     currentValue={item.value}
+                    source={SAMPLE_PRODUCT_SOURCE}
                     onValueChange={(val) =>
                       onUpdate(`content.body.${index}.value`, val)
                     }
+                    onOpenStateChange={onActiveSectionChange}
                   />
                 </div>
 
@@ -279,14 +285,15 @@ const ProductCardBodySection = ({
                       label='Currency'
                       forId={`pc-price-currency-${index}`}
                     />
-                    <ConfigInput
+                    <DataPlaceholderPicker
                       id={`pc-price-currency-${index}`}
                       name={`content.body.${index}.currency`}
-                      inputType='text'
                       currentValue={item.currency}
+                      source={SAMPLE_PRODUCT_SOURCE}
                       onValueChange={(val) =>
                         onUpdate(`content.body.${index}.currency`, val)
                       }
+                      onOpenStateChange={onActiveSectionChange}
                     />
                   </div>
 
@@ -295,14 +302,15 @@ const ProductCardBodySection = ({
                       label='Unit'
                       forId={`pc-price-unit-${index}`}
                     />
-                    <ConfigInput
+                    <DataPlaceholderPicker
                       id={`pc-price-unit-${index}`}
                       name={`content.body.${index}.unit`}
-                      inputType='text'
                       currentValue={item.unit}
+                      source={SAMPLE_PRODUCT_SOURCE}
                       onValueChange={(val) =>
                         onUpdate(`content.body.${index}.unit`, val)
                       }
+                      onOpenStateChange={onActiveSectionChange}
                     />
                   </div>
                 </div>

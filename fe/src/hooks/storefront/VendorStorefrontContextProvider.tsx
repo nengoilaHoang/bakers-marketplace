@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/api';
 import {
   getMyStorefront,
-  getStorefrontReleaseLayouts,
+  getStorefrontReleasePages,
   updateReleaseThemeSettings,
 } from '@/services/storefront';
 import { Storefront, StorefrontRelease } from '@/types/storefront';
@@ -113,7 +113,7 @@ const VendorStorefrontContextProvider = ({
     queueMicrotask(() => setMutatedCurrentRelease(null));
     // CACHE MISS: fetch once and store into storefront state
     const controller = new AbortController();
-    getStorefrontReleaseLayouts(currentReleaseId, controller.signal)
+    getStorefrontReleasePages(currentReleaseId, controller.signal)
       .then((layouts) => {
         setStorefront((prev) => {
           if (!prev) return prev;
@@ -217,14 +217,14 @@ const VendorStorefrontContextProvider = ({
 
   const revalidateLayouts = useCallback(async () => {
     if (!currentReleaseId) return;
-    const layouts = await getStorefrontReleaseLayouts(currentReleaseId);
+    const pages = await getStorefrontReleasePages(currentReleaseId);
 
     setStorefront((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
         releases: prev.releases.map((r) =>
-          r.id === currentReleaseId ? { ...r, layouts } : r,
+          r.id === currentReleaseId ? { ...r, layouts: pages } : r,
         ),
       };
     });

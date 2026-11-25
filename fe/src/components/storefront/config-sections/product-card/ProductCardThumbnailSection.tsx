@@ -3,9 +3,12 @@ import {
   MediaFit,
 } from '@/types/layout-component/aspect-ratio';
 import { SectionId } from '../../ComponentInspector';
+import { RATIO_OPTIONS } from '../aspectRatioOptions';
 import ConfigInput from '../ConfigInput';
 import ConfigLabel from '../ConfigLabel';
 import ConfigSectionWrapper from '../ConfigSectionWrapper';
+import DataPlaceholderPicker from '../inputs/DataPlaceholderPicker';
+import { SAMPLE_PRODUCT_SOURCE } from './sampleProductSource';
 
 const FIT_OPTIONS: Record<MediaFit, string> = {
   cover: 'Cover',
@@ -51,26 +54,27 @@ const ProductCardThumbnailSection = ({
       zIndex={zIndex}
     >
       {/* 1. Thumbnail URL */}
-      <div className='flex flex-col justify-center items-start gap-2'>
+      <div className='flex flex-col gap-2'>
         <ConfigLabel label='Thumbnail URL' forId='thumbnail-url' />
-        <ConfigInput
+        <DataPlaceholderPicker
           id='thumbnail-url'
           name='thumbnail.url'
-          inputType='file'
           currentValue={thumbnail.url}
+          source={SAMPLE_PRODUCT_SOURCE}
           onValueChange={(val) => onUpdate('thumbnail.url', val)}
           onOpenStateChange={onActiveSectionChange}
         />
       </div>
 
       {/* 2. Thumbnail Image Ratio */}
-      <div className='flex flex-col justify-center items-start gap-2'>
+      <div className='flex flex-col gap-2'>
         <ConfigLabel label='Thumbnail Image Ratio' forId='thumbnail-ratio' />
         <ConfigInput
           id='thumbnail-ratio'
           name='thumbnail.ratio'
-          inputType='text'
-          currentValue={thumbnail.ratio.toString()}
+          inputType='select'
+          selectOptions={RATIO_OPTIONS}
+          currentValue={String(thumbnail.ratio)}
           onValueChange={(val) => onUpdate('thumbnail.ratio', val)}
           onOpenStateChange={onActiveSectionChange}
         />

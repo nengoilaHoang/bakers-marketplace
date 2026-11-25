@@ -1,14 +1,17 @@
 import request from '@/lib/api';
 import type { Collection, CollectionInput } from '@/types/collection';
 import type { Product } from '@/types/product';
+import { ProductFilters, ProductSort } from './products';
 
 export type * from '@/types/collection';
 
 export async function getCollections(
   onlyActive = false,
+  signal?: AbortSignal,
 ): Promise<{ data: Collection[] }> {
   return request<{ data: Collection[] }>(
     `/collections${onlyActive ? '?active=true' : ''}`,
+    { signal },
   );
 }
 
@@ -20,13 +23,8 @@ export async function getCollectionById(
 
 export async function getCollectionProducts(
   id: string,
-  filters?: {
-    tag?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
-    inStockOnly?: boolean;
-  },
+  filters?: Omit<ProductFilters, 'collection'>,
+  sort?: ProductSort,
   limit = 0,
   page = 1,
   signal?: AbortSignal,
@@ -38,6 +36,7 @@ export async function getCollectionProducts(
     },
     {
       ...filters,
+      sort,
       limit,
       page,
     },

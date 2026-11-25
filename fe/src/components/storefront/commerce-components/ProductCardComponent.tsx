@@ -66,6 +66,7 @@ const ProductCardComponent = ({
 
   const aspectRatio = getAspectRatio(thumbnail.ratio);
   const isAutoRatio = !aspectRatio || aspectRatio === 'auto';
+  const resolvedThumbnailUrl = dynamicPlaceholderResolver(thumbnail.url);
 
   return (
     <CanvasNodeWrapper
@@ -78,7 +79,7 @@ const ProductCardComponent = ({
         {isAutoRatio ? (
           <Image
             unoptimized={true}
-            src={thumbnail.url}
+            src={resolvedThumbnailUrl}
             alt='Thumbnail Image'
             width={600}
             height={400}
@@ -96,7 +97,7 @@ const ProductCardComponent = ({
           >
             <Image
               unoptimized={true}
-              src={thumbnail.url}
+              src={resolvedThumbnailUrl}
               alt='Thumbnail Image'
               fill
               preload
@@ -169,13 +170,13 @@ const ProductCardSimpleLayout = ({
         return (
           <div key={index} className='w-full' style={priceStyle}>
             <span>
-              {item.format.showCurrency && item.currency}
+              {item.format.showCurrency && String(resolver(item.currency))}
               {String(resolver(item.value))}
             </span>
             {item.format.showUnit && item.unit && (
               <span style={unitStyle}>
                 {separator}
-                {item.unit}
+                {String(resolver(item.unit))}
               </span>
             )}
           </div>

@@ -1,6 +1,7 @@
 import { TextAlignmentType, TextConfig } from '@/types/layout-component';
 import ConfigInput from './ConfigInput';
 import ConfigLabel from './ConfigLabel';
+import DataPlaceholderPicker from './inputs/DataPlaceholderPicker';
 
 export type TextConfigItem = {
   value: string;
@@ -55,6 +56,7 @@ export interface TextConfigGroupProps {
   fieldPrefix: string;
   item: TextConfigItem;
   defaultColor?: string;
+  dataSource?: unknown;
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
 }
@@ -64,6 +66,7 @@ const TextConfigGroup = ({
   fieldPrefix,
   item,
   defaultColor = '#000000',
+  dataSource,
   onUpdate,
   onActiveSectionChange,
 }: TextConfigGroupProps) => {
@@ -76,13 +79,24 @@ const TextConfigGroup = ({
       {/* 1. Text Content Value */}
       <div className='flex flex-col gap-1.5'>
         <ConfigLabel label='Text' forId={`${fieldPrefix}-text`} />
-        <ConfigInput
-          id={`${fieldPrefix}-text`}
-          name={`${fieldPrefix}.value`}
-          inputType='text'
-          currentValue={item.value}
-          onValueChange={(val) => onUpdate(`${fieldPrefix}.value`, val)}
-        />
+        {dataSource !== undefined ? (
+          <DataPlaceholderPicker
+            id={`${fieldPrefix}-text`}
+            name={`${fieldPrefix}.value`}
+            currentValue={item.value}
+            source={dataSource}
+            onValueChange={(val) => onUpdate(`${fieldPrefix}.value`, val)}
+            onOpenStateChange={onActiveSectionChange}
+          />
+        ) : (
+          <ConfigInput
+            id={`${fieldPrefix}-text`}
+            name={`${fieldPrefix}.value`}
+            inputType='text'
+            currentValue={item.value}
+            onValueChange={(val) => onUpdate(`${fieldPrefix}.value`, val)}
+          />
+        )}
       </div>
 
       {/* 2. Text Color */}

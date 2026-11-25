@@ -1,7 +1,10 @@
 import database from '#/db/index.js';
 import {
 	InsertPageLayoutRecord,
+	PageLayout,
 	PageLayoutSchema,
+	PageLayoutSummary,
+	PageLayoutSummarySchema,
 	UpdatePageLayoutRecord,
 } from '#/models/storefronts/page-layouts.model.js';
 import { Knex } from 'knex';
@@ -22,7 +25,7 @@ export class PageLayoutDao {
     return this.knex.transaction(action);
   };
 
-  public getReleaseLayouts = async (releaseId: string) => {
+  public getReleasePages = async (releaseId: string): Promise<PageLayout[]> => {
     const rawData = await this.knex('page_layouts')
       .select(
         'id',
@@ -39,9 +42,21 @@ export class PageLayoutDao {
       )
       .where({ storefrontReleaseId: releaseId });
 
-    if (!rawData || rawData.length === 0) return null;
+    if (!rawData || rawData.length === 0) return [];
 
     return z.array(PageLayoutSchema).parse(rawData);
+  };
+
+  public getReleaseSummaryPages = async (
+    releaseId: string,
+  ): Promise<PageLayoutSummary[]> => {
+    const rawData = await this.knex('page_layouts')
+      .select('id', 'type', 'name', 'slug')
+      .where({ storefrontReleaseId: releaseId });
+
+    if (!rawData || rawData.length === 0) return [];
+
+    return z.array(PageLayoutSummarySchema).parse(rawData);
   };
 
   createPage = async (

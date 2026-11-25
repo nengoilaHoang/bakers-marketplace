@@ -1,8 +1,11 @@
 import request from '@/lib/api';
 import type {
+	PaginatedProducts,
 	Product,
+	ProductFilters,
 	ProductInput,
 	ProductNote,
+	ProductSort,
 	ProductStock,
 	ProductTag,
 	StockAlert,
@@ -11,24 +14,22 @@ import type {
 export type * from '@/types/product';
 
 export async function getProducts(
-  filters?: {
-    tag?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
-    inStockOnly?: boolean;
-  },
+  filters?: ProductFilters,
+  sort?: ProductSort,
   limit = 0,
   page = 1,
+  cursor?: string,
   signal?: AbortSignal,
-): Promise<{ data: Product[] }> {
-  return request<{ data: Product[] }>(
+): Promise<{ data: PaginatedProducts }> {
+  return request<{ data: PaginatedProducts }>(
     '/products',
     { signal },
     {
       ...filters,
+      sort,
       limit,
       page,
+      cursor,
     },
   );
 }

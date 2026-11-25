@@ -125,8 +125,12 @@ export class StorefrontService {
     }
   };
 
-  public getReleaseLayouts = async (releaseId: string) => {
-    return await this.pageLayoutDao.getReleaseLayouts(releaseId);
+  public getReleasePages = async (releaseId: string) => {
+    return await this.pageLayoutDao.getReleasePages(releaseId);
+  };
+
+  public getReleaseSummaryPages = async (releaseId: string) => {
+    return await this.pageLayoutDao.getReleaseSummaryPages(releaseId);
   };
 
   public createReleasePage = async (
