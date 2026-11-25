@@ -1,13 +1,13 @@
 import { PaddingType } from '@/types/layout-component';
 import { useMemo } from 'react';
-import { SectionId } from '../ConfigSidebar';
+import { SectionId } from '../ComponentInspector';
 import ConfigInput from './ConfigInput';
 import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type PaddingSectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   paddings: {
     top: PaddingType;
     bottom: PaddingType;
@@ -20,10 +20,10 @@ type PaddingSectionProps = {
 };
 
 const PADDING_OPTIONS = {
-  None: 'none',
-  Small: 'sm',
-  Medium: 'md',
-  Large: 'lg',
+  none: 'None',
+  sm: 'Small',
+  md: 'Medium',
+  lg: 'Large',
 } as const;
 
 const PaddingSection = ({
@@ -34,7 +34,7 @@ const PaddingSection = ({
   onActiveSectionChange,
   zIndex,
 }: PaddingSectionProps) => {
-  const id = 'padding';
+  const id: SectionId = 'padding';
   const title = 'Padding';
   const description = 'Adjust the padding of the component.';
   const sides = useMemo(
@@ -71,7 +71,7 @@ const PaddingSection = ({
           return (
             <div
               key={name}
-              className='flex flex-col gap-2 justify-start items-center'
+              className='flex flex-col gap-2 justify-start items-start'
             >
               <ConfigLabel label={label} forId={id}></ConfigLabel>
               <ConfigInput
@@ -79,7 +79,7 @@ const PaddingSection = ({
                 name={name}
                 inputType='select'
                 selectOptions={PADDING_OPTIONS}
-                currentValue={String(paddings[key as keyof typeof paddings])}
+                currentValue={paddings[key as keyof typeof paddings]}
                 onValueChange={(val) => onUpdate(name, val)}
                 onOpenStateChange={onActiveSectionChange}
               />

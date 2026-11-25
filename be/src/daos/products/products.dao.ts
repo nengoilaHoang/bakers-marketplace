@@ -2,583 +2,723 @@ import type { Knex } from 'knex';
 
 import db from '#/db/index.js';
 import type { Image } from '#/models/files/images.model.js';
+import { CollectionRow } from '#/models/products/collections.model.js';
 import type {
 	Product,
 	ProductCollectionSummary,
+	ProductCursor,
+	ProductFilters,
 	ProductNoteRow,
 	ProductRow,
+	ProductSort,
 	ProductStock,
+	ProductStockRow,
 	ProductTagRow,
 	StockAlertRow,
 } from '#/models/products/products.model.js';
+import { BrandRow } from '#/models/storefronts/brands.model.js';
 
 type ProductImageJoinRow = Image & { productId: string };
 type StockRow = { id: string; stock: number; createdAt: Date };
 
 /** Current stock of a product, read inside a transaction that locks it. */
 export type LockedStock = {
-	stock: number;
-	vendorId: string | null;
-	alerts: StockAlertRow[];
+  stock: number;
+  vendorId: string | null;
+  alerts: StockAlertRow[];
 };
 type CollectionJoinRow = ProductCollectionSummary & { productId: string };
+export interface PaginatedProducts {
+  items: Product[];
+  nextCursor: ProductCursor | null;
+  hasNextPage: boolean;
+}
 
 class ProductDAO {
-	private readonly tableName = 'products';
-	private db = db;
-
-	public async getAll(): Promise<Product[]> {
-		const rows = await this.db.instance<ProductRow>(this.tableName)
-			.select('*')
-			.orderBy('createdAt', 'desc');
-
-		return this.attachRelations(rows);
-	}
-
-	public async search(keyword: string): Promise<Product[]> {
-		const rows = await this.db.instance<ProductRow>(this.tableName)
-			.select('*')
-			.whereILike('title', `%${keyword}%`)
-			.orderBy('createdAt', 'desc');
-
-		return this.attachRelations(rows);
-	}
-
-	public async getByBrandId(brandId: string): Promise<Product[]> {
-		const rows = await this.db.instance<ProductRow>(this.tableName)
-			.select('*')
-			.where('brandId', brandId)
-			.orderBy('createdAt', 'desc');
-
-		return this.attachRelations(rows);
-	}
-
-	public async getByVendorId(vendorId: string): Promise<Product[]> {
-		const rows = await this.db.instance<ProductRow>(this.tableName)
-			.select('*')
-			.where('vendorId', vendorId)
-			.orderBy('createdAt', 'desc');
-
-		return this.attachRelations(rows);
-	}
-
-	/** undefined when the product does not exist, null when it has no vendor. */
-	public async getVendorId(productId: string): Promise<string | null | undefined> {
-		const row = await this.db.instance<ProductRow>(this.tableName)
-			.select('vendorId')
-			.where('id', productId)
-			.first();
-
-		return row ? row.vendorId : undefined;
-	}
-
-	public async getByCollectionId(
-		collectionId: string,
-	): Promise<Product[]> {
-		const rows = await this.db.instance<ProductRow>(this.tableName)
-			.select('products.*')
-			.join(
-				'product_collections',
-				'products.id',
-				'product_collections.product_id',
-			)
-			.where('product_collections.collection_id', collectionId)
-			.orderBy('products.created_at', 'desc');
-
-		return this.attachRelations(rows);
-	}
-
-	public async getById(id: string): Promise<Product | null> {
-		const row = await this.db.instance<ProductRow>(this.tableName)
-			.select('*')
-			.where('id', id)
-			.first();
-
-		if (!row) {
-			return null;
-		}
-
-		const [product] = await this.attachRelations([row]);
-
-		return product;
-	}
-
-	public async getBySlug(slug: string): Promise<Product | null> {
-		const row = await this.db.instance<ProductRow>(this.tableName)
-			.select('*')
-			.where('slug', slug)
-			.first();
-
-		if (!row) {
-			return null;
-		}
-
-		const [product] = await this.attachRelations([row]);
-
-		return product;
-	}
-
-	public async create(
-		product: Partial<ProductRow>,
-	): Promise<Product> {
-		const data = this.removeUndefined(product);
-
-		const createdId = await this.db.instance.transaction(
-			async (trx) => {
-				const [created] = await trx<ProductRow>(this.tableName)
-					.insert(data)
-					.returning('id');
-
-				await trx('product_stocks').insert({
-					id: created.id,
-					stock: 0,
-				});
-
-				return created.id;
-			},
-		);
-
-		const product_ = await this.getById(createdId);
-
-		return product_ as Product;
-	}
-
-	public async update(
-		id: string,
-		product: Partial<ProductRow>,
-	): Promise<Product | null> {
-		const data = this.removeUndefined(product);
-		delete data.id;
-		delete data.createdAt;
-
-		if (Object.keys(data).length > 0) {
-			const updated = await this.db.instance<ProductRow>(this.tableName)
-				.where('id', id)
-				.update(data);
-
-			if (!updated) {
-				return null;
-			}
-		}
-
-		return this.getById(id);
-	}
-
-	public async delete(id: string): Promise<Product | null> {
-		const product = await this.getById(id);
-
-		if (!product) {
-			return null;
-		}
-
-		await this.db.instance(this.tableName)
-			.where('id', id)
-			.del();
-
-		return product;
-	}
-
-	public async existsById(id: string): Promise<boolean> {
-		const row = await this.db.instance(this.tableName)
-			.select('id')
-			.where('id', id)
-			.first();
-
-		return Boolean(row);
-	}
-
-	// ---------- media ----------
-
-	public async addImage(
-		productId: string,
-		imageId: string,
-		sortOrder?: number,
-	): Promise<void> {
-		const order = sortOrder ?? await this.nextImageOrder(productId);
-
-		await this.db.instance('product_images').insert({
-			productId,
-			imageId,
-			sortOrder: order,
-		});
-	}
-
-	public async removeImage(
-		productId: string,
-		imageId: string,
-	): Promise<boolean> {
-		const deleted = await this.db.instance('product_images')
-			.where({ productId, imageId })
-			.del();
-
-		return deleted > 0;
-	}
-
-	public async reorderImages(
-		productId: string,
-		imageIds: string[],
-	): Promise<void> {
-		await this.db.instance.transaction(async (trx) => {
-			await trx('product_images')
-				.where('productId', productId)
-				.del();
-
-			if (imageIds.length === 0) {
-				return;
-			}
-
-			await trx('product_images').insert(
-				imageIds.map((imageId, index) => ({
-					productId,
-					imageId,
-					sortOrder: index + 1,
-				})),
-			);
-		});
-	}
-
-	private async nextImageOrder(productId: string): Promise<number> {
-		const row = await this.db.instance('product_images')
-			.max('sortOrder as maxOrder')
-			.where('productId', productId)
-			.first<{ maxOrder: number | null }>();
-
-		return (row?.maxOrder ?? 0) + 1;
-	}
-
-	// ---------- notes ----------
-
-	public async addNote(
-		productId: string,
-		content: string,
-	): Promise<ProductNoteRow> {
-		const [note] = await this.db.instance<ProductNoteRow>('product_notes')
-			.insert({ productId, content })
-			.returning('*');
-
-		return note;
-	}
-
-	public async updateNote(
-		noteId: string,
-		content: string,
-	): Promise<ProductNoteRow | null> {
-		const [note] = await this.db.instance<ProductNoteRow>('product_notes')
-			.where('id', noteId)
-			.update({ content })
-			.returning('*');
-
-		return note ?? null;
-	}
-
-	public async removeNote(noteId: string): Promise<boolean> {
-		const deleted = await this.db.instance('product_notes')
-			.where('id', noteId)
-			.del();
-
-		return deleted > 0;
-	}
-
-	// ---------- tags ----------
-
-	public async addTag(
-		productId: string,
-		name: string,
-	): Promise<ProductTagRow> {
-		const [tag] = await this.db.instance<ProductTagRow>('product_tags')
-			.insert({ productId, name })
-			.returning('*');
-
-		return tag;
-	}
-
-	public async updateTag(
-		tagId: string,
-		name: string,
-	): Promise<ProductTagRow | null> {
-		const [tag] = await this.db.instance<ProductTagRow>('product_tags')
-			.where('id', tagId)
-			.update({ name })
-			.returning('*');
-
-		return tag ?? null;
-	}
-
-	public async removeTag(
-		productId: string,
-		name: string,
-	): Promise<boolean> {
-		const deleted = await this.db.instance('product_tags')
-			.where({ productId, name })
-			.del();
-
-		return deleted > 0;
-	}
-
-	// ---------- stock ----------
-
-	public async getStock(productId: string): Promise<ProductStock | null> {
-		const stocks = await this.loadStocks([productId]);
-
-		return stocks.get(productId) ?? null;
-	}
-
-	/** Locks the product's stock row until the transaction ends. */
-	public async lockStock(
-		productId: string,
-		trx: Knex.Transaction,
-	): Promise<LockedStock | null> {
-		const row: { stock: number; vendorId: string | null } | undefined =
-			await trx('product_stocks as s')
-				.join('products as p', 'p.id', 's.id')
-				.select('s.stock', 'p.vendorId')
-				.where('s.id', productId)
-				.forUpdate('s')
-				.first();
-
-		if (!row) {
-			return null;
-		}
-
-		const alerts = await trx<StockAlertRow>('stock_alerts')
-			.select('*')
-			.where('productStockId', productId);
-
-		return { ...row, alerts };
-	}
-
-	public async updateStock(
-		productId: string,
-		stock: number,
-		trx?: Knex.Transaction,
-	): Promise<boolean> {
-		const updated = await (trx ?? this.db.instance)('product_stocks')
-			.where('id', productId)
-			.update({ stock });
-
-		return updated > 0;
-	}
-
-	public async setAlert(
-		productId: string,
-		alertType: StockAlertRow['alertType'],
-		threshold: number,
-		trx?: Knex.Transaction,
-	): Promise<StockAlertRow> {
-		const [alert] = await (trx ?? this.db.instance)<StockAlertRow>('stock_alerts')
-			.insert({
-				productStockId: productId,
-				alertType,
-				threshold,
-			})
-			.onConflict(['product_stock_id', 'alert_type'])
-			.merge(['threshold'])
-			.returning('*');
-
-		return alert;
-	}
-
-	public async removeAlert(
-		productId: string,
-		alertType: StockAlertRow['alertType'],
-	): Promise<boolean> {
-		const deleted = await this.db.instance('stock_alerts')
-			.where({ productStockId: productId, alertType })
-			.del();
-
-		return deleted > 0;
-	}
-
-	// ---------- collections ----------
-
-	public async assignToCollection(
-		productId: string,
-		collectionId: string,
-	): Promise<void> {
-		await this.db.instance('product_collections')
-			.insert({ productId, collectionId })
-			.onConflict(['product_id', 'collection_id'])
-			.ignore();
-	}
-
-	public async removeFromCollection(
-		productId: string,
-		collectionId: string,
-	): Promise<boolean> {
-		const deleted = await this.db.instance('product_collections')
-			.where({ productId, collectionId })
-			.del();
-
-		return deleted > 0;
-	}
-
-	public async isSlugTaken(
-		slug: string,
-		exceptId?: string,
-	): Promise<boolean> {
-		const query = this.db.instance(this.tableName)
-			.select('id')
-			.where('slug', slug);
-
-		if (exceptId) {
-			query.whereNot('id', exceptId);
-		}
-
-		return Boolean(await query.first());
-	}
-
-	private async attachRelations(
-		rows: ProductRow[],
-	): Promise<Product[]> {
-		if (rows.length === 0) {
-			return [];
-		}
-
-		const ids = rows.map((row) => row.id);
-
-		const [media, notes, tags, stocks, collections] = await Promise.all([
-			this.loadMedia(ids),
-			this.loadNotes(ids),
-			this.loadTags(ids),
-			this.loadStocks(ids),
-			this.loadCollections(ids),
-		]);
-
-		return rows.map((row) => ({
-			...row,
-			media: media.get(row.id) ?? [],
-			notes: notes.get(row.id) ?? [],
-			tags: tags.get(row.id) ?? [],
-			stock: stocks.get(row.id) ?? null,
-			collections: collections.get(row.id) ?? [],
-		}));
-	}
-
-	private async loadCollections(
-		productIds: string[],
-	): Promise<Map<string, ProductCollectionSummary[]>> {
-		const rows = await this.db.instance<CollectionJoinRow>('collections')
-			.select(
-				'collections.id',
-				'collections.name',
-				'collections.slug',
-				'collections.is_active as isActive',
-				'product_collections.product_id as productId',
-			)
-			.join(
-				'product_collections',
-				'collections.id',
-				'product_collections.collection_id',
-			)
-			.whereIn('product_collections.product_id', productIds)
-			.orderBy('collections.name', 'asc');
-
-		return this.groupBy(rows, 'productId');
-	}
-
-	private async loadMedia(
-		productIds: string[],
-	): Promise<Map<string, Image[]>> {
-		const rows = await this.db.instance<ProductImageJoinRow>('images')
-			.select(
-				'files.*',
-				'images.width',
-				'images.height',
-				'product_images.product_id',
-			)
-			.join(
-				'product_images',
-				'images.id',
-				'product_images.image_id',
-			)
-			.join(
-				'files',
-				'images.id',
-				'files.id',
-			)
-			.whereIn('product_images.product_id', productIds)
-			.orderBy('product_images.sort_order', 'asc');
-
-		return this.groupBy(rows, 'product_id');
-	}
-
-	private async loadNotes(
-		productIds: string[],
-	): Promise<Map<string, ProductNoteRow[]>> {
-		const rows = await this.db.instance<ProductNoteRow>('product_notes')
-			.select('*')
-			.whereIn('productId', productIds)
-			.orderBy('createdAt', 'asc');
-
-		return this.groupBy(rows, 'productId');
-	}
-
-	private async loadTags(
-		productIds: string[],
-	): Promise<Map<string, ProductTagRow[]>> {
-		const rows = await this.db.instance<ProductTagRow>('product_tags')
-			.select('*')
-			.whereIn('productId', productIds)
-			.orderBy('name', 'asc');
-
-		return this.groupBy(rows, 'productId');
-	}
-
-	private async loadStocks(
-		productIds: string[],
-	): Promise<Map<string, ProductStock>> {
-		const [stocks, alerts] = await Promise.all([
-			this.db.instance<StockRow>('product_stocks')
-				.select('*')
-				.whereIn('id', productIds),
-
-			this.db.instance<StockAlertRow>('stock_alerts')
-				.select('*')
-				.whereIn('productStockId', productIds),
-		]);
-
-		const alertsByStock = this.groupBy(alerts, 'productStockId');
-
-		return new Map(
-			stocks.map((stock) => [
-				stock.id,
-				{
-					...stock,
-					alerts: alertsByStock.get(stock.id) ?? [],
-				},
-			]),
-		);
-	}
-
-	private groupBy<T, K extends keyof T>(
-		rows: T[],
-		key: K,
-	): Map<string, T[]> {
-		const grouped = new Map<string, T[]>();
-
-		for (const row of rows) {
-			const groupKey = String(row[key]);
-			const bucket = grouped.get(groupKey);
-
-			if (bucket) {
-				bucket.push(row);
-			} else {
-				grouped.set(groupKey, [row]);
-			}
-		}
-
-		return grouped;
-	}
-
-	private removeUndefined(
-		product: Partial<ProductRow>,
-	): Partial<ProductRow> {
-		return Object.fromEntries(
-			Object.entries(product).filter(
-				([, value]) => value !== undefined,
-			),
-		);
-	}
+  private readonly tableName = 'products';
+  private readonly db = db;
+
+  public async getAll(
+    filters?: ProductFilters,
+    sort?: ProductSort,
+    pagination?: { cursor?: ProductCursor; page?: number; limit?: number },
+  ): Promise<PaginatedProducts> {
+    const limit = Math.min(Math.max(pagination?.limit ?? 20, 1), 100);
+    const cursor = pagination?.cursor;
+    const page = Math.max(pagination?.page ?? 1, 1);
+
+    // Use limit + 1 to know whether next page does exist
+    const applyFilters = (qr: Knex.QueryBuilder) => {
+      if (filters?.brand) {
+        qr.whereExists(function () {
+          this.select(1)
+            .from<BrandRow>('brands')
+            .whereRaw('?? = ??', ['brands.id', 'products.brandId'])
+            .where('domain', filters.brand);
+        });
+      }
+
+      if (filters?.collection) {
+        qr.whereExists(function () {
+          this.select(1)
+            .from<CollectionRow>('collections')
+            .join(
+              'product_collections',
+              'collections.id',
+              'product_collections.collection_id',
+            )
+            .whereRaw('?? = ??', [
+              'product_collections.product_id',
+              'products.id',
+            ])
+            .where('slug', filters.collection);
+        });
+      }
+
+      if (filters?.tags?.length) {
+        qr.whereExists(function () {
+          this.select(1)
+            .from<ProductTagRow>('product_tags')
+            .whereRaw('?? = ??', ['product_tags.productId', 'products.id'])
+            .whereIn('product_tags.name', filters.tags!);
+        });
+      }
+
+      if (filters?.maxPrice !== undefined) {
+        qr.where('unitPrice', '<=', filters.maxPrice);
+      }
+
+      if (filters?.minPrice !== undefined) {
+        qr.where('unitPrice', '>=', filters.minPrice);
+      }
+
+      if (filters?.inStockOnly) {
+        qr.whereExists(function () {
+          this.select(1)
+            .from<ProductStockRow>('product_stocks')
+            .whereRaw('?? = ??', ['product_stocks.id', 'products.id'])
+            .andWhereRaw('product_stocks.stock > 0');
+        });
+      }
+    };
+
+    const applySort = (qr: Knex.QueryBuilder) => {
+      switch (sort) {
+        case 'price_asc':
+          qr.orderBy([
+            { column: 'unitPrice', order: 'asc' },
+            { column: 'id', order: 'asc' },
+          ]);
+          break;
+        case 'price_desc':
+          qr.orderBy([
+            { column: 'unitPrice', order: 'desc' },
+            { column: 'id', order: 'desc' },
+          ]);
+          break;
+        case 'newest':
+        case 'popular':
+        default:
+          qr.orderBy([
+            { column: 'createdAt', order: 'desc' },
+            { column: 'id', order: 'desc' },
+          ]);
+          break;
+      }
+    };
+
+    let rows: ProductRow[];
+
+    if (cursor) {
+      rows = await this.db
+        .instance<ProductRow>(this.tableName)
+        .select('*')
+        .modify(applyFilters)
+        .andWhereRaw(
+          '(products.created_at, products.id) < (?::timestamptz, ?::uuid)',
+          [cursor.createdAt, cursor.id],
+        )
+        .modify(applySort)
+        .limit(limit + 1);
+    } else if (page > 1) {
+      const pageIdSubquery = this.db
+        .instance<ProductRow>(this.tableName)
+        .select('id')
+        .modify(applyFilters)
+        .modify(applySort)
+        .offset((page - 1) * limit)
+        .limit(limit + 1);
+
+      rows = await this.db
+        .instance<ProductRow>(this.tableName)
+        .select('*')
+        .innerJoin(pageIdSubquery.as('page_ids'), 'page_ids.id', 'products.id')
+        .modify(applySort);
+    } else {
+      rows = await this.db
+        .instance<ProductRow>(this.tableName)
+        .select('*')
+        .modify(applyFilters)
+        .modify(applySort)
+        .limit(limit + 1);
+    }
+
+    const hasNextPage = rows.length > limit;
+    const pageRows = hasNextPage ? rows.slice(0, limit) : rows;
+    const lastRow = pageRows.at(-1);
+
+    const nextCursor: ProductCursor | null =
+      hasNextPage && lastRow
+        ? {
+            id: lastRow.id,
+            createdAt:
+              lastRow.createdAt instanceof Date
+                ? lastRow.createdAt
+                : new Date(lastRow.createdAt),
+          }
+        : null;
+
+    const items = await this.attachRelations(pageRows);
+    return { items, nextCursor, hasNextPage };
+  }
+
+  public async search(keyword: string): Promise<Product[]> {
+    const rows = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('*')
+      .whereILike('title', `%${keyword}%`)
+      .orderBy('createdAt', 'desc');
+
+    return this.attachRelations(rows);
+  }
+
+  public async getByBrandId(brandId: string): Promise<Product[]> {
+    const rows = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('*')
+      .where('brandId', brandId)
+      .orderBy('createdAt', 'desc');
+
+    return this.attachRelations(rows);
+  }
+
+  public async getByVendorId(vendorId: string): Promise<Product[]> {
+    const rows = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('*')
+      .where('vendorId', vendorId)
+      .orderBy('createdAt', 'desc');
+
+    return this.attachRelations(rows);
+  }
+
+  /** undefined when the product does not exist, null when it has no vendor. */
+  public async getVendorId(
+    productId: string,
+  ): Promise<string | null | undefined> {
+    const row = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('vendorId')
+      .where('id', productId)
+      .first();
+
+    return row ? row.vendorId : undefined;
+  }
+
+  public async getByCollectionId(collectionId: string): Promise<Product[]> {
+    const rows = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('products.*')
+      .join(
+        'product_collections',
+        'products.id',
+        'product_collections.product_id',
+      )
+      .where('product_collections.collection_id', collectionId)
+      .orderBy('products.created_at', 'desc');
+
+    return this.attachRelations(rows);
+  }
+
+  public async getById(id: string): Promise<Product | null> {
+    const row = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('*')
+      .where('id', id)
+      .first();
+
+    if (!row) {
+      return null;
+    }
+
+    const [product] = await this.attachRelations([row]);
+
+    return product;
+  }
+
+  public async getBySlug(slug: string): Promise<Product | null> {
+    const row = await this.db
+      .instance<ProductRow>(this.tableName)
+      .select('*')
+      .where('slug', slug)
+      .first();
+
+    if (!row) {
+      return null;
+    }
+
+    const [product] = await this.attachRelations([row]);
+
+    return product;
+  }
+
+  public async create(product: Partial<ProductRow>): Promise<Product> {
+    const data = this.removeUndefined(product);
+
+    const createdId = await this.db.instance.transaction(async (trx) => {
+      const [created] = await trx<ProductRow>(this.tableName)
+        .insert(data)
+        .returning('id');
+
+      await trx('product_stocks').insert({
+        id: created.id,
+        stock: 0,
+      });
+
+      return created.id;
+    });
+
+    const product_ = await this.getById(createdId);
+
+    return product_ as Product;
+  }
+
+  public async update(
+    id: string,
+    product: Partial<ProductRow>,
+  ): Promise<Product | null> {
+    const data = this.removeUndefined(product);
+    delete data.id;
+    delete data.createdAt;
+
+    if (Object.keys(data).length > 0) {
+      const updated = await this.db
+        .instance<ProductRow>(this.tableName)
+        .where('id', id)
+        .update(data);
+
+      if (!updated) {
+        return null;
+      }
+    }
+
+    return this.getById(id);
+  }
+
+  public async delete(id: string): Promise<Product | null> {
+    const product = await this.getById(id);
+
+    if (!product) {
+      return null;
+    }
+
+    await this.db.instance(this.tableName).where('id', id).del();
+
+    return product;
+  }
+
+  public async existsById(id: string): Promise<boolean> {
+    const row = await this.db
+      .instance(this.tableName)
+      .select('id')
+      .where('id', id)
+      .first();
+
+    return Boolean(row);
+  }
+
+  // ---------- media ----------
+
+  public async addImage(
+    productId: string,
+    imageId: string,
+    sortOrder?: number,
+  ): Promise<void> {
+    const order = sortOrder ?? (await this.nextImageOrder(productId));
+
+    await this.db.instance('product_images').insert({
+      productId,
+      imageId,
+      sortOrder: order,
+    });
+  }
+
+  public async removeImage(
+    productId: string,
+    imageId: string,
+  ): Promise<boolean> {
+    const deleted = await this.db
+      .instance('product_images')
+      .where({ productId, imageId })
+      .del();
+
+    return deleted > 0;
+  }
+
+  public async reorderImages(
+    productId: string,
+    imageIds: string[],
+  ): Promise<void> {
+    await this.db.instance.transaction(async (trx) => {
+      await trx('product_images').where('productId', productId).del();
+
+      if (imageIds.length === 0) {
+        return;
+      }
+
+      await trx('product_images').insert(
+        imageIds.map((imageId, index) => ({
+          productId,
+          imageId,
+          sortOrder: index + 1,
+        })),
+      );
+    });
+  }
+
+  private async nextImageOrder(productId: string): Promise<number> {
+    const row = await this.db
+      .instance('product_images')
+      .max('sortOrder as maxOrder')
+      .where('productId', productId)
+      .first<{ maxOrder: number | null }>();
+
+    return (row?.maxOrder ?? 0) + 1;
+  }
+
+  // ---------- notes ----------
+
+  public async addNote(
+    productId: string,
+    content: string,
+  ): Promise<ProductNoteRow> {
+    const [note] = await this.db
+      .instance<ProductNoteRow>('product_notes')
+      .insert({ productId, content })
+      .returning('*');
+
+    return note;
+  }
+
+  public async updateNote(
+    noteId: string,
+    content: string,
+  ): Promise<ProductNoteRow | null> {
+    const [note] = await this.db
+      .instance<ProductNoteRow>('product_notes')
+      .where('id', noteId)
+      .update({ content })
+      .returning('*');
+
+    return note ?? null;
+  }
+
+  public async removeNote(noteId: string): Promise<boolean> {
+    const deleted = await this.db
+      .instance('product_notes')
+      .where('id', noteId)
+      .del();
+
+    return deleted > 0;
+  }
+
+  // ---------- tags ----------
+
+  public async addTag(productId: string, name: string): Promise<ProductTagRow> {
+    const [tag] = await this.db
+      .instance<ProductTagRow>('product_tags')
+      .insert({ productId, name })
+      .returning('*');
+
+    return tag;
+  }
+
+  public async updateTag(
+    tagId: string,
+    name: string,
+  ): Promise<ProductTagRow | null> {
+    const [tag] = await this.db
+      .instance<ProductTagRow>('product_tags')
+      .where('id', tagId)
+      .update({ name })
+      .returning('*');
+
+    return tag ?? null;
+  }
+
+  public async removeTag(productId: string, name: string): Promise<boolean> {
+    const deleted = await this.db
+      .instance('product_tags')
+      .where({ productId, name })
+      .del();
+
+    return deleted > 0;
+  }
+
+  // ---------- stock ----------
+
+  public async getStock(productId: string): Promise<ProductStock | null> {
+    const stocks = await this.loadStocks([productId]);
+
+    return stocks.get(productId) ?? null;
+  }
+
+  /** Locks the product's stock row until the transaction ends. */
+  public async lockStock(
+    productId: string,
+    trx: Knex.Transaction,
+  ): Promise<LockedStock | null> {
+    const row: { stock: number; vendorId: string | null } | undefined =
+      await trx('product_stocks as s')
+        .join('products as p', 'p.id', 's.id')
+        .select('s.stock', 'p.vendorId')
+        .where('s.id', productId)
+        .forUpdate('s')
+        .first();
+
+    if (!row) {
+      return null;
+    }
+
+    const alerts = await trx<StockAlertRow>('stock_alerts')
+      .select('*')
+      .where('productStockId', productId);
+
+    return { ...row, alerts };
+  }
+
+  public async updateStock(
+    productId: string,
+    stock: number,
+    trx?: Knex.Transaction,
+  ): Promise<boolean> {
+    const updated = await (trx ?? this.db.instance)('product_stocks')
+      .where('id', productId)
+      .update({ stock });
+
+    return updated > 0;
+  }
+
+  public async setAlert(
+    productId: string,
+    alertType: StockAlertRow['alertType'],
+    threshold: number,
+    trx?: Knex.Transaction,
+  ): Promise<StockAlertRow> {
+    const [alert] = await (trx ?? this.db.instance)<StockAlertRow>(
+      'stock_alerts',
+    )
+      .insert({
+        productStockId: productId,
+        alertType,
+        threshold,
+      })
+      .onConflict(['product_stock_id', 'alert_type'])
+      .merge(['threshold'])
+      .returning('*');
+
+    return alert;
+  }
+
+  public async removeAlert(
+    productId: string,
+    alertType: StockAlertRow['alertType'],
+  ): Promise<boolean> {
+    const deleted = await this.db
+      .instance('stock_alerts')
+      .where({ productStockId: productId, alertType })
+      .del();
+
+    return deleted > 0;
+  }
+
+  // ---------- collections ----------
+
+  public async assignToCollection(
+    productId: string,
+    collectionId: string,
+  ): Promise<void> {
+    await this.db
+      .instance('product_collections')
+      .insert({ productId, collectionId })
+      .onConflict(['product_id', 'collection_id'])
+      .ignore();
+  }
+
+  public async removeFromCollection(
+    productId: string,
+    collectionId: string,
+  ): Promise<boolean> {
+    const deleted = await this.db
+      .instance('product_collections')
+      .where({ productId, collectionId })
+      .del();
+
+    return deleted > 0;
+  }
+
+  public async isSlugTaken(slug: string, exceptId?: string): Promise<boolean> {
+    const query = this.db
+      .instance(this.tableName)
+      .select('id')
+      .where('slug', slug);
+
+    if (exceptId) {
+      query.whereNot('id', exceptId);
+    }
+
+    return Boolean(await query.first());
+  }
+
+  private async attachRelations(rows: ProductRow[]): Promise<Product[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const ids = rows.map((row) => row.id);
+
+    const [media, notes, tags, stocks, collections] = await Promise.all([
+      this.loadMedia(ids),
+      this.loadNotes(ids),
+      this.loadTags(ids),
+      this.loadStocks(ids),
+      this.loadCollections(ids),
+    ]);
+
+    return rows.map((row) => ({
+      ...row,
+      media: media.get(row.id) ?? [],
+      notes: notes.get(row.id) ?? [],
+      tags: tags.get(row.id) ?? [],
+      stock: stocks.get(row.id) ?? null,
+      collections: collections.get(row.id) ?? [],
+    }));
+  }
+
+  private async loadCollections(
+    productIds: string[],
+  ): Promise<Map<string, ProductCollectionSummary[]>> {
+    const rows = await this.db
+      .instance<CollectionJoinRow>('collections')
+      .select(
+        'collections.id',
+        'collections.name',
+        'collections.slug',
+        'collections.is_active as isActive',
+        'product_collections.product_id as productId',
+      )
+      .join(
+        'product_collections',
+        'collections.id',
+        'product_collections.collection_id',
+      )
+      .whereIn('product_collections.product_id', productIds)
+      .orderBy('collections.name', 'asc');
+
+    return this.groupBy(rows, 'productId');
+  }
+
+  private async loadMedia(productIds: string[]): Promise<Map<string, Image[]>> {
+    const rows = await this.db
+      .instance<ProductImageJoinRow>('images')
+      .select(
+        'files.*',
+        'images.width',
+        'images.height',
+        'product_images.product_id',
+      )
+      .join('product_images', 'images.id', 'product_images.image_id')
+      .join('files', 'images.id', 'files.id')
+      .whereIn('product_images.product_id', productIds)
+      .orderBy('product_images.sort_order', 'asc');
+
+    return this.groupBy(rows, 'product_id');
+  }
+
+  private async loadNotes(
+    productIds: string[],
+  ): Promise<Map<string, ProductNoteRow[]>> {
+    const rows = await this.db
+      .instance<ProductNoteRow>('product_notes')
+      .select('*')
+      .whereIn('productId', productIds)
+      .orderBy('createdAt', 'asc');
+
+    return this.groupBy(rows, 'productId');
+  }
+
+  private async loadTags(
+    productIds: string[],
+  ): Promise<Map<string, ProductTagRow[]>> {
+    const rows = await this.db
+      .instance<ProductTagRow>('product_tags')
+      .select('*')
+      .whereIn('productId', productIds)
+      .orderBy('name', 'asc');
+
+    return this.groupBy(rows, 'productId');
+  }
+
+  private async loadStocks(
+    productIds: string[],
+  ): Promise<Map<string, ProductStock>> {
+    const [stocks, alerts] = await Promise.all([
+      this.db
+        .instance<StockRow>('product_stocks')
+        .select('*')
+        .whereIn('id', productIds),
+
+      this.db
+        .instance<StockAlertRow>('stock_alerts')
+        .select('*')
+        .whereIn('productStockId', productIds),
+    ]);
+
+    const alertsByStock = this.groupBy(alerts, 'productStockId');
+
+    return new Map(
+      stocks.map((stock) => [
+        stock.id,
+        {
+          ...stock,
+          alerts: alertsByStock.get(stock.id) ?? [],
+        },
+      ]),
+    );
+  }
+
+  private groupBy<T, K extends keyof T>(rows: T[], key: K): Map<string, T[]> {
+    const grouped = new Map<string, T[]>();
+
+    for (const row of rows) {
+      const groupKey = String(row[key]);
+      const bucket = grouped.get(groupKey);
+
+      if (bucket) {
+        bucket.push(row);
+      } else {
+        grouped.set(groupKey, [row]);
+      }
+    }
+
+    return grouped;
+  }
+
+  private removeUndefined(product: Partial<ProductRow>): Partial<ProductRow> {
+    return Object.fromEntries(
+      Object.entries(product).filter(([, value]) => value !== undefined),
+    );
+  }
 }
 
 export default new ProductDAO();

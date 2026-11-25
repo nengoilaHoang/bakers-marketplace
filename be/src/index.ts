@@ -1,12 +1,12 @@
-import express, { Request, Response} from 'express';
-import morgan from 'morgan';
-import helmet from 'helmet';
-import ratelimit from 'express-rate-limit';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import router from './routes/index.route.js';
 import { errorMiddleware } from '#/middlewares/error.middleware.js';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express, { Request, Response } from 'express';
+import ratelimit from 'express-rate-limit';
+import helmet from 'helmet';
+import morgan from 'morgan';
 import { connectRedis, disconnectRedis } from './redis.js';
+import router from './routes/index.route.js';
 
 const app = express();
 const PORT = 4000;
@@ -15,48 +15,50 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  }),
+);
 
-const limit=ratelimit({
-  windowMs:60*1000,
-  max:200,
-  message:"You are performing actions too quickly; please slow down."
+const limit = ratelimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  message: 'You are performing actions too quickly; please slow down.',
 });
-app.use("/", limit);
+app.use('/', limit);
 
-morgan.token('time',()=>{
+morgan.token('time', () => {
   const now = new Date();
   return now.toTimeString().split(' ')[0];
-})
-app.use(morgan('[RES] :time | :method | :url | :status | :response-time ms'))
+});
+app.use(morgan('[RES] :time | :method | :url | :status | :response-time ms'));
 
-import db from "#/db/index.js"
+import db from '#/db/index.js';
 app.get('/health', async (req: Request, res: Response) => {
   const checkHealth: boolean = await db.checkConnection();
   if (checkHealth) {
     return res.status(200).json({
       status: 'UP',
-      message: 'Kết nối Database thành công!!'
+      message: 'Kết nối Database thành công!!',
     });
   } else {
     return res.status(503).json({
       status: 'DOWN',
-      message: 'Mất kết nối tới Database!'
+      message: 'Mất kết nối tới Database!',
     });
   }
 });
 
 app.set('json replacer', (key: string, value: unknown) => {
-	if (value instanceof Map) {
-		return Array.from(value.entries());
-	}
-	return value;
-})
+  if (value instanceof Map) {
+    return Array.from(value.entries());
+  }
+  return value;
+});
 
-app.use("/api",router);
+app.use('/api', router);
 
 app.use(errorMiddleware);
 
@@ -84,4 +86,3 @@ async function bootstrap(): Promise<void> {
 }
 
 void bootstrap();
-

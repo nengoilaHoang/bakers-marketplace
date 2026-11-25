@@ -1,13 +1,13 @@
 import { BaseLayoutComponentConfig } from '@/types/layout-component';
 import { useMemo } from 'react';
-import { SectionId } from '../ConfigSidebar';
+import { SectionId } from '../ComponentInspector';
 import ConfigInput from './ConfigInput';
 import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type AlignmentSectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   alignment: {
     horizontal: BaseLayoutComponentConfig['alignSelfX'];
     vertical: BaseLayoutComponentConfig['alignSelfY'];
@@ -18,17 +18,17 @@ type AlignmentSectionProps = {
 };
 
 const HORIZONTAL_OPTIONS = {
-  Left: 'left',
-  Center: 'center',
-  Right: 'right',
-  Stretch: 'stretch',
+  left: 'Left',
+  center: 'Center',
+  right: 'Right',
+  stretch: 'Stretch',
 } as const;
 
 const VERTICAL_OPTIONS = {
-  Top: 'top',
-  Center: 'center',
-  Bottom: 'bottom',
-  Stretch: 'stretch',
+  top: 'Top',
+  center: 'Center',
+  bottom: 'Bottom',
+  stretch: 'Stretch',
 } as const;
 
 const AlignmentSection = ({

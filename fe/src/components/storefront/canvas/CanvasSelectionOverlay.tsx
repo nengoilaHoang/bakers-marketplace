@@ -267,9 +267,10 @@ const CanvasSelectionOverlay = ({
 
       setIsResizing(false);
 
+      const bp = breakpoint === 'fluid' ? 'desktop' : breakpoint;
       if (activeMode.type === 'bento_grid') {
-        updateConfig(selectedComponentId, 'colSpan', activeMode.colSpan);
-        updateConfig(selectedComponentId, 'rowSpan', activeMode.rowSpan);
+        updateConfig(selectedComponentId, 'colSpan', activeMode.colSpan, bp);
+        updateConfig(selectedComponentId, 'rowSpan', activeMode.rowSpan, bp);
       }
       if (finalRect) {
         updateConfig(selectedComponentId, 'w', finalRect.width);

@@ -1,30 +1,37 @@
-import { TextAlignmentType, TextConfig } from '..';
+import {
+	BoxStyleConfig,
+	ColorType,
+	ImageScaleType,
+	TextAlignmentType,
+	TextConfig,
+} from '..';
+import { AspectRatioValue } from '../aspect-ratio';
 import {
 	BaseCommerceComponent,
 	CreateBaseCommerceComponent,
 	UpdateBaseCommerceComponent,
 } from './commerce-component';
 
-export type ProductCardThumbnailRatio = '16:9' | '4:3' | '1:1';
-export type ProductCardThumbnailScale = 'none' | 'fill' | 'contain' | 'cover';
+export type ProductCardThumbnailRatio = AspectRatioValue;
 
-type ProductCardBodyItem =
+export type ProductCardBodyItem =
   | {
       type: 'description';
-      display: boolean;
       value: string;
       style: TextConfig;
     }
-  | {
+  | ({
       type: 'ratings';
-      display: boolean;
       value: string;
-      style: TextConfig;
-      ratingType?: 'numeral' | 'stars' | undefined;
-    }
+    } & (
+      | {
+          style: TextConfig;
+          ratingType: 'numeral';
+        }
+      | { ratingType: 'stars'; color: ColorType }
+    ))
   | {
       type: 'priceTag';
-      display: boolean;
       value: string;
       currency: string;
       unit: string;
@@ -38,14 +45,14 @@ type ProductCardBodyItem =
             color: {
               textAlign: TextAlignmentType;
               decoration: 'strikethrough' | 'underline';
-              txtColor: string;
+              textColor: string;
               fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
               fontStyle: 'italic' | 'normal' | 'oblique';
             };
             unitColor: {
               textAlign: TextAlignmentType;
               decoration: 'strikethrough' | 'underline';
-              txtColor: string;
+              textColor: string;
               fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
               fontStyle: 'italic' | 'normal' | 'oblique';
             };
@@ -53,18 +60,11 @@ type ProductCardBodyItem =
         | undefined;
     };
 
-export type ProductCardBody = {
+export type ProductCardContent = {
   layout: 'simple';
   header: {
-    title: {
-      value: string;
-      style: TextConfig;
-    };
-    subtitle: {
-      display: boolean;
-      value: string;
-      style: TextConfig;
-    };
+    title: { value: string } & TextConfig;
+    subtitle?: ({ value: string } & TextConfig) | undefined;
   };
   body: Array<ProductCardBodyItem>;
 };
@@ -73,10 +73,10 @@ export type ProductCardConfig = {
   thumbnail: {
     url: string;
     ratio: ProductCardThumbnailRatio;
-    scale: ProductCardThumbnailScale;
+    fit: ImageScaleType;
   };
-  content: ProductCardBody;
-};
+  content: ProductCardContent;
+} & BoxStyleConfig;
 
 export interface ProductCardCommerceComponent extends BaseCommerceComponent<ProductCardConfig> {
   componentType: 'PRODUCT_CARD';

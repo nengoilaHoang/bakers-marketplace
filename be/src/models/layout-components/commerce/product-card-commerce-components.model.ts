@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import {
 	BaseLayoutComponentConfigSchema,
+	BoxStyleConfigSchema,
+	ColorSchema,
 	InterpolatedStringSchema,
 	TextConfigSchema,
 } from '../base-layout-components.model.js';
@@ -20,22 +22,26 @@ export const ProductCardThumbnailScaleSchema = z.enum([
   'cover', // scale up to fill while preserving ratio
 ]);
 
-export const ProductCardBodyItemSchema = z.discriminatedUnion('type', [
+export const ProductCardBodyItemSchema = z.union([
   z.object({
     type: z.literal('description'),
-    display: z.boolean(),
     value: InterpolatedStringSchema,
     style: TextConfigSchema,
   }),
   z.object({
     type: z.literal('ratings'),
-    display: z.boolean(),
     value: InterpolatedStringSchema,
-    ratingType: z.enum(['stars', 'numeral']).optional(),
+    ratingType: z.literal('numeral'),
+    style: TextConfigSchema,
+  }),
+  z.object({
+    type: z.literal('ratings'),
+    value: InterpolatedStringSchema,
+    ratingType: z.literal('stars'),
+    color: ColorSchema,
   }),
   z.object({
     type: z.literal('priceTag'),
-    display: z.boolean(),
     value: InterpolatedStringSchema,
 
     currency: InterpolatedStringSchema,
@@ -60,15 +66,12 @@ export const ProductCardBodySchema = z.discriminatedUnion('layout', [
   z.object({
     layout: z.literal(ProductCardContentLayoutSchema.enum.simple),
     header: z.object({
-      title: z.object({
+      title: TextConfigSchema.extend({
         value: InterpolatedStringSchema,
-        style: TextConfigSchema,
       }),
-      subtitle: z.object({
-        display: z.boolean(),
+      subtitle: TextConfigSchema.extend({
         value: InterpolatedStringSchema,
-        style: TextConfigSchema,
-      }),
+      }).optional(),
     }),
     body: z.array(ProductCardBodyItemSchema).superRefine((items, ctx) => {
       const seen = new Set();
@@ -88,10 +91,11 @@ export const ProductCardBodySchema = z.discriminatedUnion('layout', [
 ]);
 
 export const ProductCardConfigSchema = BaseLayoutComponentConfigSchema.extend({
+  ...BoxStyleConfigSchema.shape,
   thumbnail: z.object({
-    url: z.url(),
+    url: z.union([z.url(), InterpolatedStringSchema]),
     ratio: ProductCardThumbnailRatioSchema,
-    scale: ProductCardThumbnailScaleSchema,
+    fit: ProductCardThumbnailScaleSchema,
   }),
   content: ProductCardBodySchema,
 });
@@ -108,7 +112,10 @@ export const ProductCardRepeaterComponentSchema =
 
 export const UpdateProductCardRepeaterComponentSchema =
   UpdateBaseCommerceComponentSchema.extend({
-    config: ProductCardConfigSchema.partial().optional(),
+    componentType: z
+      .literal(CommerceComponentTypeSchema.enum.PRODUCT_CARD)
+      .readonly(),
+    config: ProductCardConfigSchema.optional(),
   });
 
 // Create Schemas

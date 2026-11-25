@@ -6,6 +6,7 @@ import {
 } from '../aspect-ratio.model.js';
 import {
 	BasePlacementConfigSchema,
+	PaddingSchema,
 	ResponsiveProp,
 	TextConfigSchema,
 } from '../base-layout-components.model.js';
@@ -78,7 +79,24 @@ export const HeroBannerContentSchema = z.object({
   contentSize: HeroBannerContentSizeTypeSchema.default('large'),
 });
 
+export const HeroBannerCtaColorSchemeSchema = z.enum([
+  'primary',
+  'secondary',
+  'accent',
+  'neutral', // Resolves to high-contrast surface/text tokens for busy hero media
+]);
+
+export const HeroBannerCtaSchema = z.object({
+  label: z.string(),
+  url: z.url(),
+  style: HeroBannerCtaStyleTypeSchema,
+  colorScheme: HeroBannerCtaColorSchemeSchema.default('primary'),
+  size: ResponsiveProp(HeroBannerCtaSizeTypeSchema.default('md')),
+  target: HeroBannerCtaTargetTypeSchema,
+});
+
 export const BaseHeroBannerConfigSchema = BasePlacementConfigSchema.extend({
+  padding: PaddingSchema,
   aspect: ResponsiveProp(AspectRatioValueSchema.default('16:9')),
   fit: MediaFitSchema,
   focalPoint: MediaFocalPointSchema.nullable().optional().default(null),
@@ -91,25 +109,15 @@ export const BaseHeroBannerConfigSchema = BasePlacementConfigSchema.extend({
 
   ...HeroBannerContentSchema.shape,
 
-  primaryCta: z
-    .object({
-      label: z.string(),
-      url: z.url(),
-      style: HeroBannerCtaStyleTypeSchema,
-      size: ResponsiveProp(HeroBannerCtaSizeTypeSchema.default('md')),
-      target: HeroBannerCtaTargetTypeSchema,
-    })
-    .optional(),
-  secondaryCta: z
-    .object({
-      label: z.string(),
-      url: z.url(),
-      style: HeroBannerCtaStyleTypeSchema,
-      size: ResponsiveProp(HeroBannerCtaSizeTypeSchema.default('md')),
-      target: HeroBannerCtaTargetTypeSchema,
-    })
-    .optional(),
-  ctaPosition: ResponsiveProp(HeroBannerContentPositionTypeSchema).optional(),
+  primaryCta: HeroBannerCtaSchema.extend({
+    colorScheme: HeroBannerCtaColorSchemeSchema.default('primary'),
+  }).optional(),
+  secondaryCta: HeroBannerCtaSchema.extend({
+    colorScheme: HeroBannerCtaColorSchemeSchema.default('secondary'),
+  }).optional(),
+  ctaPosition: ResponsiveProp(
+    HeroBannerContentPositionTypeSchema.default('middle-center'),
+  ).optional(),
 });
 
 export const ImageHeroBannerConfigSchema = BaseHeroBannerConfigSchema.extend({
@@ -118,7 +126,7 @@ export const ImageHeroBannerConfigSchema = BaseHeroBannerConfigSchema.extend({
 
 export const VideoHeroBannerConfigSchema = BaseHeroBannerConfigSchema.extend({
   mediaType: z.literal(HeroBannerMediaTypeSchema.enum.video),
-  posterUrl: z.url(), // Fallback for video
+  posterUrl: z.url().optional(), // Fallback for video
   videoAutoplay: z.boolean().default(false),
 });
 
@@ -134,17 +142,45 @@ export const HeroBannerCommerceComponent = BaseCommerceComponentSchema.extend({
   config: HeroBannerConfigSchema,
 });
 
+const CreateImageHeroBannerConfigSchema = ImageHeroBannerConfigSchema.omit({
+  desktopMediaUrl: true,
+  mobileMediaUrl: true,
+}).extend({
+  desktopMedia: z.file(),
+  mobileMedia: z.file().optional(),
+});
+
+const CreateVideoHeroBannerConfigSchema = VideoHeroBannerConfigSchema.omit({
+  posterUrl: true,
+  desktopMediaUrl: true,
+  mobileMediaUrl: true,
+}).extend({
+  poster: z.file().optional(),
+  desktopMedia: z.file(),
+  mobileMedia: z.file().optional(),
+});
+
+const PutImageHeroBannerConfigSchema = z.union([
+  CreateImageHeroBannerConfigSchema,
+  ImageHeroBannerConfigSchema,
+]);
+
+const PutVideoHeroBannerConfigSchema = z.union([
+  CreateVideoHeroBannerConfigSchema,
+  VideoHeroBannerConfigSchema,
+]);
+
+export const PutHeroBannerConfigSchema = z.union([
+  PutImageHeroBannerConfigSchema,
+  PutVideoHeroBannerConfigSchema,
+]);
+
 export const UpdateHeroBannerCommerceComponent =
   UpdateBaseCommerceComponentSchema.extend({
     componentType: z
       .literal(CommerceComponentTypeSchema.enum.HERO_BANNER)
       .readonly(),
-    config: z
-      .union([
-        ImageHeroBannerConfigSchema.partial(),
-        VideoHeroBannerConfigSchema.partial(),
-      ])
-      .optional(),
+    config: PutHeroBannerConfigSchema.optional(),
   });
 
 export const CreateHeroBannerCommerceComponent =
@@ -152,5 +188,8 @@ export const CreateHeroBannerCommerceComponent =
     componentType: z
       .literal(CommerceComponentTypeSchema.enum.HERO_BANNER)
       .readonly(),
-    config: HeroBannerConfigSchema,
+    config: z.discriminatedUnion('mediaType', [
+      CreateImageHeroBannerConfigSchema,
+      CreateVideoHeroBannerConfigSchema,
+    ]),
   });

@@ -1,4 +1,4 @@
-import { SectionId } from '../ConfigSidebar';
+import { SectionId } from '../ComponentInspector';
 
 type ConfigSectionProps = {
   id: SectionId;
@@ -49,9 +49,7 @@ const ConfigSectionWrapper = ({
       <div
         className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] overflow-hidden'}`}
       >
-        <div
-          className={`min-w-0 min-h-0`}
-        >
+        <div className={`min-w-0 min-h-0`}>
           <div className={`pb-4 pt-0 space-y-3`}>
             {description && (
               <p className='text-xs text-zinc-500 leading-relaxed'>

@@ -15,7 +15,7 @@ const StorefrontEditLayout = ({ children }: StorefrontEditLayoutProps) => {
     >
       <div className='flex flex-col relative h-screen w-screen overflow-hidden'>
         <CanvasTopBar></CanvasTopBar>
-        <div className='relative flex flex-col flex-1 min-h-0 overflow-y-auto'>
+        <div className='relative flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden'>
           <main className='size-full flex-1 flex flex-col min-w-0 min-h-0 z-0'>
             {children}
           </main>

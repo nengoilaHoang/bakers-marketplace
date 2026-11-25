@@ -1,7 +1,15 @@
+// hooks/storefront/StorefrontCanvasContext.ts
 import { DeviceBreakpointWithFluid } from '@/types/canvas';
 import { createContext } from 'react';
 
-type StorefrontCanvasContextType = {
+export type LayoutHistoryControls = {
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+};
+
+export type StorefrontCanvasContextValue = {
   zoom: number;
   setZoom: (zoom: number) => void;
   breakpoint: DeviceBreakpointWithFluid;
@@ -12,11 +20,18 @@ type StorefrontCanvasContextType = {
   setIsDragging: (isDragging: boolean) => void;
   isResizing: boolean;
   setIsResizing: (isResizing: boolean) => void;
+  currentPageId: string | null;
+  setCurrentPageId: (pageId: string | null) => void;
   selectedComponentId: string | null;
   selectComponent: (id: string | null) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+  registerLayoutHistory: (controls: LayoutHistoryControls | null) => void;
 };
 
 const StorefrontCanvasContext =
-  createContext<StorefrontCanvasContextType | null>(null);
+  createContext<StorefrontCanvasContextValue | null>(null);
 
 export default StorefrontCanvasContext;

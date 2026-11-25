@@ -1,8 +1,11 @@
 import request from '@/lib/api';
 import type {
+	PaginatedProducts,
 	Product,
+	ProductFilters,
 	ProductInput,
 	ProductNote,
+	ProductSort,
 	ProductStock,
 	ProductTag,
 	StockAlert,
@@ -10,177 +13,197 @@ import type {
 
 export type * from '@/types/product';
 
-export async function getProducts(): Promise<{ data: Product[] }> {
-	return request<{ data: Product[] }>('/products');
+export async function getProducts(
+  filters?: ProductFilters,
+  sort?: ProductSort,
+  limit = 0,
+  page = 1,
+  cursor?: string,
+  signal?: AbortSignal,
+): Promise<{ data: PaginatedProducts }> {
+  return request<{ data: PaginatedProducts }>(
+    '/products',
+    { signal },
+    {
+      ...filters,
+      sort,
+      limit,
+      page,
+      cursor,
+    },
+  );
 }
 
 /** Sản phẩm của vendor đang đăng nhập, kèm tồn kho và các mốc cảnh báo. */
-export async function getMyProducts(
-	{ signal }: { signal?: AbortSignal } = {},
-): Promise<{ data: Product[] }> {
-	return request<{ data: Product[] }>('/products/mine', { signal });
+export async function getMyProducts({
+  signal,
+}: { signal?: AbortSignal } = {}): Promise<{ data: Product[] }> {
+  return request<{ data: Product[] }>('/products/mine', { signal });
 }
 
 export async function searchProducts(
-	keyword: string,
+  keyword: string,
 ): Promise<{ data: Product[] }> {
-	return request<{ data: Product[] }>(
-		`/products/search?q=${encodeURIComponent(keyword)}`,
-	);
+  return request<{ data: Product[] }>(
+    `/products/search?q=${encodeURIComponent(keyword)}`,
+  );
 }
 
 export async function getProductById(id: string): Promise<{ data: Product }> {
-	return request<{ data: Product }>(`/products/${id}`);
+  return request<{ data: Product }>(`/products/${id}`);
 }
 
 export async function getProductBySlug(
-	slug: string,
+  slug: string,
 ): Promise<{ data: Product }> {
-	return request<{ data: Product }>(`/products/slug/${slug}`);
+  return request<{ data: Product }>(`/products/slug/${slug}`);
 }
 
 export async function createProduct(
-	input: ProductInput,
+  input: ProductInput,
 ): Promise<{ data: Product }> {
-	return request<{ data: Product }>('/products', {
-		method: 'POST',
-		body: JSON.stringify(input),
-	});
+  return request<{ data: Product }>('/products', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }
 
 export async function updateProduct(
-	id: string,
-	input: Partial<ProductInput>,
+  id: string,
+  input: Partial<ProductInput>,
 ): Promise<{ data: Product }> {
-	return request<{ data: Product }>(`/products/${id}`, {
-		method: 'PATCH',
-		body: JSON.stringify(input),
-	});
+  return request<{ data: Product }>(`/products/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
 }
 
 export async function deleteProduct(id: string): Promise<{ data: Product }> {
-	return request<{ data: Product }>(`/products/${id}`, {
-		method: 'DELETE',
-	});
+  return request<{ data: Product }>(`/products/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function addProductTag(
-	id: string,
-	name: string,
+  id: string,
+  name: string,
 ): Promise<{ data: ProductTag }> {
-	return request<{ data: ProductTag }>(`/products/${id}/tags`, {
-		method: 'POST',
-		body: JSON.stringify({ name }),
-	});
+  return request<{ data: ProductTag }>(`/products/${id}/tags`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
 }
 
 export async function removeProductTag(
-	id: string,
-	name: string,
+  id: string,
+  name: string,
 ): Promise<void> {
-	return request<void>(`/products/${id}/tags/${encodeURIComponent(name)}`, {
-		method: 'DELETE',
-	});
+  return request<void>(`/products/${id}/tags/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function addProductNote(
-	id: string,
-	content: string,
+  id: string,
+  content: string,
 ): Promise<{ data: ProductNote }> {
-	return request<{ data: ProductNote }>(`/products/${id}/notes`, {
-		method: 'POST',
-		body: JSON.stringify({ content }),
-	});
+  return request<{ data: ProductNote }>(`/products/${id}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  });
 }
 
 export async function removeProductNote(
-	id: string,
-	noteId: string,
+  id: string,
+  noteId: string,
 ): Promise<void> {
-	return request<void>(`/products/${id}/notes/${noteId}`, {
-		method: 'DELETE',
-	});
+  return request<void>(`/products/${id}/notes/${noteId}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function updateProductStock(
-	id: string,
-	stock: number,
+  id: string,
+  stock: number,
 ): Promise<{ data: ProductStock }> {
-	return request<{ data: ProductStock }>(`/products/${id}/stock`, {
-		method: 'PATCH',
-		body: JSON.stringify({ stock }),
-	});
+  return request<{ data: ProductStock }>(`/products/${id}/stock`, {
+    method: 'PATCH',
+    body: JSON.stringify({ stock }),
+  });
 }
 
 /** Cộng (delta > 0) hoặc trừ (delta < 0) tồn kho. */
 export async function adjustProductStock(
-	id: string,
-	delta: number,
+  id: string,
+  delta: number,
 ): Promise<{ data: ProductStock }> {
-	return request<{ data: ProductStock }>(`/products/${id}/stock/adjust`, {
-		method: 'POST',
-		body: JSON.stringify({ delta }),
-	});
+  return request<{ data: ProductStock }>(`/products/${id}/stock/adjust`, {
+    method: 'POST',
+    body: JSON.stringify({ delta }),
+  });
 }
 
 export async function setProductStockAlert(
-	id: string,
-	alertType: StockAlert['alertType'],
-	threshold: number,
+  id: string,
+  alertType: StockAlert['alertType'],
+  threshold: number,
 ): Promise<{ data: StockAlert }> {
-	return request<{ data: StockAlert }>(`/products/${id}/stock/alerts`, {
-		method: 'PUT',
-		body: JSON.stringify({ alertType, threshold }),
-	});
+  return request<{ data: StockAlert }>(`/products/${id}/stock/alerts`, {
+    method: 'PUT',
+    body: JSON.stringify({ alertType, threshold }),
+  });
 }
 
 export async function removeProductStockAlert(
-	id: string,
-	alertType: StockAlert['alertType'],
+  id: string,
+  alertType: StockAlert['alertType'],
 ): Promise<void> {
-	return request<void>(`/products/${id}/stock/alerts/${alertType}`, {
-		method: 'DELETE',
-	});
+  return request<void>(`/products/${id}/stock/alerts/${alertType}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function assignProductToCollection(
-	id: string,
-	collectionId: string,
+  id: string,
+  collectionId: string,
 ): Promise<{ data: Product }> {
-	return request<{ data: Product }>(`/products/${id}/collections`, {
-		method: 'POST',
-		body: JSON.stringify({ collectionId }),
-	});
+  return request<{ data: Product }>(`/products/${id}/collections`, {
+    method: 'POST',
+    body: JSON.stringify({ collectionId }),
+  });
 }
 
 export async function removeProductFromCollection(
-	id: string,
-	collectionId: string,
+  id: string,
+  collectionId: string,
 ): Promise<{ data: Product }> {
-	return request<{ data: Product }>(`/products/${id}/collections/${collectionId}`, {
-		method: 'DELETE',
-	});
+  return request<{ data: Product }>(
+    `/products/${id}/collections/${collectionId}`,
+    {
+      method: 'DELETE',
+    },
+  );
 }
 
 export const productApi = {
-	getAll: getProducts,
-	getMine: getMyProducts,
-	search: searchProducts,
-	getById: getProductById,
-	getBySlug: getProductBySlug,
-	create: createProduct,
-	update: updateProduct,
-	remove: deleteProduct,
-	addTag: addProductTag,
-	removeTag: removeProductTag,
-	addNote: addProductNote,
-	removeNote: removeProductNote,
-	updateStock: updateProductStock,
-	adjustStock: adjustProductStock,
-	setAlert: setProductStockAlert,
-	removeAlert: removeProductStockAlert,
-	assignToCollection: assignProductToCollection,
-	removeFromCollection: removeProductFromCollection,
+  getAll: getProducts,
+  getMine: getMyProducts,
+  search: searchProducts,
+  getById: getProductById,
+  getBySlug: getProductBySlug,
+  create: createProduct,
+  update: updateProduct,
+  remove: deleteProduct,
+  addTag: addProductTag,
+  removeTag: removeProductTag,
+  addNote: addProductNote,
+  removeNote: removeProductNote,
+  updateStock: updateProductStock,
+  adjustStock: adjustProductStock,
+  setAlert: setProductStockAlert,
+  removeAlert: removeProductStockAlert,
+  assignToCollection: assignProductToCollection,
+  removeFromCollection: removeProductFromCollection,
 };
 
 export default productApi;

@@ -1,6 +1,9 @@
 import { BREAKPOINT_PRESETS, DeviceBreakpointWithFluid } from '@/types/canvas';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import StorefrontCanvasContext from './StorefrontCanvasContext';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import StorefrontCanvasContext, {
+  LayoutHistoryControls,
+  StorefrontCanvasContextValue,
+} from './StorefrontCanvasContext';
 
 type StorefrontCanvasProviderProps = {
   children: React.ReactNode;
@@ -20,15 +23,21 @@ const StorefrontCanvasProvider = ({
   const [isPreview, setIsPreview] = useState(initialIsPreview);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [currentPageId, setCurrentPageId] = useState<string | null>(null);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     null,
   );
+  const [layoutHistory, setLayoutHistory] =
+    useState<LayoutHistoryControls | null>(null);
 
-  const containerRef = useRef(null);
+  const noop = () => {};
+
+  const selectPage = useCallback((pageId: string | null) => {
+    setSelectedComponentId(null);
+    setCurrentPageId(pageId);
+  }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const updateBreakpoint = (entries: ResizeObserverEntry[]) => {
       if (breakpoint === 'fluid') return;
 
@@ -58,7 +67,7 @@ const StorefrontCanvasProvider = ({
     return () => observer.disconnect();
   }, [breakpoint]);
 
-  const contextValue = useMemo(
+  const contextValue: StorefrontCanvasContextValue = useMemo(
     () => ({
       zoom,
       setZoom,
@@ -70,17 +79,35 @@ const StorefrontCanvasProvider = ({
       setIsDragging,
       isResizing,
       setIsResizing,
+      currentPageId,
+      setCurrentPageId: selectPage,
       selectedComponentId,
       selectComponent: setSelectedComponentId,
+      canUndo: layoutHistory?.canUndo ?? false,
+      canRedo: layoutHistory?.canRedo ?? false,
+      undo: layoutHistory?.undo ?? noop,
+      redo: layoutHistory?.redo ?? noop,
+      registerLayoutHistory: setLayoutHistory,
     }),
-    [zoom, breakpoint, isPreview, isDragging, isResizing, selectedComponentId],
+    [
+      zoom,
+      breakpoint,
+      isPreview,
+      isDragging,
+      isResizing,
+      currentPageId,
+      selectPage,
+      selectedComponentId,
+      layoutHistory?.canUndo,
+      layoutHistory?.canRedo,
+      layoutHistory?.undo,
+      layoutHistory?.redo,
+    ],
   );
 
   return (
     <StorefrontCanvasContext.Provider value={contextValue}>
-      <div ref={containerRef} className='relative'>
-        {children}
-      </div>
+      {children}
     </StorefrontCanvasContext.Provider>
   );
 };

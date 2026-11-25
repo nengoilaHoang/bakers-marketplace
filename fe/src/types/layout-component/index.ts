@@ -1,18 +1,47 @@
 import { WithBase } from '@/utils/tsHelper';
 import {
-	CommerceComponent,
-	UpdateCommerceComponent,
+  CommerceComponent,
+  CreateCommerceComponent,
+  UpdateCommerceComponent,
 } from './commerce-component/commerce-component';
 import {
-	CompositeComponent,
-	UpdateCompositeComponent,
+  CompositeComponent,
+  CreateCompositeComponent,
+  UpdateCompositeComponent,
 } from './composite-component';
-import { LeafComponent, UpdateLeafComponent } from './leaf-component';
 import {
-	RepeaterComponent,
-	UpdateRepeaterComponent,
+  CreateLeafComponent,
+  LeafComponent,
+  UpdateLeafComponent,
+} from './leaf-component';
+import {
+  CreateRepeaterComponent,
+  RepeaterComponent,
+  UpdateRepeaterComponent,
 } from './repeater-component';
 
+export const DYNAMIC_PLACEHOLDER_REGEX = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
+export const TOKEN_ALLOW_LIST = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/;
+
+export type ResponsiveProp<T> = {
+  desktop: T;
+  mobile?: T | undefined;
+  tablet?: T | undefined;
+};
+export type PaletteColorTokenType =
+  | 'colorBackground'
+  | 'colorSurface'
+  | 'colorBorder'
+  | 'colorTextPrimary'
+  | 'colorTextSecondary'
+  | 'colorPrimary'
+  | 'colorPrimaryForeground'
+  | 'colorSecondary'
+  | 'colorSecondaryForeground'
+  | 'colorAccent'
+  | 'colorAccentForeground';
+export type ColorType = PaletteColorTokenType | (string & {});
+export type ImageScaleType = 'none' | 'fill' | 'contain' | 'cover';
 export type TextAlignmentType = 'center' | 'justify' | 'left' | 'right';
 export type DimensionType = number | 'auto' | 'full' | 'lg' | 'md' | 'sm';
 export type PaddingType = number | 'lg' | 'md' | 'none' | 'sm';
@@ -26,15 +55,15 @@ export type SurfaceTheme =
   | 'accent';
 export type TextConfig = {
   textAlign: TextAlignmentType;
-  decoration: 'strikethrough' | 'underline';
-  textColor: string;
+  decoration: 'strikethrough' | 'underline' | 'none';
+  textColor: ColorType;
   fontWeight: number | 'bold' | 'extra-bold' | 'semi-bold';
   fontStyle: 'italic' | 'normal' | 'oblique';
 };
 
 export type BentoItemConfig = {
-  colSpan: number;
-  rowSpan: number;
+  colSpan: ResponsiveProp<number>;
+  rowSpan: ResponsiveProp<number>;
 };
 
 export type BasePlacementConfig = {
@@ -45,13 +74,15 @@ export type BasePlacementConfig = {
 
 export type SlotPlacementConfig = BasePlacementConfig & { h: DimensionType };
 
-type BoxStyleConfig = {
-  padding: {
-    top: PaddingType;
-    bottom: PaddingType;
-    left: PaddingType;
-    right: PaddingType;
-  };
+export type PaddingConfig = {
+  top: PaddingType;
+  bottom: PaddingType;
+  left: PaddingType;
+  right: PaddingType;
+};
+
+export type BoxStyleConfig = {
+  padding: PaddingConfig;
   surfaceTheme: SurfaceTheme;
 };
 
@@ -63,9 +94,8 @@ export type BaseLayoutComponentConfig<TConfig = unknown> = WithBase<
     [K in keyof TConfig]: TConfig[K];
   };
 
-export type UpdateBaseLayoutComponentConfig<TConfig = unknown> = Partial<
-  BaseLayoutComponentConfig<TConfig>
->;
+export type UpdateBaseLayoutComponentConfig<TConfig = unknown> =
+  BaseLayoutComponentConfig<TConfig>;
 
 export type BaseLayoutComponent<TConfig = BaseLayoutComponentConfig<unknown>> =
   {
@@ -83,7 +113,7 @@ export type UpdateBaseLayoutComponent<
   name?: string;
   type: 'COMPOSITE' | 'LEAF' | 'REPEATER' | 'COMMERCE';
   componentType: string;
-  config?: Partial<TConfig>;
+  config?: TConfig;
 };
 
 export type CreateBaseLayoutComponent<
@@ -106,8 +136,11 @@ export type UpdateLayoutComponent =
   | UpdateLeafComponent
   | UpdateRepeaterComponent
   | UpdateCommerceComponent;
-export type ResponsiveProp<T> = {
-  mobile: T;
-  tablet: T;
-  desktop: T;
-};
+
+export type CreateLayoutComponent =
+  | CreateCompositeComponent
+  | CreateLeafComponent
+  | CreateRepeaterComponent
+  | CreateCommerceComponent;
+
+export type PutLayoutComponent = CreateLayoutComponent | UpdateLayoutComponent;

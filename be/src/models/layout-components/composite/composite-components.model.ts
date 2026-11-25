@@ -1,27 +1,33 @@
 import { z } from 'zod';
 import {
+	CreateGridCompositeComponentSchema,
 	GridCompositeComponentSchema,
 	UpdateGridCompositeComponentSchema,
-	CreateGridCompositeComponentSchema,
 } from './grid-composite-components.model.js';
 
 export const CompositeComponentSchema = z.discriminatedUnion('componentType', [
-	GridCompositeComponentSchema,
+  GridCompositeComponentSchema,
 ]);
 export type CompositeComponent = z.infer<typeof CompositeComponentSchema>;
 
 export const UpdateCompositeComponentSchema = z.discriminatedUnion(
-	'componentType',
-	[UpdateGridCompositeComponentSchema],
+  'componentType',
+  [UpdateGridCompositeComponentSchema],
 );
 export type UpdateCompositeComponent = z.infer<
-	typeof UpdateCompositeComponentSchema
+  typeof UpdateCompositeComponentSchema
 >;
 
 export const CreateCompositeComponentSchema = z.discriminatedUnion(
-	'componentType',
-	[CreateGridCompositeComponentSchema],
+  'componentType',
+  [CreateGridCompositeComponentSchema],
 );
 export type CreateCompositeComponent = z.infer<
-	typeof CreateCompositeComponentSchema
+  typeof CreateCompositeComponentSchema
 >;
+
+export const PutCompositeComponentSchema = z.union([
+  UpdateCompositeComponentSchema,
+  CreateCompositeComponentSchema,
+]);
+export type PutCompositeComponent = z.infer<typeof PutCompositeComponentSchema>;

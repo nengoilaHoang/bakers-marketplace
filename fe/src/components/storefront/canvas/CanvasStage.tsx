@@ -68,10 +68,8 @@ const CanvasStage = ({ children }: CanvasStageProps) => {
         <CanvasIframe
           onArtboardMount={handleArtboardMount}
           onClickCapture={handleCaptureClick}
-          className={`w-full min-h-200 border-0 rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-all duration-150 ${
-            isPreview || isResizing || isDragging
-              ? 'pointer-events-none select-none'
-              : ''
+          className={`w-full min-h-200 border-0 rounded-md bg-white shadow-2xl ring-1 ring-zinc-300 transition-shadow duration-150 ${
+            isPreview || isResizing ? 'pointer-events-none select-none' : ''
           }`}
           freezeHeight={isDragging}
         >

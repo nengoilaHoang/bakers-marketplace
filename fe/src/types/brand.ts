@@ -1,4 +1,4 @@
-export type Brand = {
+export type BrandPublicView = {
   id: string;
   name: string;
   vendorId: string;

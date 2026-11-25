@@ -1,7 +1,15 @@
 import { HeroBannerCommerceComponent } from '@/types/layout-component/commerce-component';
+import HeroBannerImageSection from '../config-sections/hero-banner/HeroBannerImageSection';
 import HeroContentSection from '../config-sections/hero-banner/HeroContentSection';
+import HeroCtaSection from '../config-sections/hero-banner/HeroCtaSection';
 import HeroOverlaySection from '../config-sections/hero-banner/HeroOverlaySection';
 import { InspectorProps } from './registry';
+
+export type HeroBannerSectionId =
+  | 'hero-banner-image'
+  | 'hero-overlay'
+  | 'hero-content'
+  | 'hero-cta';
 
 type HeroBannerInspectorProps = InspectorProps<HeroBannerCommerceComponent>;
 
@@ -18,19 +26,36 @@ const HeroBannerInspector = ({
 
   return (
     <>
+      <HeroBannerImageSection
+        isOpen={Boolean(openSections['hero-banner-image'])}
+        toggleSection={() => toggleSection('hero-banner-image')}
+        banner={{
+          desktopMediaUrl: config.desktopMediaUrl,
+          mobileMediaUrl: config.mobileMediaUrl,
+          aspect: config.aspect,
+          fit: config.fit,
+          focalPoint: config.focalPoint,
+        }}
+        onUpdate={onUpdate}
+        onActiveSectionChange={(active) => {
+          if (active) onActiveSectionChange('hero-banner-image');
+        }}
+        zIndex={getSectionZIndex('hero-banner-image')}
+        currentBp={currentBp}
+      />
       <HeroOverlaySection
         isOpen={Boolean(openSections['hero-overlay'])}
-        toggleSection={toggleSection}
+        toggleSection={() => toggleSection('hero-overlay')}
         overlay={config.overlay}
         onUpdate={onUpdate}
-        onActiveSectionChange={(active) =>
-          onActiveSectionChange(active ? 'hero-overlay' : null)
-        }
+        onActiveSectionChange={(active) => {
+          if (active) onActiveSectionChange('hero-overlay');
+        }}
         zIndex={getSectionZIndex('hero-overlay')}
       />
       <HeroContentSection
         isOpen={Boolean(openSections['hero-content'])}
-        toggleSection={toggleSection}
+        toggleSection={() => toggleSection('hero-content')}
         content={{
           title: config.title,
           subtitle: config.subtitle,
@@ -39,10 +64,23 @@ const HeroBannerInspector = ({
           contentSize: config.contentSize,
         }}
         onUpdate={onUpdate}
-        onActiveSectionChange={(active) =>
-          onActiveSectionChange(active ? 'hero-content' : null)
-        }
+        onActiveSectionChange={(active) => {
+          if (active) onActiveSectionChange('hero-content');
+        }}
         zIndex={getSectionZIndex('hero-content')}
+        currentBp={currentBp}
+      />
+      <HeroCtaSection
+        isOpen={Boolean(openSections['hero-cta'])}
+        toggleSection={() => toggleSection('hero-cta')}
+        ctaPosition={config.ctaPosition}
+        primaryCta={config.primaryCta}
+        secondaryCta={config.secondaryCta}
+        onUpdate={onUpdate}
+        onActiveSectionChange={(active) => {
+          if (active) onActiveSectionChange('hero-cta');
+        }}
+        zIndex={getSectionZIndex('hero-cta')}
         currentBp={currentBp}
       />
     </>

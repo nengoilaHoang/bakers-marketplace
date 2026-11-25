@@ -1,3 +1,4 @@
+import { BatchLayoutComponentPayload } from '#/models/layout-components/layout-components.model.js';
 import layoutComponentService, {
 	LayoutComponentService,
 } from '#/services/layout-component.service.js';
@@ -5,26 +6,39 @@ import asyncHandler from '#/utils/asyncHandler.js';
 import { Request, Response } from 'express';
 
 export class LayoutComponentController {
-	constructor(
-		private readonly layoutComponentService: LayoutComponentService,
-	) {}
+  constructor(
+    private readonly layoutComponentService: LayoutComponentService,
+  ) {}
 
-	public deleteBatch = asyncHandler(async (req: Request, res: Response) => {
-		const { ids } = req.body as { ids: string[] };
+  public saveBatch = asyncHandler(
+    async (
+      req: Request<undefined, undefined, BatchLayoutComponentPayload>,
+      res: Response,
+    ) => {
+      const payload = req.body;
+      await this.layoutComponentService.saveBatch(payload);
+      return res.status(200).json({
+        message: 'Layout components saved successfully',
+      });
+    },
+  );
 
-		// 1. Validate the components belong to vendor
-		// TODO: Implement validation logic
+  public deleteBatch = asyncHandler(async (req: Request, res: Response) => {
+    const { ids } = req.body as { ids: string[] };
 
-		// 2. Delete
-		await this.layoutComponentService.delete(ids);
+    // 1. Validate the components belong to vendor
+    // TODO: Implement validation logic
 
-		return res.status(200).json({
-			message: 'Layout components deleted successfully',
-		});
-	});
+    // 2. Delete
+    await this.layoutComponentService.delete(ids);
+
+    return res.status(200).json({
+      message: 'Layout components deleted successfully',
+    });
+  });
 }
 
 const layoutComponentController = new LayoutComponentController(
-	layoutComponentService,
+  layoutComponentService,
 );
 export default layoutComponentController;

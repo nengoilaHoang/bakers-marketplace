@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 import { ImageSchema } from '../files/images.model.js';
 
-export const StockAlertEnum = z.enum(["MAXIMUM", "REORDER", "MINIMUM"]);
+export const StockAlertEnum = z.enum(['MAXIMUM', 'REORDER', 'MINIMUM']);
 
 export const ProductTableSchema = z.object({
   id: z.uuidv4(),
@@ -13,7 +13,7 @@ export const ProductTableSchema = z.object({
   slug: z.string().max(255),
   unitPrice: z.coerce.number().nonnegative(),
   unitCost: z.coerce.number().nonnegative(),
-  currency: z.string().length(3).default("VND"),
+  currency: z.string().length(3).default('VND'),
   unit: z.string().max(255),
   expirationDate: z.date().nullable(),
   createdAt: z.date().default(() => new Date()),
@@ -74,8 +74,8 @@ export const ProductSchema = ProductTableSchema.extend({
 
 /** Dữ liệu client gửi lên khi tạo sản phẩm. */
 export const ProductCreateSchema = ProductTableSchema.omit({
-	id: true,
-	createdAt: true,
+  id: true,
+  createdAt: true,
 });
 
 /** Khi cập nhật, mọi trường đều không bắt buộc. */
@@ -97,3 +97,43 @@ export type StockAlert = z.infer<typeof StockAlertTableSchema>;
 export type ProductCollectionSummary = z.infer<
   typeof ProductCollectionSummarySchema
 >;
+
+export const ProductSortSchema = z.enum([
+  'newest',
+  'price_asc',
+  'price_desc',
+  'popular',
+]);
+
+export const ProductFiltersSchema = z.object({
+  tags: z
+    .union([
+      z
+        .string()
+        .trim()
+        .min(1)
+        .transform((val) => [val]),
+      z.array(z.string().trim().min(1)),
+    ])
+    .optional(),
+  minPrice: z.coerce.number().nonnegative().optional(),
+  maxPrice: z.coerce.number().nonnegative().optional(),
+  inStockOnly: z
+    .union([
+      z.boolean(),
+      z.enum(['true', 'false']).transform((val) => val === 'true'),
+    ])
+    .optional(),
+  collection: z.string().trim().min(1).optional(),
+  brand: z.string().trim().min(1).optional(),
+});
+
+export type ProductSort = z.infer<typeof ProductSortSchema>;
+export type ProductFilters = z.infer<typeof ProductFiltersSchema>;
+
+export const ProductCursorSchema = z.object({
+  id: z.uuidv4(),
+  createdAt: z.coerce.date(),
+});
+
+export type ProductCursor = z.infer<typeof ProductCursorSchema>;

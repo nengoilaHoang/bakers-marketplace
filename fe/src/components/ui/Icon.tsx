@@ -17,6 +17,7 @@ import {
   Copyright,
   Eye,
   EyeOff,
+  File,
   Flag,
   Flame,
   Globe,
@@ -40,6 +41,7 @@ import {
   Printer,
   Reply,
   RotateCcw,
+  RotateCw,
   Search,
   Share2,
   ShoppingCart,
@@ -58,8 +60,25 @@ import {
   Wheat,
   X,
 } from 'lucide-react';
+import { forwardRef } from 'react';
 
 import { cn } from '@/lib/cn';
+
+const TriangleLeft = forwardRef<SVGSVGElement, LucideProps>((props, ref) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    aria-hidden='true'
+    width='16'
+    height='16'
+    fill='currentColor'
+    viewBox='0 0 16 16'
+    ref={ref}
+    {...props}
+  >
+    <path d='m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z' />
+  </svg>
+));
+TriangleLeft.displayName = 'TriangleLeft';
 
 // Bộ icon duy nhất của dự án: Lucide (https://lucide.dev/icons).
 // Cần icon mới → import từ 'lucide-react' và thêm một dòng vào đây.
@@ -84,6 +103,7 @@ const ICONS = {
   eye: Eye,
   'eye-off': EyeOff,
   filter: ListFilter,
+  file: File,
   flag: Flag,
   flame: Flame,
   globe: Globe,
@@ -116,10 +136,13 @@ const ICONS = {
   timer: Timer,
   trash: Trash2,
   'triangle-alert': TriangleAlert,
+  'triangle-left': TriangleLeft,
   user: UserRound,
   users: Users,
   utensils: Utensils,
   wheat: Wheat,
+  'rotate-ccw': RotateCcw,
+  'rotate-cw': RotateCw,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

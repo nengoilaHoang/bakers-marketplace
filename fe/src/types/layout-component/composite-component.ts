@@ -2,33 +2,50 @@ import {
 	BaseLayoutComponent,
 	BaseLayoutComponentConfig,
 	CreateBaseLayoutComponent,
+	CreateLayoutComponent,
 	LayoutComponent,
 	ResponsiveProp,
 	UpdateBaseLayoutComponent,
+	UpdateLayoutComponent,
 } from '.';
+
+export interface BreakpointSlotMap {
+  [order: string]: string;
+}
 
 export interface BaseCompositeComponent<
   TConfig = unknown,
 > extends BaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children: ResponsiveProp<Map<number, LayoutComponent>>;
+  children: LayoutComponent[];
+  slots?: ResponsiveProp<BreakpointSlotMap> | undefined;
 }
 
+export interface BreakpointIndexSlotMap {
+  [order: string]: number;
+}
+
+export type CompositePutSlot = ResponsiveProp<
+  BreakpointSlotMap | BreakpointIndexSlotMap
+>;
+
 export interface UpdateBaseCompositeComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends UpdateBaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends UpdateBaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: ResponsiveProp<Map<number, LayoutComponent>>;
+  children?: (UpdateLayoutComponent | CreateLayoutComponent)[] | undefined;
+  slots?: CompositePutSlot | undefined;
 }
 
 export interface CreateBaseCompositeComponent<
-  TConfig = BaseLayoutComponentConfig<unknown>,
-> extends CreateBaseLayoutComponent<TConfig> {
+  TConfig = unknown,
+> extends CreateBaseLayoutComponent<BaseLayoutComponentConfig<TConfig>> {
   type: 'COMPOSITE';
   componentType: CompositeComponentType;
-  children?: ResponsiveProp<Map<number, LayoutComponent>>;
+  children?: (UpdateLayoutComponent | CreateLayoutComponent)[] | undefined;
+  slots?: CompositePutSlot | undefined;
 }
 
 export type CompositeComponentType = 'GRID' | 'COLUMN' | 'ROW' | 'CAROUSEL';
@@ -47,8 +64,10 @@ export type RowHeightMode =
       minHeightPx: number;
     };
 
+export type GridLayoutMode = 'UNIFORM' | 'BENTO';
+
 export type GridCompositeComponentConfig = {
-  layout: 'BENTO' | 'UNIFORM';
+  layout: GridLayoutMode;
   rows?: ResponsiveProp<number> | undefined;
   cols: ResponsiveProp<number>;
   gap: ResponsiveProp<number>;
