@@ -64,7 +64,14 @@ export const ProductCollectionSummarySchema = z.object({
   isActive: z.boolean(),
 });
 
+/** The brand (shop) selling the product, shown to buyers. */
+export const ProductBrandSummarySchema = z.object({
+  id: z.uuidv4(),
+  name: z.string().max(100),
+});
+
 export const ProductSchema = ProductTableSchema.extend({
+  brand: ProductBrandSummarySchema.nullable().default(null),
   media: z.array(ImageSchema).default([]),
   notes: z.array(ProductNoteTableSchema).default([]),
   tags: z.array(ProductTagTableSchema).default([]),
@@ -94,6 +101,7 @@ export type StockAlertRow = z.infer<typeof StockAlertTableSchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductStock = z.infer<typeof ProductStockSchema>;
 export type StockAlert = z.infer<typeof StockAlertTableSchema>;
+export type ProductBrandSummary = z.infer<typeof ProductBrandSummarySchema>;
 export type ProductCollectionSummary = z.infer<
   typeof ProductCollectionSummarySchema
 >;

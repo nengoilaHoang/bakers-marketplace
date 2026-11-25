@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/cn';
 
 import AccountMenu from './AccountMenu';
+import CartLink from './CartLink';
 import CreateMenu from './CreateMenu';
 import Icon from './Icon';
 import { IconLink } from './IconButton';
@@ -16,6 +17,7 @@ type NavItem = { label: string; href: string };
 const MAIN_NAV: NavItem[] = [
   { label: 'Diễn đàn', href: '/' },
   { label: 'Công thức', href: '/recipes' },
+  { label: 'Cửa hàng', href: '/products' },
 ];
 
 type SiteHeaderProps = Readonly<{
@@ -66,6 +68,7 @@ export default function SiteHeader({ activeHref }: SiteHeaderProps) {
           >
             <Icon name='bookmark' className='size-6.5' />
           </IconLink>
+          <CartLink />
           <AccountMenu />
           <button
             type='button'

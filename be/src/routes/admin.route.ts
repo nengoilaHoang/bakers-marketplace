@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import adminPostController from '#/controllers/admin-posts.controller.js';
 import adminRecipeController from '#/controllers/admin-recipes.controller.js';
+import adminShipmentController from '#/controllers/admin-shipments.controller.js';
 import adminUserController from '#/controllers/admin-users.controller.js';
 import {
 	authenMiddleware,
@@ -36,6 +37,13 @@ router.post('/reports/:id/dismiss', adminUserController.dismissReport);
 
 // vendors (?status=&keyword=&page=&pageSize=); a vendor is banned through /users/:id/ban
 router.get('/vendors', adminUserController.getVendorPage);
+
+// shipments (?view=active|delivered|all&page=&pageSize=): created when an order is approved;
+// advance { status, locationName, description } moves one shipment to its next step and
+// records that tracking event; the last step completes the order
+router.get('/shipments', adminShipmentController.getPage);
+router.get('/shipments/:id', adminShipmentController.getDetail);
+router.post('/shipments/:id/advance', adminShipmentController.advance);
 
 
 export default router;

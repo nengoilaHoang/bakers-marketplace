@@ -90,6 +90,23 @@ const adminUser = {
   role: 'ADMIN',
 };
 
+// Bakers buy for their own shop and are the only ones who can place pre-orders (recurring orders).
+// Inserted apart from `users` so the baker does not author seeded recipes or posts.
+const bakerUser = {
+  email: 'lananh.baker@example.com',
+  displayname: 'Võ Lan Anh',
+  hashed_password: SEED_PASSWORD_HASH,
+  role: 'BAKER',
+};
+
+const bakerAddress = {
+  recipientName: 'Võ Lan Anh',
+  phone: '0934567890',
+  streetAddress: '27 Phan Đình Phùng',
+  ward: 'Phường Đức Nhuận',
+  province: 'Thành phố Hồ Chí Minh',
+};
+
 const baseRecipes: RecipeSeed[] = [
   {
     title: 'Bánh Chocolate Fudge',
@@ -475,6 +492,298 @@ const products: SeedProduct[] = [
     collectionSlugs: ['hang-moi-ve'],
     alerts: [{ alertType: 'MINIMUM', threshold: 12 }],
   },
+  {
+    title: 'Bánh Bông Lan Trứng Muối',
+    slug: 'banh-bong-lan-trung-muoi',
+    description: 'Bông lan mềm xốp, phủ sốt phô mai và trứng muối, chà bông.',
+    unitPrice: 65000,
+    unitCost: 38000,
+    unit: 'hộp',
+    stock: 40,
+    brandIndex: 0,
+    tags: ['bong-lan', 'trung-muoi'],
+    notes: ['Bảo quản ngăn mát, dùng trong 3 ngày.'],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [],
+  },
+  {
+    // Out of stock on purpose: the product page and checkout must refuse it
+    title: 'Bánh Mì Hoa Cúc',
+    slug: 'banh-mi-hoa-cuc',
+    description: 'Brioche hoa cúc kiểu Pháp, thơm bơ và mật ong.',
+    unitPrice: 120000,
+    unitCost: 70000,
+    unit: 'ổ',
+    stock: 0,
+    brandIndex: 0,
+    tags: ['brioche', 'an-sang'],
+    notes: [],
+    collectionSlugs: [],
+    alerts: [],
+  },
+  {
+    title: 'Tart Trứng Bồ Đào Nha',
+    slug: 'tart-trung-bo-dao-nha',
+    description: 'Vỏ ngàn lớp giòn rụm, nhân trứng sữa xém mặt.',
+    unitPrice: 25000,
+    unitCost: 12000,
+    unit: 'cái',
+    stock: 80,
+    brandIndex: 1,
+    tags: ['tart', 'an-vat'],
+    notes: ['Hâm nóng 3 phút ở 180°C trước khi dùng.'],
+    collectionSlugs: ['hang-moi-ve'],
+    alerts: [],
+  },
+  {
+    title: 'Bánh Su Kem',
+    slug: 'banh-su-kem',
+    description: 'Vỏ su mỏng, nhân kem vani mát lạnh.',
+    unitPrice: 8000,
+    unitCost: 3500,
+    unit: 'cái',
+    stock: 150,
+    brandIndex: 1,
+    tags: ['su-kem', 'an-vat'],
+    notes: [],
+    collectionSlugs: [],
+    alerts: [],
+  },
+];
+
+// ==========================================================
+// ORDERS CONFIG
+// ==========================================================
+type SeedOrderStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
+type SeedShipmentStatus =
+  | 'LABEL_CREATED'
+  | 'PICKED_UP'
+  | 'IN_TRANSIT'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED';
+
+// What a vendor decided about its items in an order (EXPIRED: no answer before the deadline)
+type SeedDecision = 'PENDING' | 'APPROVED' | 'EXPIRED' | { declined: string };
+
+// Seeded orders use a real-life approval window; the app's own window is ORDER_APPROVAL_WINDOW_MINUTES
+const SEED_APPROVAL_HOURS = 24;
+
+type SeedOrder = {
+  customerEmail: string;
+  status: SeedOrderStatus;
+  // Per brand name; brands not listed follow the order status (PENDING/CANCELLED: undecided,
+  // APPROVED/COMPLETED: approved, DECLINED: declined with closingNote, EXPIRED: no answer)
+  vendorDecisions?: Record<string, SeedDecision>;
+  placedHoursAgo: number;
+  items: Array<{
+    slug: string;
+    quantity: number;
+    note?: string;
+    rating?: { stars: number; comment: string };
+  }>;
+  // Why the order was cancelled (by the customer) or declined
+  closingNote?: string;
+  shipment?: { carrier: string; trackingNumber: string; status: SeedShipmentStatus };
+};
+
+const customerAddresses: Record<
+  string,
+  { recipientName: string; phone: string; streetAddress: string; ward: string; province: string }
+> = {
+  'minhanh@example.com': {
+    recipientName: 'Nguyễn Minh Anh',
+    phone: '0901234567',
+    streetAddress: '12 Lê Lợi',
+    ward: 'Phường Sài Gòn',
+    province: 'Thành phố Hồ Chí Minh',
+  },
+  'baongoc@example.com': {
+    recipientName: 'Trần Bảo Ngọc',
+    phone: '0912345678',
+    streetAddress: '45 Hàng Bài',
+    ward: 'Phường Hoàn Kiếm',
+    province: 'Thành phố Hà Nội',
+  },
+  'hoangnam@example.com': {
+    recipientName: 'Lê Hoàng Nam',
+    phone: '0987654321',
+    streetAddress: '88 Nguyễn Văn Linh',
+    ward: 'Phường Hải Châu',
+    province: 'Thành phố Đà Nẵng',
+  },
+};
+
+// Every order status appears at least once; some orders mix both vendors, with each
+// vendor deciding its own items (one waits on a vendor, one had a vendor decline its part).
+const orders: SeedOrder[] = [
+  {
+    // Sunrise approved its part, Hoa Sen has not answered yet
+    customerEmail: 'minhanh@example.com',
+    status: 'PENDING',
+    placedHoursAgo: 3,
+    vendorDecisions: { 'Sunrise Patisserie': 'APPROVED' },
+    items: [
+      { slug: 'croissant-bo-phap', quantity: 4 },
+      { slug: 'banh-bong-lan-trung-muoi', quantity: 1, note: 'Ít sốt giúp mình' },
+    ],
+  },
+  {
+    // Neither vendor has answered yet
+    customerEmail: 'baongoc@example.com',
+    status: 'PENDING',
+    placedHoursAgo: 5,
+    items: [
+      { slug: 'banh-trung-thu-thap-cam', quantity: 2 },
+      { slug: 'banh-su-kem', quantity: 6 },
+    ],
+  },
+  {
+    customerEmail: 'minhanh@example.com',
+    status: 'APPROVED',
+    placedHoursAgo: 48,
+    items: [{ slug: 'banh-trung-thu-thap-cam', quantity: 6 }],
+    shipment: { carrier: 'Giao Hàng Nhanh', trackingNumber: 'GHN5X8K2LQ', status: 'IN_TRANSIT' },
+  },
+  {
+    customerEmail: 'minhanh@example.com',
+    status: 'COMPLETED',
+    placedHoursAgo: 240,
+    items: [
+      {
+        slug: 'croissant-bo-phap',
+        quantity: 2,
+        rating: { stars: 5, comment: 'Croissant giòn, thơm bơ, sẽ mua lại.' },
+      },
+      { slug: 'tart-trung-bo-dao-nha', quantity: 6 },
+    ],
+    shipment: { carrier: 'Giao Hàng Tiết Kiệm', trackingNumber: 'GHTK8812734', status: 'DELIVERED' },
+  },
+  {
+    customerEmail: 'minhanh@example.com',
+    status: 'CANCELLED',
+    placedHoursAgo: 120,
+    items: [{ slug: 'banh-su-kem', quantity: 3 }],
+    closingNote: 'Đặt nhầm số lượng',
+  },
+  {
+    customerEmail: 'baongoc@example.com',
+    status: 'COMPLETED',
+    placedHoursAgo: 360,
+    items: [
+      {
+        slug: 'banh-trung-thu-thap-cam',
+        quantity: 4,
+        rating: { stars: 4, comment: 'Nhân đậm vị, hơi ngọt một chút.' },
+      },
+      {
+        slug: 'banh-su-kem',
+        quantity: 10,
+        rating: { stars: 5, comment: 'Kem mát, vỏ mỏng, cả nhà đều thích.' },
+      },
+    ],
+    shipment: { carrier: 'Viettel Post', trackingNumber: 'VTP1029384756', status: 'DELIVERED' },
+  },
+  {
+    customerEmail: 'baongoc@example.com',
+    status: 'DECLINED',
+    placedHoursAgo: 72,
+    items: [{ slug: 'banh-trung-thu-thap-cam', quantity: 10 }],
+    closingNote: 'Tiệm tạm hết nhân thập cẩm, xin lỗi bạn',
+  },
+  {
+    // Hoa Sen declined its item, so only Sunrise's tarts are on the way
+    customerEmail: 'hoangnam@example.com',
+    status: 'APPROVED',
+    placedHoursAgo: 30,
+    vendorDecisions: { 'Hoa Sen Bakery': { declined: 'Tiệm hết trứng muối hôm nay, xin lỗi bạn' } },
+    items: [
+      { slug: 'tart-trung-bo-dao-nha', quantity: 12 },
+      { slug: 'banh-bong-lan-trung-muoi', quantity: 2 },
+    ],
+    shipment: { carrier: 'Giao Hàng Nhanh', trackingNumber: 'GHN9Q4M7TZ', status: 'OUT_FOR_DELIVERY' },
+  },
+  {
+    // Sunrise never answered: the order expired at the deadline
+    customerEmail: 'baongoc@example.com',
+    status: 'EXPIRED',
+    placedHoursAgo: 40,
+    items: [{ slug: 'croissant-bo-phap', quantity: 3 }],
+  },
+  {
+    // Sunrise approved, Hoa Sen let the deadline pass: only the choux are shipped
+    customerEmail: 'hoangnam@example.com',
+    status: 'APPROVED',
+    placedHoursAgo: 50,
+    vendorDecisions: { 'Hoa Sen Bakery': 'EXPIRED' },
+    items: [
+      { slug: 'banh-su-kem', quantity: 10 },
+      { slug: 'banh-trung-thu-thap-cam', quantity: 2 },
+    ],
+    shipment: { carrier: 'Giao Hàng Nhanh', trackingNumber: 'GHN3H6P1WD', status: 'LABEL_CREATED' },
+  },
+];
+
+// Tracking events of a shipment, in order; a shipment at status X has every event up to X
+const trackingTemplate: Array<{
+  status: SeedShipmentStatus;
+  locationName: string;
+  description: string;
+}> = [
+  { status: 'LABEL_CREATED', locationName: 'Tiệm bánh', description: 'Đã tạo vận đơn' },
+  { status: 'PICKED_UP', locationName: 'Tiệm bánh', description: 'Đơn vị vận chuyển đã lấy hàng' },
+  { status: 'IN_TRANSIT', locationName: 'Kho trung chuyển', description: 'Đang trung chuyển' },
+  { status: 'OUT_FOR_DELIVERY', locationName: 'Bưu cục gần bạn', description: 'Shipper đang giao hàng' },
+  { status: 'DELIVERED', locationName: 'Địa chỉ nhận hàng', description: 'Giao hàng thành công' },
+];
+
+// ==========================================================
+// PRE-ORDERS CONFIG
+// ==========================================================
+// Cycle days are calendar days in Vietnam; a cycle's order is created at 00:00 of its day
+const PRE_ORDER_TZ = 'Asia/Ho_Chi_Minh';
+
+type SeedPreOrder = {
+  status: 'PENDING' | 'ACTIVE';
+  frequency: 'MONTHLY' | 'BIWEEKLY';
+  durationMonths: number;
+  // First cycle day, counted from today (negative: already started)
+  startInDays: number;
+  requestedHoursAgo: number;
+  // Per brand name: APPROVED, or still PENDING
+  decisions: Record<string, 'APPROVED' | 'PENDING'>;
+  items: Array<{ slug: string; quantity: number; note?: string }>;
+  // Cycle numbers the baker skipped
+  skipped?: number[];
+};
+
+const preOrders: SeedPreOrder[] = [
+  {
+    // Sunrise approved, Hoa Sen has not answered yet: test the vendor approval
+    status: 'PENDING',
+    frequency: 'MONTHLY',
+    durationMonths: 3,
+    startInDays: 3,
+    requestedHoursAgo: 2,
+    decisions: { 'Sunrise Patisserie': 'APPROVED', 'Hoa Sen Bakery': 'PENDING' },
+    items: [
+      { slug: 'croissant-bo-phap', quantity: 20, note: 'Giao trước 7 giờ sáng' },
+      { slug: 'banh-bong-lan-trung-muoi', quantity: 5 },
+    ],
+  },
+  {
+    // Running: cycle 1 delivered, cycle 3 skipped, cycles 2 and 4 to come
+    status: 'ACTIVE',
+    frequency: 'BIWEEKLY',
+    durationMonths: 2,
+    startInDays: -10,
+    requestedHoursAgo: 12 * 24,
+    decisions: { 'Sunrise Patisserie': 'APPROVED', 'Hoa Sen Bakery': 'APPROVED' },
+    items: [
+      { slug: 'banh-su-kem', quantity: 30 },
+      { slug: 'banh-trung-thu-thap-cam', quantity: 6 },
+    ],
+    skipped: [3],
+  },
 ];
 
 // ==========================================================
@@ -829,6 +1138,22 @@ export async function seed(knex: Knex): Promise<void> {
     await trx('storefronts').del();
     await trx('social_links').del();
 
+    // Pre-orders Module (cycles point at generated orders)
+    await trx('pre_order_status_histories').del();
+    await trx('pre_order_cycles').del();
+    await trx('pre_order_items').del();
+    await trx('pre_order_requests').del();
+
+    // Orders Module
+    await trx('rating_images').del();
+    await trx('order_ratings').del();
+    await trx('ratings').del();
+    await trx('tracking_events').del();
+    await trx('shipments').del();
+    await trx('order_status_histories').del();
+    await trx('order_items').del();
+    await trx('orders').del();
+
     // Products Module
     await trx('product_collections').del();
     await trx('stock_alerts').del();
@@ -890,6 +1215,7 @@ export async function seed(knex: Knex): Promise<void> {
       .returning(['id', 'email', 'displayname', 'role']);
 
     const [adminRow] = await trx('users').insert(adminUser).returning(['id']);
+    const [bakerRow] = await trx('users').insert(bakerUser).returning(['id']);
 
     const generatedRecipes: RecipeSeed[] = [...baseRecipes];
     for (const flavor of flavors) {
@@ -1129,6 +1455,11 @@ export async function seed(knex: Knex): Promise<void> {
       )
       .returning(['id']);
 
+    const productBySlug = new Map<
+      string,
+      { id: string; vendorId: string; seed: SeedProduct }
+    >();
+
     for (let index = 0; index < products.length; index += 1) {
       const product = products[index];
       const [createdProduct] = await trx('products')
@@ -1147,6 +1478,11 @@ export async function seed(knex: Knex): Promise<void> {
         .returning(['id']);
 
       const productId = createdProduct.id;
+      productBySlug.set(product.slug, {
+        id: productId,
+        vendorId: vendorRows[product.brandIndex].id,
+        seed: product,
+      });
 
       await trx('product_stocks').insert({
         id: productId,
@@ -1521,7 +1857,7 @@ export async function seed(knex: Knex): Promise<void> {
           },
           primaryCta: {
             label: 'Explore Our Collection',
-            url: 'https://hoasen-bakery.vn/collections',
+            url: '/products',
             style: 'solid',
             colorScheme: 'primary',
             size: 'lg',
@@ -2247,5 +2583,422 @@ export async function seed(knex: Knex): Promise<void> {
         note: 'Đã kiểm tra, tài khoản thật',
       },
     });
+
+    // =========================================================================
+    // 10. SEED ORDERS, SHIPMENTS & ORDER RATINGS
+    // =========================================================================
+    // Stock above is the stock left after these orders, so it is not decremented here.
+    for (const order of orders) {
+      const customerId = getUserId(order.customerEmail);
+      const address = customerAddresses[order.customerEmail];
+      const lines = order.items.map((item) => {
+        const product = productBySlug.get(item.slug);
+        if (!product) throw new Error(`Seed product ${item.slug} not found`);
+        return { ...item, product };
+      });
+      const placed = order.placedHoursAgo;
+
+      // Group the lines by vendor (brand), in the order they appear
+      const defaultDecision: SeedDecision =
+        order.status === 'APPROVED' || order.status === 'COMPLETED'
+          ? 'APPROVED'
+          : order.status === 'DECLINED'
+            ? { declined: order.closingNote ?? 'Tiệm không nhận đơn' }
+            : order.status === 'EXPIRED'
+              ? 'EXPIRED'
+              : 'PENDING';
+      const groups = new Map<string, { vendorId: string; decision: SeedDecision; count: number }>();
+      for (const line of lines) {
+        const brand = brands[line.product.seed.brandIndex].name;
+        const group = groups.get(brand) ?? {
+          vendorId: line.product.vendorId,
+          decision: order.vendorDecisions?.[brand] ?? defaultDecision,
+          count: 0,
+        };
+        group.count += 1;
+        groups.set(brand, group);
+      }
+      const decisionOf = (line: (typeof lines)[number]) =>
+        groups.get(brands[line.product.seed.brandIndex].name)!.decision;
+      const itemStatus = (decision: SeedDecision) =>
+        typeof decision === 'string' ? decision : 'DECLINED';
+
+      // Declined and expired items stay in the order but no longer count in its total
+      const subtotal = lines
+        .filter((line) => ['PENDING', 'APPROVED'].includes(itemStatus(decisionOf(line))))
+        .reduce((sum, line) => sum + line.product.seed.unitPrice * line.quantity, 0);
+
+      const [createdOrder] = await trx('orders')
+        .insert({
+          ordered_by: customerId,
+          shipping_recipient_name: address.recipientName,
+          shipping_phone: address.phone,
+          shipping_street_address: address.streetAddress,
+          shipping_ward: address.ward,
+          shipping_province: address.province,
+          subtotal,
+          total_amount: subtotal,
+          currency: 'VND',
+          current_status: order.status,
+          approval_deadline: hoursAgo(trx, placed - SEED_APPROVAL_HOURS),
+          placed_at: hoursAgo(trx, placed),
+          updated_at: hoursAgo(trx, placed),
+        })
+        .returning(['id']);
+      const orderId: string = createdOrder.id;
+
+      const itemRows = await trx('order_items')
+        .insert(
+          lines.map((line) => ({
+            order_id: orderId,
+            product_id: line.product.id,
+            product_title: line.product.seed.title,
+            unit_price: line.product.seed.unitPrice,
+            unit_cost: line.product.seed.unitCost,
+            unit: line.product.seed.unit,
+            quantity: line.quantity,
+            note: line.note ?? null,
+            status: itemStatus(decisionOf(line)),
+            decline_reason: (() => {
+              const decision = decisionOf(line);
+              return typeof decision === 'string' ? null : decision.declined;
+            })(),
+          })),
+        )
+        .returning(['id']);
+
+      // Status history: PENDING, then each vendor's answer; the answer that settles the
+      // last undecided items also moves the order to APPROVED (or DECLINED if nothing is left).
+      // Vendors that never answered expire at the deadline, which then settles the order.
+      const history: Array<{ status: string; actorId: string | null; note?: string; hoursAgo: number }> = [
+        { status: 'PENDING', actorId: customerId, hoursAgo: placed },
+      ];
+      const answered = [...groups.entries()].filter(
+        ([, group]) => group.decision !== 'PENDING' && group.decision !== 'EXPIRED',
+      );
+      const expiredGroups = [...groups.entries()].filter(([, group]) => group.decision === 'EXPIRED');
+      const allDecided = [...groups.values()].every((group) => group.decision !== 'PENDING');
+      const anyApproved = [...groups.values()].some((group) => group.decision === 'APPROVED');
+      const settledStatus = anyApproved ? 'APPROVED' : expiredGroups.length > 0 ? 'EXPIRED' : 'DECLINED';
+      const expected = !allDecided
+        ? ['PENDING', 'CANCELLED']
+        : settledStatus === 'APPROVED'
+          ? ['APPROVED', 'COMPLETED']
+          : [settledStatus];
+      if (!expected.includes(order.status)) {
+        throw new Error(`Seed order status ${order.status} does not match its vendor decisions`);
+      }
+      answered.forEach(([brand, group], index) => {
+        const isLast = allDecided && expiredGroups.length === 0 && index === answered.length - 1;
+        history.push({
+          status: isLast ? settledStatus : 'PENDING',
+          actorId: group.vendorId,
+          note:
+            group.decision === 'APPROVED'
+              ? `${brand} đã duyệt ${group.count} món`
+              : `${brand} từ chối ${group.count} món: ${(group.decision as { declined: string }).declined}`,
+          hoursAgo: placed - 1 - index * 0.5,
+        });
+      });
+      if (expiredGroups.length > 0) {
+        const count = expiredGroups.reduce((sum, [, group]) => sum + group.count, 0);
+        history.push({
+          status: settledStatus,
+          actorId: null,
+          note: `Hết hạn duyệt: ${expiredGroups.map(([brand]) => brand).join(', ')} không phản hồi ${count} món`,
+          hoursAgo: placed - SEED_APPROVAL_HOURS,
+        });
+      }
+      if (order.status === 'CANCELLED') {
+        history.push({ status: 'CANCELLED', actorId: customerId, note: order.closingNote, hoursAgo: placed - 2 });
+      }
+
+      if (order.shipment) {
+        const reached = trackingTemplate.findIndex(
+          (event) => event.status === order.shipment!.status,
+        );
+        // One event every 6 hours, starting two hours after the order settled
+        const settledHoursAgo = history[history.length - 1].hoursAgo;
+        const eventHoursAgo = (index: number) => settledHoursAgo - 2 - index * 6;
+
+        const [shipment] = await trx('shipments')
+          .insert({
+            order_id: orderId,
+            carrier: order.shipment.carrier,
+            tracking_number: order.shipment.trackingNumber,
+            current_status: order.shipment.status,
+            // Delivered: the delivery time; still on the way: tomorrow
+            estimated_delivery: hoursAgo(
+              trx,
+              order.shipment.status === 'DELIVERED' ? eventHoursAgo(reached) : -24,
+            ),
+            created_at: hoursAgo(trx, eventHoursAgo(0)),
+            updated_at: hoursAgo(trx, eventHoursAgo(reached)),
+          })
+          .returning(['id']);
+
+        await trx('tracking_events').insert(
+          trackingTemplate.slice(0, reached + 1).map((event, index) => ({
+            shipment_id: shipment.id,
+            status: event.status,
+            location_name: event.locationName,
+            description: event.description,
+            timestamp: hoursAgo(trx, eventHoursAgo(index)),
+          })),
+        );
+
+        if (order.status === 'COMPLETED') {
+          history.push({
+            status: 'COMPLETED',
+            actorId: null,
+            note: 'Đã giao hàng thành công',
+            hoursAgo: eventHoursAgo(reached),
+          });
+        }
+      }
+
+      await trx('order_status_histories').insert(
+        history.map((entry) => ({
+          order_id: orderId,
+          status: entry.status,
+          actor_id: entry.actorId,
+          note: entry.note ?? null,
+          timestamp: hoursAgo(trx, entry.hoursAgo),
+        })),
+      );
+
+      const last = history[history.length - 1];
+      await trx('orders')
+        .where('id', orderId)
+        .update({ updated_at: hoursAgo(trx, last.hoursAgo) });
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const rating = lines[index].rating;
+        // Only items that were delivered (approved) can be rated
+        if (!rating || itemStatus(decisionOf(lines[index])) !== 'APPROVED') continue;
+
+        const [ratingRow] = await trx('ratings')
+          .insert({
+            rater_id: customerId,
+            rating: rating.stars,
+            comment: rating.comment,
+            rated_at: hoursAgo(trx, Math.max(last.hoursAgo - 12, 1)),
+          })
+          .returning(['id']);
+        await trx('order_ratings').insert({
+          id: ratingRow.id,
+          order_item_id: itemRows[index].id,
+        });
+      }
+    }
+
+    // =========================================================================
+    // 11. SEED PRE-ORDERS (baker Võ Lan Anh)
+    // =========================================================================
+    // Stock is not reserved by a request; each cycle takes its own when its order is created.
+    const bakerId: string = bakerRow.id;
+    const brandVendorId = new Map(
+      brands.map((brand, index) => [brand.name, vendorRows[index].id as string]),
+    );
+    // 00:00 (Vietnam) of the day `startInDays` from today, plus months / days / hours
+    const cycleTime = (startInDays: number, months: number, days: number, plusHours = 0) =>
+      trx.raw(
+        `(((now() AT TIME ZONE '${PRE_ORDER_TZ}')::date + ?::int + make_interval(months => ?, days => ?))::timestamp AT TIME ZONE '${PRE_ORDER_TZ}') + make_interval(hours => ?)`,
+        [startInDays, months, days, plusHours],
+      );
+    const localDay = (startInDays: number, months = 0, minusDays = 0) =>
+      trx.raw(
+        `((now() AT TIME ZONE '${PRE_ORDER_TZ}')::date + ?::int + make_interval(months => ?) - make_interval(days => ?))::date`,
+        [startInDays, months, minusDays],
+      );
+
+    for (const preOrder of preOrders) {
+      const lines = preOrder.items.map((item) => {
+        const product = productBySlug.get(item.slug);
+        if (!product) throw new Error(`Seed product ${item.slug} not found`);
+        const brand = brands[product.seed.brandIndex].name;
+        return { ...item, product, brand, decision: preOrder.decisions[brand] ?? 'PENDING' };
+      });
+      const requested = preOrder.requestedHoursAgo;
+      const isPending = preOrder.status === 'PENDING';
+
+      const [request] = await trx('pre_order_requests')
+        .insert({
+          issuer_id: bakerId,
+          current_status: preOrder.status,
+          duration_months: preOrder.durationMonths,
+          frequency: preOrder.frequency,
+          start_date: localDay(preOrder.startInDays),
+          end_date: localDay(preOrder.startInDays, preOrder.durationMonths, 1),
+          // Seeded requests use a real-life window of 24 hours
+          approval_deadline: hoursAgo(trx, requested - 24),
+          shipping_recipient_name: bakerAddress.recipientName,
+          shipping_phone: bakerAddress.phone,
+          shipping_street_address: bakerAddress.streetAddress,
+          shipping_ward: bakerAddress.ward,
+          shipping_province: bakerAddress.province,
+          currency: 'VND',
+          requested_at: hoursAgo(trx, requested),
+          updated_at: hoursAgo(trx, requested),
+        })
+        .returning(['id']);
+      const requestId: string = request.id;
+
+      await trx('pre_order_items').insert(
+        lines.map((line) => ({
+          pre_order_request_id: requestId,
+          product_id: line.product.id,
+          product_title: line.product.seed.title,
+          unit_price: line.product.seed.unitPrice,
+          unit_cost: line.product.seed.unitCost,
+          unit: line.product.seed.unit,
+          quantity: line.quantity,
+          note: line.note ?? null,
+          status: line.decision,
+        })),
+      );
+
+      // History: requested, each vendor's answer (the last one settles it), then the start
+      const history: Array<{ status: string; actorId: string | null; note?: string; at: Knex.Raw }> = [
+        { status: 'PENDING', actorId: bakerId, at: hoursAgo(trx, requested) },
+      ];
+      const answered = Object.entries(preOrder.decisions).filter(([, decision]) => decision === 'APPROVED');
+      answered.forEach(([brand], index) => {
+        const isLast = !isPending && index === answered.length - 1;
+        history.push({
+          status: isLast ? 'APPROVED' : 'PENDING',
+          actorId: brandVendorId.get(brand) ?? null,
+          note: `${brand} đã duyệt ${lines.filter((line) => line.brand === brand).length} món`,
+          at: hoursAgo(trx, requested - 1 - index * 0.5),
+        });
+      });
+      if (!isPending) {
+        history.push({
+          status: 'ACTIVE',
+          actorId: null,
+          note: 'Đến ngày bắt đầu, bắt đầu giao định kỳ',
+          at: cycleTime(preOrder.startInDays, 0, 0),
+        });
+      }
+
+      // Plan the cycles like the app does
+      const offsets: Array<{ months: number; days: number }> = [];
+      for (let month = 0; month < preOrder.durationMonths; month += 1) {
+        offsets.push({ months: month, days: 0 });
+        if (preOrder.frequency === 'BIWEEKLY') offsets.push({ months: month, days: 14 });
+      }
+
+      for (let index = 0; index < offsets.length; index += 1) {
+        const cycleNumber = index + 1;
+        const offset = offsets[index];
+        const isPast = preOrder.startInDays + offset.months * 30 + offset.days <= 0;
+        let generatedOrderId: string | null = null;
+
+        // A cycle already reached: its order, delivered within two days
+        if (isPast) {
+          const subtotal = lines.reduce((sum, line) => sum + line.product.seed.unitPrice * line.quantity, 0);
+          const at = (hours: number) => cycleTime(preOrder.startInDays, offset.months, offset.days, hours);
+          const [order] = await trx('orders')
+            .insert({
+              ordered_by: bakerId,
+              shipping_recipient_name: bakerAddress.recipientName,
+              shipping_phone: bakerAddress.phone,
+              shipping_street_address: bakerAddress.streetAddress,
+              shipping_ward: bakerAddress.ward,
+              shipping_province: bakerAddress.province,
+              subtotal,
+              total_amount: subtotal,
+              currency: 'VND',
+              current_status: 'COMPLETED',
+              approval_deadline: null,
+              placed_at: at(0),
+              updated_at: at(32),
+            })
+            .returning(['id']);
+          generatedOrderId = order.id;
+
+          await trx('order_items').insert(
+            lines.map((line) => ({
+              order_id: order.id,
+              product_id: line.product.id,
+              product_title: line.product.seed.title,
+              unit_price: line.product.seed.unitPrice,
+              unit_cost: line.product.seed.unitCost,
+              unit: line.product.seed.unit,
+              quantity: line.quantity,
+              note: line.note ?? null,
+              status: 'APPROVED',
+            })),
+          );
+
+          const [shipment] = await trx('shipments')
+            .insert({
+              order_id: order.id,
+              carrier: 'Giao Hàng Nhanh',
+              tracking_number: `GHNPRE${cycleNumber}${requestId.slice(0, 4).toUpperCase()}`,
+              current_status: 'DELIVERED',
+              estimated_delivery: at(32),
+              created_at: at(0),
+              updated_at: at(32),
+            })
+            .returning(['id']);
+          await trx('tracking_events').insert(
+            trackingTemplate.map((event, step) => ({
+              shipment_id: shipment.id,
+              status: event.status,
+              location_name: event.locationName,
+              description: event.description,
+              timestamp: at(step * 8),
+            })),
+          );
+
+          await trx('order_status_histories').insert([
+            {
+              order_id: order.id,
+              status: 'APPROVED',
+              actor_id: null,
+              note: `Tạo tự động từ đặt định kỳ, kỳ ${cycleNumber}/${offsets.length}`,
+              timestamp: at(0),
+            },
+            {
+              order_id: order.id,
+              status: 'COMPLETED',
+              actor_id: null,
+              note: 'Đã giao hàng thành công',
+              timestamp: at(32),
+            },
+          ]);
+        }
+
+        const isSkipped = preOrder.skipped?.includes(cycleNumber) ?? false;
+        await trx('pre_order_cycles').insert({
+          pre_order_request_id: requestId,
+          cycle_number: cycleNumber,
+          current_status: generatedOrderId ? 'ORDER_CREATED' : isSkipped ? 'SKIPPED' : 'SCHEDULED',
+          generated_order_id: generatedOrderId,
+          scheduled_at: cycleTime(preOrder.startInDays, offset.months, offset.days),
+          created_at: hoursAgo(trx, requested),
+        });
+
+        if (isSkipped) {
+          history.push({
+            status: preOrder.status,
+            actorId: bakerId,
+            note: `Bỏ qua kỳ ${cycleNumber}`,
+            at: hoursAgo(trx, 48),
+          });
+        }
+      }
+
+      await trx('pre_order_status_histories').insert(
+        history.map((entry) => ({
+          pre_order_request_id: requestId,
+          status: entry.status,
+          actor_id: entry.actorId,
+          note: entry.note ?? null,
+          timestamp: entry.at,
+        })),
+      );
+    }
   });
 }

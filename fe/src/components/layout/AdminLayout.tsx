@@ -12,6 +12,7 @@ const ADMIN_NAV: DashboardNavItem[] = [
   { label: 'Công thức', href: '/admin/recipes', icon: 'chef-hat' },
   { label: 'Người dùng', href: '/admin/users', icon: 'users' },
   { label: 'Vendor', href: '/admin/vendors', icon: 'cart' },
+  { label: 'Giao hàng', href: '/admin/shipments', icon: 'truck' },
 ];
 
 // Khu quản trị: chỉ tài khoản ADMIN, dùng chung khung với khu vendor.

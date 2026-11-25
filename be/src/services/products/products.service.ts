@@ -155,6 +155,15 @@ class ProductService {
   }
 
   public async delete(id: string): Promise<Product | null> {
+    const activeOrders = await this.productDAO.countActiveOrders(id);
+
+    if (activeOrders > 0) {
+      throw new ConflictError(
+        `Product is in ${activeOrders} unfinished order(s)`,
+        'PRODUCT_IN_ACTIVE_ORDERS',
+      );
+    }
+
     return this.productDAO.delete(id);
   }
 

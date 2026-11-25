@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import KeywordSearch from '@/components/admin/KeywordSearch';
-import Pagination from '@/components/admin/Pagination';
+import Pagination from '@/components/ui/Pagination';
 import { USER_STATUS, UserStatusBadge } from '@/components/admin/StatusBadges';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { ButtonLink } from '@/components/ui/Button';
@@ -12,7 +12,7 @@ import Select from '@/components/ui/Select';
 import Table, { Td, Th } from '@/components/ui/Table';
 import { PanelSkeleton } from '@/components/dashboard/Panel';
 import DashboardPage from '@/components/dashboard/DashboardPage';
-import { useAdminData } from '@/hooks/useAdminData';
+import { useApiData } from '@/hooks/useApiData';
 import { readEnum, readPage, readString, useUrlFilters } from '@/hooks/useUrlFilters';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { getAdminVendors } from '@/services/admin';
@@ -27,7 +27,7 @@ const AdminVendorsPage: NextPageWithLayout = () => {
   const keyword = readString(query.keyword);
   const page = readPage(query.page);
 
-  const { data, isLoading, error, reload } = useAdminData(
+  const { data, isLoading, error, reload } = useApiData(
     (signal) => getAdminVendors({ status, keyword, page }, { signal }),
     `${status}|${keyword}|${page}`,
     isReady,

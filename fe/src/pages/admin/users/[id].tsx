@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import ReasonForm from '@/components/admin/ReasonForm';
+import ReasonForm from '@/components/dashboard/ReasonForm';
 import ReportTable from '@/components/admin/ReportTable';
 import TakedownHistory from '@/components/admin/TakedownHistory';
 import { USER_ROLE_LABELS, UserStatusBadge } from '@/components/admin/StatusBadges';
@@ -13,7 +13,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import ApiErrorAlert from '@/components/dashboard/ApiErrorAlert';
 import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
 import DashboardPage from '@/components/dashboard/DashboardPage';
-import { useAdminData } from '@/hooks/useAdminData';
+import { useApiData } from '@/hooks/useApiData';
 import { readString } from '@/hooks/useUrlFilters';
 import type { NextPageWithLayout } from '@/pages/_app';
 import {
@@ -63,7 +63,7 @@ function WarningReports({ reports }: { reports: AdminWarningReport[] }) {
 const AdminUserDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = readString(router.query.id);
-  const { data, isLoading, error, reload } = useAdminData(
+  const { data, isLoading, error, reload } = useApiData(
     (signal) => getAdminUser(id!, { signal }).then((response) => response.data),
     id ?? '',
     Boolean(id),

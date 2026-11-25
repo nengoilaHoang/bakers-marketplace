@@ -9,6 +9,9 @@ type AppLayoutProps = Readonly<{
 
 function getActiveHref(pathname: string) {
   if (pathname.startsWith('/recipes')) return '/recipes';
+  if (pathname.startsWith('/products') || pathname === '/cart' || pathname === '/checkout') {
+    return '/products';
+  }
   if (pathname === '/' || pathname.startsWith('/posts')) return '/';
   return undefined;
 }

@@ -88,7 +88,7 @@ export const HeroBannerCtaColorSchemeSchema = z.enum([
 
 export const HeroBannerCtaSchema = z.object({
   label: z.string(),
-  url: z.url(),
+  url: z.union([z.url(), z.string().regex(/^\/[^\s]*$/, 'Invalid URL')]),
   style: HeroBannerCtaStyleTypeSchema,
   colorScheme: HeroBannerCtaColorSchemeSchema.default('primary'),
   size: ResponsiveProp(HeroBannerCtaSizeTypeSchema.default('md')),

@@ -1,3 +1,4 @@
+import { useOptionalStorefrontRenderContext } from '@/hooks/storefront/useStorefrontRenderContext';
 import { cn } from '@/lib/cn';
 import { DeviceBreakpoint } from '@/types/canvas';
 import { ResponsiveProp } from '@/types/layout-component';
@@ -108,6 +109,16 @@ const HeroBannerCtaButton = ({
   size,
   isEditor = false,
 }: HeroBannerCtaButtonProps) => {
+  const renderCtx = useOptionalStorefrontRenderContext();
+
+  const resolvedHref = useMemo(() => {
+    if (!url) return '#';
+    if (url.startsWith('/') && renderCtx?.basePath) {
+      return url === '/' ? renderCtx.basePath : `${renderCtx.basePath}${url}`;
+    }
+    return url;
+  }, [renderCtx?.basePath, url]);
+
   const handleClickCapture = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (!isEditor) return;
@@ -136,7 +147,7 @@ const HeroBannerCtaButton = ({
 
   return (
     <Link
-      href={url || '#'}
+      href={resolvedHref}
       target={target}
       rel={target === '_blank' ? 'noopener noreferrer' : undefined}
       tabIndex={isEditor ? -1 : undefined}

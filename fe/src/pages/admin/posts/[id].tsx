@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 
-import ReasonForm from '@/components/admin/ReasonForm';
+import ReasonForm from '@/components/dashboard/ReasonForm';
 import {
   IngredientList,
   NoteList,
@@ -20,7 +20,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import ApiErrorAlert from '@/components/dashboard/ApiErrorAlert';
 import Panel, { PanelSkeleton } from '@/components/dashboard/Panel';
 import DashboardPage from '@/components/dashboard/DashboardPage';
-import { useAdminData } from '@/hooks/useAdminData';
+import { useApiData } from '@/hooks/useApiData';
 import { readString } from '@/hooks/useUrlFilters';
 import type { NextPageWithLayout } from '@/pages/_app';
 import {
@@ -45,7 +45,7 @@ function RecipeSection({ title, children }: { title: string; children: React.Rea
 const AdminPostDetailPage: NextPageWithLayout = () => {
   const router = useRouter();
   const id = readString(router.query.id);
-  const { data, isLoading, error, reload } = useAdminData(
+  const { data, isLoading, error, reload } = useApiData(
     (signal) => getAdminPost(id!, { signal }).then((response) => response.data),
     id ?? '',
     Boolean(id),
