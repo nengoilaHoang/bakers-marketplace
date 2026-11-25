@@ -16,6 +16,7 @@ const getServerSnapshot = () => EMPTY_TOASTS;
 
 const ToastContainer = () => {
   const [mounted, setMounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const toasts = useSyncExternalStore(
     toastStore.subscribe,
     toastStore.getSnapshot,
@@ -26,10 +27,29 @@ const ToastContainer = () => {
     queueMicrotask(() => setMounted(true));
   }, []);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof el.showPopover !== 'function') return;
+
+    if (toasts.length > 0) {
+      // Re-promote to the top of the browser's Top Layer (above <dialog>.showModal())
+      if (el.matches(':popover-open')) {
+        el.hidePopover();
+      }
+      el.showPopover();
+    } else if (el.matches(':popover-open')) {
+      el.hidePopover();
+    }
+  }, [mounted, toasts]);
+
   if (!mounted || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className='fixed flex flex-col bottom-10 right-10 gap-5 max-w-[calc(100vw-2rem)] z-9999'>
+    <div
+      ref={containerRef}
+      popover='manual'
+      className='fixed inset-auto bottom-10 right-10 m-0 flex flex-col gap-5 border-0 bg-transparent p-0 max-w-[calc(100vw-2rem)] z-9999 overflow-visible'
+    >
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast}></ToastItem>
       ))}

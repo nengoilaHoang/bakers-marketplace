@@ -46,15 +46,17 @@ export default async function request<T>(
   }
 
   // Get only the part after the domain name, e.g. "/api/products" instead of "http://localhost:4000/api/products"
-  const relativeUrl = url.pathname + url.search;
+  const targetUrl =
+    typeof window === 'undefined' ? url.toString() : url.pathname + url.search;
 
+  const isFormData = init?.body instanceof FormData;
   const requestInit: RequestInit = {
-    headers: { 'Content-Type': 'application/json' },
+    ...(isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }),
     credentials: init?.credentials ?? 'include',
     ...init,
   };
 
-  let res = await fetch(relativeUrl, requestInit);
+  let res = await fetch(targetUrl, requestInit);
   let body = res.status === 204 ? null : await res.json().catch(() => null);
 
   if (
@@ -63,7 +65,7 @@ export default async function request<T>(
     path !== '/authen/refresh'
   ) {
     await refreshAccessToken();
-    res = await fetch(relativeUrl, requestInit);
+    res = await fetch(targetUrl, requestInit);
     body = res.status === 204 ? null : await res.json().catch(() => null);
   }
 
@@ -89,9 +91,12 @@ export default async function request<T>(
 async function refreshAccessToken(): Promise<void> {
   if (!refreshAccessTokenPromise) {
     const refreshUrl = new URL(`${BASE_URL}/authen/refresh`);
-    const relativeRefreshUrl = refreshUrl.pathname + refreshUrl.search;
+    const targetRefreshUrl =
+      typeof window === 'undefined'
+        ? refreshUrl.toString()
+        : refreshUrl.pathname + refreshUrl.search;
 
-    refreshAccessTokenPromise = fetch(relativeRefreshUrl, {
+    refreshAccessTokenPromise = fetch(targetRefreshUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

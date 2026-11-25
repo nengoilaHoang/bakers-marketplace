@@ -37,6 +37,7 @@ const VendorLayout = ({
       nav={VENDOR_NAV}
       navLabel='Điều hướng cửa hàng'
       title={title}
+      className='h-screen overflow-hidden'
     >
       {children}
     </DashboardLayout>

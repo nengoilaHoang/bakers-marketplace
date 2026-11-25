@@ -31,7 +31,7 @@ export const RichTextLeafComponentSchema = BaseLeafComponentSchema.extend({
 export const UpdateRichTextLeafComponentSchema =
   UpdateBaseLeafComponentSchema.extend({
     componentType: z.literal(LeafComponentTypeSchema.enum.RICH_TEXT),
-    config: RichTextConfigSchema.partial().optional(),
+    config: RichTextConfigSchema.optional(),
   });
 
 // Create Schemas

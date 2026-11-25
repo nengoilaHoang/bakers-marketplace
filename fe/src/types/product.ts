@@ -70,3 +70,20 @@ export type ProductInput = {
 	unit: string;
 	expirationDate: string | null;
 };
+
+export type ProductSort = 'newest' | 'price_asc' | 'price_desc' | 'popular';
+
+export type ProductFilters = {
+	tag?: string;
+	minPrice?: number;
+	maxPrice?: number;
+	inStockOnly?: boolean;
+	collection?: string;
+	brand?: string;
+};
+
+export type PaginatedProducts = {
+	items: Product[];
+	nextCursor: string | null;
+	hasNextPage: boolean;
+};

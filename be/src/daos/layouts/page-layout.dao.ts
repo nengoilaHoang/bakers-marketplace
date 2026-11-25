@@ -1,27 +1,37 @@
 import database from '#/db/index.js';
-import { PutLayoutComponent } from '#/models/layout-components/layout-components.model.js';
-import { PageLayoutSchema } from '#/models/storefronts/page-layouts.model.js';
+import {
+	InsertPageLayoutRecord,
+	PageLayout,
+	PageLayoutSchema,
+	PageLayoutSummary,
+	PageLayoutSummarySchema,
+	UpdatePageLayoutRecord,
+} from '#/models/storefronts/page-layouts.model.js';
 import { Knex } from 'knex';
 import z from 'zod';
-import layoutComponentDao, {
-	LayoutComponentDao,
-} from '../layouts/layout-components.dao.js';
 
 export class PageLayoutDao {
-  constructor(
-    private readonly knex: Knex,
-    private readonly layoutComponentDao: LayoutComponentDao,
-  ) {}
+  constructor(private readonly knex: Knex) {}
 
-  public transaction = async (trx?: Knex.Transaction) => {
-    return trx ?? (await this.knex.transaction());
+  public withTransaction = async <T>(
+    action: (trx: Knex.Transaction) => Promise<T>,
+    trx?: Knex.Transaction,
+  ): Promise<T> => {
+    // If an external transaction exists, participate in it without closing it
+    if (trx) {
+      return action(trx);
+    }
+    // Otherwise, create a managed transaction that auto-commits and auto-rollbacks
+    return this.knex.transaction(action);
   };
 
-  public getReleaseLayouts = async (releaseId: string) => {
+  public getReleasePages = async (releaseId: string): Promise<PageLayout[]> => {
     const rawData = await this.knex('page_layouts')
       .select(
         'id',
         'type',
+        'name',
+        'slug',
         this.knex.raw(`
           CASE 
             WHEN root_component_id IS NOT NULL 
@@ -32,31 +42,60 @@ export class PageLayoutDao {
       )
       .where({ storefrontReleaseId: releaseId });
 
-    if (!rawData || rawData.length === 0) return null;
+    if (!rawData || rawData.length === 0) return [];
 
     return z.array(PageLayoutSchema).parse(rawData);
   };
 
-  public updatePageLayout = async (
-    pageId: string,
-    root: PutLayoutComponent,
+  public getReleaseSummaryPages = async (
+    releaseId: string,
+  ): Promise<PageLayoutSummary[]> => {
+    const rawData = await this.knex('page_layouts')
+      .select('id', 'type', 'name', 'slug')
+      .where({ storefrontReleaseId: releaseId });
+
+    if (!rawData || rawData.length === 0) return [];
+
+    return z.array(PageLayoutSummarySchema).parse(rawData);
+  };
+
+  createPage = async (
+    payload: InsertPageLayoutRecord,
     trx?: Knex.Transaction,
   ) => {
-    return await this.knex.transaction(async (trx) => {
-      const rootId = await this.layoutComponentDao.upsertLayoutComponent(
-        root,
-        trx,
-      );
+    return await this.withTransaction(async (t) => {
+      return await t('page_layouts')
+        .insert({ ...payload })
+        .returning('*');
+    }, trx);
+  };
 
-      // Attach root component to the page layout
-      await trx('page_layouts')
-        .where({ id: pageId })
-        .update({ rootComponentId: rootId });
+  public updatePage = async (
+    pageId: string,
+    payload: UpdatePageLayoutRecord,
+    trx?: Knex.Transaction,
+  ) => {
+    return await this.withTransaction(async (t) => {
+      return await t('page_layouts').where({ id: pageId }).update(payload);
+    }, trx);
+  };
 
-      return rootId;
-    });
+  public getNavPages = async (domain: string) => {
+    const rows = await this.knex('page_layouts as pl')
+      .join('storefront_releases as sr', 'sr.id', 'pl.storefrontReleaseId')
+      .join('storefronts as s', 's.id', 'sr.storefrontId')
+      .join('brands as b', 'b.id', 's.brandId')
+      .select('pl.id', 'pl.name', 'pl.slug', 'pl.type')
+      .where({ 'b.domain': domain, 'sr.isActive': true });
+
+    return rows.map((row) => ({
+      id: row.id as string,
+      name: row.name as string,
+      slug: row.slug as string,
+      type: row.type as string,
+    }));
   };
 }
 
-const pageLayoutDao = new PageLayoutDao(database.instance, layoutComponentDao);
+const pageLayoutDao = new PageLayoutDao(database.instance);
 export default pageLayoutDao;

@@ -1,30 +1,62 @@
 import { FlattenComponent } from '@/utils/flattenLayout';
 import { getBaseLayoutClassesAndStyle } from '@/utils/layoutClasses';
+import {
+	Draggable,
+	DragOperation,
+	Droppable,
+	Modifier,
+} from '@dnd-kit/abstract';
+import type { Coordinates } from '@dnd-kit/geometry';
 import { useDraggable } from '@dnd-kit/react';
 import React, { useCallback, useMemo } from 'react';
 import useStorefrontCanvasContext from './useStorefrontCanvasContext';
 import useStorefrontLayoutContext from './useStorefrontLayoutContext';
 
+class GrabOffsetModifier extends Modifier {
+  public apply(operation: DragOperation<Draggable, Droppable>): Coordinates {
+    const { activatorEvent, source, transform } = operation;
+
+    if (
+      !(activatorEvent instanceof MouseEvent) ||
+      !source ||
+      !('element' in source) ||
+      !(source.element instanceof HTMLElement)
+    ) {
+      return transform;
+    }
+
+    const rect = source.element.getBoundingClientRect();
+    const clickOffsetX = activatorEvent.clientX - rect.left;
+    const clickOffsetY = activatorEvent.clientY - rect.top;
+
+    return {
+      ...transform,
+      x: transform.x + (clickOffsetX - 20),
+      y: transform.y + (clickOffsetY - 20),
+    };
+  }
+}
+
 const useLayoutComponent = ({
   component,
   sourceParentId,
   sourceSlot,
+  isPreview = false,
 }: {
   component: FlattenComponent;
   sourceParentId?: string;
   sourceSlot?: number;
+  isPreview?: boolean;
 }) => {
-  const { removeComponent } = useStorefrontLayoutContext();
-  const { selectComponent, selectedComponentId, isResizing } =
+  const { state, removeComponent, removeComponentInBreakpoint } =
+    useStorefrontLayoutContext();
+  const { selectComponent, selectedComponentId, isResizing, breakpoint } =
     useStorefrontCanvasContext();
   const isSelected = useMemo(
     () => selectedComponentId === component.id,
     [component.id, selectedComponentId],
   );
-  const isRoot = useMemo(
-    () => sourceParentId === undefined && sourceSlot === undefined,
-    [sourceParentId, sourceSlot],
-  );
+  const isRoot = component.id === state.rootId;
 
   const isDefaultFocusTarget = selectedComponentId === null && isRoot;
   const tabIndex = isSelected || isDefaultFocusTarget ? 0 : -1;
@@ -37,7 +69,9 @@ const useLayoutComponent = ({
       componentId: component.id,
       sourceParentId,
       sourceSlot,
+      isPreview,
     },
+    modifiers: [GrabOffsetModifier],
   });
 
   const handleMouseDown = useCallback(
@@ -71,14 +105,26 @@ const useLayoutComponent = ({
         return;
       }
 
-      if (e.key === 'Delete') {
+      const isModifierKeyPressed = e.ctrlKey || e.metaKey;
+
+      if (isModifierKeyPressed && e.key === 'Delete') {
         e.stopPropagation();
         if (
           !isRoot &&
           sourceParentId !== undefined &&
           sourceSlot !== undefined
         ) {
-          removeComponent(sourceParentId, sourceSlot, component.id);
+          removeComponentInBreakpoint(
+            sourceParentId,
+            breakpoint === 'fluid' ? 'desktop' : breakpoint,
+            sourceSlot,
+          );
+          selectComponent(null);
+        }
+      } else if (!isModifierKeyPressed && e.key === 'Delete') {
+        e.stopPropagation();
+        if (!isRoot && sourceParentId !== undefined) {
+          removeComponent(sourceParentId, component.id);
           selectComponent(null);
         }
       }
@@ -89,11 +135,18 @@ const useLayoutComponent = ({
         e.preventDefault();
         e.stopPropagation();
 
-        const board = document.getElementById('cms-board');
-        if (!board) return;
+        const iframe = document.getElementById('canvas-iframe');
+        if (!iframe) return;
+
+        const iframeDoc =
+          (iframe as HTMLIFrameElement).contentWindow?.document ??
+          (iframe as HTMLIFrameElement).contentDocument;
+        if (!iframeDoc) return;
 
         const componentsList = Array.from(
-          board.querySelectorAll<HTMLElement>('[data-layout-node="true"]'),
+          iframeDoc.body.querySelectorAll<HTMLElement>(
+            '[data-layout-node="true"]',
+          ),
         );
         const currentIndex = componentsList.indexOf(e.currentTarget);
         if (currentIndex === -1) return;
@@ -108,9 +161,11 @@ const useLayoutComponent = ({
       }
     },
     [
+      breakpoint,
       component.id,
       isRoot,
       removeComponent,
+      removeComponentInBreakpoint,
       selectComponent,
       sourceParentId,
       sourceSlot,

@@ -2,9 +2,9 @@
 import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasContext';
 import useStorefrontLayoutContext from '@/hooks/storefront/useStorefrontLayoutContext';
 import { useCallback, useState } from 'react';
-import ConfigSidebar from './ConfigSidebar';
+import ComponentInspector from './ComponentInspector';
 
-const StorefrontConfigSidebar = () => {
+const ComponentInspectorContainer = () => {
   const { state, updateConfig } = useStorefrontLayoutContext();
   const { selectedComponentId } = useStorefrontCanvasContext();
   const [openConfig, setOpenConfig] = useState(true);
@@ -29,7 +29,7 @@ const StorefrontConfigSidebar = () => {
   if (!selectedComponent) return null;
 
   return (
-    <ConfigSidebar
+    <ComponentInspector
       key={selectedComponent.id}
       isOpen={openConfig}
       toggleConfig={handleToggleConfig}
@@ -39,4 +39,4 @@ const StorefrontConfigSidebar = () => {
   );
 };
 
-export default StorefrontConfigSidebar;
+export default ComponentInspectorContainer;

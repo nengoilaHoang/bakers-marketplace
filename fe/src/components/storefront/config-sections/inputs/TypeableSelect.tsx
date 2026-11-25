@@ -1,5 +1,6 @@
 import Icon from '@/components/ui/Icon';
 import useDebouncedCallback from '@/hooks/useDebounceCallback';
+import { cn } from '@/lib/cn';
 import React, {
   useCallback,
   useEffect,
@@ -9,83 +10,145 @@ import React, {
   useState,
 } from 'react';
 
-type TypeableSelectProps<T extends string | number | boolean> = {
+type TypeableSelectProps = {
   id: string;
   name: string;
-  options: Readonly<Record<string, T>>;
-  currentValue: T;
-  onValueChange: (value: T) => void;
+  options: Readonly<Record<string, string>>;
+  currentValue: string;
+  onValueChange: (value: string) => void;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   isTypeable?: boolean;
   showKeyValue?: boolean;
+  containerClassName?: string;
+  footer?: React.ReactNode;
 };
 
 /**
  * A select component that allows users to type in a value to filter the options.
  * It supports string, number, and boolean types for the options.
  *
- * > **Note:** Open state is handled by the parent
+ * > **Note:** Open state is handled by the parent (externally)
  *
- * @template T - The type of the options (string, number, or boolean).
- * @param {TypeableSelectProps<T>} props - The props for the component.
+ * @param {TypeableSelectProps} props - The props for the component.
  * @returns {JSX.Element} The rendered TypeableSelect component.
- *
- * @
  */
-const TypeableSelect = <T extends string | number | boolean>({
+const TypeableSelect = ({
   id,
   name,
   options,
-  currentValue,
+  currentValue: currentKey,
   onValueChange,
   isOpen,
   onOpenChange,
   isTypeable = true,
   showKeyValue = true,
-}: TypeableSelectProps<T>) => {
+  containerClassName,
+  footer,
+}: TypeableSelectProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputTextRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const optionTextRefs = useRef<Record<number, HTMLSpanElement | null>>({});
 
   const [inputHeight, setInputHeight] = useState(0);
-  const [isNearBottom, setIsNearBottom] = useState(false);
-  const [overflowingOptions, setOverflowingOptions] = useState<Set<number>>(
-    new Set(),
+  const [inputValue, setInputValue] = useState(
+    options[currentKey] ?? currentKey ?? '',
   );
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [inputOverflowOffset, setInputOverflowOffset] = useState(0);
+  const [isNearBottom, setIsNearBottom] = useState(false);
+  const [overflowOffsets, setOverflowOffsets] = useState<
+    Record<number, number>
+  >({});
+  const [selectableOptions, setSelectableOptions] =
+    useState<Record<string, string>>(options);
 
   const enumKeys = useMemo(
-    () => (options ? (Object.keys(options) as string[]) : []),
+    () => (options ? Object.keys(options) : []),
     [options],
   );
   const enumValues = useMemo(
-    () => (options ? (Object.values(options) as T[]) : []),
+    () => (options ? Object.values(options) : []),
     [options],
   );
-  const convertedValues = enumValues.every((v) => typeof v === 'boolean')
-    ? enumValues.map((v) => +v)
-    : enumValues;
+
+  useEffect(() => {
+    if (!isOpen) {
+      queueMicrotask(() =>
+        setInputValue(options[currentKey] ?? currentKey ?? ''),
+      );
+    }
+  }, [currentKey, isOpen, options]);
+
+  useEffect(() => {
+    queueMicrotask(() => setSelectableOptions(options));
+  }, [options]);
+
+  useLayoutEffect(() => {
+    if (inputRef.current) {
+      setInputHeight(inputRef.current.offsetHeight);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (isOpen || isInputFocused) {
+      queueMicrotask(() => setInputOverflowOffset(0));
+      return;
+    }
+
+    const element = inputTextRef.current;
+    const parent = element?.parentElement;
+    if (!element || !parent) return;
+
+    const updateInputOverflow = () => {
+      const nextOffset =
+        element.scrollWidth > parent.clientWidth
+          ? parent.clientWidth - element.scrollWidth
+          : 0;
+
+      setInputOverflowOffset((current) =>
+        current === nextOffset ? current : nextOffset,
+      );
+    };
+
+    updateInputOverflow();
+    const resizeObserver = new ResizeObserver(updateInputOverflow);
+    resizeObserver.observe(parent);
+    resizeObserver.observe(element);
+    window.addEventListener('resize', updateInputOverflow);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateInputOverflow);
+    };
+  }, [inputValue, isOpen, isInputFocused]);
 
   useLayoutEffect(() => {
     const updateOverflowingOptions = () => {
-      const nextOverflowingOptions = new Set<number>();
+      const nextOffsets: Record<number, number> = {};
 
       Object.entries(optionTextRefs.current).forEach(([index, element]) => {
-        if (element && element.scrollWidth > element.clientWidth) {
-          nextOverflowingOptions.add(Number(index));
+        const parent = element?.parentElement;
+        if (element && parent && element.scrollWidth > parent.clientWidth) {
+          nextOffsets[Number(index)] = parent.clientWidth - element.scrollWidth;
         }
       });
 
-      setOverflowingOptions((current) => {
+      setOverflowOffsets((current) => {
+        const currentKeys = Object.keys(current);
+        const nextKeys = Object.keys(nextOffsets);
         if (
-          current.size === nextOverflowingOptions.size &&
-          [...current].every((index) => nextOverflowingOptions.has(index))
+          currentKeys.length === nextKeys.length &&
+          nextKeys.every(
+            (key) => current[Number(key)] === nextOffsets[Number(key)],
+          )
         ) {
           return current;
         }
-        return nextOverflowingOptions;
+        return nextOffsets;
       });
     };
 
@@ -98,30 +161,7 @@ const TypeableSelect = <T extends string | number | boolean>({
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateOverflowingOptions);
     };
-  }, [convertedValues.length, showKeyValue]);
-
-  const getKey = useCallback(
-    (value: string) => {
-      if (value === undefined || value === null) return '';
-      const foundEntry = Object.entries(options).find(
-        ([, val]) => val === value,
-      );
-      return foundEntry ? foundEntry[0] : value;
-    },
-    [options],
-  );
-
-  const [inputValue, setInputValue] = useState(getKey(String(currentValue)));
-
-  useEffect(() => {
-    queueMicrotask(() => setInputValue(getKey(String(currentValue))));
-  }, [currentValue, getKey]);
-
-  useLayoutEffect(() => {
-    if (inputRef.current) {
-      setInputHeight(inputRef.current.offsetHeight);
-    }
-  }, []);
+  }, [selectableOptions, showKeyValue, isOpen]);
 
   const updateView = useCallback(() => {
     const container = containerRef.current;
@@ -134,14 +174,14 @@ const TypeableSelect = <T extends string | number | boolean>({
 
     // Measures the real height of the options list instead of hardcoding 180
     const measuredHeight =
-      contentRef.current?.scrollHeight ||
-      convertedValues.length * 22 + inputHeight; // fallback to a rough estimate
+      contentRef.current?.scrollHeight || enumValues.length * 22 + inputHeight; // fallback to a rough estimate
     const contentHeight = Math.min(measuredHeight, 150);
     const requiredSpace = contentHeight + 8;
 
     setIsNearBottom(spaceBelow < requiredSpace);
-  }, [convertedValues.length, inputHeight]);
+  }, [enumValues.length, inputHeight]);
 
+  // Update the view when the window is resized or scrolled
   useLayoutEffect(() => {
     updateView();
     window.addEventListener('resize', updateView);
@@ -155,7 +195,11 @@ const TypeableSelect = <T extends string | number | boolean>({
 
   const handleContainerClick = useCallback(() => {
     if (inputRef.current) {
-      inputRef.current.focus();
+      if (!isOpen) {
+        inputRef.current.focus();
+      } else {
+        inputRef.current.blur();
+      }
     }
     updateView();
     onOpenChange(!isOpen);
@@ -164,35 +208,62 @@ const TypeableSelect = <T extends string | number | boolean>({
   const handleChange = useCallback(
     (rawInput: string) => {
       const query = rawInput.trim().toLowerCase();
-      if (!query) return;
+      optionTextRefs.current = {};
 
-      const matchedOption = enumKeys.find((key) =>
-        key.toLowerCase().startsWith(query),
+      if (!query) {
+        setSelectableOptions(options);
+        return;
+      }
+
+      const newOptions = Object.fromEntries(
+        Object.entries(options).filter(
+          ([key, value]) =>
+            key.toLowerCase().includes(query) ||
+            value.toLowerCase().includes(query),
+        ),
       );
 
-      if (matchedOption) {
-        onValueChange(options[matchedOption]);
-        return;
-      }
+      setSelectableOptions((prev) => (prev === newOptions ? prev : newOptions));
+    },
+    [options],
+  );
 
-      const formattedNumber = Number(query);
-      if (!Number.isNaN(formattedNumber)) {
-        onValueChange(formattedNumber as T);
-        return;
-      }
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        const rawValue = (e.target as HTMLInputElement).value
+          .trim()
+          .toLocaleLowerCase();
+        if (!rawValue) return;
 
-      let formattedBoolean: boolean | null = null;
-      if (query === 'true') {
-        formattedBoolean = true;
-      } else if (query === 'false') {
-        formattedBoolean = false;
-      }
+        let matchedOptionIndex = enumKeys.findIndex((key) => {
+          if (typeof key === 'string') {
+            return key.toLowerCase().startsWith(rawValue);
+          }
+          return false;
+        });
 
-      if (formattedBoolean !== null) {
-        onValueChange(formattedBoolean as T);
+        if (matchedOptionIndex === -1) {
+          matchedOptionIndex = enumValues.findIndex((val) =>
+            val.toLowerCase().startsWith(rawValue),
+          );
+        }
+
+        if (matchedOptionIndex !== -1) {
+          const matchedKey = enumKeys[matchedOptionIndex];
+          if (matchedKey !== undefined) {
+            onValueChange(matchedKey);
+          }
+          return;
+        }
+
+        const formattedNumber = Number(rawValue);
+        if (!Number.isNaN(formattedNumber)) {
+          onValueChange(String(formattedNumber));
+        }
       }
     },
-    [enumKeys, onValueChange, options],
+    [enumKeys, enumValues, onValueChange],
   );
 
   const handleDebouncedChange = useDebouncedCallback(handleChange, 400);
@@ -200,16 +271,19 @@ const TypeableSelect = <T extends string | number | boolean>({
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const nextValue = e.target.value;
-      setInputValue(getKey(nextValue));
+      setInputValue(nextValue);
       handleDebouncedChange(nextValue);
     },
-    [handleDebouncedChange, getKey],
+    [handleDebouncedChange],
   );
 
-  const handleSelectOption = (value: string) => {
-    setInputValue(getKey(value));
-    onValueChange(value as T);
+  const handleSelectOption = (key: string) => {
+    if (!(key in options)) return;
+    const value = options[key];
+    setInputValue(value);
+    onValueChange(key);
     onOpenChange(false);
+    inputRef.current?.blur();
   };
 
   let arrowRotation = '';
@@ -217,35 +291,75 @@ const TypeableSelect = <T extends string | number | boolean>({
     arrowRotation = isNearBottom ? 'rotate-90' : '-rotate-90';
   }
 
+  const showInputOverlay = !isOpen && !isInputFocused;
+
   return (
-    <div className='relative block w-full'>
+    <div className={cn('relative block w-full', containerClassName)}>
       <button
         ref={containerRef}
         tabIndex={-1}
         onClick={handleContainerClick}
-        className={`block relative z-20 w-full rounded-md border border-zinc-200 text-xs text-zinc-800 transition ${
+        className={`group block relative z-20 w-full rounded-md border border-zinc-200 text-xs text-zinc-800 transition ${
           isOpen ? 'bg-white border-zinc-950' : 'bg-zinc-50/50 hover:bg-white'
-        }	focus-within:bg-white focus-within:border-zinc-950 focus-within:outline-none focus-within:ring-1 focus-within:ring-zinc-950`}
+        } focus-within:bg-white focus-within:border-zinc-950 focus-within:outline-none focus-within:ring-1 focus-within:ring-zinc-950`}
       >
         <div className='relative flex items-center w-full min-w-0'>
-          <input
-            id={id}
-            name={name}
-            ref={inputRef}
-            className='flex-1 min-w-0 px-2.5 py-1.5 bg-transparent focus:outline-none focus:border-none'
-            type='text'
-            autoComplete='off'
-            readOnly={!isTypeable}
-            onChange={handleInputChange}
-            value={inputValue}
-          ></input>
+          <div className='relative flex-1 min-w-0'>
+            <input
+              id={id}
+              name={name}
+              ref={inputRef}
+              className={cn(
+                'block w-full px-2.5 py-1.5 bg-transparent focus:outline-none focus:border-none',
+                showInputOverlay && 'text-transparent selection:bg-transparent',
+              )}
+              type='text'
+              autoComplete='off'
+              readOnly={!isTypeable}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              value={inputValue}
+            />
+
+            {showInputOverlay && (
+              <div
+                aria-hidden='true'
+                className='pointer-events-none absolute inset-0 flex items-center px-2.5'
+              >
+                <div className='min-w-0 flex-1 overflow-hidden text-left'>
+                  <span
+                    ref={inputTextRef}
+                    style={
+                      inputOverflowOffset < 0
+                        ? ({
+                            '--scroll-offset': `${inputOverflowOffset}px`,
+                          } as React.CSSProperties)
+                        : undefined
+                    }
+                    className={cn(
+                      'block whitespace-nowrap',
+                      inputOverflowOffset < 0
+                        ? 'w-max group-hover:animate-scrolling-text'
+                        : 'truncate',
+                    )}
+                  >
+                    {inputValue}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
           <Icon
             name='chevron-left'
             label={`Arrow icon indicating the dropdown is ${isOpen ? 'open' : 'closed'}`}
             className={`pointer-events-none mr-1 inset-y-0 right-0 flex items-center transition-transform duration-200 ease-in-out ${arrowRotation}`}
-          ></Icon>
+          />
         </div>
       </button>
+
       <div
         className={`grid transition-all duration-200 ease-out absolute ${isNearBottom ? 'bottom-0' : 'top-0'} left-0 w-full min-w-0 max-h-37.5 rounded-md border text-xs text-zinc-800 z-10 overflow-hidden scrollbar-none ${
           isOpen
@@ -263,36 +377,52 @@ const TypeableSelect = <T extends string | number | boolean>({
           className='min-h-0 min-w-0 overflow-y-auto scrollbar-none'
           ref={contentRef}
         >
-          {convertedValues.map((val, idx) => {
+          {Object.entries(selectableOptions).map(([key, value], idx) => {
+            const scrollOffset = overflowOffsets[idx];
+
             return (
               <button
-                key={`${String(val)}-${idx}`}
+                key={key}
                 onClick={(e) => {
                   e.preventDefault();
-                  handleSelectOption(String(val));
+                  handleSelectOption(key);
                 }}
-                className='appearance-none flex min-h-0 w-full items-center justify-between px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
+                className='group appearance-none flex min-h-0 w-full items-center justify-between gap-2 px-2.5 py-1.5 hover:bg-zinc-100 transition-colors cursor-pointer'
               >
-                <span
-                  ref={(element) => {
-                    optionTextRefs.current[idx] = element;
-                  }}
-                  className={`min-w-0 truncate ${
-                    overflowingOptions.has(idx)
-                      ? 'hover:animate-scrolling-text'
-                      : ''
-                  }`}
-                >
-                  {enumKeys[idx]}
+                <span className='min-w-0 flex-1 overflow-hidden text-left'>
+                  <span
+                    ref={(element) => {
+                      optionTextRefs.current[idx] = element;
+                    }}
+                    style={
+                      scrollOffset
+                        ? ({
+                            '--scroll-offset': `${scrollOffset}px`,
+                          } as React.CSSProperties)
+                        : undefined
+                    }
+                    className={cn(
+                      'block whitespace-nowrap',
+                      scrollOffset
+                        ? 'w-max group-hover:animate-scrolling-text'
+                        : 'truncate',
+                    )}
+                  >
+                    {value}
+                  </span>
                 </span>
                 {showKeyValue && (
-                  <span className='ml-auto font-mono text-[10px] text-zinc-400'>
-                    {val}
+                  <span className='shrink-0 font-mono text-[10px] text-zinc-400'>
+                    {key}
                   </span>
                 )}
               </button>
             );
           })}
+
+          {footer && (
+            <div className='border-t border-zinc-200 bg-white'>{footer}</div>
+          )}
         </div>
       </div>
     </div>

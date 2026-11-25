@@ -3,46 +3,67 @@ import useStorefrontCanvasContext from '@/hooks/storefront/useStorefrontCanvasCo
 import { FlattenComponent } from '@/utils/flattenLayout';
 import { useMemo, useState } from 'react';
 import BaseLayoutSections from './config-sections/BaseLayoutSections';
+import { CollectionGridSectionId } from './inspectors/CollectionGridInspector';
+import { GridSectionId } from './inspectors/GridInspector';
+import { HeroBannerSectionId } from './inspectors/HeroBannerInspector';
+import { ProductCardSectionId } from './inspectors/ProductCardInspector';
 import { COMPONENT_INSPECTORS } from './inspectors/registry';
 
 export type SectionId =
   | 'dimensions'
   | 'alignment'
   | 'padding'
-  | 'surface-theme'
+  | 'theme'
   | 'bento'
-  | 'hero-overlay'
-  | 'hero-content';
+  | HeroBannerSectionId
+  | GridSectionId
+  | CollectionGridSectionId
+  | ProductCardSectionId;
 
-type ConfigSidebarProps = {
+type ComponentInspectorProps = {
   isOpen: boolean;
   toggleConfig: () => void;
   component: FlattenComponent;
   onUpdate: (pathname: string, value: unknown) => void;
 };
 
-const ConfigSidebar = ({
+const ComponentInspector = ({
   isOpen,
   toggleConfig,
   component,
   onUpdate,
-}: ConfigSidebarProps) => {
+}: ComponentInspectorProps) => {
   const { breakpoint } = useStorefrontCanvasContext();
 
   const isBentoItem =
     'colSpan' in component.config && 'rowSpan' in component.config;
 
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+  const [openSections, setOpenSections] = useState<Record<SectionId, boolean>>({
     dimensions: true,
-    alignment: false,
-    padding: false,
-    'surface-theme': false,
-    ...(isBentoItem && { bento: false }),
+    alignment: true,
+    padding: true,
+    theme: true,
     ...(component.componentType === 'HERO_BANNER' && {
-      'hero-overlay': false,
-      'hero-content': false,
+      'hero-overlay': true,
+      'hero-content': true,
+      'hero-cta': true,
+      'hero-banner-image': true,
     }),
-  });
+    ...(component.componentType === 'GRID' && {
+      'grid-layout': true,
+      'grid-tracks': true,
+    }),
+    ...(component.componentType === 'COLLECTION_GRID' && {
+      'collection-grid-data-source': true,
+      'collection-grid-layout': true,
+    }),
+    ...(component.componentType === 'PRODUCT_CARD' && {
+      'product-card-thumbnail': true,
+      'product-card-header': true,
+      'product-card-body': true,
+    }),
+    ...(isBentoItem && { bento: true }),
+  } as Record<SectionId, boolean>);
 
   const [activeSectionId, setActiveSectionId] = useState<SectionId | null>(
     null,
@@ -58,10 +79,19 @@ const ConfigSidebar = ({
         'dimensions',
         'alignment',
         'padding',
-        'surface-theme',
-        'bento',
+        'theme',
+        'hero-banner-image',
         'hero-overlay',
         'hero-content',
+        'hero-cta',
+        'grid-layout',
+        'grid-tracks',
+        'collection-grid-data-source',
+        'collection-grid-layout',
+        'product-card-thumbnail',
+        'product-card-header',
+        'product-card-body',
+        'bento',
       ].filter((id) => id in openSections) as SectionId[],
     [openSections],
   );
@@ -93,6 +123,7 @@ const ConfigSidebar = ({
       >
         <svg
           xmlns='http://www.w3.org/2000/svg'
+          aria-hidden='true'
           width='16'
           height='16'
           fill='currentColor'
@@ -134,10 +165,11 @@ const ConfigSidebar = ({
           onUpdate={onUpdate}
           onActiveSectionChange={setActiveSectionId}
           getSectionZIndex={getSectionZIndex}
+          currentBp={breakpoint === 'fluid' ? 'desktop' : breakpoint}
         />
       </div>
     </aside>
   );
 };
 
-export default ConfigSidebar;
+export default ComponentInspector;

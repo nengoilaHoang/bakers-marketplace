@@ -1,12 +1,14 @@
 // components/layout/VendorShellLayout.tsx
-import VendorContextProvider from '@/hooks/storefront/VendorContextProvider';
+import VendorStorefrontContextProvider from '@/hooks/storefront/VendorStorefrontContextProvider';
 import React from 'react';
 import VendorGuard from './VendorGuard';
 
 const VendorScope = ({ children }: { children: React.ReactNode }) => {
   return (
     <VendorGuard>
-      <VendorContextProvider>{children}</VendorContextProvider>
+      <VendorStorefrontContextProvider>
+        {children}
+      </VendorStorefrontContextProvider>
     </VendorGuard>
   );
 };

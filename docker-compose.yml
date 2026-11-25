@@ -46,11 +46,6 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   # Backend
   backend:
@@ -76,7 +71,7 @@ services:
       postgres:
         condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     command: npm run dev:docker
     develop:
       watch:
@@ -129,3 +124,7 @@ volumes:
 networks:
   bakers_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.89.50.0/24
+          gateway: 10.89.50.1

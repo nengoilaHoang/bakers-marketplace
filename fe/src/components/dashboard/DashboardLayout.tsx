@@ -12,6 +12,7 @@ type DashboardLayoutProps = Readonly<{
   // Tên vùng điều hướng cho trình đọc màn hình.
   navLabel: string;
   title?: string;
+  className?: string;
   children: ReactNode;
 }>;
 
@@ -22,10 +23,17 @@ export default function DashboardLayout({
   nav,
   navLabel,
   title,
+  className,
   children,
 }: DashboardLayoutProps) {
   return (
-    <SiteLayout theme='dashboard' title={title} header={header} hideFooter>
+    <SiteLayout
+      theme='dashboard'
+      title={title}
+      header={header}
+      hideFooter
+      className={className}
+    >
       <div className='flex min-h-0 w-full flex-1 flex-col lg:flex-row'>
         <DashboardSidebar items={nav} label={navLabel} />
         <div className='min-h-0 flex-1 overflow-y-auto'>

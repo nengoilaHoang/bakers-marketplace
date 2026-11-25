@@ -1,7 +1,7 @@
 import request, { ApiError } from '@/lib/api';
 import { getSession } from '@/services/users';
 import { User } from '@/types/user';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AuthenticationContext from './AuthenticationContext';
 
@@ -58,7 +58,7 @@ const AuthenticationProvider = ({
       console.error('Logout request failed:', err);
     } finally {
       setAccount(null);
-      router.replace('/authen/login');
+      void router.replace('/authen/login');
     }
   }, [router]);
 

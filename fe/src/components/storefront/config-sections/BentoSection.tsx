@@ -1,12 +1,14 @@
+import { DeviceBreakpoint } from '@/types/canvas';
 import { useMemo } from 'react';
-import { SectionId } from '../ConfigSidebar';
+import { SectionId } from '../ComponentInspector';
+import BreakpointContainer from './BreakpointContainer';
 import ConfigInput from './ConfigInput';
 import ConfigLabel from './ConfigLabel';
 import ConfigSectionWrapper from './ConfigSectionWrapper';
 
 type BentoSectionProps = {
   isOpen: boolean;
-  toggleSection: (id: SectionId) => void;
+  toggleSection: () => void;
   span: {
     col: number;
     row: number;
@@ -14,6 +16,7 @@ type BentoSectionProps = {
   onUpdate: (pathname: string, value: unknown) => void;
   onActiveSectionChange: (isActive: boolean) => void;
   zIndex: number;
+  currentBp: DeviceBreakpoint;
 };
 
 const BentoSection = ({
@@ -23,16 +26,19 @@ const BentoSection = ({
   onUpdate,
   onActiveSectionChange,
   zIndex,
+  currentBp,
 }: BentoSectionProps) => {
   const id: SectionId = 'bento';
   const title = 'Bento';
   const description = 'Adjust the bento layout of the component.';
-  const spans = useMemo<Array<{
-    key: keyof BentoSectionProps['span'];
-    id: string;
-    name: string;
-    label: string;
-  }>>(
+  const spans = useMemo<
+    Array<{
+      key: keyof BentoSectionProps['span'];
+      id: string;
+      name: string;
+      label: string;
+    }>
+  >(
     () => [
       {
         key: 'col',
@@ -59,24 +65,28 @@ const BentoSection = ({
       onToggle={toggleSection}
       zIndex={zIndex}
     >
-      <div className='flex flex-row w-full gap-2'>
-        {spans.map(({ key, name, id, label }) => (
-          <div
-            key={name}
-            className='flex flex-col gap-2 justify-start items-center'
-          >
-            <ConfigLabel label={label} forId={id}></ConfigLabel>
-            <ConfigInput
-              id={id}
-              name={name}
-              inputType='text'
-              currentValue={span[key]}
-              onValueChange={(val) => onUpdate(name, val)}
-              onOpenStateChange={onActiveSectionChange}
-            />
-          </div>
-        ))}
-      </div>
+      <BreakpointContainer label='Span' breakpoint={currentBp}>
+        <div className='flex flex-row w-full gap-2'>
+          {spans.map(({ key, name, id, label }) => (
+            <div
+              key={name}
+              className='flex flex-col gap-2 justify-center items-start'
+            >
+              <ConfigLabel label={label} forId={id}></ConfigLabel>
+              <ConfigInput
+                id={id}
+                name={name}
+                min={1}
+                step={1}
+                inputType='number'
+                currentValue={span[key]}
+                onValueChange={(val) => onUpdate(name, val)}
+                onOpenStateChange={onActiveSectionChange}
+              />
+            </div>
+          ))}
+        </div>
+      </BreakpointContainer>
     </ConfigSectionWrapper>
   );
 };

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BrandSchema } from './brands.model.js';
+import { BrandPublicViewSchema, BrandSchema } from './brands.model.js';
 import { StorefrontReleaseSchema } from './storefront-releases.model.js';
 
 export const StorefrontTableSchema = z.object({
@@ -15,5 +15,15 @@ export const StorefrontSchema = z.object({
   createdAt: z.date().readonly(),
 });
 
+export const StorefrontWithBrandPublicViewSchema = z.object({
+  id: z.uuidv4().readonly(),
+  brand: BrandPublicViewSchema,
+  releases: z.array(StorefrontReleaseSchema),
+  createdAt: z.date().readonly(),
+});
+
 export type StorefrontRow = z.infer<typeof StorefrontTableSchema>;
 export type Storefront = z.infer<typeof StorefrontSchema>;
+export type StorefrontWithBrandPublicView = z.infer<
+  typeof StorefrontWithBrandPublicViewSchema
+>;

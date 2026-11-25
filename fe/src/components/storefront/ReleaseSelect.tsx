@@ -1,10 +1,10 @@
-import useVendorContext from '@/hooks/storefront/useVendorContext';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import { useMemo, useState } from 'react';
 import TypeableSelect from './config-sections/inputs/TypeableSelect';
 
 const ReleaseSelect = () => {
-  const { currentStorefront, currentRelease, setCurrentReleaseId } =
-    useVendorContext();
+  const { storefront, currentRelease, setCurrentReleaseId } =
+    useVendorStorefrontContext();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (value: string) => {
@@ -14,15 +14,15 @@ const ReleaseSelect = () => {
   const releaseOptions = useMemo(
     () =>
       Object.fromEntries(
-        (currentStorefront?.releases || []).map((rel) => [
-          `v${rel.version} - ${rel.displayName}`,
+        (storefront?.releases || []).map((rel) => [
           rel.id,
+          `v${rel.version} - ${rel.displayName}`,
         ]),
       ),
-    [currentStorefront?.releases],
+    [storefront?.releases],
   );
 
-  if (!currentStorefront || !currentRelease) return null;
+  if (!storefront || !currentRelease) return null;
 
   return (
     <div className='flex items-center gap-2'>

@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import {
-	BaseLayoutComponentConfigSchema,
 	BoxStyleConfigSchema,
+	ResponsiveProp,
 } from '../base-layout-components.model.js';
 import {
+	BaseRepeaterComponentConfigSchema,
 	BaseRepeaterComponentSchema,
 	CreateBaseRepeaterComponentSchema,
 	RepeaterComponentTypeSchema,
@@ -24,8 +25,18 @@ export const CollectionGridDataProvider = z.object({
 });
 
 export const BaseCollectionGridConfigSchema =
-  BaseLayoutComponentConfigSchema.extend({
+  BaseRepeaterComponentConfigSchema.extend({
     ...BoxStyleConfigSchema.shape,
+    cols: ResponsiveProp(z.uint32().min(1).max(12)).default({
+      desktop: 4,
+      tablet: 2,
+      mobile: 1,
+    }),
+    gap: ResponsiveProp(z.uint32().min(0)).default({
+      desktop: 16,
+      tablet: 16,
+      mobile: 12,
+    }),
     layout: CollectionGridLayoutType,
   });
 
@@ -59,12 +70,7 @@ export const UpdateCollectionGridSchema =
     componentType: z
       .literal(RepeaterComponentTypeSchema.enum.COLLECTION_GRID)
       .readonly(),
-    config: z
-      .union([
-        InfiniteScrollCollectionGridConfigSchema.partial(),
-        PaginationCollectionGridConfigSchema.partial(),
-      ])
-      .optional(),
+    config: CollectionGridConfigSchema.optional(),
   });
 
 // Create Schemas

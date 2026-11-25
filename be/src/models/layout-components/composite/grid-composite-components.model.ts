@@ -41,11 +41,12 @@ export const BaseGridConfigSchema = BaseLayoutComponentConfigSchema.extend({
   }),
   densePacking: z.boolean().default(true), // grid-auto-flow: dense
   gap: ResponsiveProp(z.uint32().min(0)), // in px
-  borderRadius: z.union([
-    z.undefined(),
-    z.uint32(), // in px
-    z.string().regex(/^\d+(\.\d+)?%/), // in %
-  ]),
+  borderRadius: z
+    .union([
+      z.uint32(), // in px
+      z.string().regex(/^\d+(\.\d+)?%/), // in %
+    ])
+    .optional(),
 });
 
 export const UniformGridConfigSchema = BaseGridConfigSchema.extend({
@@ -61,30 +62,24 @@ export const GridConfigSchema = z.discriminatedUnion('layout', [
   BentoGridConfigSchema,
 ]);
 
-export const GridCompositeComponentSchema = BaseCompositeComponentSchema.extend(
-  {
+export const GridCompositeComponentSchema =
+  BaseCompositeComponentSchema.safeExtend({
     componentType: z.literal(CompositeComponentTypeSchema.enum.GRID).readonly(),
     config: GridConfigSchema,
-  },
-);
+  });
 
 // Update Schemas
 
 export const UpdateGridCompositeComponentSchema =
   UpdateBaseCompositeComponentSchema.extend({
     componentType: z.literal(CompositeComponentTypeSchema.enum.GRID).readonly(),
-    config: z
-      .union([
-        UniformGridConfigSchema.partial(),
-        BentoGridConfigSchema.partial(),
-      ])
-      .optional(),
+    config: GridConfigSchema.optional(),
   });
 
 // Create Schemas
 
 export const CreateGridCompositeComponentSchema =
-  CreateBaseCompositeComponentSchema.extend({
+  CreateBaseCompositeComponentSchema.safeExtend({
     componentType: z.literal(CompositeComponentTypeSchema.enum.GRID).readonly(),
     config: GridConfigSchema,
   });

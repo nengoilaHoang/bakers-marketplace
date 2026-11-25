@@ -3,12 +3,24 @@ import { z } from 'zod';
 export const HexColorSchema = z
   .string()
   .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
-export const ColorSchema = z.union([z.string(), HexColorSchema]);
+export const PaletteColorTokenSchema = z.enum([
+  'colorBackground',
+  'colorSurface',
+  'colorBorder',
+  'colorTextPrimary',
+  'colorTextSecondary',
+  'colorPrimary',
+  'colorPrimaryForeground',
+  'colorSecondary',
+  'colorSecondaryForeground',
+  'colorAccent',
+  'colorAccentForeground',
+]);
+export const ColorSchema = z.union([PaletteColorTokenSchema, HexColorSchema]);
 const TextAlignmentTypeSchema = z.enum(['left', 'center', 'right', 'justify']);
 export const TextConfigSchema = z.object({
   textAlign: TextAlignmentTypeSchema.default('left'),
-  decoration: z.enum(['strikethrough', 'underline']),
-
+  decoration: z.enum(['strikethrough', 'underline', 'none']).default('none'),
   textColor: ColorSchema,
   fontWeight: z
     .union([
@@ -35,8 +47,10 @@ const HorizontalAlignTypeSchema = z.enum([
 ]);
 const VerticalAlignTypeSchema = z.enum(['top', 'center', 'bottom', 'stretch']);
 
+export const DeviceBreakpoint = z.enum(['desktop', 'tablet', 'mobile']);
+
 const DYNAMIC_PLACEHOLDER_REGEX = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
-const TOKEN_ALLOWLIST_REGEX = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/;
+const TOKEN_ALLOWLIST_REGEX = /^[a-zA-Z0-9]+(\.[a-zA-Z0-0]+)*$/; // Allow only alphanumeric characters and dots
 const CONTAINS_URL_REGEX =
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 const FORBIDDEN_WORDS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -93,11 +107,6 @@ export const SurfaceThemeSchema = z.enum([
 
 export type SurfaceTheme = z.infer<typeof SurfaceThemeSchema>;
 
-export const BentoCellConfig = z.object({
-  colSpan: z.uint32().min(1).max(50),
-  rowSpan: z.uint32().min(1).max(50),
-});
-
 /**
  * A helper that takes a Zod schema and outputs a 3-breakpoint Zod schema to support responsive layout.
  * @param valueSchema The Zod schema to make responsive.
@@ -134,6 +143,11 @@ export const ResponsiveProp = <T extends z.ZodType>(valueSchema: T) =>
       }),
   ]);
 
+export const BentoCellConfig = z.object({
+  colSpan: ResponsiveProp(z.uint32().min(1).max(50)),
+  rowSpan: ResponsiveProp(z.uint32().min(1).max(50)),
+});
+
 /**
  * Base placement config for all components
  */
@@ -151,23 +165,25 @@ export const SlotPlacementConfigSchema = BasePlacementConfigSchema.extend({
   h: DimensionTypeSchema.default('auto'),
 });
 
+export const PaddingSchema = z
+  .object({
+    top: PaddingTypeSchema.default('none'),
+    bottom: PaddingTypeSchema.default('none'),
+    left: PaddingTypeSchema.default('none'),
+    right: PaddingTypeSchema.default('none'),
+  })
+  .default({
+    top: 'none',
+    bottom: 'none',
+    left: 'none',
+    right: 'none',
+  });
+
 /**
  * A box style config for components with padding and surface theme control (e.g., grids, dividers)
  */
 export const BoxStyleConfigSchema = z.object({
-  padding: z
-    .object({
-      top: PaddingTypeSchema.default('none'),
-      bottom: PaddingTypeSchema.default('none'),
-      left: PaddingTypeSchema.default('none'),
-      right: PaddingTypeSchema.default('none'),
-    })
-    .default({
-      top: 'none',
-      bottom: 'none',
-      left: 'none',
-      right: 'none',
-    }),
+  padding: PaddingSchema,
   surfaceTheme: SurfaceThemeSchema.default('default'),
 });
 

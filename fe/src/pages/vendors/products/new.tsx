@@ -1,14 +1,14 @@
 import { useRouter } from 'next/router';
 import { useMemo, useState } from 'react';
 
+import DashboardPage from '@/components/dashboard/DashboardPage';
 import VendorLayout from '@/components/layout/VendorLayout';
 import VendorScope from '@/components/layout/VendorScope';
 import ProductForm, {
   EMPTY_PRODUCT_FORM,
   type ProductFormValues,
 } from '@/components/product/ProductForm';
-import DashboardPage from '@/components/dashboard/DashboardPage';
-import useVendorContext from '@/hooks/storefront/useVendorContext';
+import useVendorStorefrontContext from '@/hooks/storefront/useVendorStorefrontContext';
 import useAuth from '@/hooks/user/useAuthContext';
 import type { NextPageWithLayout } from '@/pages/_app';
 import { productApi } from '@/services/products';
@@ -17,7 +17,7 @@ import type { Storefront } from '@/types/storefront';
 const NewProductPage: NextPageWithLayout = () => {
   const router = useRouter();
   const { account } = useAuth();
-  const { storefronts } = useVendorContext();
+  const { storefront } = useVendorStorefrontContext();
 
   const [error, setError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
@@ -25,19 +25,19 @@ const NewProductPage: NextPageWithLayout = () => {
   // Thương hiệu của vendor lấy từ các storefront (mỗi storefront thuộc một thương hiệu).
   // API storefront hiện chỉ trả brandId (chưa có tên), nên tạm hiện "Thương hiệu 1, 2…".
   const brands = useMemo(() => {
-    const ids = storefronts
-      .map(
-        (storefront) =>
-          (storefront as Storefront & { brandId?: string }).brandId ??
-          storefront.brand?.id,
-      )
-      .filter((brandId): brandId is string => Boolean(brandId));
+    if (!storefront) return [];
+    const brandId =
+      (storefront as Storefront & { brandId?: string }).brandId ??
+      storefront.brand?.id;
+    if (!brandId) return [];
 
-    return [...new Set(ids)].map((brandId, index) => ({
-      id: brandId,
-      name: `Thương hiệu ${index + 1} (${brandId.slice(0, 8)})`,
-    }));
-  }, [storefronts]);
+    return [
+      {
+        id: brandId,
+        name: storefront.brand?.name ?? `Thương hiệu 1 (${brandId.slice(0, 8)})`,
+      },
+    ];
+  }, [storefront]);
 
   async function handleSubmit(values: ProductFormValues) {
     setSaving(true);

@@ -4,8 +4,14 @@ import {
 	PaddingType,
 	SurfaceTheme,
 	TextConfig,
-	VerticalAlignType
+	VerticalAlignType,
 } from '@/types/layout-component';
+import {
+	ASPECT_RATIO_REGEX,
+	AspectRatioValue,
+	MediaFit,
+	STANDARD_ASPECT_RATIOS,
+} from '@/types/layout-component/aspect-ratio';
 import {
 	HeroBannerContentPosition,
 	HeroBannerContentSize,
@@ -18,24 +24,25 @@ export const HERO_TYPOGRAPHY_PRESETS: Record<
   { eyebrow: string; title: string; subtitle: string }
 > = {
   compact: {
-    eyebrow: 'text-xs tracking-wider uppercase',
-    title: 'text-2xl sm:text-3xl md:text-4xl leading-tight',
-    subtitle: 'text-sm sm:text-base text-ink-muted',
+    eyebrow: 'text-[10px] sm:text-xs tracking-wider uppercase',
+    title: 'text-lg sm:text-2xl md:text-3xl lg:text-4xl leading-tight',
+    subtitle: 'text-xs sm:text-sm md:text-base text-ink-muted',
   },
   medium: {
-    eyebrow: 'text-xs sm:text-sm tracking-wider uppercase',
-    title: 'text-3xl sm:text-4xl md:text-5xl leading-tight',
-    subtitle: 'text-base sm:text-lg text-ink-muted',
+    eyebrow: 'text-[10px] sm:text-xs md:text-sm tracking-wider uppercase',
+    title: 'text-xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight',
+    subtitle: 'text-xs sm:text-sm md:text-base lg:text-lg text-ink-muted',
   },
   large: {
-    eyebrow: 'text-sm tracking-widest uppercase',
-    title: 'text-4xl sm:text-5xl md:text-6xl leading-tight',
-    subtitle: 'text-lg sm:text-xl text-ink-muted',
+    eyebrow: 'text-xs sm:text-sm tracking-widest uppercase',
+    title: 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight',
+    subtitle: 'text-sm sm:text-base md:text-lg lg:text-xl text-ink-muted',
   },
   impact: {
-    eyebrow: 'text-sm sm:text-base tracking-widest uppercase',
-    title: 'text-5xl sm:text-6xl md:text-7xl leading-none tracking-tight',
-    subtitle: 'text-xl sm:text-2xl text-ink-muted',
+    eyebrow: 'text-xs sm:text-sm md:text-base tracking-widest uppercase',
+    title:
+      'text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-none tracking-tight',
+    subtitle: 'text-sm sm:text-lg md:text-xl lg:text-2xl text-ink-muted',
   },
 };
 
@@ -49,37 +56,59 @@ export const HERO_POSITION_CLASSES: Record<
   Record<HeroBannerContentPosition, string>
 > = {
   mobile: {
-    'top-left': 'justify-start items-start text-left',
-    'top-center': 'justify-start items-center text-center',
-    'top-right': 'justify-start items-end text-right',
-    'middle-left': 'justify-center items-start text-left',
-    'middle-center': 'justify-center items-center text-center',
-    'middle-right': 'justify-center items-end text-right',
-    'bottom-left': 'justify-end items-start text-left',
-    'bottom-center': 'justify-end items-center text-center',
-    'bottom-right': 'justify-end items-end text-right',
+    'top-left': 'top-0 left-0 translate-x-0 translate-y-0 text-left',
+    'top-center': 'top-0 left-1/2 -translate-x-1/2 translate-y-0 text-center',
+    'top-right': 'top-0 left-full -translate-x-full translate-y-0 text-right',
+    'middle-left': 'top-1/2 left-0 translate-x-0 -translate-y-1/2 text-left',
+    'middle-center':
+      'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center',
+    'middle-right':
+      'top-1/2 left-full -translate-x-full -translate-y-1/2 text-right',
+    'bottom-left': 'top-full left-0 translate-x-0 -translate-y-full text-left',
+    'bottom-center':
+      'top-full left-1/2 -translate-x-1/2 -translate-y-full text-center',
+    'bottom-right':
+      'top-full left-full -translate-x-full -translate-y-full text-right',
   },
   tablet: {
-    'top-left': 'md:justify-start md:items-start md:text-left',
-    'top-center': 'md:justify-start md:items-center md:text-center',
-    'top-right': 'md:justify-start md:items-end md:text-right',
-    'middle-left': 'md:justify-center md:items-start md:text-left',
-    'middle-center': 'md:justify-center md:items-center md:text-center',
-    'middle-right': 'md:justify-center md:items-end md:text-right',
-    'bottom-left': 'md:justify-end md:items-start md:text-left',
-    'bottom-center': 'md:justify-end md:items-center md:text-center',
-    'bottom-right': 'md:justify-end md:items-end md:text-right',
+    'top-left':
+      'md:top-0 md:left-0 md:translate-x-0 md:translate-y-0 md:text-left',
+    'top-center':
+      'md:top-0 md:left-1/2 md:-translate-x-1/2 md:translate-y-0 md:text-center',
+    'top-right':
+      'md:top-0 md:left-full md:-translate-x-full md:translate-y-0 md:text-right',
+    'middle-left':
+      'md:top-1/2 md:left-0 md:translate-x-0 md:-translate-y-1/2 md:text-left',
+    'middle-center':
+      'md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:text-center',
+    'middle-right':
+      'md:top-1/2 md:left-full md:-translate-x-full md:-translate-y-1/2 md:text-right',
+    'bottom-left':
+      'md:top-full md:left-0 md:translate-x-0 md:-translate-y-full md:text-left',
+    'bottom-center':
+      'md:top-full md:left-1/2 md:-translate-x-1/2 md:-translate-y-full md:text-center',
+    'bottom-right':
+      'md:top-full md:left-full md:-translate-x-full md:-translate-y-full md:text-right',
   },
   desktop: {
-    'top-left': 'lg:justify-start lg:items-start lg:text-left',
-    'top-center': 'lg:justify-start lg:items-center lg:text-center',
-    'top-right': 'lg:justify-start lg:items-end lg:text-right',
-    'middle-left': 'lg:justify-center lg:items-start lg:text-left',
-    'middle-center': 'lg:justify-center lg:items-center lg:text-center',
-    'middle-right': 'lg:justify-center lg:items-end lg:text-right',
-    'bottom-left': 'lg:justify-end lg:items-start lg:text-left',
-    'bottom-center': 'lg:justify-end lg:items-center lg:text-center',
-    'bottom-right': 'lg:justify-end lg:items-end lg:text-right',
+    'top-left':
+      'lg:top-0 lg:left-0 lg:translate-x-0 lg:translate-y-0 lg:text-left',
+    'top-center':
+      'lg:top-0 lg:left-1/2 lg:-translate-x-1/2 lg:translate-y-0 lg:text-center',
+    'top-right':
+      'lg:top-0 lg:left-full lg:-translate-x-full lg:translate-y-0 lg:text-right',
+    'middle-left':
+      'lg:top-1/2 lg:left-0 lg:translate-x-0 lg:-translate-y-1/2 lg:text-left',
+    'middle-center':
+      'lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:text-center',
+    'middle-right':
+      'lg:top-1/2 lg:left-full lg:-translate-x-full lg:-translate-y-1/2 lg:text-right',
+    'bottom-left':
+      'lg:top-full lg:left-0 lg:translate-x-0 lg:-translate-y-full lg:text-left',
+    'bottom-center':
+      'lg:top-full lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-full lg:text-center',
+    'bottom-right':
+      'lg:top-full lg:left-full lg:-translate-x-full lg:-translate-y-full lg:text-right',
   },
 };
 
@@ -99,6 +128,25 @@ export const PADDING_MAP: Record<
   l: { none: 'pl-0', sm: 'pl-2', md: 'pl-4', lg: 'pl-8' },
   r: { none: 'pr-0', sm: 'pr-2', md: 'pr-4', lg: 'pr-8' },
   b: { none: 'pb-0', sm: 'pb-2', md: 'pb-4', lg: 'pb-8' },
+};
+
+export const getAspectRatio = (aspect: AspectRatioValue): string => {
+  let aspectRatio = '';
+  if (typeof aspect === 'number') {
+    aspectRatio = `${aspect}`;
+  }
+
+  if (typeof aspect === 'string') {
+    if (
+      (STANDARD_ASPECT_RATIOS as readonly string[]).includes(aspect) ||
+      ASPECT_RATIO_REGEX.test(aspect)
+    ) {
+      // Convert "16:9" -> "16 / 9" for valid CSS syntax
+      aspectRatio = aspect.replace(':', ' / ');
+    }
+  }
+
+  return aspectRatio;
 };
 
 function getPaddingClass(
@@ -263,4 +311,16 @@ export function getBaseLayoutClassesAndStyle(
   });
 
   return [classes.filter(Boolean).join(' ').trim(), style];
+}
+
+const IMAGE_SCALE_CLASSES: Record<MediaFit, string> = {
+  cover: 'object-cover',
+  contain: 'object-contain',
+  fill: 'object-fill',
+  none: 'object-none',
+  'scale-down': 'object-scale-down',
+};
+
+export function getImageScaleClass(scale: MediaFit): string {
+  return IMAGE_SCALE_CLASSES[scale] ?? '';
 }

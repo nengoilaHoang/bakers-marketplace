@@ -116,13 +116,15 @@ const ColorPicker = ({
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastEmittedHexRef = useRef(currentValue);
   const isDraggingRef = useRef(false);
 
   const canvasWidth = 100;
   const radius = canvasWidth / 2;
   const angleRad = (hsv.h * Math.PI) / 180;
-  const indicatorX = radius + radius * hsv.s * Math.cos(angleRad);
-  const indicatorY = radius + radius * hsv.s * Math.sin(angleRad);
+  const normalizedDist = hsv.s ** 2;
+  const indicatorX = radius + radius * normalizedDist * Math.cos(angleRad);
+  const indicatorY = radius + radius * normalizedDist * Math.sin(angleRad);
 
   const [pureR, pureG, pureB] = useMemo(
     () => hsvToRgb(hsv.h, hsv.s, hsv.v),
@@ -140,24 +142,29 @@ const ColorPicker = ({
 
   useEffect(() => {
     if (isDraggingRef.current) return;
+    if (
+      currentValue.toLowerCase() === lastEmittedHexRef.current.toLowerCase()
+    ) {
+      return;
+    }
 
+    lastEmittedHexRef.current = currentValue;
     const [r, g, b, a] = parseHex(currentValue || '#ff0000');
     setTextColor(getTextColor(r, g, b, a));
     const [newH, newS, newV] = rgbToHsv(r, g, b);
 
     setHsv((prev) => {
       const isGrayscale = r === g && g === b;
-      const newHsv = {
+      return {
         h: isGrayscale ? prev.h : newH,
         s: isGrayscale ? prev.s : newS,
         v: newV,
         a,
       };
-      return newHsv;
     });
 
-    setTextInputValue(pureHueHexString.toUpperCase());
-  }, [currentValue, pureHueHexString]);
+    setTextInputValue(currentValue.toUpperCase());
+  }, [currentValue]);
 
   // const getPixelByHsv = useCallback((hue: number, sat: number) => {
   //   const canvas = canvasRef.current;
@@ -191,20 +198,20 @@ const ColorPicker = ({
       const y = clientY - rect.top - radius;
 
       const distance = Math.hypot(x, y);
-      const sat = Math.min(1, distance / radius);
+      const sat = Math.sqrt(Math.min(1, distance / radius));
       const angleRad = Math.atan2(y, x);
       const hue = ((angleRad * 180) / Math.PI + 360) % 360;
 
-      const newHsv = { ...hsv, h: hue, s: sat };
-      setHsv(newHsv);
+      setHsv((prev) => ({ ...prev, h: hue, s: sat, v: 1 }));
     },
-    [hsv],
+    [],
   );
 
   const commitColor = useCallback(() => {
     setHsv((currentHsv) => {
       const [r, g, b] = hsvToRgb(currentHsv.h, currentHsv.s, currentHsv.v);
       const hex = formatHex(r, g, b, currentHsv.a);
+      lastEmittedHexRef.current = hex;
       setTextInputValue(hex.toUpperCase());
       onColorChange(hex);
       return currentHsv;
@@ -399,28 +406,31 @@ const ColorPicker = ({
       {/* Color picker dropdown panel */}
       <div
         id={`${id}-color-picker`}
-        className={`absolute right-0 top-full mt-1.5 p-3.5 rounded-md border border-zinc-200 bg-zinc-50 shadow-lg z-50 ${
+        className={`absolute right-0 top-full mt-1.5 p-3.5 w-min rounded-md border border-zinc-200 bg-zinc-50 shadow-lg z-50 ${
           isOpen ? '' : 'hidden'
         }`}
       >
         <div className='grid grid-cols-[minmax(0fr,auto)_minmax(0fr,1fr)] grid-rows-[minmax(0fr,auto)_minmax(0fr,1fr)_minmax(0fr,1fr)] gap-2'>
           {/* The Wheel */}
           <div className='flex items-center justify-center min-h-0 min-w-0 relative'>
-            <canvas
-              ref={canvasRef}
-              width={canvasWidth}
-              height={canvasWidth}
-              onPointerDown={handleCanvasPointerDown}
-              onPointerMove={handleCanvasPointerMove}
-              onPointerUp={handleCanvasPointerUp}
-              onPointerCancel={handleCanvasPointerUp}
-              className='size-25 rounded-full col-start-1 row-start-1'
-            ></canvas>
+            <div className='relative size-25'>
+              <canvas
+                ref={canvasRef}
+                width={canvasWidth}
+                height={canvasWidth}
+                onPointerDown={handleCanvasPointerDown}
+                onPointerMove={handleCanvasPointerMove}
+                onPointerUp={handleCanvasPointerUp}
+                onPointerCancel={handleCanvasPointerUp}
+                className='size-25 rounded-full col-start-1 row-start-1'
+              ></canvas>
+            </div>
+
             <div
               className={`absolute size-3 rounded-full border-2 border-white shadow-sm pointer-events-none -translate-x-1/2 -translate-y-1/2`}
               style={{
-                left: `${indicatorX}%`,
-                top: `${indicatorY}%`,
+                left: `${indicatorX}px`,
+                top: `${indicatorY}px`,
                 backgroundColor: currentValue,
               }}
             ></div>
@@ -468,7 +478,7 @@ const ColorPicker = ({
               backgroundColor: currentValue,
               color: textColor,
             }}
-            className='rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs tracking-wide w-full focus:outline-none focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950'
+            className='w-full min-w-0 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs tracking-wide focus:outline-none focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950'
           />
         </div>
       </div>
