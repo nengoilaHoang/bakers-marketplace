@@ -1,9 +1,7 @@
 import { z } from 'zod';
+import { Rating, RatingCreateSchema, type RatingData } from '#/models/ratings/ratings.model.js';
 
-export const RecipeRatingCreateSchema = z.object({
-  rating: z.int().min(1).max(5),
-  comment: z.string().trim().max(2000).nullable().optional().transform((value) => value === '' ? null : value),
-}).strict();
+export const RecipeRatingCreateSchema = RatingCreateSchema;
 
 export const RecipeRatingUpdateSchema = RecipeRatingCreateSchema.partial().refine(
   (value) => Object.values(value).some((field) => field !== undefined),
@@ -16,7 +14,7 @@ export const RecipeRatingsQuerySchema = z.object({
 }).strict();
 
 export const RecipeRatingCursorSchema = z.object({
-  createdAt: z.iso.datetime({ offset: true }),
+  ratedAt: z.iso.datetime({ offset: true }),
   id: z.uuidv4().transform((value) => value.toLowerCase()),
 }).strict();
 
@@ -29,16 +27,15 @@ export type RecipeRatingMutation =
   | { kind: 'update'; data: RecipeRatingUpdate }
   | { kind: 'delete' };
 
-export type RecipeRating = {
-  id: string;
-  recipeId: string;
-  userId: string;
-  rating: number;
-  comment: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  author: { id: string; displayName: string };
-};
+export class RecipeRating extends Rating {
+  // Association reference; full recipe details remain a separate API.
+  target: { id: string };
+
+  constructor(data: RatingData & { target: { id: string } }) {
+    super(data);
+    this.target = data.target;
+  }
+}
 
 export type RecipeRatingSummary = {
   average: number;

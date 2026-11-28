@@ -1,12 +1,7 @@
 import db from '#/db/index.js';
 import { PostReport } from '#/models/posts/post-reports.model.js';
-
-type ReportRow = {
-	id: string;
-	reporterId: string | null;
-	reason: string;
-	createdAt: Date;
-};
+import reportDAO from '#/daos/moderation/reports.dao.js';
+import { reportDataFromRow } from '#/models/moderation/reports.model.js';
 
 class PostReportDAO {
 	private readonly reportsTableName = 'reports';
@@ -19,13 +14,11 @@ class PostReportDAO {
 		reason: string,
 	): Promise<PostReport> {
 		return this.db.instance.transaction(async (trx) => {
-			const [report] = await trx<ReportRow>(this.reportsTableName)
-				.insert({ reporterId, reason })
-				.returning('*');
+			const report = await reportDAO.create(trx, reporterId, reason);
 
 			await trx(this.tableName).insert({ id: report.id, postId });
 
-			return new PostReport({ ...report, postId });
+			return new PostReport({ ...reportDataFromRow(report), target: { id: postId } });
 		});
 	}
 

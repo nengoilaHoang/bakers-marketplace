@@ -1,13 +1,11 @@
 import { z } from 'zod';
+import { Report, ReportCreateSchema, type ReportData } from '#/models/moderation/reports.model.js';
 
 export const UserSocialParamsSchema = z.object({
   userId: z.uuidv4().transform((value) => value.toLowerCase()),
 });
 
-export const UserReportCreateSchema = z.object({
-  reason: z.enum(['SPAM', 'HARASSMENT', 'INAPPROPRIATE_CONTENT', 'IMPERSONATION', 'OTHER']),
-  description: z.string().trim().max(2000).optional(),
-}).strict();
+export const UserReportCreateSchema = ReportCreateSchema;
 
 export type UserReportCreate = z.infer<typeof UserReportCreateSchema>;
 
@@ -21,4 +19,13 @@ export type PublicUserProfile = {
 };
 
 export type UserFollowStatus = { following: boolean; followerCount: number };
-export type UserReportReceipt = { id: string; status: 'OPEN' };
+export class ReportUser extends Report {
+  target: { id: string };
+
+  constructor(data: ReportData & { target: { id: string } }) {
+    super(data);
+    this.target = data.target;
+  }
+}
+
+export type UserReportReceipt = Pick<ReportUser, 'id' | 'status'>;

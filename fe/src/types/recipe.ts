@@ -1,3 +1,5 @@
+import type { Rating } from '@/types/rating';
+
 export type Recipe = {
   id: string;
   coverImgId?: string | null;
@@ -11,16 +13,7 @@ export type Recipe = {
   updatedAt?: string;
 };
 
-export type RecipeRating = {
-  id: string;
-  recipeId: string;
-  userId: string;
-  rating: number;
-  comment: string | null;
-  createdAt: string;
-  updatedAt: string;
-  author: { id: string; displayName: string };
-};
+export type RecipeRating = Rating & { target: { id: string } };
 
 export type RecipeRatingSummary = {
   average: number;
@@ -35,7 +28,7 @@ export type RecipeRatingsPage = {
   nextCursor: string | null;
 };
 
-export type RecipeRatingPayload = { rating: number; comment: string | null };
+export type RecipeRatingPayload = { rating: number; comment: string | null; mediaIds?: string[] };
 export type RecipeRatingReceipt = Pick<RecipeRatingsPage, 'summary' | 'myRating'>;
 
 export type RecipeCursor = {
@@ -58,7 +51,7 @@ export type RecipeIngredient = {
   coverImgId?: string | null;
 };
 
-export type RecipeTool = Omit<RecipeIngredient, "unit">;
+export type RecipeTool = Omit<RecipeIngredient, 'unit'>;
 
 export type RecipeStep = {
   id: string;
@@ -88,7 +81,7 @@ export type RecipeDetail = Recipe & {
   recipeTags: RecipeTag[];
 };
 
-export type RecipeSearchMatchMode = "complete" | "flexible";
+export type RecipeSearchMatchMode = 'complete' | 'flexible';
 
 export type RecipeRequirementMatch = {
   matched: number;
@@ -118,7 +111,7 @@ export type RecipeIngredientFormValue = {
   coverImgId?: string | null;
 };
 
-export type RecipeToolFormValue = Omit<RecipeIngredientFormValue, "unit">;
+export type RecipeToolFormValue = Omit<RecipeIngredientFormValue, 'unit'>;
 
 export type RecipeStepFormValue = {
   id?: string;
@@ -157,7 +150,7 @@ export type RecipeIngredientMutationFields = {
 
 export type RecipeToolMutationFields = Omit<
   RecipeIngredientMutationFields,
-  "unit"
+  'unit'
 >;
 
 export type RecipeStepMutationFields = {

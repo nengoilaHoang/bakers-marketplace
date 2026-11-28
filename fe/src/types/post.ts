@@ -1,4 +1,5 @@
 import type { RecipeMutationPayload } from '@/types/recipe';
+import type { Report } from '@/types/report';
 
 export type PostAuthor = {
   id: string;
@@ -91,13 +92,7 @@ export type PostSaveStatus = {
   saved: boolean;
 };
 
-export type PostReport = {
-  id: string;
-  postId: string;
-  reporterId: string | null;
-  reason: string;
-  createdAt: string;
-};
+export type PostReport = Report & { target: { id: string } };
 
 export type SessionUser = {
   id: string;

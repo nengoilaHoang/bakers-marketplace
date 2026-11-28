@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert';
 import useAuth from '@/hooks/user/useAuthContext';
 import { useDropdown } from '@/hooks/useDropdown';
 import request, { ApiError } from '@/lib/api';
+import type { UserReportReceipt } from '@/types/report';
 
 type PublicProfile = {
   id: string;
@@ -132,7 +133,7 @@ export default function UserProfilePage() {
     mutation.current = controller;
     setAction({ key: profileKey, busy: 'report', error: '', success: '' });
     try {
-      await request(`/users/${profile.id}/reports`, {
+      await request<{ data: UserReportReceipt }>(`/users/${profile.id}/reports`, {
         method: 'POST',
         body: JSON.stringify({ reason, description: description.trim() }),
         signal: controller.signal,

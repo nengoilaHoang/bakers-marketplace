@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 
@@ -6,7 +7,7 @@ import Alert, { type AlertTone } from '@/components/ui/Alert';
 import Avatar from '@/components/ui/Avatar';
 import Button, { ButtonLink } from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
-import { Textarea } from '@/components/ui/Input';
+import Input, { Textarea } from '@/components/ui/Input';
 import RatingStars, { RatingInput } from '@/components/ui/RatingStars';
 import useAuth from '@/hooks/user/useAuthContext';
 import { ApiError } from '@/lib/api';
@@ -91,7 +92,7 @@ export default function RecipeRatings({ recipeId, ownerId }: { recipeId: string;
   async function mutate(kind: 'save' | 'delete') {
     if (!page || pending.current || isOwner) return;
     if (!account) { void router.push(loginHref); return; }
-    if (kind === 'save' && (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.trim().length > 2000)) {
+    if (kind === 'save' && (!Number.isFinite(rating) || rating < 1 || rating > 5 || comment.trim().length > 2000)) {
       setAction({ key: requestKey, busy: '', tone: 'danger', message: 'Chọn từ 1 đến 5 sao và nhận xét tối đa 2.000 ký tự.' });
       return;
     }
@@ -111,7 +112,7 @@ export default function RecipeRatings({ recipeId, ownerId }: { recipeId: string;
       setLoaded((previous) => {
         if (previous?.key !== requestKey || !previous.page) return previous;
         const mine = receipt.myRating;
-        let reviews = previous.page.reviews.filter((review) => kind !== 'delete' || review.userId !== account.id);
+        let reviews = previous.page.reviews.filter((review) => kind !== 'delete' || review.rater.id !== account.id);
         if (mine) reviews = myRating
           ? reviews.map((review) => review.id === mine.id ? mine : review)
           : [mine, ...reviews];
@@ -181,6 +182,7 @@ export default function RecipeRatings({ recipeId, ownerId }: { recipeId: string;
                 </div>
               ))}
             </dl>
+            <p className='text-caption text-ink-muted sm:col-span-2'>Điểm lẻ được xếp vào nhóm sao gần nhất.</p>
           </div>
           {status?.message && <Alert tone={status.tone} action={status.tone === 'warning'
             && <Button variant='outline' size='sm' disabled={busy} onClick={() => setAttempt((value) => value + 1)}>Tải lại đánh giá</Button>}>
@@ -190,8 +192,13 @@ export default function RecipeRatings({ recipeId, ownerId }: { recipeId: string;
             : !account ? <Alert action={<ButtonLink href={loginHref} variant='outline' size='sm'>Đăng nhập để đánh giá</ButtonLink>}>Đăng nhập để chấm sao và chia sẻ nhận xét.</Alert>
               : <form onSubmit={(event) => { event.preventDefault(); void mutate('save'); }} className='flex flex-col items-start gap-5 border border-line p-5'>
                 <h3 className='text-h4 font-medium'>{myRating ? 'Đánh giá của bạn' : 'Viết đánh giá'}</h3>
-                <RatingInput name={`recipe-rating-${recipeId}`} label='Chấm điểm công thức' value={rating} required disabled={busy}
+                <RatingInput name={`recipe-rating-${recipeId}`} label='Chấm điểm công thức' value={rating} disabled={busy}
                   onChange={(value) => setDraft({ key: requestKey, rating: value, comment })} />
+                <Field label='Điểm từ 1 đến 5 (có thể nhập điểm lẻ)' htmlFor={`recipe-rating-score-${recipeId}`}>
+                  <Input id={`recipe-rating-score-${recipeId}`} type='number' min={1} max={5} step='any' required
+                    value={rating || ''} disabled={busy}
+                    onChange={(event) => setDraft({ key: requestKey, rating: event.target.valueAsNumber || 0, comment })} />
+                </Field>
                 <Field label='Nhận xét (tùy chọn)' htmlFor={`recipe-review-${recipeId}`} className='w-full'>
                   <Textarea id={`recipe-review-${recipeId}`} maxLength={2000} rows={4} value={comment} disabled={busy}
                     placeholder='Chia sẻ cảm nhận của bạn về công thức…'
@@ -208,15 +215,24 @@ export default function RecipeRatings({ recipeId, ownerId }: { recipeId: string;
             {page.reviews.length === 0 ? <p className='mt-4 text-body-sm text-ink-muted'>Hãy là người đầu tiên đánh giá công thức này.</p>
               : <ul className='mt-4 divide-y divide-line border-y border-line'>
                 {page.reviews.map((review) => <li key={review.id} className='flex gap-4 py-5'>
-                  <Avatar size='sm' label={`Ảnh đại diện ${review.author.displayName}`} />
+                  <Avatar size='sm' label={`Ảnh đại diện ${review.rater.displayName}`} />
                   <div className='min-w-0 flex-1'>
                     <div className='flex flex-wrap items-center gap-3'>
-                      <Link href={`/users/${review.author.id}`} className='font-medium hover:underline'>{review.author.displayName}{review.userId === account?.id ? ' (Bạn)' : ''}</Link>
+                      <Link href={`/users/${review.rater.id}`} className='font-medium hover:underline'>{review.rater.displayName}{review.rater.id === account?.id ? ' (Bạn)' : ''}</Link>
                       <RatingStars value={review.rating} valuePosition='none' size='md' />
-                      <time dateTime={review.createdAt} className='text-caption text-ink-muted'>{formatDateTime(review.createdAt)}</time>
-                      {review.updatedAt !== review.createdAt && <span className='text-caption text-ink-muted'>Đã chỉnh sửa</span>}
+                      <time dateTime={review.ratedAt} className='text-caption text-ink-muted'>{formatDateTime(review.ratedAt)}</time>
+                      {review.updatedAt !== review.ratedAt && <span className='text-caption text-ink-muted'>Đã chỉnh sửa</span>}
                     </div>
                     <p className='mt-3 text-body-sm break-words whitespace-pre-wrap text-ink-muted'>{review.comment || 'Không có nhận xét.'}</p>
+                    {review.media.length > 0 && <ul className='mt-3 flex flex-wrap gap-3' aria-label='Ảnh đính kèm đánh giá'>
+                      {review.media.map((image) => <li key={image.id}>
+                        <a href={image.url} target='_blank' rel='noopener noreferrer'>
+                          <Image src={image.url} alt={image.displayName || 'Ảnh đính kèm đánh giá'}
+                            width={image.width || 160} height={image.height || 120} unoptimized
+                            className='h-24 w-32 border border-line object-cover' />
+                        </a>
+                      </li>)}
+                    </ul>}
                   </div>
                 </li>)}
               </ul>}

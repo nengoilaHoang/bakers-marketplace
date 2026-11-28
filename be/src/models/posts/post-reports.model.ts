@@ -1,30 +1,22 @@
 import { z } from 'zod';
+import { Report, ReportCreateSchema, ReportSchema, type ReportData } from '#/models/moderation/reports.model.js';
 
-export const PostReportSchema = z.object({
-	id: z.uuidv4().optional(),
-	postId: z.uuidv4(),
-	reporterId: z.uuidv4().nullable().optional(),
-	reason: z.string().trim().min(1).max(500),
-	createdAt: z.date().optional(),
-});
+export const PostReportSchema = ReportSchema.extend({ target: z.object({ id: z.uuidv4() }) });
 
-export const PostReportCreateSchema = PostReportSchema.pick({
+export const PostReportCreateSchema = ReportCreateSchema.pick({
 	reason: true,
 });
 
 export type PostReportData = z.infer<typeof PostReportSchema>;
 export type PostReportCreate = z.infer<typeof PostReportCreateSchema>;
 
-export class PostReport implements PostReportData {
-	id!: string;
-	postId!: string;
-	reporterId?: string | null;
-	reason!: string;
-	createdAt?: Date;
+export class ReportPost extends Report implements PostReportData {
+	target: { id: string };
 
-	constructor(data?: Partial<PostReportData>) {
-		if (data) {
-			Object.assign(this, data);
-		}
+	constructor(data: ReportData & { target: { id: string } }) {
+		super(data);
+		this.target = data.target;
 	}
 }
+
+export { ReportPost as PostReport };

@@ -2,6 +2,9 @@ import db from '#/db/index.js';
 import type { Knex } from 'knex';
 import type { PublicUserProfile, UserFollowStatus, UserReportCreate, UserReportReceipt } from '#/models/users/user-social.model.js';
 import { ConflictError, NotFoundError } from '#/utils/http-errors.js';
+import reportDAO from '#/daos/moderation/reports.dao.js';
+import { EReportStatus, reportDataFromRow } from '#/models/moderation/reports.model.js';
+import { ReportUser } from '#/models/users/user-social.model.js';
 
 class UserSocialDAO {
   public async getProfile(userId: string, viewerId?: string): Promise<PublicUserProfile | null> {
@@ -42,18 +45,14 @@ class UserSocialDAO {
       if (!target) throw new NotFoundError('Không tìm thấy người dùng.');
 
       const duplicate = await trx('user_reports as ur').join('reports as r', 'r.id', 'ur.id')
-        .where({ 'ur.reportedUserId': userId, 'r.reporterId': actorId, 'r.status': 'OPEN' })
+        .where({ 'ur.reportedUserId': userId, 'r.reporterId': actorId, 'r.status': EReportStatus.PENDING })
         .select('ur.id').first();
       if (duplicate) throw new ConflictError('Bạn đã có báo cáo đang chờ xử lý cho người dùng này.');
 
-      const [report] = await trx('reports').insert({
-        reporterId: actorId,
-        reason: payload.reason,
-        description: payload.description || null,
-        status: 'OPEN',
-      }).returning(['id', 'status']);
+      const report = await reportDAO.create(trx, actorId, payload.reason, payload.description);
       await trx('user_reports').insert({ id: report.id, reportedUserId: userId });
-      return report as UserReportReceipt;
+      const result = new ReportUser({ ...reportDataFromRow(report), target: { id: userId } });
+      return { id: result.id, status: result.status };
     });
   }
 

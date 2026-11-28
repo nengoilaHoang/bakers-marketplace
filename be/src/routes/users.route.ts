@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { authenMiddleware, optionalAuthenMiddleware } from '#/middlewares/authen.middleware.js';
-import { UserReportCreateSchema, UserSocialParamsSchema } from '#/models/users/user-social.model.js';
-import userSocialService from '#/services/users/user-social.service.js';
+import userSocialController from '#/controllers/user-social.controller.js';
 import type { OptionalAuthenticatedRequest } from '#/types/request.types.js';
 import { sameOriginJsonMiddleware } from '#/middlewares/same-origin-json.middleware.js';
 import { UserProfileUpdateSchema } from '#/models/users/user-profile.model.js';
@@ -23,10 +22,7 @@ router.get('/me/settings', authenMiddleware, async (req: OptionalAuthenticatedRe
   res.json({ data: await userProfileService.getSettings(req.user!.id) });
 });
 
-router.get('/:userId', optionalAuthenMiddleware, async (req: OptionalAuthenticatedRequest, res) => {
-  const { userId } = UserSocialParamsSchema.parse(req.params);
-  res.json({ data: await userSocialService.getProfile(userId, req.user?.id) });
-});
+router.get('/:userId', optionalAuthenMiddleware, userSocialController.getProfile);
 
 router.use(authenMiddleware);
 router.use(sameOriginJsonMiddleware);
@@ -37,20 +33,10 @@ router.patch('/me', async (req: OptionalAuthenticatedRequest, res) => {
   res.json({ data: await userProfileService.update(req.user!.id, payload) });
 });
 
-router.post('/:userId/follow', async (req: OptionalAuthenticatedRequest, res) => {
-  const { userId } = UserSocialParamsSchema.parse(req.params);
-  res.json({ data: await userSocialService.setFollow(req.user!.id, userId, true) });
-});
+router.post('/:userId/follow', userSocialController.follow);
 
-router.delete('/:userId/follow', async (req: OptionalAuthenticatedRequest, res) => {
-  const { userId } = UserSocialParamsSchema.parse(req.params);
-  res.json({ data: await userSocialService.setFollow(req.user!.id, userId, false) });
-});
+router.delete('/:userId/follow', userSocialController.unfollow);
 
-router.post('/:userId/reports', reportLimit, async (req: OptionalAuthenticatedRequest, res) => {
-  const { userId } = UserSocialParamsSchema.parse(req.params);
-  const payload = UserReportCreateSchema.parse(req.body);
-  res.status(201).json({ data: await userSocialService.report(req.user!.id, userId, payload) });
-});
+router.post('/:userId/reports', reportLimit, userSocialController.report);
 
 export default router;

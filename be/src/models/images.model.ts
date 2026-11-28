@@ -1,19 +1,22 @@
 import { z } from 'zod';
+import { File, FileSchema } from '#/models/files.model.js';
 
-export const ImageTableSchema = z.object({
-	id: z.uuidv4().readonly(),
-	displayName: z.string().trim().min(3).max(255),
-	originalName: z.string().trim().min(3).max(255),
-	url: z.url().max(2048),
-	contentType: z.string().nullable(),
-	extName: z.string().nullable(),
-	size: z.number().int().nonnegative().nullable(),
-	checkSum: z.string().length(64).nullable(),
-	uploadedAt: z.date().nullable(),
+export const ImageTableSchema = FileSchema.extend({
+	width: z.number().int().positive().nullable(),
+	height: z.number().int().positive().nullable(),
 	createdAt: z.date().readonly(),
 });
 
 export const ImageSchema = ImageTableSchema;
 
 export type ImageRow = z.infer<typeof ImageTableSchema>;
-export type Image = z.infer<typeof ImageSchema>;
+export class Image extends File implements ImageRow {
+	width!: number | null;
+	height!: number | null;
+	createdAt!: Date;
+
+	constructor(data: ImageRow) {
+		super(data);
+		Object.assign(this, data);
+	}
+}
